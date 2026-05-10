@@ -1,0 +1,64 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - navigation [ref=e4]:
+      - generic [ref=e6]:
+        - generic [ref=e7] [cursor=pointer]:
+          - img [ref=e9]
+          - generic [ref=e12]: SmatWay
+        - generic [ref=e13]:
+          - button "Home" [ref=e14] [cursor=pointer]
+          - button "About" [ref=e15] [cursor=pointer]
+          - button "How It Works" [ref=e16] [cursor=pointer]
+          - generic [ref=e18] [cursor=pointer]:
+            - img "global" [ref=e19]:
+              - img [ref=e20]
+            - generic [ref=e22]: Language
+        - button "Get Started" [ref=e24] [cursor=pointer]:
+          - generic [ref=e25]: Get Started
+    - generic [ref=e26]:
+      - generic [ref=e28]:
+        - heading "About SmatWay" [level=1] [ref=e29]
+        - paragraph [ref=e30]: Connecting travelers and transporters across the World
+      - generic [ref=e32]:
+        - heading "Our Story" [level=2] [ref=e34]
+        - generic [ref=e37]:
+          - paragraph [ref=e38]: "Smatway was born from a simple observation: traveling shouldn't be complicated or unsafe. We saw countless travelers struggling to find reliable transportation, while transporters struggled to fill their vehicles efficiently."
+          - paragraph [ref=e39]: Our platform bridges this gap by connecting verified transporters with travelers who need reliable, affordable transportation. We've built a community based on trust, safety, and transparency.
+          - paragraph [ref=e40]: Since our launch, we've helped thousands of travelers reach their destinations safely while providing transporters with a steady stream of customers. Our technology ensures secure payments, real-time tracking, and verified identities for peace of mind.
+          - paragraph [ref=e41]: Today, Smatway continues to grow, connecting more communities and making travel easier, safer, and more accessible for everyone.
+      - generic [ref=e44]:
+        - generic [ref=e48]:
+          - img [ref=e50]
+          - heading "Our Mission" [level=3] [ref=e54]
+          - paragraph [ref=e55]: To make travel accessible, safe, and affordable for everyone across the World
+        - generic [ref=e59]:
+          - img [ref=e61]
+          - heading "Our Vision" [level=3] [ref=e64]
+          - paragraph [ref=e65]: To become the World's leading transportation platform connecting communities
+      - generic [ref=e67]:
+        - generic [ref=e68]:
+          - heading "Our Values" [level=2] [ref=e69]
+          - paragraph [ref=e70]: What we believe in and stand for
+        - generic [ref=e71]:
+          - generic [ref=e73]:
+            - img [ref=e75]
+            - heading "Safety First" [level=3] [ref=e77]
+            - paragraph [ref=e78]: Your safety is our top priority with verified transporters and secure payments
+          - generic [ref=e80]:
+            - img [ref=e82]
+            - heading "Community Driven" [level=3] [ref=e84]
+            - paragraph [ref=e85]: Built by travelers, for travelers. Join our growing community
+          - generic [ref=e87]:
+            - img [ref=e89]
+            - heading "Quality Service" [level=3] [ref=e92]
+            - paragraph [ref=e93]: We ensure the highest quality of service for all our users
+          - generic [ref=e95]:
+            - img [ref=e97]
+            - heading "Innovation" [level=3] [ref=e100]
+            - paragraph [ref=e101]: Leveraging technology to make travel easier and more accessible
+      - generic [ref=e103]:
+        - img [ref=e104]
+        - heading "Join Our Community" [level=2] [ref=e109]
+        - paragraph [ref=e110]: Be part of the fastest-growing transportation network
+        - button "Get Started Today" [ref=e111] [cursor=pointer]
+  - img [ref=e114]

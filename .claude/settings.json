@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm --version)",
+      "Read(//c/Users/HP/AppData/Local/Temp/claude/d--CODE-Projects-Markhor-Systems-Projects-smatway/faa7db64-5296-401d-a02f-067482be63e4/tasks/**)"
+    ]
+  }
+}
