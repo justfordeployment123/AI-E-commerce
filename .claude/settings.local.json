@@ -30,7 +30,8 @@
       "Bash(npx create-next-app@latest admin --typescript --tailwind --eslint --app --no-src-dir --import-alias \"@/*\" --yes)",
       "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(list\\(d.get\\('exports',{}\\).keys\\(\\)\\)[:15]\\)\")",
       "Bash(grep -n 'queryRaw\\\\|$connect\\\\|$disconnect\\\\|PrismaClient' 'd:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\node_modules\\\\.prisma\\\\client\\\\index.d.ts')",
-      "Bash(npx nest *)"
+      "Bash(npx nest *)",
+      "Bash(git remote *)"
     ]
   },
   "enabledMcpjsonServers": [
