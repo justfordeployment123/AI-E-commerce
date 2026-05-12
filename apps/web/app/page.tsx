@@ -411,19 +411,28 @@ function BrandTicker() {
 // --- Modular Homepage Sections ---
 
 function Navbar() {
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
     <header className="sticky top-0 z-50 border-b border-zinc-100 bg-white/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-8">
-          <a href="/" className="text-2xl font-bold tracking-tighter">
+        <div className="flex items-center gap-4 md:gap-8">
+          <button 
+            className="md:hidden" 
+            onClick={() => setIsOpen(!isOpen)}
+            aria-label="Toggle menu"
+          >
+            {isOpen ? <Check className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
+          <a href="/" className="text-xl md:text-2xl font-bold tracking-tighter">
             MARKHOR<span className="text-zinc-400">MARKET</span>
           </a>
           <div className="hidden md:block">
             <div className="relative">
               <input
                 type="text"
-                placeholder="Search for an iPhone, a MacBook..."
-                className="h-10 w-[400px] rounded-full bg-zinc-100 pl-10 pr-4 text-sm outline-none transition-all focus:ring-2 focus:ring-black/5 focus:bg-white border border-transparent focus:border-zinc-200"
+                placeholder="Search tech..."
+                className="h-10 w-[300px] lg:w-[400px] rounded-full bg-zinc-100 pl-10 pr-4 text-sm outline-none transition-all focus:ring-2 focus:ring-black/5 focus:bg-white border border-transparent focus:border-zinc-200"
               />
               <div className="absolute left-3 top-1/2 -translate-y-1/2">
                 <Search className="h-4 w-4 text-zinc-400" />
@@ -432,14 +441,16 @@ function Navbar() {
           </div>
         </div>
 
-        <nav className="flex items-center gap-6 text-sm font-medium">
-          <a href="/sell" className="hover:text-zinc-600">Sell</a>
-          <a href="/help" className="hover:text-zinc-600">Help</a>
-          <a href="/login" className="flex items-center gap-2 hover:text-zinc-600">
+        <nav className="flex items-center gap-4 md:gap-6 text-sm font-medium">
+          <div className="hidden md:flex items-center gap-6">
+            <a href="/sell" className="hover:text-zinc-600 transition-colors">Sell</a>
+            <a href="/help" className="hover:text-zinc-600 transition-colors">Help</a>
+          </div>
+          <a href="/login" className="flex items-center gap-2 hover:text-zinc-600 transition-colors">
             <User className="h-4 w-4" />
-            Log in
+            <span className="hidden sm:inline">Log in</span>
           </a>
-          <a href="/cart" className="relative flex items-center justify-center h-10 w-10 rounded-full hover:bg-zinc-100">
+          <a href="/cart" className="relative flex items-center justify-center h-10 w-10 rounded-full hover:bg-zinc-100 transition-colors">
             <ShoppingCart className="h-5 w-5" />
             <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-black">
               0
@@ -447,6 +458,32 @@ function Navbar() {
           </a>
         </nav>
       </div>
+
+      {/* Mobile Menu */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="md:hidden border-t border-zinc-100 bg-white px-4 py-6"
+          >
+            <div className="flex flex-col gap-6 font-bold uppercase tracking-widest text-xs">
+              <a href="/shop" className="flex items-center justify-between">Shop All <ChevronRight className="h-4 w-4" /></a>
+              <a href="/sell" className="flex items-center justify-between">Sell Your Device <ChevronRight className="h-4 w-4" /></a>
+              <a href="/help" className="flex items-center justify-between">Help Center <ChevronRight className="h-4 w-4" /></a>
+              <div className="relative mt-2">
+                <input
+                  type="text"
+                  placeholder="Search products..."
+                  className="h-12 w-full rounded-2xl bg-zinc-100 pl-10 pr-4 text-sm outline-none"
+                />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   );
 }
@@ -483,56 +520,58 @@ function CategoryRail() {
 
 function Hero() {
   return (
-    <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
-      <div className="relative overflow-hidden rounded-[2.5rem] bg-zinc-950 text-white min-h-[500px] flex items-center">
-        <div className="absolute inset-0 opacity-60">
-          <Image 
-            src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=1200&auto=format&fit=crop" 
-            alt="Refurbished technology" 
-            fill 
-            className="object-cover"
-            priority
-          />
-        </div>
-        <div className="relative z-10 flex flex-col items-start justify-center p-8 md:p-16 lg:w-3/5">
+    <section className="mx-auto max-w-7xl px-4 py-6 md:py-12 sm:px-6 lg:px-8 lg:py-20">
+      <div className="relative overflow-hidden rounded-[2rem] md:rounded-[3rem] bg-zinc-950 text-white min-h-[500px] md:min-h-[600px] flex flex-col lg:flex-row items-stretch lg:items-center">
+        <div className="flex-1 p-8 md:p-16 lg:p-24 relative z-20 flex flex-col justify-center">
           <motion.div 
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-6 inline-flex items-center gap-2 rounded-full bg-accent px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-black shadow-lg shadow-accent/20"
+            className="mb-6 md:mb-8 inline-flex self-start items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 md:px-4 py-1.5 text-[9px] md:text-[10px] font-bold uppercase tracking-[0.2em] text-accent"
           >
-            <Zap className="h-3 w-3 fill-black" />
-            Up to 70% off
+            <span className="flex h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
+            Summer Tech Event
           </motion.div>
           <motion.h1 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="font-serif text-5xl font-medium leading-[1.1] md:text-8xl"
+            className="font-serif text-4xl sm:text-6xl font-medium leading-[1] md:text-8xl tracking-tight"
           >
-            Tech that’s <i>better</i> <br />for your wallet.
+            Refurbished. <br />
+            <span className="text-zinc-400 italic">Remarkable.</span>
           </motion.h1>
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="mt-8 text-lg leading-relaxed text-zinc-200 max-w-lg"
+            className="mt-6 md:mt-8 text-lg md:text-xl leading-relaxed text-zinc-300 max-w-md font-medium"
           >
-            Top-quality refurbished devices, expert-certified and ready for their next life. 
-            Better for the planet, better for you.
+            Premium technology, expertly certified for a second life. 
+            Better for the planet, exceptional for your wallet.
           </motion.p>
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="mt-10 flex flex-wrap gap-4"
+            className="mt-10 md:mt-12 flex flex-col sm:flex-row gap-4"
           >
-            <a href="/shop" className="rounded-2xl bg-white px-10 py-5 text-sm font-bold text-black transition-all hover:scale-105 active:scale-95 shadow-xl">
-              Shop the sale
+            <a href="/shop" className="rounded-2xl bg-accent px-8 md:px-10 py-4 md:py-5 text-sm font-bold text-black text-center transition-all hover:scale-105 active:scale-95 shadow-xl shadow-accent/20">
+              Shop All Tech
             </a>
-            <a href="/how-it-works" className="rounded-2xl border border-white/30 bg-black/20 px-10 py-5 text-sm font-bold backdrop-blur-md transition-all hover:scale-105 active:scale-95">
-              How it works
+            <a href="/sell" className="rounded-2xl border border-white/20 bg-transparent px-8 md:px-10 py-4 md:py-5 text-sm font-bold text-white text-center transition-all hover:bg-white/5 hover:scale-105 active:scale-95">
+              Sell Your Device
             </a>
           </motion.div>
+        </div>
+        <div className="flex-1 relative min-h-[300px] sm:min-h-[400px] lg:h-full w-full">
+          <div className="absolute inset-0 bg-gradient-to-t lg:bg-gradient-to-r from-zinc-950 via-zinc-950/20 to-transparent z-10" />
+          <Image 
+            src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=1200&auto=format&fit=crop" 
+            alt="Refurbished technology" 
+            fill 
+            className="object-cover opacity-60 lg:opacity-80"
+            priority
+          />
         </div>
       </div>
     </section>
@@ -541,22 +580,24 @@ function Hero() {
 
 function TrustSignals() {
   return (
-    <section className="mx-auto grid max-w-7xl gap-4 px-4 py-8 sm:grid-cols-3 sm:px-6 lg:px-8">
-      {[
-        { title: "12-month warranty", text: "Every device is covered for a full year.", icon: ShieldCheck },
-        { title: "30-day returns", text: "Not satisfied? Send it back for free.", icon: RefreshCw },
-        { title: "Expert certification", text: "25+ quality checks by professionals.", icon: CheckCircle2 },
-      ].map((item) => (
-        <div key={item.title} className="group flex items-center gap-5 rounded-[2rem] border border-zinc-100 bg-zinc-50 p-6 transition-all hover:bg-white hover:shadow-xl hover:border-transparent">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm transition-transform group-hover:scale-110">
-            <item.icon className="h-6 w-6 text-black" strokeWidth={1.5} />
+    <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {[
+          { title: "12-month warranty", text: "Every device is covered for a full year.", icon: ShieldCheck },
+          { title: "30-day returns", text: "Not satisfied? Send it back for free.", icon: RefreshCw },
+          { title: "Expert certification", text: "25+ quality checks by professionals.", icon: CheckCircle2 },
+        ].map((item) => (
+          <div key={item.title} className="group flex items-center gap-5 rounded-[1.5rem] md:rounded-[2rem] border border-zinc-100 bg-zinc-50 p-6 transition-all hover:bg-white hover:shadow-xl hover:border-transparent">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm transition-transform group-hover:scale-110">
+              <item.icon className="h-6 w-6 text-black" strokeWidth={1.5} />
+            </div>
+            <div>
+              <h3 className="font-bold text-black text-sm md:text-base">{item.title}</h3>
+              <p className="text-xs md:text-sm text-zinc-500">{item.text}</p>
+            </div>
           </div>
-          <div>
-            <h3 className="font-bold text-black">{item.title}</h3>
-            <p className="text-sm text-zinc-500">{item.text}</p>
-          </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </section>
   );
 }
@@ -568,38 +609,37 @@ function FeaturedCategories() {
       desc: "Latest flagships, expert certified.",
       img: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=800&auto=format&fit=crop",
       href: "/shop?category=smartphones",
-      large: true
     },
     { 
       title: "Laptops", 
       desc: "Performance for work and play.",
       img: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?q=80&w=800&auto=format&fit=crop",
       href: "/shop?category=laptops",
-      large: true
     },
     { 
       title: "Audio", 
       desc: "Immersive sound experiences.",
       img: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=600&auto=format&fit=crop",
       href: "/shop?category=audio",
-      large: false
     },
     { 
       title: "Tablets", 
       desc: "Power in a portable form.",
       img: "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?q=80&w=600&auto=format&fit=crop",
       href: "/shop?category=tablets",
-      large: false
     }
   ];
 
   return (
-    <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-      <div className="mb-12 flex items-center justify-between">
-        <h2 className="font-serif text-4xl font-medium md:text-5xl">Shop by Category</h2>
-        <a href="/shop" className="text-sm font-bold uppercase tracking-widest text-zinc-400 hover:text-black transition-colors">Browse All</a>
+    <section className="mx-auto max-w-7xl px-4 py-16 md:py-24 sm:px-6 lg:px-8">
+      <div className="mb-12 md:mb-16 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <h2 className="font-serif text-4xl md:text-5xl font-medium">Shop by Category</h2>
+          <p className="mt-2 text-zinc-500 font-medium text-base md:text-lg">Find exactly what you need.</p>
+        </div>
+        <a href="/shop" className="text-xs md:text-sm font-bold uppercase tracking-widest text-zinc-400 hover:text-black transition-colors">Browse All</a>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
         {categories.map((cat, i) => (
           <motion.div 
             key={cat.title}
@@ -607,20 +647,20 @@ function FeaturedCategories() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: i * 0.1 }}
-            className={`group relative overflow-hidden rounded-[2.5rem] bg-zinc-100 ${cat.large ? 'lg:col-span-2' : ''} h-[400px]`}
+            className="group relative overflow-hidden rounded-[2rem] md:rounded-[2.5rem] bg-zinc-50 aspect-[4/5] sm:aspect-[3/4]"
           >
             <img 
               src={cat.img} 
               alt={cat.title} 
               className="absolute inset-0 h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-            <div className="absolute bottom-10 left-10 right-10">
-              <h3 className="font-serif text-4xl text-white mb-2">{cat.title}</h3>
-              <p className="text-zinc-300 mb-6 text-lg">{cat.desc}</p>
-              <a href={cat.href} className="inline-flex items-center gap-3 rounded-2xl bg-white px-8 py-4 text-sm font-bold text-black transition-all hover:scale-105 active:scale-95 group">
-                Shop Now
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+            <div className="absolute bottom-6 left-6 right-6 md:bottom-8 md:left-8 md:right-8">
+              <h3 className="font-serif text-2xl md:text-3xl text-white mb-2">{cat.title}</h3>
+              <p className="text-zinc-300 mb-4 md:mb-6 text-xs md:text-sm font-medium">{cat.desc}</p>
+              <a href={cat.href} className="inline-flex items-center gap-2 text-[10px] md:text-xs font-bold uppercase tracking-widest text-accent hover:text-white transition-colors">
+                Explore Now
+                <ArrowRight className="h-3 w-3" />
               </a>
             </div>
           </motion.div>
@@ -675,13 +715,13 @@ function TrendingDeals() {
   ];
 
   return (
-    <section className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
-      <div className="mb-12 flex items-end justify-between">
+    <section className="mx-auto max-w-7xl px-4 py-16 md:py-24 sm:px-6 lg:px-8">
+      <div className="mb-10 md:mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <h2 className="font-serif text-4xl font-medium md:text-5xl">Trending picks</h2>
-          <p className="mt-4 text-zinc-500 text-lg">Top-rated tech from our expert sellers.</p>
+          <h2 className="font-serif text-4xl md:text-5xl font-medium text-black">Trending picks</h2>
+          <p className="mt-2 md:mt-4 text-zinc-500 text-base md:text-lg font-medium">Top-rated tech from our expert sellers.</p>
         </div>
-        <a href="/shop" className="group flex items-center gap-3 text-sm font-bold uppercase tracking-widest text-black">
+        <a href="/shop" className="group flex items-center gap-3 text-xs md:text-sm font-bold uppercase tracking-widest text-black">
           View All Products
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-50 transition-transform group-hover:translate-x-2">
             <ArrowRight className="h-4 w-4" />
@@ -689,7 +729,7 @@ function TrendingDeals() {
         </a>
       </div>
 
-      <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-10">
         {featuredProducts.map((product, i) => (
           <motion.article 
             key={product.title}
@@ -700,8 +740,8 @@ function TrendingDeals() {
             className="group cursor-pointer"
           >
             <a href={`/shop/${product.title.toLowerCase().replace(/ /g, '-')}`}>
-              <div className="relative aspect-square overflow-hidden rounded-[2.5rem] bg-zinc-50 p-8 transition-all group-hover:bg-zinc-100 group-hover:shadow-2xl">
-                <div className="absolute top-6 left-6 z-10 rounded-full bg-white px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest shadow-sm">
+              <div className="relative aspect-square overflow-hidden rounded-[2rem] md:rounded-[2.5rem] bg-zinc-50 p-6 md:p-8 transition-all group-hover:bg-zinc-100 group-hover:shadow-2xl">
+                <div className="absolute top-4 left-4 md:top-6 md:left-6 z-10 rounded-full bg-white px-3 md:px-4 py-1.5 text-[9px] md:text-[10px] font-bold uppercase tracking-widest shadow-sm">
                   {product.grade}
                 </div>
                 <img 
@@ -712,7 +752,7 @@ function TrendingDeals() {
               </div>
               <div className="mt-6 space-y-2">
                 <h3 className="text-lg font-bold text-black">{product.title}</h3>
-                <p className="text-xs font-semibold text-zinc-400 uppercase tracking-widest">{product.storage}</p>
+                <p className="text-[10px] md:text-xs font-semibold text-zinc-400 uppercase tracking-widest">{product.storage}</p>
                 <div className="flex items-center gap-1.5">
                   <div className="flex gap-0.5">
                     {[...Array(5)].map((_, j) => (
@@ -723,7 +763,7 @@ function TrendingDeals() {
                   <span className="text-xs text-zinc-400">({product.reviews})</span>
                 </div>
                 <div className="flex items-baseline gap-3 pt-1">
-                  <span className="text-2xl font-bold text-black">{product.price}</span>
+                  <span className="text-xl md:text-2xl font-bold text-black">{product.price}</span>
                   <span className="text-sm text-zinc-400 line-through">{product.oldPrice}</span>
                 </div>
               </div>
@@ -737,33 +777,33 @@ function TrendingDeals() {
 
 function FlashSale() {
   return (
-    <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-      <div className="relative overflow-hidden rounded-[3.5rem] bg-accent p-12 md:p-24 lg:flex items-center gap-20">
-        <div className="flex-1">
-          <div className="inline-flex items-center gap-2 rounded-full bg-black px-4 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-white mb-8">
+    <section className="mx-auto max-w-7xl px-4 py-12 md:py-20 sm:px-6 lg:px-8">
+      <div className="relative overflow-hidden rounded-[2.5rem] md:rounded-[3.5rem] bg-accent p-8 md:p-16 lg:p-24 flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
+        <div className="flex-1 text-center lg:text-left">
+          <div className="inline-flex items-center gap-2 rounded-full bg-black px-4 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-white mb-6 md:mb-8">
             <Bell className="h-3.5 w-3.5 text-accent animate-bounce" />
             Limited time only
           </div>
-          <h2 className="font-serif text-6xl md:text-8xl font-medium text-black leading-[0.95] mb-8">
+          <h2 className="font-serif text-5xl sm:text-6xl md:text-8xl font-medium text-black leading-[0.95] mb-6 md:mb-8 tracking-tight">
             The Flash <br/>Sale is live.
           </h2>
-          <p className="text-xl text-black/60 mb-12 max-w-md leading-relaxed">
+          <p className="text-lg md:text-xl text-black/60 mb-8 md:mb-12 max-w-md mx-auto lg:mx-0 leading-relaxed font-medium">
             Expertly certified tech at prices you won't believe. Extra 10% off on all accessories today.
           </p>
-          <button className="rounded-2xl bg-black px-12 py-5 text-sm font-bold text-white transition-all hover:scale-105 active:scale-95 shadow-2xl">
+          <button className="w-full sm:w-auto rounded-2xl bg-black px-12 py-5 text-sm font-bold text-white transition-all hover:scale-105 active:scale-95 shadow-2xl">
             Claim Your Offer
           </button>
         </div>
-        <div className="hidden lg:block flex-1 relative">
-          <div className="aspect-square w-full rounded-full border-[40px] border-black/5 flex items-center justify-center p-12">
+        <div className="hidden sm:block flex-1 relative w-full max-w-[400px] lg:max-w-none">
+          <div className="aspect-square w-full rounded-full border-[20px] md:border-[40px] border-black/5 flex items-center justify-center p-8 md:p-12 relative">
             <motion.div 
               animate={{ rotate: 360 }}
               transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
               className="absolute inset-0 border-[2px] border-dashed border-black/20 rounded-full"
             />
-            <div className="text-[180px] drop-shadow-2xl">⚡</div>
+            <div className="text-[120px] md:text-[180px] drop-shadow-2xl select-none">⚡</div>
           </div>
-          <div className="absolute top-0 right-0 h-32 w-32 bg-white/40 blur-[60px] rounded-full" />
+          <div className="absolute top-0 right-0 h-24 w-24 md:h-32 md:w-32 bg-white/40 blur-[40px] md:blur-[60px] rounded-full" />
         </div>
       </div>
     </section>
@@ -772,37 +812,37 @@ function FlashSale() {
 
 function Mission() {
   return (
-    <section className="bg-zinc-50 py-32 border-y border-zinc-100">
+    <section className="bg-zinc-50 py-16 md:py-32 border-y border-zinc-100">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="grid gap-20 lg:grid-cols-2 items-center">
-          <div>
-            <div className="h-12 w-12 rounded-2xl bg-black flex items-center justify-center mb-8">
+        <div className="grid gap-12 lg:grid-cols-2 items-center">
+          <div className="text-center lg:text-left">
+            <div className="h-12 w-12 rounded-2xl bg-black flex items-center justify-center mb-8 mx-auto lg:mx-0">
               <Leaf className="h-6 w-6 text-accent" />
             </div>
-            <h2 className="font-serif text-5xl md:text-7xl font-medium leading-[1.05] text-black">
-              Saving the planet, <br/><i>one phone</i> at a time.
+            <h2 className="font-serif text-4xl sm:text-5xl md:text-7xl font-medium leading-[1.05] text-black tracking-tight">
+              Saving the planet, <br/><i className="text-zinc-400">one phone</i> at a time.
             </h2>
-            <p className="mt-8 text-xl leading-relaxed text-zinc-600">
+            <p className="mt-6 md:mt-8 text-lg md:text-xl leading-relaxed text-zinc-600 font-medium max-w-xl mx-auto lg:mx-0">
               Every refurbished device means one less machine in the landfill. 
               Choosing a refurbished smartphone saves 77kg of CO2 and 243kg of raw materials.
             </p>
-            <div className="mt-12">
-              <a href="/sustainability" className="group inline-flex items-center gap-4 rounded-2xl bg-black px-10 py-5 text-sm font-bold text-white transition-all hover:scale-105">
+            <div className="mt-10 md:mt-12">
+              <a href="/sustainability" className="group inline-flex items-center gap-4 rounded-2xl bg-black px-8 md:px-10 py-4 md:py-5 text-sm font-bold text-white transition-all hover:scale-105">
                 Our Sustainability Mission
                 <ArrowRight className="h-5 w-5 text-accent transition-transform group-hover:translate-x-1" />
               </a>
             </div>
           </div>
-          <div className="relative aspect-[4/5] lg:aspect-square overflow-hidden rounded-[3.5rem] shadow-2xl">
+          <div className="relative aspect-[4/5] sm:aspect-video lg:aspect-square overflow-hidden rounded-[2rem] md:rounded-[3.5rem] shadow-2xl">
             <img 
               src="https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?q=80&w=1200&auto=format&fit=crop" 
               alt="Nature sustainability"
               className="h-full w-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-            <div className="absolute bottom-10 left-10 right-10 bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-[2rem] text-white">
-              <p className="text-2xl font-serif italic mb-2">"Better for the planet, better for you."</p>
-              <p className="text-xs font-bold uppercase tracking-widest text-accent">Est. 2024</p>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+            <div className="absolute bottom-6 left-6 right-6 md:bottom-10 md:left-10 md:right-10 bg-white/10 backdrop-blur-md border border-white/20 p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] text-white">
+              <p className="text-xl md:text-2xl font-serif italic mb-2">"Better for the planet, better for you."</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-accent">Est. 2024</p>
             </div>
           </div>
         </div>
@@ -813,12 +853,12 @@ function Mission() {
 
 function Newsletter() {
   return (
-    <section className="bg-black py-24 text-white overflow-hidden relative">
-      <div className="absolute top-0 right-0 w-1/3 h-full bg-accent/10 blur-[150px] rounded-full" />
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="max-w-2xl">
-          <h2 className="font-serif text-5xl md:text-7xl font-medium mb-6">Stay in the loop.</h2>
-          <p className="text-xl text-zinc-400 mb-12">Get expert tech guides, sustainability tips, and secret drops delivered to your inbox.</p>
+    <section className="bg-black py-20 md:py-32 text-white overflow-hidden relative">
+      <div className="absolute top-0 right-0 w-1/3 h-full bg-accent/10 blur-[100px] md:blur-[150px] rounded-full" />
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10 text-center lg:text-left">
+        <div className="max-w-2xl mx-auto lg:mx-0">
+          <h2 className="font-serif text-4xl sm:text-5xl md:text-7xl font-medium mb-6 tracking-tight">Stay in the loop.</h2>
+          <p className="text-lg md:text-xl text-zinc-400 mb-10 md:mb-12 font-medium leading-relaxed">Get expert tech guides, sustainability tips, and secret drops delivered to your inbox.</p>
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1" suppressHydrationWarning>
               <input
@@ -831,7 +871,7 @@ function Newsletter() {
               Subscribe
             </button>
           </div>
-          <p className="mt-6 text-xs text-zinc-500">By subscribing, you agree to our Privacy Policy and Terms of Service.</p>
+          <p className="mt-6 text-[10px] font-bold uppercase tracking-widest text-zinc-600">No spam. Only the good stuff.</p>
         </div>
       </div>
     </section>
@@ -840,43 +880,43 @@ function Newsletter() {
 
 function Footer() {
   return (
-    <footer className="bg-white pt-24 pb-12 border-t border-zinc-100">
+    <footer className="bg-white pt-16 md:pt-24 pb-12 border-t border-zinc-100">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="grid gap-16 md:grid-cols-4 pb-20">
-          <div className="col-span-2">
-            <a href="/" className="text-3xl font-bold tracking-tighter">
+        <div className="grid gap-12 md:gap-16 md:grid-cols-4 pb-16 md:pb-20">
+          <div className="col-span-full lg:col-span-2">
+            <a href="/" className="text-2xl md:text-3xl font-bold tracking-tighter">
               MARKHOR<span className="text-zinc-400">MARKET</span>
             </a>
-            <p className="mt-8 max-w-sm text-zinc-500 leading-relaxed">
+            <p className="mt-6 md:mt-8 max-w-sm text-zinc-500 leading-relaxed font-medium">
               We're on a mission to make world-class technology accessible and sustainable. 
               Join us in reducing e-waste while saving on the tech you love.
             </p>
           </div>
           <div>
             <h4 className="font-bold text-black mb-6 uppercase tracking-widest text-xs">Explore</h4>
-            <ul className="space-y-4 text-sm text-zinc-500 font-medium">
-              <li><a href="/shop" className="hover:text-black">Shop All</a></li>
-              <li><a href="/sell" className="hover:text-black">Sell Your Tech</a></li>
-              <li><a href="/how-it-works" className="hover:text-black">How it Works</a></li>
-              <li><a href="/sustainability" className="hover:text-black">Sustainability</a></li>
+            <ul className="space-y-4 text-sm text-zinc-500 font-bold uppercase tracking-widest text-[10px]">
+              <li><a href="/shop" className="hover:text-black transition-colors">Shop All</a></li>
+              <li><a href="/sell" className="hover:text-black transition-colors">Sell Your Tech</a></li>
+              <li><a href="/how-it-works" className="hover:text-black transition-colors">How it Works</a></li>
+              <li><a href="/sustainability" className="hover:text-black transition-colors">Sustainability</a></li>
             </ul>
           </div>
           <div>
             <h4 className="font-bold text-black mb-6 uppercase tracking-widest text-xs">Support</h4>
-            <ul className="space-y-4 text-sm text-zinc-500 font-medium">
-              <li><a href="/help" className="hover:text-black">Help Center</a></li>
-              <li><a href="/shipping" className="hover:text-black">Shipping</a></li>
-              <li><a href="/warranty" className="hover:text-black">Warranty</a></li>
-              <li><a href="/contact" className="hover:text-black">Contact Us</a></li>
+            <ul className="space-y-4 text-sm text-zinc-500 font-bold uppercase tracking-widest text-[10px]">
+              <li><a href="/help" className="hover:text-black transition-colors">Help Center</a></li>
+              <li><a href="/shipping" className="hover:text-black transition-colors">Shipping</a></li>
+              <li><a href="/warranty" className="hover:text-black transition-colors">Warranty</a></li>
+              <li><a href="/contact" className="hover:text-black transition-colors">Contact Us</a></li>
             </ul>
           </div>
         </div>
-        <div className="pt-12 border-t border-zinc-100 flex flex-col md:flex-row justify-between items-center gap-6">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-zinc-400">© 2024 Markhor Market. Built for the planet.</p>
-          <div className="flex gap-8 text-xs font-bold uppercase tracking-widest text-zinc-400">
-            <a href="/privacy" className="hover:text-black">Privacy</a>
-            <a href="/terms" className="hover:text-black">Terms</a>
-            <a href="/cookies" className="hover:text-black">Cookies</a>
+        <div className="pt-10 md:pt-12 border-t border-zinc-100 flex flex-col md:flex-row justify-between items-center gap-6">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 text-center md:text-left">© 2024 Markhor Market. Built for the planet.</p>
+          <div className="flex gap-6 md:gap-8 text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+            <a href="/privacy" className="hover:text-black transition-colors">Privacy</a>
+            <a href="/terms" className="hover:text-black transition-colors">Terms</a>
+            <a href="/cookies" className="hover:text-black transition-colors">Cookies</a>
           </div>
         </div>
       </div>
@@ -886,7 +926,7 @@ function Footer() {
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen flex-col bg-white text-black font-sans scroll-smooth">
+    <div className="flex min-h-screen flex-col bg-white text-black font-sans scroll-smooth selection:bg-accent selection:text-black">
       <Navbar />
       <CategoryRail />
       <main className="flex-1">
