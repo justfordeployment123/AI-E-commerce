@@ -1,4 +1,8 @@
+"use client";
+
 import Image from "next/image";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
   Smartphone, 
   Laptop, 
@@ -18,10 +22,410 @@ import {
   Mail,
   Star,
   Zap,
-  Leaf
+  Leaf,
+  Bell,
+  Check,
+  ChevronRight,
+  Menu,
+  Heart
 } from "lucide-react";
 
+// --- Sub-components for AppPreview ---
+
+function PhoneShopScreen() {
+  return (
+    <div className="flex h-full flex-col bg-white text-black">
+      <div className="flex items-center justify-between px-4 pt-12 pb-4">
+        <Menu className="h-5 w-5" />
+        <div className="text-[10px] font-bold tracking-tighter uppercase">MARKHOR</div>
+        <ShoppingCart className="h-5 w-5" />
+      </div>
+      <div className="flex-1 px-4 py-2 overflow-y-auto scrollbar-hide">
+        <div className="relative mb-6">
+          <input type="text" placeholder="Search tech..." className="w-full h-10 rounded-xl bg-zinc-100 pl-10 text-[10px] outline-none" readOnly />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
+        </div>
+        
+        {/* Category Pills */}
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-6 pb-1">
+          {["All", "iPhones", "Macs", "Watch", "Audio"].map((c, i) => (
+            <span key={i} className={`whitespace-nowrap px-4 py-1.5 rounded-full text-[9px] font-bold ${i === 0 ? 'bg-black text-white' : 'bg-zinc-100 text-zinc-500'}`}>
+              {c}
+            </span>
+          ))}
+        </div>
+
+        <div className="mb-6 overflow-hidden rounded-2xl bg-zinc-950 p-4 text-white relative">
+          <div className="relative z-10">
+            <p className="text-[8px] font-bold uppercase tracking-widest text-accent">Limited Offer</p>
+            <p className="mt-1 text-sm font-bold leading-tight">iPhone 15 Pro <br/>from $799</p>
+          </div>
+          <div className="absolute right-[-20px] bottom-[-10px] w-24 h-24 bg-accent/20 blur-2xl" />
+        </div>
+
+        <h4 className="text-[10px] font-bold uppercase mb-3 text-zinc-400">Featured Deals</h4>
+        <div className="grid grid-cols-2 gap-3 pb-8">
+          {[
+            { name: "iPhone 14", price: "$499", img: "https://images.unsplash.com/photo-1678652197831-2d180705cd2c?q=80&w=150&h=150&auto=format&fit=crop" },
+            { name: "S23 Ultra", price: "$649", img: "https://images.unsplash.com/photo-1678911820864-e2c567c655d7?q=80&w=150&h=150&auto=format&fit=crop" },
+            { name: "Apple Watch", price: "$299", img: "https://images.unsplash.com/photo-1579586337278-3befd40fd17a?q=80&w=200&h=200&auto=format&fit=crop" },
+            { name: "AirPods Max", price: "$379", img: "https://images.unsplash.com/photo-1613040809024-b4ef7ba99bc3?q=80&w=200&h=200&auto=format&fit=crop" }
+          ].map((p, i) => (
+            <div key={i} className="rounded-2xl border border-zinc-100 p-2 bg-white shadow-sm">
+              <div className="aspect-square w-full overflow-hidden rounded-xl bg-zinc-50 mb-2 p-2">
+                <img src={p.img} alt={p.name} className="h-full w-full object-contain" />
+              </div>
+              <div className="text-[10px] font-bold truncate">{p.name}</div>
+              <div className="flex items-center justify-between mt-1">
+                <div className="text-[9px] font-bold text-zinc-900">{p.price}</div>
+                <div className="h-4 w-4 rounded-full bg-accent flex items-center justify-center">
+                  <span className="text-[10px] font-bold">+</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PhoneProductScreen() {
+  return (
+    <div className="flex h-full flex-col bg-white text-black">
+      <div className="flex items-center justify-between px-4 pt-12 pb-4">
+        <ChevronRight className="h-5 w-5 rotate-180" />
+        <div className="text-[10px] font-bold">Product Details</div>
+        <Heart className="h-5 w-5 text-zinc-300" />
+      </div>
+      <div className="flex-1 px-4 overflow-y-auto scrollbar-hide pb-20">
+        <div className="aspect-[4/3] w-full overflow-hidden rounded-3xl bg-zinc-50 mb-6 flex items-center justify-center p-8 relative">
+          <img 
+            src="https://images.unsplash.com/photo-1661961111184-11317b40adb2?q=80&w=200&h=200&auto=format&fit=crop" 
+            className="h-full w-full object-contain" 
+            alt="MacBook"
+          />
+          <div className="absolute top-4 left-4 bg-white/80 backdrop-blur-md px-2 py-1 rounded-full border border-zinc-100 shadow-sm flex items-center gap-1">
+            <CheckCircle2 className="h-2 w-2 text-emerald-500" />
+            <span className="text-[8px] font-bold uppercase">Verified</span>
+          </div>
+        </div>
+        <div className="space-y-4">
+          <div>
+            <div className="inline-flex items-center gap-1 rounded-full bg-accent/20 px-2 py-0.5 text-[8px] font-bold text-black uppercase">Excellent Condition</div>
+            <h3 className="text-lg font-bold leading-tight mt-1">MacBook Air M2 13"</h3>
+            <div className="flex items-baseline gap-2 pt-1">
+              <span className="text-xl font-bold">$849</span>
+              <span className="text-[10px] text-zinc-400 line-through">$1,099</span>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-[9px] font-bold text-zinc-400 uppercase">Select Color</p>
+            <div className="flex gap-2">
+              {["#F1E5D1", "#2F3132", "#E3E4E5"].map((c, i) => (
+                <div key={i} className={`h-6 w-6 rounded-full border-2 p-0.5 ${i === 0 ? 'border-black' : 'border-transparent'}`}>
+                  <div className="h-full w-full rounded-full" style={{ backgroundColor: c }} />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-[9px] font-bold text-zinc-400 uppercase">Description</p>
+            <p className="text-zinc-600 text-[10px] leading-relaxed">
+              Starlight · 256GB SSD · 8GB RAM. Features Apple M2 chip, 8-core CPU, and liquid retina display.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div className="p-4 border-t border-zinc-50 bg-white/80 backdrop-blur-xl">
+        <button className="h-12 w-full bg-black text-white rounded-2xl text-xs font-bold transition-transform active:scale-95 shadow-lg">
+          Add to bag
+        </button>
+      </div>
+    </div>
+  );
+}
+
+
+function PhoneCartScreen() {
+  return (
+    <div className="flex h-full flex-col bg-white text-black">
+      <div className="px-4 pt-12 pb-6">
+        <h3 className="text-lg font-bold">Your Bag</h3>
+        <p className="text-[10px] text-zinc-400">2 items ready for checkout</p>
+      </div>
+      <div className="flex-1 overflow-y-auto px-4 space-y-4 scrollbar-hide">
+        {[
+          { name: "iPhone 14 Pro", price: "$679", img: "https://images.unsplash.com/photo-1678652197831-2d180705cd2c?q=80&w=100&h=100&auto=format&fit=crop" },
+          { name: "AirPods Pro", price: "$189", img: "https://images.unsplash.com/photo-1572569511254-d8f925fe2cbb?q=80&w=100&h=100&auto=format&fit=crop" }
+        ].map((p, i) => (
+          <div key={i} className="flex gap-4 items-center p-2 rounded-2xl border border-zinc-50">
+            <div className="h-16 w-16 overflow-hidden rounded-2xl bg-zinc-50 p-2">
+              <img src={p.img} alt={p.name} className="h-full w-full object-contain" />
+            </div>
+            <div className="flex-1">
+              <div className="text-[11px] font-bold">{p.name}</div>
+              <div className="text-[10px] text-zinc-400">Excellent · Certified</div>
+            </div>
+            <div className="text-xs font-bold">{p.price}</div>
+          </div>
+        ))}
+
+        {/* Sustainability Impact Card */}
+        <div className="rounded-2xl bg-emerald-50 p-4 border border-emerald-100 mt-4">
+          <div className="flex items-center gap-2 mb-1">
+            <Leaf className="h-3 w-3 text-emerald-600" />
+            <span className="text-[10px] font-bold text-emerald-800 uppercase">Impact</span>
+          </div>
+          <p className="text-[10px] text-emerald-700 leading-tight">
+            This purchase prevents **2.4kg of e-waste** and saves 140kg of CO2 emissions.
+          </p>
+        </div>
+      </div>
+      <div className="p-6 bg-zinc-50 rounded-t-[2.5rem] space-y-4">
+        <div className="space-y-2">
+          <div className="flex justify-between text-[10px]">
+            <span className="text-zinc-500">Subtotal</span>
+            <span className="font-bold text-zinc-900">$868.00</span>
+          </div>
+          <div className="flex justify-between text-[10px]">
+            <span className="text-zinc-500">Shipping</span>
+            <span className="font-bold text-emerald-600 uppercase">Free</span>
+          </div>
+          <div className="pt-2 border-t border-zinc-200 flex justify-between text-sm">
+            <span className="font-bold">Total</span>
+            <span className="font-bold">$868.00</span>
+          </div>
+        </div>
+        <button className="h-12 w-full bg-accent text-black rounded-2xl text-xs font-bold transition-transform active:scale-95 shadow-xl shadow-accent/10">
+          Complete Purchase
+        </button>
+      </div>
+    </div>
+  );
+}
+
+
+
+
+function AppPreview() {
+  const [mounted, setMounted] = useState(false);
+  const [idx, setIdx] = useState(0);
+  const screenIds = ["shop", "product", "cart"];
+  
+  useEffect(() => {
+    setMounted(true);
+    const t = setInterval(() => setIdx((x) => (x + 1) % screenIds.length), 4000);
+    return () => clearInterval(t);
+  }, []);
+
+  const screenId = screenIds[idx];
+  const screenLabels: Record<string, string> = { shop: "Shop Collections", product: "Item Details", cart: "Smart Checkout" };
+
+  if (!mounted) {
+    return (
+      <section className="relative overflow-hidden bg-white py-24 lg:py-32">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
+          <div className="h-[600px] w-full bg-zinc-50 animate-pulse rounded-[3rem]" />
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="relative overflow-hidden bg-white py-24 lg:py-32">
+      {/* Refined Background Elements */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-0 right-0 w-1/2 h-full bg-zinc-50 skew-x-[-12deg] translate-x-24" />
+        <div className="absolute top-[10%] right-[5%] w-64 h-64 bg-accent/20 blur-[100px] rounded-full" />
+      </div>
+
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="grid items-center gap-16 lg:grid-cols-2 lg:gap-24">
+          
+          {/* Left Content */}
+          <div className="max-w-xl">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-4 py-1.5 shadow-sm mb-8"
+            >
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
+              </span>
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-600">Mobile Experience</span>
+            </motion.div>
+
+            <motion.h2
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+              className="font-serif text-5xl font-medium leading-[1.1] md:text-7xl text-black"
+            >
+              The world’s tech. <br />
+              <i>Right</i> in your pocket.
+            </motion.h2>
+
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+              className="mt-8 text-lg text-zinc-600 leading-relaxed"
+            >
+              Experience the future of refurbished tech. Our upcoming app brings 
+              expert certification, instant trade-ins, and lifetime support to 
+              a single, beautiful interface.
+            </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3 }}
+              className="mt-12 space-y-6"
+            >
+              <div className="flex items-center gap-4 group cursor-default">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-950 text-white shadow-xl transition-transform group-hover:scale-110">
+                  <Zap className="h-5 w-5 text-accent" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-black">Instant Price Alerts</h4>
+                  <p className="text-sm text-zinc-500">Get notified the second your dream tech drops in price.</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4 group cursor-default">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-950 text-white shadow-xl transition-transform group-hover:scale-110">
+                  <ShieldCheck className="h-5 w-5 text-accent" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-black">One-Tap Warranties</h4>
+                  <p className="text-sm text-zinc-500">Manage all your device protections from one simple dashboard.</p>
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.4 }}
+              className="mt-12 flex flex-wrap gap-4"
+            >
+              <button className="flex items-center gap-3 rounded-2xl bg-zinc-950 px-6 py-4 text-white shadow-2xl transition-all hover:scale-105 active:scale-95 group">
+                <div className="flex flex-col items-start leading-none">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Coming soon to</span>
+                  <span className="mt-1 text-sm font-bold">App Store</span>
+                </div>
+                <ArrowRight className="h-4 w-4 text-accent transition-transform group-hover:translate-x-1" />
+              </button>
+              <button className="flex items-center gap-3 rounded-2xl border border-zinc-200 bg-white px-6 py-4 text-black shadow-lg transition-all hover:scale-105 active:scale-95 group">
+                <div className="flex flex-col items-start leading-none">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Coming soon to</span>
+                  <span className="mt-1 text-sm font-bold">Google Play</span>
+                </div>
+                <ArrowRight className="h-4 w-4 text-zinc-400 transition-transform group-hover:translate-x-1" />
+              </button>
+            </motion.div>
+          </div>
+
+          {/* Right Content - Phone Mockup */}
+          <div className="relative flex justify-center lg:justify-end">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              className="relative"
+            >
+              {/* Animated Glow behind phone */}
+              <div className="absolute -inset-20 bg-accent/20 blur-[100px] rounded-full opacity-50" />
+              
+              {/* Phone Frame */}
+              <div className="relative w-[300px] sm:w-[340px] rounded-[3.5rem] bg-zinc-950 p-4 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.3)] ring-1 ring-white/10">
+                <div className="absolute left-1/2 top-2 z-20 h-7 w-36 -translate-x-1/2 rounded-b-3xl bg-zinc-950" />
+                
+                <div className="relative aspect-[9/19.5] overflow-hidden rounded-[2.5rem] bg-white">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={screenId}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
+                      className="h-full w-full"
+                    >
+                      {screenId === "shop" && <PhoneShopScreen />}
+                      {screenId === "product" && <PhoneProductScreen />}
+                      {screenId === "cart" && <PhoneCartScreen />}
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+
+                {/* Home Indicator */}
+                <div className="absolute bottom-2 left-1/2 h-1 w-20 -translate-x-1/2 rounded-full bg-zinc-200/20" />
+              </div>
+
+              {/* Status Pill */}
+              <div className="absolute -left-12 bottom-12 z-30">
+                <motion.div
+                  animate={{ y: [0, -10, 0] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                  className="rounded-2xl border border-zinc-100 bg-white/90 p-4 shadow-2xl backdrop-blur-md"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-accent flex items-center justify-center">
+                      <Star className="h-5 w-5 text-black fill-black" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-black">4.9/5 Rating</div>
+                      <div className="text-[10px] text-zinc-500">Beta Community</div>
+                    </div>
+                  </div>
+                </motion.div>
+              </div>
+            </motion.div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+  );
+}
+
+
+function BrandTicker() {
+  const brands = ["Apple", "Samsung", "Google", "Sony", "Dell", "Microsoft", "Asus", "HP", "Lenovo", "LG"];
+  const doubledBrands = [...brands, ...brands];
+
+  return (
+    <section className="relative overflow-hidden border-y border-zinc-100 bg-white py-12">
+      <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-48 bg-gradient-to-r from-white to-transparent" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-48 bg-gradient-to-l from-white to-transparent" />
+      
+      <div className="flex w-max animate-marquee items-center gap-16 whitespace-nowrap">
+        {doubledBrands.map((brand, i) => (
+          <div key={i} className="flex items-center gap-16 group">
+            <span className="text-3xl font-bold tracking-tighter text-zinc-900 group-hover:text-accent transition-colors duration-300 cursor-default">
+              {brand}
+            </span>
+            <span className="h-1.5 w-1.5 rounded-full bg-zinc-300 group-hover:bg-accent transition-all duration-300" />
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+
+
+
 export default function Home() {
+
   const categories = [
     { name: "Smartphones", icon: Smartphone },
     { name: "Laptops", icon: Laptop },
@@ -42,7 +446,7 @@ export default function Home() {
       oldPrice: "$1,099.00",
       rating: 4.8,
       reviews: 1240,
-      image: "https://images.unsplash.com/photo-1678652197831-2d180705cd2c?q=80&w=300&h=300&auto=format&fit=crop",
+      image: "https://images.unsplash.com/photo-1616348436168-de43ad0db179?q=80&w=400&h=400&auto=format&fit=crop",
     },
     {
       title: "MacBook Air M2",
@@ -52,7 +456,7 @@ export default function Home() {
       oldPrice: "$1,499.00",
       rating: 4.9,
       reviews: 856,
-      image: "https://images.unsplash.com/photo-1661961111184-11317b40adb2?q=80&w=300&h=300&auto=format&fit=crop",
+      image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?q=80&w=400&h=400&auto=format&fit=crop",
     },
     {
       title: "Samsung Galaxy S23",
@@ -62,7 +466,7 @@ export default function Home() {
       oldPrice: "$859.00",
       rating: 4.7,
       reviews: 420,
-      image: "https://images.unsplash.com/photo-1678911820864-e2c567c655d7?q=80&w=300&h=300&auto=format&fit=crop",
+      image: "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?q=80&w=400&h=400&auto=format&fit=crop",
     },
     {
       title: "PlayStation 5",
@@ -72,9 +476,10 @@ export default function Home() {
       oldPrice: "$629.00",
       rating: 4.8,
       reviews: 2100,
-      image: "https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?q=80&w=300&h=300&auto=format&fit=crop",
+      image: "https://images.unsplash.com/photo-1607853202273-797f1c22a38e?q=80&w=500&auto=format&fit=crop",
     },
   ];
+
 
   return (
     <div className="flex min-h-screen flex-col bg-white text-black font-sans">
@@ -106,13 +511,13 @@ export default function Home() {
           </div>
 
           <nav className="flex items-center gap-6 text-sm font-medium">
-            <a href="#" className="hover:text-zinc-600">Sell</a>
-            <a href="#" className="hover:text-zinc-600">Help</a>
-            <a href="#" className="flex items-center gap-2 hover:text-zinc-600">
+            <a href="/sell" className="hover:text-zinc-600">Sell</a>
+            <a href="/help" className="hover:text-zinc-600">Help</a>
+            <a href="/login" className="flex items-center gap-2 hover:text-zinc-600">
               <User className="h-4 w-4" />
               Log in
             </a>
-            <a href="#" className="relative flex items-center justify-center h-10 w-10 rounded-full hover:bg-zinc-100">
+            <a href="/cart" className="relative flex items-center justify-center h-10 w-10 rounded-full hover:bg-zinc-100">
               <ShoppingCart className="h-5 w-5" />
               <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-black">
                 0
@@ -126,7 +531,7 @@ export default function Home() {
       <div className="border-b border-zinc-100 overflow-x-auto scrollbar-hide">
         <div className="mx-auto flex max-w-7xl gap-8 px-4 py-4 sm:px-6 lg:px-8">
           {categories.map((cat) => (
-            <a key={cat.name} href="#" className="flex flex-shrink-0 flex-col items-center gap-2 group">
+            <a key={cat.name} href={`/shop?category=${cat.name.toLowerCase()}`} className="flex flex-shrink-0 flex-col items-center gap-2 group">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-50 text-xl transition-all group-hover:scale-110 group-hover:bg-accent/20">
                 <cat.icon className="h-5 w-5 text-zinc-600 group-hover:text-black" />
               </div>
@@ -164,16 +569,17 @@ export default function Home() {
                 With 12-month warranty and 30-day returns.
               </p>
               <div className="mt-10 flex flex-wrap gap-4">
-                <a href="#" className="rounded-full bg-white px-8 py-4 text-sm font-bold text-black transition-transform hover:scale-105 active:scale-95">
+                <a href="/shop" className="rounded-full bg-white px-8 py-4 text-sm font-bold text-black transition-transform hover:scale-105 active:scale-95">
                   Shop the sale
                 </a>
-                <a href="#" className="rounded-full border border-white/30 bg-black/20 px-8 py-4 text-sm font-bold backdrop-blur-md transition-transform hover:scale-105 active:scale-95">
+                <a href="/how-it-works" className="rounded-full border border-white/30 bg-black/20 px-8 py-4 text-sm font-bold backdrop-blur-md transition-transform hover:scale-105 active:scale-95">
                   How it works
                 </a>
               </div>
             </div>
           </div>
         </section>
+
 
         {/* Trust signals */}
         <section className="mx-auto grid max-w-7xl gap-4 px-4 py-8 sm:grid-cols-3 sm:px-6 lg:px-8">
@@ -192,6 +598,49 @@ export default function Home() {
           ))}
         </section>
 
+        {/* Brand Ticker */}
+        <BrandTicker />
+
+
+
+        {/* Featured Categories Grid */}
+        <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+          <div className="grid gap-6 md:grid-cols-2">
+            <div className="group relative overflow-hidden rounded-[2.5rem] bg-zinc-100 h-[400px]">
+              <img 
+                src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=800&auto=format&fit=crop" 
+                alt="Smartphones" 
+                className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+              <div className="absolute bottom-8 left-8 text-white">
+                <h3 className="font-serif text-3xl font-medium mb-2">Smartphones</h3>
+                <p className="text-zinc-200 mb-4">The latest flagships, certified and tested.</p>
+                <a href="/shop?category=smartphones" className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-bold text-black transition-transform hover:scale-105">
+                  Shop Phones
+                  <ArrowRight className="h-4 w-4" />
+                </a>
+              </div>
+            </div>
+            <div className="group relative overflow-hidden rounded-[2.5rem] bg-zinc-100 h-[400px]">
+              <img 
+                src="https://images.unsplash.com/photo-1496181133206-80ce9b88a853?q=80&w=800&auto=format&fit=crop" 
+                alt="Laptops" 
+                className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+              <div className="absolute bottom-8 left-8 text-white">
+                <h3 className="font-serif text-3xl font-medium mb-2">Laptops</h3>
+                <p className="text-zinc-200 mb-4">Powerful machines for work and play.</p>
+                <a href="/shop?category=laptops" className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-bold text-black transition-transform hover:scale-105">
+                  Shop Laptops
+                  <ArrowRight className="h-4 w-4" />
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Trending Section */}
         <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
           <div className="mb-8 flex items-end justify-between">
@@ -199,7 +648,7 @@ export default function Home() {
               <h2 className="font-serif text-3xl font-medium md:text-4xl">Trending deals</h2>
               <p className="mt-2 text-zinc-600">The most popular picks from our verified sellers.</p>
             </div>
-            <a href="#" className="font-bold underline decoration-accent decoration-4 underline-offset-8 flex items-center gap-2">
+            <a href="/shop" className="font-bold underline decoration-accent decoration-4 underline-offset-8 flex items-center gap-2">
               View all
               <ArrowRight className="h-4 w-4" />
             </a>
@@ -208,35 +657,93 @@ export default function Home() {
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {featuredProducts.map((product) => (
               <article key={product.title} className="group cursor-pointer">
-                <div className="relative aspect-square overflow-hidden rounded-[2rem] bg-zinc-50 p-6 transition-all group-hover:bg-zinc-100">
-                  <div className="absolute top-4 left-4 z-10 rounded-full bg-white px-3 py-1 text-[10px] font-bold uppercase tracking-wider shadow-sm">
-                    {product.grade}
+                <a href={`/shop/${product.title.toLowerCase().replace(/ /g, '-')}`}>
+                  <div className="relative aspect-square overflow-hidden rounded-[2rem] bg-zinc-50 p-6 transition-all group-hover:bg-zinc-100">
+                    <div className="absolute top-4 left-4 z-10 rounded-full bg-white px-3 py-1 text-[10px] font-bold uppercase tracking-wider shadow-sm">
+                      {product.grade}
+                    </div>
+                    <img 
+                      src={product.image} 
+                      alt={product.title}
+                      className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-110"
+                    />
                   </div>
-                  <img 
-                    src={product.image} 
-                    alt={product.title}
-                    className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-110"
-                  />
-                </div>
-                <div className="mt-4 space-y-1">
-                  <h3 className="font-bold">{product.title}</h3>
-                  <p className="text-xs text-zinc-500">{product.storage}</p>
-                  <div className="flex items-center gap-1">
-                    <Star className="h-3 w-3 fill-accent text-accent" />
-                    <span className="text-xs font-bold">{product.rating}</span>
-                    <span className="text-xs text-zinc-400">({product.reviews})</span>
+                  <div className="mt-4 space-y-1">
+                    <h3 className="font-bold">{product.title}</h3>
+                    <p className="text-xs text-zinc-500">{product.storage}</p>
+                    <div className="flex items-center gap-1">
+                      <Star className="h-3 w-3 fill-accent text-accent" />
+                      <span className="text-xs font-bold">{product.rating}</span>
+                      <span className="text-xs text-zinc-400">({product.reviews})</span>
+                    </div>
+                    <div className="flex items-baseline gap-2 pt-1">
+                      <span className="text-xl font-bold">{product.price}</span>
+                      <span className="text-sm text-zinc-400 line-through">{product.oldPrice}</span>
+                    </div>
                   </div>
-                  <div className="flex items-baseline gap-2 pt-1">
-                    <span className="text-xl font-bold">{product.price}</span>
-                    <span className="text-sm text-zinc-400 line-through">{product.oldPrice}</span>
-                  </div>
-                </div>
+                </a>
               </article>
             ))}
           </div>
         </section>
 
+        {/* App Preview Section */}
+        <AppPreview />
+
+        {/* Flash Sale Section */}
+        <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+          <div className="relative overflow-hidden rounded-[3rem] bg-accent p-10 md:p-20 flex flex-col md:flex-row items-center gap-12">
+            <div className="flex-1 text-center md:text-left">
+              <div className="inline-flex items-center gap-2 rounded-full bg-black px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-white mb-6">
+                Limited time only
+              </div>
+              <h2 className="font-serif text-5xl md:text-7xl font-medium text-black leading-tight mb-6">
+                The Flash <br/>Sale is live.
+              </h2>
+              <p className="text-xl text-black/70 mb-10 max-w-md">
+                Extra 10% off on all accessories when you buy any smartphone today.
+              </p>
+              <button className="bg-black text-white rounded-full px-10 py-5 text-sm font-bold transition-transform hover:scale-105 active:scale-95">
+                Claim Offer
+              </button>
+            </div>
+            <div className="flex-1 relative h-[300px] w-full">
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="h-64 w-64 bg-white/30 rounded-full blur-3xl animate-pulse" />
+              </div>
+              <div className="relative z-10 flex items-center justify-center h-full">
+                <div className="text-[120px] filter drop-shadow-2xl">🎁</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Testimonials Section */}
+        <section className="bg-zinc-50 py-24">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
+            <h2 className="font-serif text-4xl md:text-5xl font-medium mb-16">Don't just take our word for it.</h2>
+            <div className="grid gap-8 md:grid-cols-3">
+              {[
+                { name: "Sarah K.", text: "My iPhone 14 Pro arrived in perfect condition. Saved $400 and it looks brand new!", stars: 5 },
+                { name: "Michael T.", text: "Fast shipping and the 12-month warranty gives me peace of mind. Highly recommend.", stars: 5 },
+                { name: "David L.", text: "Best place to buy refurbished tech. The sustainability aspect is a huge plus.", stars: 5 }
+              ].map((review) => (
+                <div key={review.name} className="bg-white rounded-3xl p-8 border border-zinc-100 text-left hover:shadow-xl transition-all">
+                  <div className="flex gap-1 mb-4">
+                    {[...Array(review.stars)].map((_, i) => (
+                      <Star key={i} className="h-4 w-4 fill-accent text-accent" />
+                    ))}
+                  </div>
+                  <p className="text-zinc-600 italic mb-6">"{review.text}"</p>
+                  <p className="font-bold">{review.name}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* Mission Section */}
+
         <section className="bg-accent/10 py-20 mt-12">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
@@ -249,7 +756,7 @@ export default function Home() {
                   Choosing a refurbished smartphone saves 77kg of CO2 and 243kg of raw materials.
                 </p>
                 <div className="mt-10">
-                  <a href="#" className="inline-flex items-center gap-2 rounded-full bg-black px-8 py-4 text-sm font-bold text-white transition-transform hover:scale-105">
+                  <a href="/sustainability" className="inline-flex items-center gap-2 rounded-full bg-black px-8 py-4 text-sm font-bold text-white transition-transform hover:scale-105">
                     Our sustainability mission
                     <Leaf className="h-4 w-4" />
                   </a>
@@ -279,7 +786,7 @@ export default function Home() {
                 Join our newsletter for the latest tech deals, sustainability tips, and exclusive offers.
               </p>
               <div className="mt-6 flex max-w-sm gap-2">
-                <div className="relative flex-1">
+                <div className="relative flex-1" suppressHydrationWarning>
                   <input
                     type="email"
                     placeholder="Your email"
@@ -293,18 +800,18 @@ export default function Home() {
             <div>
               <h4 className="font-bold">Shop</h4>
               <ul className="mt-6 space-y-4 text-sm text-zinc-600 font-medium">
-                <li><a href="#" className="hover:text-black">Smartphones</a></li>
-                <li><a href="#" className="hover:text-black">Laptops</a></li>
-                <li><a href="#" className="hover:text-black">Tablets</a></li>
-                <li><a href="#" className="hover:text-black">Cameras</a></li>
+                <li><a href="/shop?category=smartphones" className="hover:text-black">Smartphones</a></li>
+                <li><a href="/shop?category=laptops" className="hover:text-black">Laptops</a></li>
+                <li><a href="/shop?category=tablets" className="hover:text-black">Tablets</a></li>
+                <li><a href="/shop?category=cameras" className="hover:text-black">Cameras</a></li>
               </ul>
             </div>
             <div>
               <h4 className="font-bold">About</h4>
               <ul className="mt-6 space-y-4 text-sm text-zinc-600 font-medium">
-                <li><a href="#" className="hover:text-black">Our story</a></li>
-                <li><a href="#" className="hover:text-black">Quality grading</a></li>
-                <li><a href="#" className="hover:text-black">Sustainability</a></li>
+                <li><a href="/about" className="hover:text-black">Our story</a></li>
+                <li><a href="/quality-grading" className="hover:text-black">Quality grading</a></li>
+                <li><a href="/sustainability" className="hover:text-black">Sustainability</a></li>
                 <li><a href="#" className="hover:text-black">Sitemap</a></li>
               </ul>
             </div>
@@ -319,8 +826,7 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
     </div>
   );
 }
-
-
