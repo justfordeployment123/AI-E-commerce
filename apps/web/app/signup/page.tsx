@@ -4,17 +4,18 @@ import {
   Mail, 
   Lock, 
   ArrowRight,
+  User,
   ChevronLeft
 } from "lucide-react";
 import { motion } from "framer-motion";
 
-export default function LoginPage() {
+export default function SignupPage() {
   return (
     <div className="flex min-h-screen flex-col bg-white text-black font-sans items-center justify-center p-4 relative overflow-hidden">
       {/* Background Decor */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
-        <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-accent/10 blur-[120px] rounded-full" />
-        <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-zinc-100 blur-[100px] rounded-full" />
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-accent/10 blur-[120px] rounded-full" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-zinc-100 blur-[100px] rounded-full" />
       </div>
 
       <motion.div 
@@ -32,12 +33,24 @@ export default function LoginPage() {
             <a href="/" className="text-3xl font-bold tracking-tighter inline-block mb-8">
               MARKHOR<span className="text-zinc-400">MARKET</span>
             </a>
-            <h1 className="text-3xl font-bold tracking-tight">Welcome back</h1>
-            <p className="text-zinc-500 mt-3 font-medium">Log in to your account to track orders and manage your sell-ins.</p>
+            <h1 className="text-3xl font-bold tracking-tight">Create an account</h1>
+            <p className="text-zinc-500 mt-3 font-medium">Join the marketplace for premium refurbished technology.</p>
           </div>
         </div>
 
         <div className="space-y-5">
+          <div className="space-y-2">
+            <label className="text-xs font-bold uppercase tracking-widest text-zinc-400 ml-1">Full Name</label>
+            <div className="relative group">
+              <input 
+                type="text" 
+                placeholder="John Doe"
+                className="w-full h-14 rounded-2xl bg-zinc-50 px-12 text-sm focus:ring-2 focus:ring-accent outline-none border border-zinc-100 transition-all focus:bg-white"
+              />
+              <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-300 group-focus-within:text-black transition-colors" />
+            </div>
+          </div>
+
           <div className="space-y-2">
             <label className="text-xs font-bold uppercase tracking-widest text-zinc-400 ml-1">Email address</label>
             <div className="relative group">
@@ -51,10 +64,7 @@ export default function LoginPage() {
           </div>
 
           <div className="space-y-2">
-            <div className="flex justify-between items-center ml-1">
-              <label className="text-xs font-bold uppercase tracking-widest text-zinc-400">Password</label>
-              <a href="#" className="text-xs font-bold text-zinc-400 hover:text-black transition-colors">Forgot password?</a>
-            </div>
+            <label className="text-xs font-bold uppercase tracking-widest text-zinc-400 ml-1">Password</label>
             <div className="relative group">
               <input 
                 type="password" 
@@ -66,7 +76,7 @@ export default function LoginPage() {
           </div>
 
           <button className="w-full h-14 bg-black text-white rounded-2xl font-bold mt-4 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 shadow-xl shadow-black/5">
-            Log in
+            Create account
             <ArrowRight className="h-4 w-4" />
           </button>
         </div>
@@ -76,7 +86,7 @@ export default function LoginPage() {
             <div className="w-full border-t border-zinc-100"></div>
           </div>
           <div className="relative flex justify-center text-[10px] uppercase font-bold tracking-[0.2em]">
-            <span className="bg-white px-6 text-zinc-300">Or continue with</span>
+            <span className="bg-white px-6 text-zinc-300">Or sign up with</span>
           </div>
         </div>
 
@@ -111,7 +121,7 @@ export default function LoginPage() {
         </div>
 
         <p className="text-center text-sm text-zinc-500 mt-12 font-medium">
-          Don't have an account? <a href="/signup" className="text-black font-bold underline underline-offset-4 decoration-accent decoration-4 hover:decoration-black transition-all">Sign up</a>
+          Already have an account? <a href="/login" className="text-black font-bold underline underline-offset-4 decoration-accent decoration-4 hover:decoration-black transition-all">Log in</a>
         </p>
       </motion.div>
     </div>

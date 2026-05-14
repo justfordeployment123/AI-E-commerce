@@ -852,6 +852,12 @@ function Mission() {
 }
 
 function Newsletter() {
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   return (
     <section className="bg-black py-20 md:py-32 text-white overflow-hidden relative">
       <div className="absolute top-0 right-0 w-1/3 h-full bg-accent/10 blur-[100px] md:blur-[150px] rounded-full" />
@@ -859,18 +865,28 @@ function Newsletter() {
         <div className="max-w-2xl mx-auto lg:mx-0">
           <h2 className="font-serif text-4xl sm:text-5xl md:text-7xl font-medium mb-6 tracking-tight">Stay in the loop.</h2>
           <p className="text-lg md:text-xl text-zinc-400 mb-10 md:mb-12 font-medium leading-relaxed">Get expert tech guides, sustainability tips, and secret drops delivered to your inbox.</p>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1" suppressHydrationWarning>
-              <input
-                type="email"
-                placeholder="Enter your email"
-                className="h-16 w-full rounded-2xl bg-zinc-900 border border-zinc-800 px-6 text-sm outline-none focus:ring-2 focus:ring-accent transition-all"
-              />
-            </div>
-            <button className="h-16 rounded-2xl bg-accent px-12 text-sm font-bold text-black transition-all hover:scale-105 active:scale-95 shadow-xl shadow-accent/20">
-              Subscribe
-            </button>
-          </div>
+          
+          {mounted ? (
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex flex-col sm:flex-row gap-4"
+            >
+              <div className="relative flex-1">
+                <input
+                  type="email"
+                  placeholder="Enter your email"
+                  className="h-16 w-full rounded-2xl bg-zinc-900 border border-zinc-800 px-6 text-sm outline-none focus:ring-2 focus:ring-accent transition-all"
+                />
+              </div>
+              <button className="h-16 rounded-2xl bg-accent px-12 text-sm font-bold text-black transition-all hover:scale-105 active:scale-95 shadow-xl shadow-accent/20">
+                Subscribe
+              </button>
+            </motion.div>
+          ) : (
+            <div className="h-16 w-full max-w-md bg-zinc-900/50 rounded-2xl animate-pulse" />
+          )}
+          
           <p className="mt-6 text-[10px] font-bold uppercase tracking-widest text-zinc-600">No spam. Only the good stuff.</p>
         </div>
       </div>
