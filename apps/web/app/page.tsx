@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   ShoppingCart, ShieldCheck, RefreshCw, Leaf, ArrowRight,
   Star, Search, Play, Recycle, TrendingUp, Package, BadgeCheck,
-  Zap, Check
+  Zap, Check, Smartphone, Laptop, Headphones, Gamepad2, Tablet
 } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
@@ -36,20 +36,38 @@ function MarqueeStrip() {
 
 // ─── Brands Bar ───────────────────────────────────────────────────────────────
 function BrandsBar() {
-  const brands = ["Apple", "Samsung", "Sony", "Google", "Microsoft", "OnePlus", "Nintendo", "Dyson"];
+  const brands = [
+    { name: "Apple",     count: "12,400+ items" },
+    { name: "Samsung",   count: "8,900+ items" },
+    { name: "Sony",      count: "4,200+ items" },
+    { name: "Google",    count: "2,100+ items" },
+    { name: "Microsoft", count: "1,800+ items" },
+    { name: "OnePlus",   count: "1,400+ items" },
+    { name: "Nintendo",  count: "3,600+ items" },
+    { name: "Dyson",     count: "900+ items" },
+  ];
   return (
-    <section className="border-y border-zinc-100 py-5 bg-white overflow-hidden">
+    <section className="border-y border-zinc-100 py-6 bg-white overflow-hidden">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-6 md:gap-10">
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 flex-shrink-0 hidden sm:block">
-            Top brands
+        <div className="flex items-center gap-4 md:gap-6">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 flex-shrink-0 hidden sm:block whitespace-nowrap">
+            Shop by brand
           </p>
-          <div className="h-4 w-px bg-zinc-200 flex-shrink-0 hidden sm:block" />
-          <div className="flex items-center gap-10 md:gap-14 overflow-x-auto scrollbar-hide w-full">
+          <div className="h-5 w-px bg-zinc-200 flex-shrink-0 hidden sm:block" />
+          <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide w-full pb-0.5">
             {brands.map((b) => (
-              <span key={b} className="text-sm md:text-base font-bold text-zinc-200 hover:text-zinc-800 transition-colors duration-200 flex-shrink-0 cursor-pointer select-none tracking-tight">
-                {b}
-              </span>
+              <a
+                key={b.name}
+                href="/shop"
+                className="group flex-shrink-0 flex flex-col items-center justify-center h-14 px-6 rounded-2xl border border-zinc-100 hover:border-zinc-950 hover:bg-zinc-950 transition-all duration-200 cursor-pointer"
+              >
+                <span className="text-sm font-bold text-zinc-700 group-hover:text-white transition-colors leading-none mb-0.5">
+                  {b.name}
+                </span>
+                <span className="text-[9px] font-medium text-zinc-400 group-hover:text-zinc-400 transition-colors">
+                  {b.count}
+                </span>
+              </a>
             ))}
           </div>
         </div>
@@ -112,10 +130,38 @@ function Hero() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.15 }}
-              className="text-lg text-zinc-500 max-w-[42ch] mb-10 leading-relaxed font-medium"
+              className="text-lg text-zinc-500 max-w-[42ch] mb-6 leading-relaxed font-medium"
             >
               Every device on TechStop is certified by expert refurbishers — rigorously tested, graded honestly, and priced fairly.
             </motion.p>
+
+            {/* Search bar */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.18 }}
+              className="mb-8 max-w-[520px]"
+            >
+              <div className="flex items-center gap-3 h-14 px-5 rounded-2xl bg-zinc-50 border border-zinc-200 focus-within:ring-2 focus-within:ring-zinc-950 focus-within:border-transparent focus-within:bg-white transition-all">
+                <Search className="h-5 w-5 text-zinc-400 flex-shrink-0" />
+                <input
+                  type="text"
+                  placeholder='Try "iPhone 15 Pro" or "MacBook Air"'
+                  className="flex-1 bg-transparent text-sm font-medium outline-none placeholder:text-zinc-400"
+                />
+                <a href="/shop" className="h-9 px-5 bg-zinc-950 text-white rounded-xl font-bold text-xs flex-shrink-0 flex items-center">
+                  Search
+                </a>
+              </div>
+              <div className="flex items-center gap-2 mt-3 flex-wrap">
+                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Trending:</span>
+                {["iPhone 15", "MacBook M3", "PlayStation 5", "AirPods Pro"].map((q) => (
+                  <a key={q} href="/shop" className="text-[10px] font-bold px-3 py-1.5 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-600 hover:text-zinc-950 transition-colors">
+                    {q}
+                  </a>
+                ))}
+              </div>
+            </motion.div>
 
             <motion.div
               initial={{ opacity: 0, y: 16 }}
@@ -168,12 +214,41 @@ function Hero() {
             <div className="absolute inset-0 bg-accent/30 rounded-[4rem] rotate-3 scale-90" />
             <div className="absolute inset-0 bg-zinc-50 rounded-[4rem] -rotate-1" />
 
-            <div className="relative z-10 p-10 w-full">
-              <img
-                src="/hero-phone.png"
-                alt="Certified refurbished iPhone"
-                className="w-full max-w-[360px] mx-auto object-contain drop-shadow-[0_30px_60px_rgba(0,0,0,0.18)]"
-              />
+            <div className="relative z-10 p-8 w-full">
+              {/* Featured product card */}
+              <div className="bg-white rounded-3xl p-5 shadow-2xl mb-4 ring-1 ring-zinc-100">
+                <div className="flex items-center gap-4">
+                  <img src="https://picsum.photos/seed/heroip15/200/200" alt="iPhone 15 Pro" className="h-24 w-24 rounded-2xl object-cover flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[9px] font-bold uppercase tracking-widest text-sky-700 bg-sky-50 px-2.5 py-1 rounded-full">Excellent</span>
+                      <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">Save £460</span>
+                    </div>
+                    <p className="font-bold text-zinc-950">iPhone 15 Pro</p>
+                    <p className="text-xs text-zinc-400 mt-0.5">256GB · Black Titanium</p>
+                    <div className="flex items-baseline gap-2 mt-2">
+                      <span className="text-xl font-bold text-zinc-950">£739</span>
+                      <span className="text-xs text-zinc-400 line-through">£1,199</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {/* Two smaller cards */}
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { name: "MacBook Air M2", price: "£849", pct: "35", img: "mbhero1", grade: "Pristine", gradeClr: "text-emerald-700 bg-emerald-50" },
+                  { name: "AirPods Pro 2",  price: "£149", pct: "47", img: "aphero1", grade: "Good",     gradeClr: "text-amber-700 bg-amber-50" },
+                ].map((p, i) => (
+                  <div key={i} className="bg-white rounded-2xl p-4 shadow-lg ring-1 ring-zinc-100">
+                    <img src={`https://picsum.photos/seed/${p.img}/120/120`} alt={p.name} className="h-16 w-full rounded-xl object-cover mb-3" />
+                    <p className="font-bold text-xs text-zinc-950 truncate mb-1">{p.name}</p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-bold text-zinc-950">{p.price}</span>
+                      <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${p.gradeClr}`}>-{p.pct}%</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Floating cards */}
@@ -227,53 +302,86 @@ function Hero() {
 // ─── Category Bento ───────────────────────────────────────────────────────────
 function CategoryBento() {
   const cats = [
-    { name: "Smartphones", sub: "From £149", img: "https://picsum.photos/seed/phones2/800/600", span: "lg:col-span-2 lg:row-span-2" },
-    { name: "Laptops", sub: "From £249", img: "https://picsum.photos/seed/laptop9/800/600", span: "" },
-    { name: "Audio", sub: "From £39", img: "https://picsum.photos/seed/audio3/800/600", span: "" },
-    { name: "Gaming", sub: "From £89", img: "https://picsum.photos/seed/gaming7/800/600", span: "" },
-    { name: "Tablets", sub: "From £129", img: "https://picsum.photos/seed/tablet4/800/600", span: "" },
+    {
+      name: "Smartphones", sub: "From £149", count: "12,400+ devices",
+      Icon: Smartphone, iconBg: "bg-blue-500",
+      img: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=900&h=1000&fit=crop&q=80",
+    },
+    {
+      name: "Laptops", sub: "From £249", count: "4,200+ devices",
+      Icon: Laptop, iconBg: "bg-violet-500",
+      img: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=700&h=500&fit=crop&q=80",
+    },
+    {
+      name: "Audio", sub: "From £39", count: "3,600+ devices",
+      Icon: Headphones, iconBg: "bg-pink-500",
+      img: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=700&h=500&fit=crop&q=80",
+    },
+    {
+      name: "Gaming", sub: "From £89", count: "6,100+ devices",
+      Icon: Gamepad2, iconBg: "bg-emerald-500",
+      img: "https://images.unsplash.com/photo-1607853202273-797f1c22a38e?w=700&h=500&fit=crop&q=80",
+    },
+    {
+      name: "Tablets", sub: "From £129", count: "2,800+ devices",
+      Icon: Tablet, iconBg: "bg-amber-500",
+      img: "https://images.unsplash.com/photo-1544244015-c24b59b8102e?w=700&h=500&fit=crop&q=80",
+    },
   ];
 
   return (
-    <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-24">
-      <div className="flex items-end justify-between mb-12">
-        <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-3">Browse</p>
-          <h2 className="font-serif text-5xl md:text-6xl font-medium text-zinc-950 leading-none">
-            Pick your category
-          </h2>
+    <section className="bg-zinc-50 border-y border-zinc-100 py-24">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex items-end justify-between mb-12">
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-3">Browse</p>
+            <h2 className="font-serif text-5xl md:text-6xl font-medium text-zinc-950 leading-none">
+              Pick your <i>category.</i>
+            </h2>
+          </div>
+          <a href="/shop" className="hidden md:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-zinc-950 transition-colors border-b border-zinc-300 pb-1">
+            All categories <ArrowRight className="h-3.5 w-3.5" />
+          </a>
         </div>
-        <a href="/shop" className="hidden md:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-zinc-950 transition-colors border-b border-zinc-300 pb-1">
-          All categories <ArrowRight className="h-3.5 w-3.5" />
-        </a>
-      </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 lg:grid-rows-2 gap-4 h-auto lg:h-[540px]">
-        {cats.map((cat, i) => (
-          <motion.a
-            href="/shop"
-            key={i}
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: i * 0.08 }}
-            className={`group relative overflow-hidden rounded-3xl bg-zinc-100 cursor-pointer ${i === 0 ? "col-span-2 lg:col-span-2 lg:row-span-2" : ""}`}
-          >
-            <img
-              src={cat.img}
-              alt={cat.name}
-              className="absolute inset-0 h-full w-full object-cover opacity-70 group-hover:scale-105 transition-transform duration-700"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/80 via-zinc-950/10 to-transparent" />
-            <div className="absolute bottom-0 left-0 p-5 lg:p-7">
-              <p className="font-serif text-white text-2xl font-medium leading-tight">{cat.name}</p>
-              <p className="text-xs font-bold text-white/60 mt-1 uppercase tracking-widest">{cat.sub}</p>
-            </div>
-            <div className="absolute top-4 right-4 h-9 w-9 rounded-full bg-white/10 border border-white/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
-              <ArrowRight className="h-4 w-4 text-white" />
-            </div>
-          </motion.a>
-        ))}
+        <div className="grid grid-cols-2 lg:grid-cols-4 lg:grid-rows-2 gap-4 h-auto lg:h-[560px]">
+          {cats.map((cat, i) => (
+            <motion.a
+              href="/shop"
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.08 }}
+              className={`group relative overflow-hidden rounded-3xl bg-zinc-200 cursor-pointer ${i === 0 ? "col-span-2 lg:col-span-2 lg:row-span-2" : ""}`}
+            >
+              <img
+                src={cat.img}
+                alt={cat.name}
+                className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-700"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/90 via-zinc-950/30 to-zinc-950/5" />
+
+              {/* Category icon badge */}
+              <div className={`absolute top-4 left-4 h-10 w-10 rounded-2xl ${cat.iconBg} flex items-center justify-center shadow-lg`}>
+                <cat.Icon className="h-5 w-5 text-white" />
+              </div>
+
+              {/* Hover arrow */}
+              <div className="absolute top-4 right-4 h-9 w-9 rounded-full bg-white/10 border border-white/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
+                <ArrowRight className="h-4 w-4 text-white" />
+              </div>
+
+              <div className="absolute bottom-0 left-0 right-0 p-5 lg:p-7">
+                <p className="font-serif text-white text-2xl font-medium leading-tight">{cat.name}</p>
+                <div className="flex items-center justify-between mt-1.5">
+                  <p className="text-xs font-bold text-white/60 uppercase tracking-widest">{cat.sub}</p>
+                  <p className="text-[10px] font-bold text-white/40 hidden sm:block">{cat.count}</p>
+                </div>
+              </div>
+            </motion.a>
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -439,48 +547,62 @@ function HowItWorks() {
 // ─── Reviews ──────────────────────────────────────────────────────────────────
 function Reviews() {
   const reviews = [
-    { name: "Priya Mehta", loc: "London", rating: 5, text: "Absolutely flawless iPhone 13. Arrived next day, pristine condition. Saved £380 vs new. Will never buy new again.", product: "iPhone 13 Pro · Pristine", img: "https://picsum.photos/seed/rev11/64/64" },
-    { name: "Marcus Osei", loc: "Birmingham", rating: 5, text: "The MacBook Air M1 I received was genuinely indistinguishable from new. Battery at 97% health. Incredible value.", product: "MacBook Air M1 · Excellent", img: "https://picsum.photos/seed/rev22/64/64" },
-    { name: "Sophie Keller", loc: "Manchester", rating: 5, text: "Returned my first order no hassle — the replacement came in two days. Customer service actually picks up the phone.", product: "Samsung S23 · Good", img: "https://picsum.photos/seed/rev33/64/64" },
+    { name: "Priya Mehta",    loc: "London",      rating: 5, text: "Absolutely flawless iPhone 13. Arrived next day, pristine condition. Saved £380 vs new. Will never buy new again.",                       product: "iPhone 13 Pro · Pristine",      img: "https://picsum.photos/seed/rev11/64/64" },
+    { name: "Marcus Osei",    loc: "Birmingham",  rating: 5, text: "MacBook Air M1 indistinguishable from new. Battery at 97% health. This is the only way I'll buy tech from now on.",                        product: "MacBook Air M1 · Excellent",    img: "https://picsum.photos/seed/rev22/64/64" },
+    { name: "Sophie Keller",  loc: "Manchester",  rating: 5, text: "Returned my first order no hassle — replacement arrived in two days. Customer service actually picks up the phone.",                        product: "Samsung S23 · Good",            img: "https://picsum.photos/seed/rev33/64/64" },
+    { name: "Rahul Sharma",   loc: "Leicester",   rating: 5, text: "iPad Pro arrived perfectly packaged with a full inspection report. The grade description was 100% accurate. Brilliantly run.",             product: "iPad Pro M2 · Pristine",        img: "https://picsum.photos/seed/rev44/64/64" },
+    { name: "Emily Walsh",    loc: "Edinburgh",   rating: 5, text: "Saved £420 on my PS5 and it genuinely looks new. The 12-month warranty gave me total confidence. Already recommended to everyone.",        product: "PlayStation 5 · Excellent",     img: "https://picsum.photos/seed/rev55/64/64" },
+    { name: "Daniel Adeyemi", loc: "Bristol",     rating: 5, text: "Pixel 8 Pro came with 94% battery health — better than some brand new phones I've had. Delivery was next day. Phenomenal service.",      product: "Pixel 8 Pro · Excellent",       img: "https://picsum.photos/seed/rev66/64/64" },
   ];
 
   return (
-    <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-24">
-      <div className="flex items-end justify-between mb-14">
-        <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-3">Social proof</p>
-          <h2 className="font-serif text-5xl md:text-6xl font-medium text-zinc-950 leading-none">
-            Real buyers,<br />real reviews.
-          </h2>
-        </div>
-        <div className="hidden md:flex flex-col items-end">
-          <div className="flex gap-0.5 mb-1">
-            {[...Array(5)].map((_, i) => <Star key={i} className="h-5 w-5 fill-accent text-accent" />)}
+    <section className="py-24 bg-zinc-50 border-y border-zinc-100 overflow-hidden">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-12">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-3">Social proof</p>
+            <h2 className="font-serif text-5xl md:text-6xl font-medium text-zinc-950 leading-none">
+              Real buyers,<br />real reviews.
+            </h2>
           </div>
-          <p className="text-sm font-bold text-zinc-950">4.8 / 5</p>
-          <p className="text-[11px] text-zinc-400 font-medium">12,400 Trustpilot reviews</p>
+          {/* Trustpilot-style score */}
+          <div className="flex items-center gap-6 bg-white rounded-3xl px-7 py-5 border border-zinc-100 shadow-sm self-start md:self-auto">
+            <div>
+              <div className="flex gap-0.5 mb-1.5">
+                {[...Array(5)].map((_, i) => <Star key={i} className="h-5 w-5 fill-accent text-accent" />)}
+              </div>
+              <p className="text-3xl font-bold text-zinc-950 leading-none">4.8</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mt-1">out of 5</p>
+            </div>
+            <div className="h-12 w-px bg-zinc-100" />
+            <div>
+              <p className="text-2xl font-bold text-zinc-950 leading-none">12,400</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mt-1">Verified reviews</p>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Horizontal scroll */}
+      <div className="flex gap-5 overflow-x-auto scrollbar-hide pl-4 sm:pl-6 lg:pl-8 pr-8 pb-2">
         {reviews.map((r, i) => (
           <motion.div
             key={i}
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, x: 20 }}
+            whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            transition={{ delay: i * 0.1 }}
-            className="bg-zinc-50 rounded-3xl p-8 border border-zinc-100 flex flex-col gap-5"
+            transition={{ delay: i * 0.07 }}
+            className="flex-shrink-0 w-[320px] md:w-[360px] bg-white rounded-3xl p-7 border border-zinc-100 flex flex-col gap-5 shadow-sm hover:shadow-md transition-shadow"
           >
             <div className="flex gap-0.5">
               {[...Array(r.rating)].map((_, j) => <Star key={j} className="h-4 w-4 fill-accent text-accent" />)}
             </div>
-            <p className="text-zinc-700 leading-relaxed text-[15px]">"{r.text}"</p>
-            <div className="pt-2 border-t border-zinc-200 flex items-center gap-3 mt-auto">
+            <p className="text-zinc-700 leading-relaxed text-[15px] flex-1">"{r.text}"</p>
+            <div className="pt-4 border-t border-zinc-100 flex items-center gap-3">
               <img src={r.img} alt={r.name} className="h-10 w-10 rounded-full object-cover" />
               <div>
                 <p className="text-sm font-bold text-zinc-950">{r.name} · {r.loc}</p>
-                <p className="text-[11px] text-zinc-400 font-medium">{r.product}</p>
+                <p className="text-[11px] text-zinc-400 font-medium mt-0.5">{r.product}</p>
               </div>
             </div>
           </motion.div>
@@ -728,14 +850,43 @@ function AppPreview() {
 // ─── Shop By Budget ───────────────────────────────────────────────────────────
 function ShopByBudget() {
   const ranges = [
-    { label: "Under £100",  sub: "Audio, accessories & basics",    count: "3,240+ deals", img: "https://picsum.photos/seed/bgt1/600/800" },
-    { label: "£100–£300",  sub: "Tablets, gaming & wearables",     count: "7,810+ deals", img: "https://picsum.photos/seed/bgt2/600/800" },
-    { label: "£300–£600",  sub: "Flagship phones & cameras",       count: "9,120+ deals", img: "https://picsum.photos/seed/bgt3/600/800" },
-    { label: "£600+",      sub: "Pro laptops, no compromise",      count: "4,580+ deals", img: "https://picsum.photos/seed/bgt4/600/800" },
+    {
+      label: "Under £100",
+      sub: "Audio, accessories & basics",
+      count: "3,240+",
+      tags: ["Earbuds", "Cables", "Smart Speakers", "Mice"],
+      img: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=1200&h=700&fit=crop&q=80",
+      accent: "bg-emerald-400",
+    },
+    {
+      label: "£100 – £300",
+      sub: "Tablets, gaming & wearables",
+      count: "7,810+",
+      tags: ["Nintendo Switch", "Tablets", "Smartwatches", "Cameras"],
+      img: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=1200&h=700&fit=crop&q=80",
+      accent: "bg-sky-400",
+    },
+    {
+      label: "£300 – £600",
+      sub: "Flagship phones & cameras",
+      count: "9,120+",
+      tags: ["iPhone 14", "Pixel 8 Pro", "Galaxy S23", "iPad Pro"],
+      img: "https://images.unsplash.com/photo-1616348436168-de43ad0db179?w=1200&h=700&fit=crop&q=80",
+      accent: "bg-violet-400",
+    },
+    {
+      label: "£600 and over",
+      sub: "Pro laptops, no compromise",
+      count: "4,580+",
+      tags: ["MacBook Pro M3", "iPhone 15 Pro", "Surface Pro", "Dell XPS"],
+      img: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=1200&h=700&fit=crop&q=80",
+      accent: "bg-amber-400",
+    },
   ];
 
   return (
-    <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-24">
+    <section className="bg-zinc-50 border-y border-zinc-100 py-24">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       <div className="flex items-end justify-between mb-12">
         <div>
           <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-3">Budget friendly</p>
@@ -748,34 +899,56 @@ function ShopByBudget() {
         </a>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
         {ranges.map((r, i) => (
           <motion.a
             key={i}
             href="/shop"
-            initial={{ opacity: 0, y: 16 }}
+            initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: i * 0.08 }}
-            className="group relative overflow-hidden rounded-3xl cursor-pointer"
-            style={{ aspectRatio: "3/4" }}
+            className="group relative overflow-hidden rounded-3xl cursor-pointer h-[280px] md:h-[320px]"
           >
-            <img src={r.img} alt={r.label} className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
-            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/90 via-zinc-950/30 to-transparent" />
-            <div className="absolute inset-0 p-5 flex flex-col justify-between">
-              <div className="self-end px-3 py-1 bg-white/10 border border-white/20 rounded-full backdrop-blur-sm">
-                <span className="text-[10px] font-bold text-white uppercase tracking-widest">{r.count}</span>
+            <img
+              src={r.img}
+              alt={r.label}
+              className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/95 via-zinc-950/50 to-zinc-950/10" />
+
+            <div className="absolute inset-0 p-7 flex flex-col justify-between">
+              {/* Top row */}
+              <div className="flex items-start justify-between">
+                <div className={`${r.accent} text-zinc-950 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full`}>
+                  {r.count} deals
+                </div>
+                <div className="h-9 w-9 rounded-full bg-white/10 border border-white/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
+                  <ArrowRight className="h-4 w-4 text-white" />
+                </div>
               </div>
+
+              {/* Bottom content */}
               <div>
-                <p className="font-serif text-white text-2xl md:text-3xl font-medium leading-tight mb-1">{r.label}</p>
-                <p className="text-xs font-medium text-white/60 mb-3">{r.sub}</p>
-                <div className="flex items-center gap-1.5 text-xs font-bold text-white/70 group-hover:text-accent transition-colors">
-                  Browse <ArrowRight className="h-3.5 w-3.5" />
+                <p className="font-serif text-white text-3xl md:text-4xl font-medium leading-tight mb-1.5">
+                  {r.label}
+                </p>
+                <p className="text-sm font-medium text-white/60 mb-4">{r.sub}</p>
+                <div className="flex flex-wrap gap-2">
+                  {r.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="text-[10px] font-bold text-white/70 bg-white/10 border border-white/10 rounded-full px-3 py-1 backdrop-blur-sm"
+                    >
+                      {tag}
+                    </span>
+                  ))}
                 </div>
               </div>
             </div>
           </motion.a>
         ))}
+      </div>
       </div>
     </section>
   );
@@ -976,162 +1149,428 @@ function NewArrivals() {
 }
 
 // ─── Grade Guide ──────────────────────────────────────────────────────────────
-function GradeGuide() {
-  const [active, setActive] = useState(0);
+function ConditionMeter({ level, barClass }: { level: 0 | 1 | 2; barClass: string }) {
+  const bars = 5;
+  const filled = level === 0 ? 5 : level === 1 ? 4 : 3;
+  return (
+    <div className="flex gap-1.5 items-end h-6">
+      {[...Array(bars)].map((_, k) => (
+        <div
+          key={k}
+          className={`w-2 rounded-full transition-all ${k < filled ? barClass : "bg-white/10"}`}
+          style={{ height: `${40 + k * 12}%` }}
+        />
+      ))}
+    </div>
+  );
+}
 
-  const grades = [
+function PhoneSketch({ level }: { level: 0 | 1 | 2 }) {
+  return (
+    <svg viewBox="0 0 110 190" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-44 w-auto drop-shadow-2xl">
+      {/* Phone body */}
+      <rect x="8" y="4" width="94" height="182" rx="20" fill="white" fillOpacity="0.13" stroke="white" strokeOpacity="0.45" strokeWidth="2.5"/>
+      {/* Dynamic island */}
+      <rect x="36" y="12" width="38" height="10" rx="5" fill="white" fillOpacity="0.35"/>
+      {/* Screen */}
+      <rect x="14" y="28" width="82" height="142" rx="10" fill="white" fillOpacity="0.07" stroke="white" strokeOpacity="0.2" strokeWidth="1"/>
+      {/* Home bar */}
+      <rect x="38" y="178" width="34" height="5" rx="2.5" fill="white" fillOpacity="0.4"/>
+      {/* Side buttons */}
+      <rect x="5" y="56" width="3" height="24" rx="1.5" fill="white" fillOpacity="0.3"/>
+      <rect x="102" y="50" width="3" height="16" rx="1.5" fill="white" fillOpacity="0.3"/>
+      <rect x="102" y="72" width="3" height="16" rx="1.5" fill="white" fillOpacity="0.3"/>
+
+      {/* App icons 3×4 grid */}
+      {[0,1,2].map(col => [0,1,2,3].map(row => (
+        <rect key={`${col}-${row}`} x={20 + col * 28} y={42 + row * 28} width="18" height="18" rx="5" fill="white" fillOpacity="0.1"/>
+      )))}
+
+      {/* Dock bar */}
+      <rect x="18" y="158" width="74" height="20" rx="10" fill="white" fillOpacity="0.08" stroke="white" strokeOpacity="0.12" strokeWidth="1"/>
+      {[0,1,2,3].map(k => <rect key={k} x={26 + k * 18} y={163} width="12" height="12" rx="3" fill="white" fillOpacity="0.12"/>)}
+
+      {/* ── Pristine: green verified badge ── */}
+      {level === 0 && (
+        <g>
+          <circle cx="88" cy="44" r="14" fill="#10b981" fillOpacity="0.9"/>
+          <path d="M81 44 L86 49 L96 38" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </g>
+      )}
+
+      {/* ── Excellent: one faint scratch + magnifier callout ── */}
+      {level === 1 && (
+        <>
+          <line x1="30" y1="52" x2="72" y2="94" stroke="white" strokeOpacity="0.4" strokeWidth="1.5" strokeLinecap="round"/>
+          {/* Magnifier circle */}
+          <circle cx="94" cy="56" r="13" fill="white" fillOpacity="0.15" stroke="white" strokeOpacity="0.5" strokeWidth="1.5"/>
+          <line x1="82" y1="66" x2="75" y2="74" stroke="white" strokeOpacity="0.5" strokeWidth="1.5" strokeLinecap="round"/>
+          <line x1="48" y1="70" x2="82" y2="58" stroke="white" strokeOpacity="0.2" strokeWidth="1" strokeDasharray="3 2"/>
+          <circle cx="94" cy="56" r="3" fill="white" fillOpacity="0.5"/>
+        </>
+      )}
+
+      {/* ── Good: multiple prominent scratches + warning badge ── */}
+      {level === 2 && (
+        <>
+          <line x1="24" y1="60" x2="68" y2="96"  stroke="white" strokeOpacity="0.55" strokeWidth="2.5" strokeLinecap="round"/>
+          <line x1="40" y1="100" x2="84" y2="130" stroke="white" strokeOpacity="0.4"  strokeWidth="2"   strokeLinecap="round"/>
+          <line x1="20" y1="110" x2="50" y2="92"  stroke="white" strokeOpacity="0.3"  strokeWidth="1.5" strokeLinecap="round"/>
+          <line x1="60" y1="50" x2="86" y2="76"   stroke="white" strokeOpacity="0.25" strokeWidth="1"   strokeLinecap="round"/>
+          {/* Warning triangle */}
+          <path d="M88 34 L100 54 L76 54 Z" fill="#f59e0b" fillOpacity="0.85"/>
+          <text x="88" y="50" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold">!</text>
+        </>
+      )}
+    </svg>
+  );
+}
+
+function GradeGuide() {
+  const grades: {
+    num: string; name: string; tagline: string;
+    battery: number; saving: number; fromPrice: string;
+    rating: number; reviewCount: string;
+    conditionLabel: string; sketchLevel: 0 | 1 | 2; featured: boolean;
+    img: string; features: string[];
+    products: { name: string; price: string }[];
+    barClass: string; textClass: string; glowColor: string;
+    chipBg: string; featuredRing: string;
+  }[] = [
     {
-      name: "Pristine",
-      tagline: "Indistinguishable from new.",
-      battery: "95%+",
-      desc: "Pristine devices show absolutely no signs of prior use. Screen is flawless, all buttons and ports work perfectly, and original or equivalent accessories are included.",
-      features: ["Zero scratches — flawless screen", "Battery health 95% or above", "All features pass 25-point check", "Original or equivalent accessories"],
-      btnColor:  "bg-emerald-500 text-white",
-      iconColor: "bg-emerald-500",
-      cardBg:    "bg-emerald-50",
-      border:    "border-emerald-200",
-      tag:       "text-emerald-700",
-      pill:      "bg-emerald-50 text-emerald-700",
+      num: "01", name: "Pristine", tagline: "Zero cosmetic flaws. Like opening a new box.",
+      battery: 95, saving: 30, fromPrice: "From £199",
+      rating: 4.9, reviewCount: "4,200", conditionLabel: "Zero marks",
+      sketchLevel: 0, featured: false,
+      img: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800&h=900&fit=crop&q=75",
+      features: ["Flawless screen — zero scratches", "Original or equivalent accessories", "25/25 inspection points passed", "Near-sealed condition packaging"],
+      products: [{ name: "iPhone 15 Pro", price: "£739" }, { name: "MacBook Pro M3", price: "£1,699" }, { name: "Galaxy S24 Ultra", price: "£899" }],
+      barClass: "bg-emerald-500", textClass: "text-emerald-400",
+      glowColor: "#10b981", chipBg: "bg-emerald-500/20", featuredRing: "",
     },
     {
-      name: "Excellent",
-      tagline: "Light signs of use. Fully functional.",
-      battery: "85%+",
-      desc: "Excellent devices may show very light micro-scratches only visible under strong direct light. Every function is tested and working perfectly.",
-      features: ["Micro-scratches under strong light only", "Battery health 85% or above", "All features fully tested", "Fully clean and functional"],
-      btnColor:  "bg-sky-500 text-white",
-      iconColor: "bg-sky-500",
-      cardBg:    "bg-sky-50",
-      border:    "border-sky-200",
-      tag:       "text-sky-700",
-      pill:      "bg-sky-50 text-sky-700",
+      num: "02", name: "Excellent", tagline: "Micro-marks invisible in everyday light.",
+      battery: 85, saving: 45, fromPrice: "From £129",
+      rating: 4.8, reviewCount: "12,400", conditionLabel: "Micro-scratches",
+      sketchLevel: 1, featured: true,
+      img: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800&h=900&fit=crop&q=75",
+      features: ["Micro-scratches not visible in use", "Battery 85%+ certified by engineers", "All ports, cameras & buttons tested", "Thoroughly cleaned and sanitised"],
+      products: [{ name: "iPhone 14 Pro", price: "£549" }, { name: "MacBook Air M2", price: "£849" }, { name: "Samsung S23", price: "£429" }],
+      barClass: "bg-sky-400", textClass: "text-sky-400",
+      glowColor: "#38bdf8", chipBg: "bg-sky-500/20", featuredRing: "ring-2 ring-accent ring-offset-2 ring-offset-zinc-950",
     },
     {
-      name: "Good",
-      tagline: "Visible wear. 100% working.",
-      battery: "80%+",
-      desc: "Good devices have clear cosmetic wear — scratches or scuffs — but are 100% tested and fully functional. Best value for money on the platform.",
-      features: ["Visible scratches or scuffs", "Battery health 80% or above", "All features fully tested", "Best value on the platform"],
-      btnColor:  "bg-amber-500 text-white",
-      iconColor: "bg-amber-500",
-      cardBg:    "bg-amber-50",
-      border:    "border-amber-200",
-      tag:       "text-amber-700",
-      pill:      "bg-amber-50 text-amber-700",
+      num: "03", name: "Good", tagline: "Visible wear — every function 100% working.",
+      battery: 80, saving: 60, fromPrice: "From £69",
+      rating: 4.7, reviewCount: "8,900", conditionLabel: "Visible wear",
+      sketchLevel: 2, featured: false,
+      img: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&h=900&fit=crop&q=75",
+      features: ["Visible scratches or scuffs on body", "Battery 80%+ certified by engineers", "All features 100% working", "Best price-to-performance on TechStop"],
+      products: [{ name: "iPhone 13", price: "£299" }, { name: "MacBook Air M1", price: "£649" }, { name: "Pixel 7 Pro", price: "£349" }],
+      barClass: "bg-amber-500", textClass: "text-amber-400",
+      glowColor: "#f59e0b", chipBg: "bg-amber-500/20", featuredRing: "",
     },
   ];
 
-  const g = grades[active];
-
   return (
-    <section className="bg-zinc-50 border-y border-zinc-100 py-24">
+    <section className="py-24 bg-zinc-950 overflow-hidden">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-12">
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-3">Quality grading</p>
-          <h2 className="font-serif text-5xl md:text-6xl font-medium text-zinc-950 leading-none">
-            Understand your <i>grade.</i>
-          </h2>
+
+        {/* Section header */}
+        <div className="mb-16 flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-500 mb-3">How grading works</p>
+            <h2 className="font-serif text-5xl md:text-6xl font-medium text-white leading-none">
+              What does each <i>grade mean?</i>
+            </h2>
+          </div>
+          <p className="text-zinc-500 text-base max-w-[42ch] leading-relaxed">
+            Every device is independently tested before listing. Pick the grade that fits your budget — all are 100% functional.
+          </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
-          {/* Left: tabs + detail */}
-          <div>
-            <div className="flex gap-3 mb-10 flex-wrap">
-              {grades.map((gr, i) => (
-                <button
-                  key={i}
-                  onClick={() => setActive(i)}
-                  className={`h-11 px-7 rounded-2xl font-bold text-sm transition-all duration-200 ${
-                    active === i ? gr.btnColor + " shadow-lg" : "bg-white border border-zinc-200 text-zinc-500 hover:border-zinc-400"
-                  }`}
-                >
-                  {gr.name}
-                </button>
-              ))}
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch">
+          {grades.map((g, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 32 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.12 }}
+              className={`relative rounded-[2rem] overflow-hidden flex flex-col group hover:-translate-y-1.5 transition-all duration-300 ${g.featuredRing}`}
+            >
+              {/* ── Photo panel ── */}
+              <div className="relative h-[380px] overflow-hidden flex-shrink-0">
+                {/* Product photo */}
+                <img src={g.img} alt={g.name} className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                {/* Dark gradient from top + bottom */}
+                <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/70 via-transparent to-zinc-950/95" />
 
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={active}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.2 }}
-              >
-                <p className="text-zinc-500 text-base mb-8 leading-relaxed max-w-[46ch]">{g.desc}</p>
-                <ul className="space-y-3 mb-8">
-                  {g.features.map((feat, j) => (
-                    <li key={j} className="flex items-center gap-3">
-                      <div className={`h-6 w-6 rounded-full ${g.iconColor} flex items-center justify-center flex-shrink-0`}>
-                        <Check className="h-3.5 w-3.5 text-white" />
+                {/* Watermark number */}
+                <div className="absolute -bottom-6 -right-4 text-[160px] font-black leading-none select-none pointer-events-none text-white/[0.04]">
+                  {g.num}
+                </div>
+
+                {/* Most Popular badge */}
+                {g.featured && (
+                  <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-accent text-zinc-950 text-[9px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-full whitespace-nowrap shadow-lg">
+                    Most Popular
+                  </div>
+                )}
+
+                {/* Top-left: number + rating */}
+                <div className="absolute top-4 left-5 flex flex-col gap-1.5">
+                  <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">{g.num}</span>
+                  <div className="flex items-center gap-1">
+                    {[...Array(5)].map((_, k) => <Star key={k} className="h-3 w-3 fill-accent text-accent" />)}
+                    <span className="text-[10px] font-bold text-white/70 ml-1">{g.rating} · {g.reviewCount}</span>
+                  </div>
+                </div>
+
+                {/* Top-right: savings pill */}
+                <div className="absolute top-4 right-5 flex flex-col items-center justify-center h-14 w-14 rounded-full bg-zinc-950/60 border border-white/10 backdrop-blur-md">
+                  <span className={`text-sm font-bold leading-none ${g.textClass}`}>-{g.saving}%</span>
+                  <span className="text-[8px] text-white/40 uppercase tracking-wide mt-0.5">save</span>
+                </div>
+
+                {/* Floating glassmorphism chips (left side) */}
+                <div className="absolute left-5 top-1/2 -translate-y-1/2 flex flex-col gap-2">
+                  <div className={`${g.chipBg} backdrop-blur-md border border-white/10 rounded-xl px-3 py-2`}>
+                    <p className="text-[8px] text-white/50 font-bold uppercase tracking-widest mb-0.5">Battery</p>
+                    <p className={`text-sm font-bold ${g.textClass}`}>{g.battery}%+</p>
+                  </div>
+                  <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-xl px-3 py-2">
+                    <p className="text-[8px] text-white/50 font-bold uppercase tracking-widest mb-0.5">Condition</p>
+                    <p className="text-sm font-bold text-white">{g.conditionLabel}</p>
+                  </div>
+                </div>
+
+                {/* Phone sketch — centred */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="opacity-90 group-hover:opacity-100 transition-opacity mt-6">
+                    <PhoneSketch level={g.sketchLevel} />
+                  </div>
+                </div>
+
+                {/* Bottom: grade name + price */}
+                <div className="absolute bottom-0 left-0 right-0 p-6">
+                  <div className="flex items-end justify-between">
+                    <div>
+                      <p className="font-serif text-4xl font-medium text-white leading-none">{g.name}</p>
+                      <p className="text-white/50 text-xs font-medium mt-1.5">{g.tagline}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className={`text-xl font-bold ${g.textClass}`}>{g.fromPrice}</p>
+                      <p className="text-[10px] text-white/40 font-medium mt-0.5 uppercase tracking-widest">certified</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* ── Dark body panel ── */}
+              <div className="bg-zinc-900 flex-1 p-6 flex flex-col gap-4 border border-zinc-800 rounded-b-[2rem]">
+
+                {/* Condition meter */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-500 mb-2">Condition score</p>
+                    <ConditionMeter level={g.sketchLevel} barClass={g.barClass} />
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-500 mb-1">Inspection</p>
+                    <div className="flex items-center gap-1.5 justify-end">
+                      <div className="h-5 w-5 rounded-md bg-zinc-800 flex items-center justify-center">
+                        <Check className="h-3 w-3 text-accent" />
                       </div>
-                      <span className="text-sm font-medium text-zinc-700">{feat}</span>
+                      <span className="text-xs font-bold text-white">25 / 25</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Battery segments */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-500">Battery health</p>
+                    <p className={`text-xs font-bold ${g.textClass}`}>{g.battery}%+</p>
+                  </div>
+                  <div className="flex gap-1">
+                    {[...Array(10)].map((_, k) => (
+                      <motion.div
+                        key={k}
+                        initial={{ scaleY: 0 }}
+                        whileInView={{ scaleY: 1 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: i * 0.1 + k * 0.04 + 0.3 }}
+                        className={`h-2.5 flex-1 rounded-sm origin-bottom ${k < Math.round(g.battery / 10) ? g.barClass : "bg-zinc-800"}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Popular devices */}
+                <div>
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-500 mb-2">Popular in {g.name}</p>
+                  <div className="flex flex-col gap-1.5">
+                    {g.products.map((p, j) => (
+                      <div key={j} className="flex items-center justify-between bg-zinc-800/60 rounded-xl px-3 py-2">
+                        <div className="flex items-center gap-2">
+                          <div className={`h-1.5 w-1.5 rounded-full ${g.barClass}`} />
+                          <span className="text-xs font-medium text-zinc-300">{p.name}</span>
+                        </div>
+                        <span className={`text-xs font-bold ${g.textClass}`}>{p.price}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Feature list */}
+                <ul className="space-y-2 pt-1 border-t border-zinc-800">
+                  {g.features.map((feat, j) => (
+                    <li key={j} className="flex items-start gap-2.5 pt-1">
+                      <Check className={`h-3.5 w-3.5 mt-0.5 flex-shrink-0 ${g.textClass}`} />
+                      <span className="text-xs text-zinc-400 leading-snug">{feat}</span>
                     </li>
                   ))}
                 </ul>
-                <div className={`inline-flex items-center gap-3 ${g.pill} rounded-2xl px-5 py-3`}>
-                  <span className="text-sm font-bold">Min. battery health:</span>
-                  <span className="text-xl font-bold">{g.battery}</span>
-                </div>
-              </motion.div>
-            </AnimatePresence>
-          </div>
 
-          {/* Right: visual grade card */}
-          <div className="relative flex justify-center">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={active}
-                initial={{ opacity: 0, scale: 0.94 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.94 }}
-                transition={{ duration: 0.25 }}
-                className={`w-[240px] md:w-[280px] rounded-[3rem] ${g.cardBg} border-4 ${g.border} shadow-2xl overflow-hidden`}
-                style={{ aspectRatio: "9/19" }}
-              >
-                <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-                  <div className={`h-24 w-24 rounded-full ${g.iconColor} flex items-center justify-center mb-6 shadow-xl`}>
-                    <Check className="h-12 w-12 text-white" />
-                  </div>
-                  <p className={`text-3xl font-bold ${g.tag} mb-2`}>{g.name}</p>
-                  <p className={`text-sm font-medium ${g.tag} opacity-70 mb-8`}>{g.tagline}</p>
-
-                  {/* Battery bar */}
-                  <div className={`w-full rounded-2xl ${g.pill} px-4 py-3`}>
-                    <div className="flex justify-between text-xs font-bold mb-2">
-                      <span>Battery health</span>
-                      <span>{g.battery}</span>
-                    </div>
-                    <div className="h-2 rounded-full bg-white/60 overflow-hidden">
-                      <div
-                        className={`h-full rounded-full ${g.iconColor}`}
-                        style={{ width: active === 0 ? "95%" : active === 1 ? "85%" : "80%" }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Scratch indicator for Good */}
-                  {active === 2 && (
-                    <div className="mt-4 w-full rounded-xl bg-white/40 px-4 py-2.5 text-center">
-                      <p className="text-[11px] font-bold text-amber-700">Cosmetic wear visible</p>
-                      <p className="text-[10px] text-amber-600 mt-0.5">Fully tested · Works perfectly</p>
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            </AnimatePresence>
-
-            {/* Side badge */}
-            <motion.div
-              key={`badge-${active}`}
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              className={`absolute -right-4 top-1/3 ${g.pill} border ${g.border} rounded-2xl px-4 py-3 shadow-lg`}
-            >
-              <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-500 mb-0.5">Min. battery</p>
-              <p className={`text-xl font-bold ${g.tag}`}>{g.battery}</p>
+                {/* CTA */}
+                <a
+                  href="/shop"
+                  className={`mt-auto flex items-center justify-center gap-2 h-11 rounded-2xl bg-zinc-800 hover:bg-accent text-zinc-300 hover:text-zinc-950 font-bold text-sm transition-all duration-200`}
+                >
+                  Shop {g.name} <ArrowRight className="h-4 w-4" />
+                </a>
+              </div>
             </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── Live Activity Feed ───────────────────────────────────────────────────────
+function LiveFeed() {
+  const [idx, setIdx] = useState(0);
+  const [mounted, setMounted] = useState(false);
+
+  const activity = [
+    { name: "James K.",  city: "Leicester",   device: "iPhone 14 Pro",       price: "£679", seed: "lf1" },
+    { name: "Aisha M.",  city: "London",      device: "MacBook Air M2",      price: "£849", seed: "lf2" },
+    { name: "Ben P.",    city: "Manchester",  device: "Samsung S23 Ultra",   price: "£599", seed: "lf3" },
+    { name: "Sofia R.",  city: "Birmingham",  device: "iPad Pro M2",         price: "£699", seed: "lf4" },
+    { name: "Tom C.",    city: "Bristol",     device: "AirPods Pro 2",       price: "£149", seed: "lf5" },
+    { name: "Priya D.",  city: "Edinburgh",   device: "PS5 Digital Edition", price: "£299", seed: "lf6" },
+  ];
+
+  useEffect(() => {
+    setMounted(true);
+    const t = setInterval(() => setIdx(i => (i + 1) % activity.length), 3500);
+    return () => clearInterval(t);
+  }, []);
+
+  if (!mounted) return null;
+  const a = activity[idx];
+
+  return (
+    <div className="border-b border-zinc-100 bg-zinc-50/80 py-3 overflow-hidden">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={idx}
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -5 }}
+            transition={{ duration: 0.28 }}
+            className="flex items-center gap-3"
+          >
+            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" />
+            <img src={`https://picsum.photos/seed/${a.seed}/28/28`} alt="" className="h-7 w-7 rounded-full object-cover flex-shrink-0" />
+            <p className="text-xs font-medium text-zinc-600 truncate">
+              <span className="font-bold text-zinc-950">{a.name} from {a.city}</span>
+              {" just purchased a "}
+              <span className="font-bold text-zinc-950">{a.device}</span>
+              {" for "}
+              <span className="font-bold text-zinc-950 bg-accent/30 px-1.5 py-0.5 rounded">{a.price}</span>
+            </p>
+            <span className="ml-auto text-[10px] font-bold text-zinc-400 flex-shrink-0 hidden sm:block">Live</span>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+}
+
+// ─── Savings Comparison ───────────────────────────────────────────────────────
+function SavingsComparison() {
+  const items = [
+    { device: "iPhone 15 Pro 256GB",      newPrice: 1199, ourPrice: 739,  grade: "Excellent", img: "https://picsum.photos/seed/cmp1/120/120" },
+    { device: "MacBook Air M2 8GB/256GB", newPrice: 1299, ourPrice: 849,  grade: "Pristine",  img: "https://picsum.photos/seed/cmp2/120/120" },
+    { device: "Samsung Galaxy S23 Ultra", newPrice: 1249, ourPrice: 599,  grade: "Excellent", img: "https://picsum.photos/seed/cmp3/120/120" },
+    { device: "Sony WH-1000XM5",          newPrice:  379, ourPrice: 199,  grade: "Good",      img: "https://picsum.photos/seed/cmp4/120/120" },
+  ];
+
+  const gradeClr: Record<string, string> = {
+    Pristine: "text-emerald-700",
+    Excellent: "text-sky-700",
+    Good: "text-amber-700",
+  };
+
+  return (
+    <section className="py-24 bg-white border-t border-zinc-100">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex items-end justify-between mb-14">
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-3">Why refurbished?</p>
+            <h2 className="font-serif text-5xl md:text-6xl font-medium text-zinc-950 leading-none">
+              Refurbished vs <i>retail.</i>
+            </h2>
           </div>
+          <div className="hidden md:flex items-center gap-10 text-sm font-bold text-zinc-400">
+            <span>Retail price</span>
+            <span className="text-zinc-950">TechStop price</span>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          {items.map((item, i) => {
+            const saving = item.newPrice - item.ourPrice;
+            const pct = Math.round((saving / item.newPrice) * 100);
+            return (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, x: -16 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.07 }}
+                className="group flex items-center gap-4 md:gap-6 p-4 md:p-5 rounded-2xl border border-zinc-100 hover:shadow-md hover:border-zinc-200 transition-all cursor-pointer"
+              >
+                <img src={item.img} alt={item.device} className="h-14 w-14 md:h-16 md:w-16 rounded-2xl object-cover flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-zinc-950 text-sm truncate">{item.device}</p>
+                  <p className={`text-[10px] font-bold uppercase tracking-widest mt-0.5 ${gradeClr[item.grade]}`}>{item.grade} · Certified</p>
+                </div>
+                <div className="hidden sm:block text-right flex-shrink-0 min-w-[80px]">
+                  <p className="text-zinc-300 line-through text-sm font-bold">£{item.newPrice.toLocaleString()}</p>
+                  <p className="text-[10px] font-bold uppercase text-zinc-400 mt-0.5">Retail</p>
+                </div>
+                <div className="text-right flex-shrink-0 min-w-[80px]">
+                  <p className="text-xl md:text-2xl font-bold text-zinc-950">£{item.ourPrice.toLocaleString()}</p>
+                  <p className="text-[10px] font-bold uppercase text-zinc-400 mt-0.5">TechStop</p>
+                </div>
+                <div className="flex-shrink-0 h-14 w-[90px] bg-accent rounded-2xl flex flex-col items-center justify-center">
+                  <p className="text-base font-bold text-zinc-950 leading-none">-{pct}%</p>
+                  <p className="text-[9px] font-bold text-zinc-700 mt-0.5">Save £{saving}</p>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+
+        <div className="mt-10 text-center">
+          <a href="/shop" className="inline-flex items-center gap-2 h-12 px-8 bg-zinc-950 text-white rounded-2xl font-bold text-sm hover:bg-zinc-800 transition-colors">
+            Browse all deals <ArrowRight className="h-4 w-4" />
+          </a>
         </div>
       </div>
     </section>
@@ -1517,6 +1956,7 @@ export default function HomePage() {
       <MarqueeStrip />
       <Hero />
       <BrandsBar />
+      <LiveFeed />
       <CategoryBento />
       <FeaturedShop />
       <FlashDeals />
@@ -1526,6 +1966,7 @@ export default function HomePage() {
       <ShopByBudget />
       <TrustPillars />
       <TrendingDeals />
+      <SavingsComparison />
       <HowItWorks />
       <GradeGuide />
       <AppPreview />
