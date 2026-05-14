@@ -13,12 +13,24 @@ import {
   Heart,
   Truck,
   Zap,
-  Info
+  Info,
+  ShoppingCart
 } from "lucide-react";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 
-const INITIAL_ITEMS = [
+interface CartItem {
+  id: number;
+  name: string;
+  grade: string;
+  storage: string;
+  color: string;
+  price: number;
+  image: string;
+  quantity: number;
+}
+
+const INITIAL_ITEMS: CartItem[] = [
   {
     id: 1,
     name: "iPhone 14 Pro",
@@ -48,8 +60,8 @@ const RECOMMENDATIONS = [
 ];
 
 export default function CartPage() {
-  const [items, setItems] = useState(INITIAL_ITEMS);
-  const [savedItems, setSavedItems] = useState<any[]>([]);
+  const [items, setItems] = useState<CartItem[]>(INITIAL_ITEMS);
+  const [savedItems, setSavedItems] = useState<CartItem[]>([]);
 
   const subtotal = useMemo(() => items.reduce((acc, item) => acc + (item.price * item.quantity), 0), [items]);
   const shippingThreshold = 1000;
