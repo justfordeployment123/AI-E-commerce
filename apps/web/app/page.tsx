@@ -1138,6 +1138,308 @@ function GradeGuide() {
   );
 }
 
+// ─── Shared product card ──────────────────────────────────────────────────────
+interface PCard {
+  name: string; type: string; spec: string;
+  price: string; was: string; grade: string; img: string; index?: number;
+}
+const GRADE_STYLE: Record<string, string> = {
+  Pristine:  "bg-emerald-50 text-emerald-700",
+  Excellent: "bg-sky-50 text-sky-700",
+  Good:      "bg-amber-50 text-amber-700",
+};
+function ProductCard({ name, type, spec, price, was, grade, img, index = 0 }: PCard) {
+  const pct = Math.round((1 - parseInt(price.replace(/[^0-9]/g,"")) / parseInt(was.replace(/[^0-9]/g,""))) * 100);
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.04, duration: 0.3 }}
+      className="group cursor-pointer"
+    >
+      <div className="relative aspect-square rounded-2xl bg-zinc-50 overflow-hidden mb-3 ring-1 ring-zinc-100 group-hover:ring-transparent group-hover:shadow-xl transition-all duration-300">
+        <img src={img} alt={name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
+        <div className={`absolute top-3 left-3 px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest ${GRADE_STYLE[grade] ?? "bg-zinc-100 text-zinc-600"}`}>{grade}</div>
+        <div className="absolute top-3 right-3 px-2 py-1 rounded-full bg-accent text-zinc-950 text-[9px] font-bold">-{pct}%</div>
+        <button className="absolute bottom-3 right-3 h-10 w-10 rounded-full bg-zinc-950 text-white flex items-center justify-center opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 shadow-lg">
+          <ShoppingCart className="h-4 w-4" />
+        </button>
+      </div>
+      <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-0.5">{type}</p>
+      <p className="font-bold text-zinc-950 text-sm leading-tight truncate mb-1">{name}</p>
+      <p className="text-[11px] text-zinc-400 mb-2 truncate">{spec}</p>
+      <div className="flex items-baseline gap-2">
+        <span className="text-lg font-bold text-zinc-950">{price}</span>
+        <span className="text-xs text-zinc-400 line-through">{was}</span>
+        <span className="text-xs font-bold text-emerald-600">-{pct}%</span>
+      </div>
+    </motion.div>
+  );
+}
+
+// ─── Featured Shop (sticky tabs + animated product grid) ──────────────────────
+function FeaturedShop() {
+  const cats = ["All", "Phones", "Laptops", "Tablets", "Audio", "Gaming", "Wearables"];
+  const [active, setActive] = useState("All");
+
+  const products: PCard[] = [
+    { name: "iPhone 15 Pro",       type: "Phones",    spec: "256GB · Natural Titanium",   price: "£799",   was: "£1,199", grade: "Excellent", img: "https://picsum.photos/seed/ip15px/400/400" },
+    { name: "iPhone 14",           type: "Phones",    spec: "128GB · Midnight",           price: "£499",   was: "£799",   grade: "Good",      img: "https://picsum.photos/seed/ip14x/400/400" },
+    { name: "Samsung Galaxy S24",  type: "Phones",    spec: "256GB · Marble Grey",        price: "£599",   was: "£1,099", grade: "Excellent", img: "https://picsum.photos/seed/sgs24x/400/400" },
+    { name: "Google Pixel 8",      type: "Phones",    spec: "128GB · Obsidian",           price: "£399",   was: "£599",   grade: "Pristine",  img: "https://picsum.photos/seed/px8x/400/400" },
+    { name: "OnePlus 12",          type: "Phones",    spec: "256GB · Flowy Emerald",      price: "£449",   was: "£799",   grade: "Excellent", img: "https://picsum.photos/seed/op12x/400/400" },
+    { name: "MacBook Air M3",      type: "Laptops",   spec: "8GB · 256GB SSD",           price: "£949",   was: "£1,299", grade: "Pristine",  img: "https://picsum.photos/seed/mbm3x/400/400" },
+    { name: "Dell XPS 15",         type: "Laptops",   spec: "16GB · 512GB SSD",          price: "£749",   was: "£1,199", grade: "Excellent", img: "https://picsum.photos/seed/dxpsx/400/400" },
+    { name: "Surface Laptop 5",    type: "Laptops",   spec: "16GB · 256GB · Platinum",   price: "£649",   was: "£999",   grade: "Good",      img: "https://picsum.photos/seed/sl5x/400/400" },
+    { name: "iPad Pro 12.9\"",     type: "Tablets",   spec: "M2 · 128GB · WiFi",         price: "£699",   was: "£1,099", grade: "Excellent", img: "https://picsum.photos/seed/ipadpx/400/400" },
+    { name: "Samsung Tab S9+",     type: "Tablets",   spec: "256GB · WiFi · Pink Gold",  price: "£599",   was: "£899",   grade: "Pristine",  img: "https://picsum.photos/seed/tabs9px/400/400" },
+    { name: "iPad 10th Gen",       type: "Tablets",   spec: "64GB · WiFi · Blue",        price: "£299",   was: "£499",   grade: "Good",      img: "https://picsum.photos/seed/ip10x/400/400" },
+    { name: "AirPods Pro 2",       type: "Audio",     spec: "USB-C · ANC · White",       price: "£149",   was: "£279",   grade: "Excellent", img: "https://picsum.photos/seed/app2x/400/400" },
+    { name: "Sony WH-1000XM5",    type: "Audio",     spec: "Wireless · Noise Cancelling", price: "£199",  was: "£380",   grade: "Good",      img: "https://picsum.photos/seed/xm5x/400/400" },
+    { name: "Bose QC45",           type: "Audio",     spec: "Wireless · White Smoke",    price: "£149",   was: "£329",   grade: "Excellent", img: "https://picsum.photos/seed/bqc45x/400/400" },
+    { name: "PS5 Disc Edition",    type: "Gaming",    spec: "825GB SSD · White",         price: "£349",   was: "£479",   grade: "Excellent", img: "https://picsum.photos/seed/ps5cx/400/400" },
+    { name: "Xbox Series X",       type: "Gaming",    spec: "1TB · Carbon Black",        price: "£299",   was: "£449",   grade: "Good",      img: "https://picsum.photos/seed/xbxx/400/400" },
+    { name: "Nintendo Switch OLED",type: "Gaming",    spec: "64GB · White",              price: "£219",   was: "£309",   grade: "Good",      img: "https://picsum.photos/seed/nswx/400/400" },
+    { name: "Apple Watch S9",      type: "Wearables", spec: "45mm · GPS · Midnight",     price: "£299",   was: "£429",   grade: "Pristine",  img: "https://picsum.photos/seed/aws9x/400/400" },
+    { name: "Samsung Watch 6",     type: "Wearables", spec: "44mm · LTE · Graphite",     price: "£199",   was: "£329",   grade: "Excellent", img: "https://picsum.photos/seed/sw6x/400/400" },
+    { name: "Garmin Fenix 7",      type: "Wearables", spec: "GPS · Solar · Black DLC",   price: "£349",   was: "£679",   grade: "Good",      img: "https://picsum.photos/seed/gf7x/400/400" },
+  ];
+
+  const filtered = active === "All" ? products : products.filter(p => p.type === active);
+
+  return (
+    <section id="shop" className="border-t border-zinc-100">
+      {/* Sticky filter bar */}
+      <div className="sticky top-16 lg:top-20 z-30 bg-white/95 backdrop-blur-md border-b border-zinc-100 shadow-sm">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide py-3.5">
+            {cats.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setActive(cat)}
+                className={`flex-shrink-0 h-9 px-5 rounded-full font-bold text-xs transition-all duration-200 ${
+                  active === cat ? "bg-zinc-950 text-white" : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 hover:text-zinc-950"
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+            <div className="ml-auto flex-shrink-0">
+              <a href="/shop" className="h-9 px-5 rounded-full border border-zinc-200 font-bold text-xs text-zinc-600 hover:border-zinc-950 hover:text-zinc-950 transition-all flex items-center gap-1.5 whitespace-nowrap">
+                View all <ArrowRight className="h-3.5 w-3.5" />
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Grid */}
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
+        <div className="flex items-center justify-between mb-8">
+          <p className="text-sm font-bold text-zinc-400">{filtered.length} products</p>
+          <div className="flex items-center gap-2 text-xs font-bold text-zinc-400">
+            Sort:
+            <select className="text-zinc-950 font-bold bg-transparent outline-none cursor-pointer">
+              <option>Featured</option>
+              <option>Price ↑</option>
+              <option>Price ↓</option>
+              <option>Newest</option>
+            </select>
+          </div>
+        </div>
+
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={active}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6"
+          >
+            {filtered.map((p, i) => <ProductCard key={`${active}-${i}`} {...p} index={i} />)}
+          </motion.div>
+        </AnimatePresence>
+
+        <div className="mt-12 text-center">
+          <a href="/shop" className="inline-flex items-center gap-2 h-12 px-8 border-2 border-zinc-950 text-zinc-950 rounded-2xl font-bold text-sm hover:bg-zinc-950 hover:text-white transition-all duration-300">
+            See all {active === "All" ? "products" : active.toLowerCase()} <ArrowRight className="h-4 w-4" />
+          </a>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── Shop By Brand ─────────────────────────────────────────────────────────────
+function ShopByBrand() {
+  const [idx, setIdx] = useState(0);
+
+  const brands = [
+    {
+      name: "Apple", accent: "bg-zinc-950 text-white",
+      products: [
+        { name: "iPhone 15 Pro Max", type: "Apple", spec: "256GB · Black Titanium", price: "£999",   was: "£1,299", grade: "Excellent", img: "https://picsum.photos/seed/ip15pma/400/400" },
+        { name: "MacBook Pro M3",    type: "Apple", spec: "18GB · 512GB SSD",       price: "£1,699", was: "£2,499", grade: "Pristine",  img: "https://picsum.photos/seed/mbpm3a/400/400" },
+        { name: "iPad Air 5",        type: "Apple", spec: "64GB · WiFi · Purple",   price: "£399",   was: "£679",   grade: "Good",      img: "https://picsum.photos/seed/ipa5a/400/400" },
+        { name: "AirPods Max",       type: "Apple", spec: "Over-ear · Space Grey",  price: "£349",   was: "£549",   grade: "Excellent", img: "https://picsum.photos/seed/apma/400/400" },
+      ],
+    },
+    {
+      name: "Samsung", accent: "bg-blue-600 text-white",
+      products: [
+        { name: "Galaxy S24 Ultra",  type: "Samsung", spec: "256GB · Titanium Black", price: "£799", was: "£1,299", grade: "Pristine",  img: "https://picsum.photos/seed/s24ua/400/400" },
+        { name: "Galaxy Tab S9",     type: "Samsung", spec: "128GB · Beige · WiFi",   price: "£549", was: "£799",   grade: "Excellent", img: "https://picsum.photos/seed/s9ta/400/400" },
+        { name: "Galaxy Z Flip 5",   type: "Samsung", spec: "256GB · Lavender",       price: "£549", was: "£999",   grade: "Good",      img: "https://picsum.photos/seed/zf5a/400/400" },
+        { name: "Galaxy Buds 2 Pro", type: "Samsung", spec: "White · ANC",            price: "£89",  was: "£229",   grade: "Excellent", img: "https://picsum.photos/seed/gb2pa/400/400" },
+      ],
+    },
+    {
+      name: "Sony", accent: "bg-zinc-700 text-white",
+      products: [
+        { name: "Sony WH-1000XM5",  type: "Sony", spec: "Wireless ANC · Black",     price: "£199",   was: "£380",   grade: "Excellent", img: "https://picsum.photos/seed/xm5a/400/400" },
+        { name: "Sony WF-1000XM5",  type: "Sony", spec: "True Wireless · Black",    price: "£149",   was: "£299",   grade: "Good",      img: "https://picsum.photos/seed/wf5a/400/400" },
+        { name: "Sony A7 III",       type: "Sony", spec: "Full Frame · Body Only",   price: "£1,299", was: "£1,999", grade: "Excellent", img: "https://picsum.photos/seed/a7iiia/400/400" },
+        { name: "PS5 Digital",       type: "Sony", spec: "825GB SSD · White",        price: "£299",   was: "£449",   grade: "Good",      img: "https://picsum.photos/seed/ps5da/400/400" },
+      ],
+    },
+    {
+      name: "Google", accent: "bg-emerald-600 text-white",
+      products: [
+        { name: "Pixel 8 Pro",      type: "Google", spec: "256GB · Bay Blue",         price: "£599", was: "£999",  grade: "Pristine",  img: "https://picsum.photos/seed/px8proa/400/400" },
+        { name: "Pixel 8",          type: "Google", spec: "128GB · Hazel",            price: "£399", was: "£599",  grade: "Excellent", img: "https://picsum.photos/seed/px8ba/400/400" },
+        { name: "Pixel Watch 2",    type: "Google", spec: "GPS · LTE · Champagne",   price: "£249", was: "£379",  grade: "Good",      img: "https://picsum.photos/seed/pw2a/400/400" },
+        { name: "Pixel Buds Pro",   type: "Google", spec: "True Wireless · ANC",     price: "£99",  was: "£219",  grade: "Excellent", img: "https://picsum.photos/seed/pbpa/400/400" },
+      ],
+    },
+  ];
+
+  const brand = brands[idx];
+
+  return (
+    <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-24">
+      <div className="flex items-end justify-between mb-12">
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-3">Shop by brand</p>
+          <h2 className="font-serif text-5xl md:text-6xl font-medium text-zinc-950 leading-none">Your favourite <i>brands.</i></h2>
+        </div>
+        <a href="/shop" className="hidden md:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-zinc-950 transition-colors border-b border-zinc-300 pb-1">
+          All brands <ArrowRight className="h-3.5 w-3.5" />
+        </a>
+      </div>
+
+      <div className="flex gap-3 mb-10 overflow-x-auto scrollbar-hide pb-1">
+        {brands.map((b, i) => (
+          <button
+            key={b.name}
+            onClick={() => setIdx(i)}
+            className={`flex-shrink-0 h-11 px-7 rounded-2xl font-bold text-sm transition-all duration-200 ${
+              idx === i ? b.accent + " shadow-lg" : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 hover:text-zinc-950"
+            }`}
+          >
+            {b.name}
+          </button>
+        ))}
+      </div>
+
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={idx}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.2 }}
+          className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6"
+        >
+          {brand.products.map((p, i) => <ProductCard key={i} {...p} index={i} />)}
+        </motion.div>
+      </AnimatePresence>
+
+      <div className="mt-10 text-center">
+        <a href="/shop" className="inline-flex items-center gap-2 h-12 px-7 border border-zinc-200 text-zinc-950 rounded-2xl font-bold text-sm hover:bg-zinc-50 transition-colors">
+          All {brand.name} products <ArrowRight className="h-4 w-4" />
+        </a>
+      </div>
+    </section>
+  );
+}
+
+// ─── Budget Picks ──────────────────────────────────────────────────────────────
+function BudgetPicks() {
+  const under200: PCard[] = [
+    { name: "AirPods 3rd Gen",    type: "Audio",     spec: "MagSafe · White",            price: "£109", was: "£179", grade: "Good",      img: "https://picsum.photos/seed/airp3b/400/400" },
+    { name: "Samsung Galaxy A54", type: "Phone",     spec: "128GB · Awesome Black",      price: "£149", was: "£349", grade: "Good",      img: "https://picsum.photos/seed/a54b/400/400" },
+    { name: "Google Pixel 7a",    type: "Phone",     spec: "128GB · Charcoal",           price: "£199", was: "£449", grade: "Good",      img: "https://picsum.photos/seed/px7ab/400/400" },
+    { name: "JBL Charge 5",       type: "Audio",     spec: "Portable · Waterproof",      price: "£79",  was: "£179", grade: "Excellent", img: "https://picsum.photos/seed/jblb/400/400" },
+    { name: "Apple Watch SE 2",   type: "Wearable",  spec: "GPS · 44mm · Midnight",      price: "£169", was: "£279", grade: "Excellent", img: "https://picsum.photos/seed/awse2b/400/400" },
+    { name: "Kindle Paperwhite",  type: "Tablet",    spec: "8GB · WiFi · Black",         price: "£69",  was: "£149", grade: "Excellent", img: "https://picsum.photos/seed/kpwb/400/400" },
+    { name: "Nintendo Switch",    type: "Gaming",    spec: "HAC-001 · Neon Blue/Red",    price: "£149", was: "£279", grade: "Good",      img: "https://picsum.photos/seed/nsb/400/400" },
+  ];
+
+  const under500: PCard[] = [
+    { name: "iPhone 13",          type: "Phone",     spec: "128GB · Starlight",          price: "£379", was: "£699", grade: "Excellent", img: "https://picsum.photos/seed/ip13b/400/400" },
+    { name: "MacBook Air M1",     type: "Laptop",    spec: "8GB RAM · 256GB SSD",        price: "£499", was: "£899", grade: "Good",      img: "https://picsum.photos/seed/mba1b/400/400" },
+    { name: "iPad 10th Gen",      type: "Tablet",    spec: "64GB · WiFi · Yellow",       price: "£349", was: "£499", grade: "Good",      img: "https://picsum.photos/seed/ip10b/400/400" },
+    { name: "Samsung Tab A9+",    type: "Tablet",    spec: "64GB · WiFi · Silver",       price: "£249", was: "£399", grade: "Pristine",  img: "https://picsum.photos/seed/ta9pb/400/400" },
+    { name: "Sony WH-1000XM4",   type: "Audio",     spec: "Wireless ANC · Black",       price: "£149", was: "£349", grade: "Good",      img: "https://picsum.photos/seed/xm4b/400/400" },
+    { name: "PS5 Digital",        type: "Gaming",    spec: "825GB SSD · White",          price: "£299", was: "£449", grade: "Excellent", img: "https://picsum.photos/seed/ps5db/400/400" },
+    { name: "Garmin Venu 3",      type: "Wearable",  spec: "GPS · AMOLED · Slate",       price: "£299", was: "£449", grade: "Excellent", img: "https://picsum.photos/seed/gv3b/400/400" },
+  ];
+
+  function PriceRow({ title, badge, items }: { title: string; badge: string; items: PCard[] }) {
+    return (
+      <div className="mb-16 last:mb-0">
+        <div className="flex items-center justify-between mb-8 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-4">
+            <h3 className="font-serif text-3xl md:text-4xl font-medium text-zinc-950">{title}</h3>
+            <span className="px-3 py-1 bg-accent text-zinc-950 text-[10px] font-bold uppercase tracking-widest rounded-full">{badge}</span>
+          </div>
+          <a href="/shop" className="hidden sm:flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-zinc-950 transition-colors">
+            See all <ArrowRight className="h-3.5 w-3.5" />
+          </a>
+        </div>
+        <div className="flex gap-4 overflow-x-auto scrollbar-hide pl-4 sm:pl-6 lg:pl-8 pr-8 pb-2">
+          {items.map((p, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, x: 16 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.06 }}
+              className="flex-shrink-0 w-[190px] md:w-[210px] group cursor-pointer"
+            >
+              <div className="relative aspect-square rounded-2xl bg-zinc-100 overflow-hidden mb-3 group-hover:shadow-lg transition-shadow duration-300">
+                <img src={p.img} alt={p.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <div className={`absolute top-2.5 left-2.5 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest ${GRADE_STYLE[p.grade] ?? "bg-zinc-100 text-zinc-600"}`}>{p.grade}</div>
+                <button className="absolute bottom-2.5 right-2.5 h-9 w-9 rounded-full bg-zinc-950 text-white flex items-center justify-center opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+                  <ShoppingCart className="h-3.5 w-3.5" />
+                </button>
+              </div>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-0.5">{p.type}</p>
+              <p className="font-bold text-zinc-950 text-xs leading-tight truncate mb-1.5">{p.name}</p>
+              <div className="flex items-baseline gap-2">
+                <span className="text-base font-bold text-zinc-950">{p.price}</span>
+                <span className="text-[11px] text-zinc-400 line-through">{p.was}</span>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <section className="py-20 bg-zinc-50 border-y border-zinc-100 overflow-hidden">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-14">
+        <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-3">Budget deals</p>
+        <h2 className="font-serif text-5xl md:text-6xl font-medium text-zinc-950 leading-none">More for <i>less.</i></h2>
+      </div>
+      <PriceRow title="Under £200" badge="Great value" items={under200} />
+      <PriceRow title="Under £500" badge="Most popular" items={under500} />
+    </section>
+  );
+}
+
 // ─── Sell Your Device CTA ─────────────────────────────────────────────────────
 function SellCTA() {
   return (
@@ -1216,11 +1518,14 @@ export default function HomePage() {
       <Hero />
       <BrandsBar />
       <CategoryBento />
+      <FeaturedShop />
+      <FlashDeals />
+      <ShopByBrand />
+      <NewArrivals />
+      <BudgetPicks />
       <ShopByBudget />
       <TrustPillars />
-      <FlashDeals />
       <TrendingDeals />
-      <NewArrivals />
       <HowItWorks />
       <GradeGuide />
       <AppPreview />

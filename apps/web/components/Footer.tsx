@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import {
   CheckCircle2,
   Star,
@@ -13,6 +14,9 @@ import {
 import { motion } from "framer-motion";
 
 export default function Footer() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   return (
     <footer className="bg-white pt-24 pb-12 border-t border-zinc-100 text-black font-sans selection:bg-accent selection:text-black">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -24,17 +28,21 @@ export default function Footer() {
               <h3 className="font-serif text-4xl md:text-5xl font-medium mb-4">Don't miss the <i>good</i> stuff.</h3>
               <p className="text-black/60 font-medium">Get exclusive deals, new drops, and e-waste reports.</p>
            </div>
-           <div className="relative z-10 flex flex-col sm:flex-row gap-4 w-full max-w-md">
-              <input 
-                type="email" 
-                placeholder="you@example.com" 
-                className="h-16 px-8 rounded-2xl bg-white border-transparent focus:ring-2 focus:ring-black outline-none flex-1 font-bold text-sm shadow-xl"
-              />
-              <button className="h-16 px-8 bg-black text-white rounded-2xl font-bold transition-transform active:scale-95 shadow-xl flex items-center justify-center gap-2">
-                Join
-                <ArrowRight className="h-4 w-4 text-accent" />
-              </button>
-           </div>
+           {mounted ? (
+             <div className="relative z-10 flex flex-col sm:flex-row gap-4 w-full max-w-md">
+               <input
+                 type="email"
+                 placeholder="you@example.com"
+                 className="h-16 px-8 rounded-2xl bg-white border-transparent focus:ring-2 focus:ring-black outline-none flex-1 font-bold text-sm shadow-xl"
+               />
+               <button className="h-16 px-8 bg-black text-white rounded-2xl font-bold transition-transform active:scale-95 shadow-xl flex items-center justify-center gap-2">
+                 Join
+                 <ArrowRight className="h-4 w-4 text-accent" />
+               </button>
+             </div>
+           ) : (
+             <div className="relative z-10 w-full max-w-md h-16 rounded-2xl bg-white/60 animate-pulse shadow-xl" />
+           )}
         </div>
 
         <div className="grid gap-16 md:grid-cols-2 lg:grid-cols-4 pb-20 border-b border-zinc-100">
