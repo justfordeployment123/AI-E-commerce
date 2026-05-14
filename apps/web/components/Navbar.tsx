@@ -26,7 +26,7 @@ export default function Navbar({ itemsCount = 0 }: { itemsCount?: number }) {
             {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
           <a href="/" className="text-xl md:text-2xl font-bold tracking-tighter text-black">
-            MARKHOR<span className="text-zinc-400">MARKET</span>
+            TECHSTOP<span className="text-zinc-400">LEICESTER</span>
           </a>
           <div className="hidden md:block">
             <div className="relative">

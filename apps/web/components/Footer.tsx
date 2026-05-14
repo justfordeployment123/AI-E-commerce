@@ -7,7 +7,7 @@ export default function Footer() {
         <div className="grid gap-12 md:gap-16 md:grid-cols-4 pb-16 md:pb-20 border-b border-zinc-50">
           <div className="col-span-full lg:col-span-2">
             <a href="/" className="text-2xl md:text-3xl font-bold tracking-tighter text-black">
-              MARKHOR<span className="text-zinc-400">MARKET</span>
+              TECHSTOP<span className="text-zinc-400">LEICESTER</span>
             </a>
             <p className="mt-6 md:mt-8 max-w-sm text-zinc-500 leading-relaxed font-medium">
               We're on a mission to make world-class technology accessible and sustainable. 
@@ -53,7 +53,7 @@ export default function Footer() {
         </div>
 
         <div className="pt-10 md:pt-12 flex flex-col md:flex-row justify-between items-center gap-6">
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 text-center md:text-left">© 2024 Markhor Market. Built for the planet.</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 text-center md:text-left">© 2024 TechStop Leicester. Built for the planet.</p>
           <div className="flex gap-6 md:gap-8 text-[10px] font-bold uppercase tracking-widest text-zinc-400">
             <a href="/privacy" className="hover:text-black transition-colors">Privacy</a>
             <a href="/terms" className="hover:text-black transition-colors">Terms</a>
