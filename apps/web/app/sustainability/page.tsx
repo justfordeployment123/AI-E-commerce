@@ -13,7 +13,7 @@ export default function SustainabilityPage() {
       <header className="border-b border-zinc-100 bg-white">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <a href="/" className="text-2xl font-bold tracking-tighter">
-            MARKHOR<span className="text-zinc-400">MARKET</span>
+            TECHSTOP<span className="text-zinc-400">LEICESTER</span>
           </a>
           <nav className="flex items-center gap-6 text-sm font-medium">
             <a href="/shop" className="hover:text-zinc-600">Shop</a>

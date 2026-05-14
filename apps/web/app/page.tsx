@@ -37,7 +37,7 @@ function PhoneShopScreen() {
     <div className="flex h-full flex-col bg-white text-black">
       <div className="flex items-center justify-between px-4 pt-12 pb-4">
         <Menu className="h-5 w-5" />
-        <div className="text-[10px] font-bold tracking-tighter uppercase">MARKHOR</div>
+        <div className="text-[10px] font-bold tracking-tighter uppercase">TECHSTOP</div>
         <ShoppingCart className="h-5 w-5" />
       </div>
       <div className="flex-1 px-4 py-2 overflow-y-auto scrollbar-hide">
@@ -425,7 +425,7 @@ function Navbar() {
             {isOpen ? <Check className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
           <a href="/" className="text-xl md:text-2xl font-bold tracking-tighter">
-            MARKHOR<span className="text-zinc-400">MARKET</span>
+            TECHSTOP<span className="text-zinc-400">LEICESTER</span>
           </a>
           <div className="hidden md:block">
             <div className="relative">
@@ -901,7 +901,7 @@ function Footer() {
         <div className="grid gap-12 md:gap-16 md:grid-cols-4 pb-16 md:pb-20">
           <div className="col-span-full lg:col-span-2">
             <a href="/" className="text-2xl md:text-3xl font-bold tracking-tighter">
-              MARKHOR<span className="text-zinc-400">MARKET</span>
+              TECHSTOP<span className="text-zinc-400">LEICESTER</span>
             </a>
             <p className="mt-6 md:mt-8 max-w-sm text-zinc-500 leading-relaxed font-medium">
               We're on a mission to make world-class technology accessible and sustainable. 
@@ -928,7 +928,7 @@ function Footer() {
           </div>
         </div>
         <div className="pt-10 md:pt-12 border-t border-zinc-100 flex flex-col md:flex-row justify-between items-center gap-6">
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 text-center md:text-left">© 2024 Markhor Market. Built for the planet.</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 text-center md:text-left">© 2024 TechStop Leicester. Built for the planet.</p>
           <div className="flex gap-6 md:gap-8 text-[10px] font-bold uppercase tracking-widest text-zinc-400">
             <a href="/privacy" className="hover:text-black transition-colors">Privacy</a>
             <a href="/terms" className="hover:text-black transition-colors">Terms</a>

@@ -31,7 +31,7 @@ export default function SignupPage() {
           </a>
           <div className="text-center">
             <a href="/" className="text-3xl font-bold tracking-tighter inline-block mb-8">
-              MARKHOR<span className="text-zinc-400">MARKET</span>
+              TECHSTOP<span className="text-zinc-400">LEICESTER</span>
             </a>
             <h1 className="text-3xl font-bold tracking-tight">Create an account</h1>
             <p className="text-zinc-500 mt-3 font-medium">Join the marketplace for premium refurbished technology.</p>

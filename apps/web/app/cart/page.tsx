@@ -122,7 +122,7 @@ export default function CartPage() {
           <div className="flex-1">
             <header className="mb-12 flex items-end justify-between border-b border-zinc-100 pb-8">
               <div>
-                <h1 className="font-serif text-4xl md:text-6xl font-medium text-black tracking-tight">Your Bag</h1>
+                <h1 className="font-serif text-4xl md:text-6xl font-medium text-black tracking-tight">TechStop Bag</h1>
                 <p className="text-zinc-500 mt-3 font-medium text-lg">{items.length} items ready for checkout</p>
               </div>
             </header>

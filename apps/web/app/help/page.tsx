@@ -29,7 +29,7 @@ export default function HelpPage() {
 
   const faqs = [
     "How do I track my order?",
-    "What is the Markhor Market warranty?",
+    "What is the TechStop Leicester warranty?",
     "Can I return a device if I don't like it?",
     "How long does it take to get paid for a trade-in?",
     "What comes in the box with my device?",

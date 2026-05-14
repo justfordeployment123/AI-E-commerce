@@ -19,7 +19,7 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
-  title: "Markhor Market | Certified Refurbished Tech",
+  title: "TechStop Leicester | Certified Refurbished Tech",
   description:
     "Premium marketplace for certified refurbished electronics with warranty, quality grading, and fast delivery.",
 };

@@ -32,7 +32,7 @@ export default function HowItWorksPage() {
               animate={{ opacity: 1, scale: 1 }}
               className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 border border-zinc-100 mb-8"
             >
-              The Markhor Standard
+              The TechStop Standard
             </motion.div>
             <motion.h1 
               initial={{ opacity: 0, y: 20 }}
