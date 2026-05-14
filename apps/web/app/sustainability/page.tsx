@@ -1,81 +1,207 @@
+"use client";
+
 import { 
   Leaf, 
   Wind, 
   Droplets, 
   Recycle,
-  ArrowRight
+  ArrowRight,
+  Zap,
+  ShieldCheck,
+  CheckCircle2,
+  TreeDeciduous,
+  Globe
 } from "lucide-react";
+import { motion } from "framer-motion";
+import Navbar from "../../components/Navbar";
+import Footer from "../../components/Footer";
 
 export default function SustainabilityPage() {
   return (
-    <div className="flex min-h-screen flex-col bg-white text-black font-sans">
-      {/* Navigation */}
-      <header className="border-b border-zinc-100 bg-white">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <a href="/" className="text-2xl font-bold tracking-tighter">
-            TECHSTOP<span className="text-zinc-400">LEICESTER</span>
-          </a>
-          <nav className="flex items-center gap-6 text-sm font-medium">
-            <a href="/shop" className="hover:text-zinc-600">Shop</a>
-            <a href="/how-it-works" className="hover:text-zinc-600">How it works</a>
-          </nav>
-        </div>
-      </header>
+    <div className="flex min-h-screen flex-col bg-white text-black font-sans selection:bg-accent selection:text-black">
+      <Navbar />
 
       <main className="flex-1">
-        {/* Hero Section */}
-        <section className="relative h-[60vh] overflow-hidden">
-          <img 
-            src="https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?q=80&w=1600&auto=format&fit=crop" 
-            className="absolute inset-0 h-full w-full object-cover"
-            alt="Sustainability"
-          />
-          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-            <div className="max-w-3xl px-4 text-center text-white">
-              <h1 className="font-serif text-5xl md:text-7xl font-medium mb-6 italic">Tech for the future.</h1>
-              <p className="text-xl md:text-2xl text-zinc-200">
-                Why buy new when you can save the planet? Refurbished is the most sustainable choice for tech.
-              </p>
+        {/* Hero Section (Back Market Mood Emerald) */}
+        <section className="bg-mood-emerald py-24 md:py-32 overflow-hidden border-b border-zinc-100 relative">
+           <div className="absolute top-0 right-0 w-1/2 h-full bg-white/20 blur-[150px] rounded-full translate-x-1/2" />
+          
+          <div className="mx-auto max-w-7xl px-4 relative z-10 text-center lg:text-left">
+            <div className="grid lg:grid-cols-2 gap-16 items-center">
+              <div>
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="inline-flex items-center gap-2 rounded-full bg-black text-white px-4 py-2 text-[10px] font-bold uppercase tracking-widest mb-8"
+                >
+                  <Leaf className="h-3.5 w-3.5 text-accent" />
+                  Eco-Certified Marketplace
+                </motion.div>
+                <motion.h1 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className="font-serif text-5xl md:text-8xl font-medium mb-8 leading-[0.9] tracking-tighter"
+                >
+                  Tech that <br/>
+                  <span className="italic text-emerald-900">loves Earth.</span>
+                </motion.h1>
+                <motion.p 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="text-xl text-black/60 mb-12 max-w-lg mx-auto lg:mx-0 leading-relaxed font-medium"
+                >
+                  Buying refurbished isn't just about saving cash—it's about saving the planet. One device at a time.
+                </motion.p>
+                
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
+                >
+                  <a href="/shop" className="h-16 px-10 bg-black text-white rounded-2xl font-bold flex items-center justify-center gap-3 transition-transform hover:scale-105 active:scale-95 shadow-2xl">
+                    Shop Sustainably
+                    <ArrowRight className="h-5 w-5 text-accent" />
+                  </a>
+                </motion.div>
+              </div>
+
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.2 }}
+                className="relative hidden lg:block"
+              >
+                 <div className="aspect-square bg-white rounded-[4rem] p-12 -rotate-6 shadow-2xl flex flex-col justify-center text-center relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-gradient-to-br from-mood-emerald/20 to-transparent" />
+                    <div className="relative z-10">
+                       <div className="h-24 w-24 rounded-3xl bg-mood-emerald flex items-center justify-center mx-auto mb-8 rotate-12 transition-transform group-hover:scale-110">
+                          <TreeDeciduous className="h-12 w-12 text-black" />
+                       </div>
+                       <h3 className="text-4xl font-serif font-medium mb-2">12,000+</h3>
+                       <p className="text-sm font-bold uppercase tracking-widest text-zinc-400">Trees saved this year</p>
+                    </div>
+                 </div>
+              </motion.div>
             </div>
           </div>
         </section>
 
-        {/* Stats Section */}
-        <section className="py-24 bg-accent/10">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="grid gap-12 md:grid-cols-3 text-center">
-              {[
-                { label: "CO2 Saved", value: "77kg", icon: Wind, text: "The amount of carbon emissions avoided per refurbished smartphone." },
-                { label: "Raw Materials", value: "243kg", icon: Recycle, text: "Amount of raw materials saved from mining for new components." },
-                { label: "Water Saved", value: "12k Liters", icon: Droplets, text: "Water usage avoided compared to manufacturing a new device." }
-              ].map((stat) => (
-                <div key={stat.label} className="bg-white rounded-[2.5rem] p-10 shadow-sm border border-zinc-100">
-                  <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-accent/20 mb-6">
-                    <stat.icon className="h-8 w-8 text-black" />
-                  </div>
-                  <h3 className="text-4xl font-bold mb-2">{stat.value}</h3>
-                  <p className="text-xs font-bold uppercase tracking-widest text-zinc-400 mb-4">{stat.label}</p>
-                  <p className="text-sm text-zinc-600 leading-relaxed">{stat.text}</p>
+        {/* The Impact (Playful Stats) */}
+        <section className="py-32 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+           <div className="flex flex-col md:flex-row items-end justify-between mb-24 gap-8">
+              <div className="max-w-xl">
+                 <h2 className="font-serif text-5xl md:text-7xl font-medium leading-tight">Every device <br/>counts.</h2>
+              </div>
+              <p className="text-xl text-zinc-400 font-medium">Why buy new? Seriously.</p>
+           </div>
+          
+          <div className="grid gap-12 lg:grid-cols-3">
+            {[
+              {
+                title: "90% Less CO2",
+                text: "Refurbished tech prevents up to 90% of the carbon emissions of a new device.",
+                icon: Wind,
+                mood: "bg-mood-sky"
+              },
+              {
+                title: "Zero e-Waste",
+                text: "We keep tech out of landfills by giving it a second, third, and fourth life.",
+                icon: Recycle,
+                mood: "bg-mood-rose"
+              },
+              {
+                title: "10k Liters Saved",
+                text: "Manufacturing one new smartphone uses as much water as 500 average showers.",
+                icon: Droplets,
+                mood: "bg-mood-violet"
+              }
+            ].map((item, index) => (
+              <motion.div 
+                key={item.title}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1 }}
+                className="group relative"
+              >
+                <div className={`aspect-square rounded-[3rem] ${item.mood} p-10 flex flex-col justify-between transition-transform group-hover:-translate-y-2`}>
+                   <div className="h-16 w-16 rounded-2xl bg-white flex items-center justify-center shadow-sm">
+                     <item.icon className="h-8 w-8 text-black" strokeWidth={1.5} />
+                   </div>
+                   <div>
+                     <h3 className="text-3xl font-serif font-medium mb-4">{item.title}</h3>
+                     <p className="text-black/60 leading-relaxed font-medium">{item.text}</p>
+                   </div>
                 </div>
-              ))}
-            </div>
+              </motion.div>
+            ))}
           </div>
         </section>
 
-        {/* Mission Quote */}
-        <section className="py-32 bg-white">
-          <div className="mx-auto max-w-3xl px-4 text-center">
-            <Leaf className="h-12 w-12 mx-auto mb-8 text-accent" />
-            <h2 className="font-serif text-4xl md:text-5xl font-medium leading-tight mb-12">
-              "Our goal is to extend the life of electronics and reduce the 50 million tons of e-waste produced every year."
-            </h2>
-            <a href="/shop" className="inline-flex items-center gap-3 rounded-full bg-black px-10 py-5 text-sm font-bold text-white transition-transform hover:scale-105">
-              Start shopping sustainably
-              <ArrowRight className="h-4 w-4" />
-            </a>
-          </div>
+        {/* Long Form Mission (High Contrast) */}
+        <section className="py-32 bg-zinc-950 text-white overflow-hidden">
+           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+              <div className="grid lg:grid-cols-2 gap-24 items-center">
+                 <div className="relative">
+                    <div className="aspect-[4/5] rounded-[4rem] bg-mood-emerald/10 border border-white/5 p-12 relative overflow-hidden group">
+                       <img 
+                        src="https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?q=80&w=800&auto=format&fit=crop" 
+                        alt="Nature" 
+                        className="absolute inset-0 w-full h-full object-cover opacity-30 grayscale transition-all duration-1000 group-hover:grayscale-0 group-hover:scale-110"
+                       />
+                       <div className="relative z-10 h-full flex flex-col justify-end">
+                          <div className="bg-white text-black p-10 rounded-[3rem] shadow-2xl">
+                             <div className="h-12 w-12 rounded-2xl bg-emerald-500 flex items-center justify-center text-white mb-6">
+                                <Globe className="h-6 w-6" />
+                             </div>
+                             <p className="text-2xl font-serif font-medium mb-4">"Buying refurbished is the most impactful thing you can do for the planet."</p>
+                             <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">— TechStop Ethics Board</p>
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+                 <div>
+                    <h2 className="font-serif text-5xl md:text-7xl font-medium mb-12">The circular <br/><span className="text-accent">revolution.</span></h2>
+                    <div className="space-y-10">
+                       {[
+                         { title: "No New Mining", text: "New tech requires destructive mining for rare minerals. Refurbished uses what's already here." },
+                         { title: "Extended Life", text: "We repair and renew devices to double or triple their useful lifespan." },
+                         { title: "Recycling is Last", text: "We believe in reuse first. Recycling is our final step for parts that truly can't be saved." }
+                       ].map((item, i) => (
+                         <div key={i} className="flex gap-8 group">
+                            <div className="h-2 w-2 rounded-full bg-accent mt-3 transition-transform group-hover:scale-150" />
+                            <div>
+                               <h4 className="text-2xl font-bold mb-3">{item.title}</h4>
+                               <p className="text-zinc-500 font-medium leading-relaxed">{item.text}</p>
+                            </div>
+                         </div>
+                       ))}
+                    </div>
+                 </div>
+              </div>
+           </div>
+        </section>
+
+        {/* CTA */}
+        <section className="py-32 bg-white text-center">
+           <div className="mx-auto max-w-4xl px-4">
+              <h2 className="font-serif text-5xl md:text-8xl font-medium mb-12">Join the movement.</h2>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                 <button className="h-20 px-16 bg-black text-white rounded-[2rem] font-bold text-lg transition-all hover:scale-105 active:scale-95 shadow-2xl">
+                    Browse All Tech
+                 </button>
+                 <button className="h-20 px-16 border-2 border-zinc-100 text-black rounded-[2rem] font-bold text-lg hover:bg-zinc-50 transition-all">
+                    Sell Your Device
+                 </button>
+              </div>
+           </div>
         </section>
       </main>
+
+      <Footer />
     </div>
   );
 }
