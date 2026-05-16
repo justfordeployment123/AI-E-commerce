@@ -10,6 +10,148 @@ import {
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 
+// ─── Promo Carousel Banner ───────────────────────────────────────────────────
+function PromoCarouselBanner() {
+  const [idx, setIdx] = useState(0);
+  const slides = [
+    {
+      title: "Weekend Offer+",
+      img: "/galaxy_watch_promo_1778927696615.png", 
+      text: "Save up to £20 on Galaxy Watch\nthis weekend only.*",
+      bg: "bg-[#d4c3f4]", // Light purple
+      accent: "text-purple-700",
+      btn: "Save now",
+    },
+    {
+      title: "Student Discount",
+      img: "/laptop_student_promo_1778927711734.png", 
+      text: "Get 5% off everything\nall year round.",
+      bg: "bg-[#b8e4d3]", // Light green
+      accent: "text-emerald-700",
+      btn: "Unlock code",
+    },
+    {
+      title: "Trade-in Bonus",
+      img: "/iphone_tradein_promo_1778927727005.png", 
+      text: "Extra £30 when you trade in\nyour old iPhone.",
+      bg: "bg-[#ffdca8]", // Light orange
+      accent: "text-orange-700",
+      btn: "Get a quote",
+    }
+  ];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setIdx((prev) => (prev + 1) % slides.length);
+    }, 6000);
+    return () => clearInterval(timer);
+  }, [slides.length]);
+
+  return (
+    <section className="w-full relative overflow-hidden bg-white">
+      <div className={`w-full transition-colors duration-700 ease-in-out ${slides[idx].bg}`}>
+        <div className="mx-auto max-w-[1600px] px-6 lg:px-12 py-12 md:py-20">
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-12 relative z-10">
+            
+            {/* Left: Title & Branding */}
+            <div className="w-full lg:w-[35%] flex flex-col gap-6 text-center lg:text-left">
+              <motion.div
+                key={`title-${idx}`}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="flex flex-col"
+              >
+                <span className="text-[11px] font-black uppercase tracking-[0.3em] text-zinc-950/40 mb-3 block">Special Event</span>
+                <h2 className="font-bold text-4xl md:text-6xl text-zinc-950 tracking-tighter leading-[0.95]">
+                  <span className="font-sans text-3xl font-black align-top mr-2 opacity-30">«</span>
+                  {slides[idx].title}
+                </h2>
+              </motion.div>
+            </div>
+            
+            {/* Center: Image with Decorative Elements */}
+            <div className="w-full lg:w-[30%] flex justify-center relative">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={idx}
+                  initial={{ opacity: 0, scale: 0.9, rotate: -2 }}
+                  animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                  exit={{ opacity: 0, scale: 1.1, rotate: 2 }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
+                  className="relative z-10 h-64 md:h-80 w-full flex items-center justify-center"
+                >
+                  <div className="absolute inset-0 bg-white/20 blur-3xl rounded-full scale-75" />
+                  <img 
+                    src={slides[idx].img} 
+                    alt={slides[idx].title} 
+                    className="h-full object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.15)] mix-blend-multiply transition-transform hover:scale-105 duration-500" 
+                  />
+                </motion.div>
+              </AnimatePresence>
+            </div>
+
+            {/* Right: CTA & Footer Text */}
+            <div className="w-full lg:w-[35%] flex flex-col items-center lg:items-end text-center lg:text-right gap-8">
+              <motion.div
+                key={`text-${idx}`}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex flex-col items-center lg:items-end gap-6"
+              >
+                <p className="text-2xl md:text-3xl font-bold text-zinc-950 whitespace-pre-line leading-tight tracking-tight">
+                  {slides[idx].text}
+                </p>
+                <a 
+                  href="/shop" 
+                  className="group relative inline-flex h-14 px-10 items-center justify-center bg-zinc-950 text-white rounded-2xl font-bold text-sm overflow-hidden transition-all hover:pr-12"
+                >
+                  <span className="relative z-10">{slides[idx].btn}</span>
+                  <ArrowRight className="absolute right-4 h-4 w-4 opacity-0 group-hover:opacity-100 transition-all" />
+                  <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform" />
+                </a>
+              </motion.div>
+              
+              <div className="mt-4">
+                <p className="text-[10px] font-medium text-zinc-600/70 tracking-wide">*Terms and conditions apply. Limited time offer.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Pagination & Navigation */}
+      <div className="absolute bottom-8 left-0 right-0 flex items-center justify-between px-8 lg:px-16 pointer-events-none">
+        <div className="flex items-center gap-3 pointer-events-auto">
+          {slides.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setIdx(i)}
+              className="group relative h-8 w-8 flex items-center justify-center"
+            >
+              <div className={`h-1.5 rounded-full transition-all duration-300 ${idx === i ? "w-6 bg-zinc-950" : "w-1.5 bg-zinc-950/20 group-hover:bg-zinc-950/40"}`} />
+            </button>
+          ))}
+        </div>
+        
+        <div className="flex gap-2 pointer-events-auto">
+          <button 
+            onClick={() => setIdx(i => (i === 0 ? slides.length - 1 : i - 1))} 
+            className="h-12 w-12 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 text-zinc-950 flex items-center justify-center hover:bg-white transition-all shadow-sm active:scale-95"
+          >
+            <span className="text-xl font-light">‹</span>
+          </button>
+          <button 
+            onClick={() => setIdx(i => (i === slides.length - 1 ? 0 : i + 1))} 
+            className="h-12 w-12 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 text-zinc-950 flex items-center justify-center hover:bg-white transition-all shadow-sm active:scale-95"
+          >
+            <span className="text-xl font-light">›</span>
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // ─── Marquee Strip ────────────────────────────────────────────────────────────
 function MarqueeStrip() {
   const items = [
@@ -88,7 +230,7 @@ function Hero() {
   return (
     <section className="relative bg-white overflow-hidden">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="grid lg:grid-cols-2 min-h-[92vh] items-center gap-8 py-16 lg:py-0">
+        <div className="grid lg:grid-cols-2 min-h-[85vh] items-center gap-8 py-20 lg:py-24">
 
           {/* Left */}
           <div className="relative z-10 lg:pr-12">
@@ -153,13 +295,22 @@ function Hero() {
                   Search
                 </a>
               </div>
-              <div className="flex items-center gap-2 mt-3 flex-wrap">
-                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Trending:</span>
-                {["iPhone 15", "MacBook M3", "PlayStation 5", "AirPods Pro"].map((q) => (
-                  <a key={q} href="/shop" className="text-[10px] font-bold px-3 py-1.5 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-600 hover:text-zinc-950 transition-colors">
-                    {q}
-                  </a>
-                ))}
+              <div className="flex flex-col gap-3 mt-4">
+                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Quick Categories:</span>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { name: "iPhones", icon: Smartphone },
+                    { name: "MacBooks", icon: Laptop },
+                    { name: "Tablets", icon: Tablet },
+                    { name: "Audio", icon: Headphones },
+                    { name: "Gaming", icon: Gamepad2 }
+                  ].map((cat) => (
+                    <a key={cat.name} href="/shop" className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl bg-zinc-100 hover:bg-zinc-950 text-zinc-600 hover:text-white transition-colors border border-zinc-200 hover:border-zinc-950">
+                      <cat.icon className="h-3.5 w-3.5" />
+                      {cat.name}
+                    </a>
+                  ))}
+                </div>
               </div>
             </motion.div>
 
@@ -210,87 +361,89 @@ function Hero() {
             transition={{ duration: 0.7, delay: 0.1 }}
             className="relative hidden lg:flex items-center justify-center"
           >
-            {/* BG blob */}
-            <div className="absolute inset-0 bg-accent/30 rounded-[4rem] rotate-3 scale-90" />
-            <div className="absolute inset-0 bg-zinc-50 rounded-[4rem] -rotate-1" />
+            {/* BG decoration */}
+            <div className="absolute inset-0 bg-accent/20 rounded-[4rem] rotate-3 scale-95 z-0 blur-sm" />
+            <div className="absolute inset-0 bg-zinc-50/50 backdrop-blur-3xl rounded-[4rem] -rotate-1 z-0 ring-1 ring-zinc-200" />
 
-            <div className="relative z-10 p-8 w-full">
+            <div className="relative z-10 p-8 w-full max-w-[540px]">
               {/* Featured product card */}
-              <div className="bg-white rounded-3xl p-5 shadow-2xl mb-4 ring-1 ring-zinc-100">
-                <div className="flex items-center gap-4">
-                  <img src="https://picsum.photos/seed/heroip15/200/200" alt="iPhone 15 Pro" className="h-24 w-24 rounded-2xl object-cover flex-shrink-0" />
+              <div className="bg-white rounded-[2.5rem] p-6 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.08)] mb-4 ring-1 ring-zinc-100 group cursor-pointer hover:shadow-[0_48px_80px_-16px_rgba(0,0,0,0.12)] transition-all duration-500">
+                <div className="flex items-center gap-6">
+                  <div className="h-32 w-32 rounded-3xl overflow-hidden bg-zinc-50 flex-shrink-0">
+                    <img src="/showcase_iphone.png" alt="iPhone 15 Pro" className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                  </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-[9px] font-bold uppercase tracking-widest text-sky-700 bg-sky-50 px-2.5 py-1 rounded-full">Excellent</span>
-                      <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">Save £460</span>
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-sky-700 bg-sky-50 px-3 py-1.5 rounded-full">Excellent Grade</span>
+                      <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2.5 py-1.5 rounded-full">Save £460</span>
                     </div>
-                    <p className="font-bold text-zinc-950">iPhone 15 Pro</p>
-                    <p className="text-xs text-zinc-400 mt-0.5">256GB · Black Titanium</p>
-                    <div className="flex items-baseline gap-2 mt-2">
-                      <span className="text-xl font-bold text-zinc-950">£739</span>
-                      <span className="text-xs text-zinc-400 line-through">£1,199</span>
+                    <h3 className="font-bold text-xl text-zinc-950 mb-1">iPhone 15 Pro</h3>
+                    <p className="text-[13px] text-zinc-400 font-medium">256GB · Natural Titanium</p>
+                    <div className="flex items-baseline gap-2.5 mt-3">
+                      <span className="text-2xl font-black text-zinc-950">£739</span>
+                      <span className="text-sm text-zinc-300 line-through font-medium">£1,199</span>
                     </div>
                   </div>
                 </div>
               </div>
+
               {/* Two smaller cards */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-4">
                 {[
-                  { name: "MacBook Air M2", price: "£849", pct: "35", img: "mbhero1", grade: "Pristine", gradeClr: "text-emerald-700 bg-emerald-50" },
-                  { name: "AirPods Pro 2",  price: "£149", pct: "47", img: "aphero1", grade: "Good",     gradeClr: "text-amber-700 bg-amber-50" },
+                  { name: "MacBook Air M2", price: "£849", pct: "35", img: "/showcase_macbook.png", grade: "Pristine", gradeClr: "text-emerald-700 bg-emerald-50" },
+                  { name: "AirPods Pro 2",  price: "£149", pct: "47", img: "/showcase_airpods_pro.png", grade: "Excellent", gradeClr: "text-sky-700 bg-sky-50" },
                 ].map((p, i) => (
-                  <div key={i} className="bg-white rounded-2xl p-4 shadow-lg ring-1 ring-zinc-100">
-                    <img src={`https://picsum.photos/seed/${p.img}/120/120`} alt={p.name} className="h-16 w-full rounded-xl object-cover mb-3" />
-                    <p className="font-bold text-xs text-zinc-950 truncate mb-1">{p.name}</p>
+                  <div key={i} className="bg-white rounded-[2rem] p-5 shadow-[0_20px_40px_-12px_rgba(0,0,0,0.06)] ring-1 ring-zinc-100 group cursor-pointer hover:shadow-[0_32px_50px_-12px_rgba(0,0,0,0.1)] transition-all duration-500">
+                    <div className="h-28 w-full rounded-2xl overflow-hidden bg-zinc-50 mb-4">
+                      <img src={p.img} alt={p.name} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                    </div>
+                    <p className="font-bold text-sm text-zinc-950 truncate mb-1.5">{p.name}</p>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-bold text-zinc-950">{p.price}</span>
-                      <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${p.gradeClr}`}>-{p.pct}%</span>
+                      <span className="text-lg font-black text-zinc-950">{p.price}</span>
+                      <span className={`text-[10px] font-black px-2 py-1 rounded-full ${p.gradeClr}`}>-{p.pct}%</span>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Floating cards */}
+            {/* Floating badges */}
             <motion.div
-              animate={{ y: [0, -8, 0] }}
+              animate={{ y: [0, -12, 0] }}
               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute top-12 -left-6 bg-white border border-zinc-100 rounded-2xl px-4 py-3 shadow-xl flex items-center gap-3"
+              className="absolute top-4 -left-12 z-20 bg-white border border-zinc-100 rounded-3xl px-5 py-4 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.12)] flex items-center gap-4"
             >
-              <div className="h-9 w-9 rounded-xl bg-emerald-50 flex items-center justify-center">
-                <BadgeCheck className="h-5 w-5 text-emerald-600" />
+              <div className="h-11 w-11 rounded-2xl bg-emerald-50 flex items-center justify-center shadow-inner">
+                <BadgeCheck className="h-6 w-6 text-emerald-600" />
               </div>
               <div>
-                <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Grade</p>
-                <p className="text-sm font-bold text-zinc-950">Excellent</p>
+                <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-0.5">Verified</p>
+                <p className="text-base font-black text-zinc-950">Expert Grade</p>
               </div>
             </motion.div>
 
             <motion.div
-              animate={{ y: [0, 8, 0] }}
+              animate={{ y: [0, 12, 0] }}
               transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-              className="absolute bottom-20 -right-4 bg-zinc-950 rounded-2xl px-4 py-3 shadow-xl"
+              className="absolute top-1/2 -right-12 z-20 bg-zinc-950 rounded-3xl px-6 py-5 shadow-2xl"
             >
-              <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-0.5">Saved vs new</p>
-              <p className="text-lg font-bold text-white">- £340</p>
+              <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5">Saved vs new</p>
+              <p className="text-2xl font-black text-white tracking-tight">- £340</p>
             </motion.div>
 
             <motion.div
-              animate={{ y: [0, -6, 0] }}
+              animate={{ y: [0, -8, 0] }}
               transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-              className="absolute bottom-10 left-4 bg-white border border-zinc-100 rounded-2xl px-4 py-3 shadow-xl flex items-center gap-3"
+              className="absolute -bottom-6 left-12 z-20 bg-white border border-zinc-100 rounded-[1.5rem] px-5 py-4 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.12)] flex items-center gap-4"
             >
-              <div className="flex -space-x-1">
-                {["34", "56", "78"].map(seed => (
-                  <img
-                    key={seed}
-                    src={`https://picsum.photos/seed/av${seed}/32/32`}
-                    className="h-7 w-7 rounded-full ring-2 ring-white object-cover"
-                    alt=""
-                  />
+              <div className="flex -space-x-2">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="h-8 w-8 rounded-full border-2 border-white bg-zinc-200 overflow-hidden">
+                    <img src={`https://i.pravatar.cc/100?u=${i+10}`} alt="" className="h-full w-full object-cover" />
+                  </div>
                 ))}
               </div>
-              <p className="text-xs font-bold text-zinc-950">1,240 bought this week</p>
+              <p className="text-xs font-black text-zinc-950 tracking-tight">1,240 bought this week</p>
             </motion.div>
           </motion.div>
         </div>
@@ -304,37 +457,37 @@ function CategoryBento() {
   const cats = [
     {
       name: "Smartphones", sub: "From £149", count: "12,400+ devices",
-      Icon: Smartphone, iconBg: "bg-blue-500",
-      img: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=900&h=1000&fit=crop&q=80",
+      Icon: Smartphone, iconBg: "bg-blue-600",
+      img: "/bento_smartphones.png",
     },
     {
       name: "Laptops", sub: "From £249", count: "4,200+ devices",
-      Icon: Laptop, iconBg: "bg-violet-500",
-      img: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=700&h=500&fit=crop&q=80",
+      Icon: Laptop, iconBg: "bg-violet-600",
+      img: "/bento_laptops.png",
     },
     {
       name: "Audio", sub: "From £39", count: "3,600+ devices",
-      Icon: Headphones, iconBg: "bg-pink-500",
-      img: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=700&h=500&fit=crop&q=80",
+      Icon: Headphones, iconBg: "bg-pink-600",
+      img: "/bento_audio.png",
     },
     {
       name: "Gaming", sub: "From £89", count: "6,100+ devices",
-      Icon: Gamepad2, iconBg: "bg-emerald-500",
-      img: "https://images.unsplash.com/photo-1607853202273-797f1c22a38e?w=700&h=500&fit=crop&q=80",
+      Icon: Gamepad2, iconBg: "bg-emerald-600",
+      img: "/bento_gaming.png",
     },
     {
       name: "Tablets", sub: "From £129", count: "2,800+ devices",
-      Icon: Tablet, iconBg: "bg-amber-500",
-      img: "https://images.unsplash.com/photo-1544244015-c24b59b8102e?w=700&h=500&fit=crop&q=80",
+      Icon: Tablet, iconBg: "bg-amber-600",
+      img: "/bento_tablets.png",
     },
   ];
 
   return (
-    <section className="bg-zinc-50 border-y border-zinc-100 py-24">
+    <section className="bg-white border-y border-zinc-100 py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex items-end justify-between mb-12">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-3">Browse</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-3">Browse by tech</p>
             <h2 className="font-serif text-5xl md:text-6xl font-medium text-zinc-950 leading-none">
               Pick your <i>category.</i>
             </h2>
@@ -344,7 +497,7 @@ function CategoryBento() {
           </a>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 lg:grid-rows-2 gap-4 h-auto lg:h-[560px]">
+        <div className="grid grid-cols-2 lg:grid-cols-4 lg:grid-rows-2 gap-5 h-auto lg:h-[600px]">
           {cats.map((cat, i) => (
             <motion.a
               href="/shop"
@@ -353,30 +506,30 @@ function CategoryBento() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.08 }}
-              className={`group relative overflow-hidden rounded-3xl bg-zinc-200 cursor-pointer ${i === 0 ? "col-span-2 lg:col-span-2 lg:row-span-2" : ""}`}
+              className={`group relative overflow-hidden rounded-[2rem] bg-zinc-100 cursor-pointer ${i === 0 ? "col-span-2 lg:col-span-2 lg:row-span-2" : ""}`}
             >
               <img
                 src={cat.img}
                 alt={cat.name}
-                className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-700"
+                className="absolute inset-0 h-full w-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-out"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/90 via-zinc-950/30 to-zinc-950/5" />
+              <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/80 via-zinc-950/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
 
               {/* Category icon badge */}
-              <div className={`absolute top-4 left-4 h-10 w-10 rounded-2xl ${cat.iconBg} flex items-center justify-center shadow-lg`}>
-                <cat.Icon className="h-5 w-5 text-white" />
+              <div className={`absolute top-6 left-6 h-12 w-12 rounded-2xl ${cat.iconBg} flex items-center justify-center shadow-xl z-10 transition-transform group-hover:scale-110`}>
+                <cat.Icon className="h-6 w-6 text-white" />
               </div>
 
               {/* Hover arrow */}
-              <div className="absolute top-4 right-4 h-9 w-9 rounded-full bg-white/10 border border-white/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
-                <ArrowRight className="h-4 w-4 text-white" />
+              <div className="absolute top-6 right-6 h-10 w-10 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-10">
+                <ArrowRight className="h-5 w-5 text-white" />
               </div>
 
-              <div className="absolute bottom-0 left-0 right-0 p-5 lg:p-7">
-                <p className="font-serif text-white text-2xl font-medium leading-tight">{cat.name}</p>
-                <div className="flex items-center justify-between mt-1.5">
-                  <p className="text-xs font-bold text-white/60 uppercase tracking-widest">{cat.sub}</p>
-                  <p className="text-[10px] font-bold text-white/40 hidden sm:block">{cat.count}</p>
+              <div className="absolute bottom-0 left-0 right-0 p-8 lg:p-10 z-10">
+                <h3 className="font-serif text-white text-3xl font-medium leading-tight mb-2">{cat.name}</h3>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-bold text-white/70 uppercase tracking-widest">{cat.sub}</p>
+                  <p className="text-[10px] font-bold text-white/50 hidden sm:block uppercase tracking-tighter">{cat.count}</p>
                 </div>
               </div>
             </motion.a>
@@ -954,124 +1107,96 @@ function ShopByBudget() {
   );
 }
 
-// ─── Flash Deals ──────────────────────────────────────────────────────────────
-function FlashDeals() {
-  const [mounted, setMounted] = useState(false);
-  const [timeLeft, setTimeLeft] = useState({ h: 5, m: 42, s: 17 });
-
-  useEffect(() => {
-    setMounted(true);
-    const end = Date.now() + 5 * 3_600_000 + 42 * 60_000 + 17_000;
-    const t = setInterval(() => {
-      const diff = Math.max(0, end - Date.now());
-      setTimeLeft({
-        h: Math.floor(diff / 3_600_000),
-        m: Math.floor((diff % 3_600_000) / 60_000),
-        s: Math.floor((diff % 60_000) / 1_000),
-      });
-    }, 1000);
-    return () => clearInterval(t);
-  }, []);
-
-  const pad = (n: number) => String(n).padStart(2, "0");
-
-  const deals = [
-    { name: "Samsung Galaxy S23",   spec: "256GB · Phantom Black",    price: "£429", was: "£849", stock: 7,  grade: "Excellent", img: "https://picsum.photos/seed/s23fd/400/400" },
-    { name: "iPad Air 5th Gen",     spec: "64GB · Space Grey · WiFi", price: "£349", was: "£659", stock: 12, grade: "Pristine",  img: "https://picsum.photos/seed/ipadfd/400/400" },
-    { name: "PS5 Digital Edition",  spec: "825GB · White",            price: "£299", was: "£449", stock: 4,  grade: "Good",      img: "https://picsum.photos/seed/ps5fd/400/400" },
+// ─── Best Deals Split ─────────────────────────────────────────────────────────
+function BestDealsSplit() {
+  const pills = [
+    { name: "Flash Deals", icon: Zap, bg: "bg-emerald-100", text: "text-emerald-700" },
+    { name: "Price drop", icon: TrendingUp, bg: "bg-emerald-100", text: "text-emerald-700" },
+    { name: "MacBook", img: "https://picsum.photos/seed/macp/60/60" },
+    { name: "iPad", img: "https://picsum.photos/seed/ipadp/60/60" },
+    { name: "Android", img: "https://picsum.photos/seed/andp/60/60" },
+    { name: "iPhone", img: "https://picsum.photos/seed/iphp/60/60" },
+    { name: "Retro tech", img: "https://picsum.photos/seed/retp/60/60" },
+    { name: "AirPods", img: "https://picsum.photos/seed/airp/60/60" },
   ];
 
-  const gradeColor: Record<string, string> = {
-    Pristine:  "bg-emerald-100 text-emerald-700",
-    Excellent: "bg-sky-100 text-sky-700",
-    Good:      "bg-amber-100 text-amber-700",
-  };
+  const products = [
+    { name: "Smart Watch Samsung HR", spec: "GPS Galaxy Watch 8 Classic", price: "209.00", was: "£459.24 new", grade: "Excellent", rating: "4.7/5 (27)", img: "https://picsum.photos/seed/sw1/400/400" },
+    { name: "Smart Watch Samsung HR", spec: "GPS Galaxy Watch 8 Classic", price: "232.00", was: "£459.24 new", grade: "Good", rating: "4.7/5 (27)", img: "https://picsum.photos/seed/sw2/400/400" },
+    { name: "Smart Watch Samsung HR", spec: "GPS Galaxy Watch 8 Classic", price: "197.00", was: "£550.00 new", grade: "Excellent", rating: "5/5 (3)", img: "https://picsum.photos/seed/sw3/400/400" },
+  ];
 
   return (
-    <section className="bg-zinc-950 py-20">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {/* Header row */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-12">
-          <div className="flex items-center gap-4">
-            <div className="h-11 w-11 rounded-2xl bg-accent flex items-center justify-center flex-shrink-0">
-              <Zap className="h-5 w-5 text-zinc-950" />
-            </div>
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-500">Limited time</p>
-              <h2 className="font-serif text-3xl font-medium text-white">Flash Deals</h2>
-            </div>
+    <section className="bg-zinc-50 py-16 md:py-24 overflow-hidden border-t border-zinc-100">
+      <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
+        <h2 className="text-3xl md:text-4xl font-normal tracking-tight text-zinc-950 mb-6">Shop our best deals</h2>
+        
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+          {/* Left Image */}
+          <div className="w-full lg:w-[40%] xl:w-[450px] flex-shrink-0 relative rounded-2xl overflow-hidden aspect-[4/5] lg:aspect-auto lg:h-[500px]">
+            <img src="https://images.unsplash.com/photo-1593305841991-05c297ba4575?w=800&h=1000&fit=crop" alt="Tennis court with tech" className="absolute inset-0 w-full h-full object-cover" />
           </div>
 
-          {/* Countdown */}
-          <div className="flex items-center gap-2">
-            <p className="text-[11px] font-bold uppercase tracking-widest text-zinc-500 mr-1">Ends in</p>
-            {[
-              mounted ? timeLeft.h : 5,
-              mounted ? timeLeft.m : 42,
-              mounted ? timeLeft.s : 17,
-            ].map((val, i) => (
-              <span key={i} className="flex items-center gap-2">
-                <span className="h-12 w-14 bg-zinc-900 border border-zinc-800 rounded-xl flex items-center justify-center font-mono text-xl font-bold text-white tabular-nums">
-                  {pad(val)}
-                </span>
-                {i < 2 && <span className="text-zinc-600 font-bold text-lg">:</span>}
-              </span>
-            ))}
+          {/* Right Content */}
+          <div className="flex-1 min-w-0 flex flex-col">
+            {/* Pills */}
+            <div className="flex gap-2.5 overflow-x-auto scrollbar-hide pb-4 mb-2">
+              {pills.map((pill, i) => (
+                <div key={i} className="flex flex-col items-center gap-1.5 flex-shrink-0 w-[64px] cursor-pointer group">
+                  <div className="h-12 w-[64px] rounded-xl bg-zinc-50 border border-transparent shadow-[0_1px_2px_rgba(0,0,0,0.02)] flex items-center justify-center overflow-hidden group-hover:bg-white group-hover:border-zinc-200 transition-colors">
+                    {pill.icon ? (
+                      <div className={`h-8 w-10 rounded-lg flex items-center justify-center ${pill.bg} ${pill.text}`}>
+                        <pill.icon className="h-4 w-4" />
+                      </div>
+                    ) : (
+                      <img src={pill.img} alt={pill.name} className="h-8 w-8 object-contain mix-blend-multiply" />
+                    )}
+                  </div>
+                  <span className="text-[10px] font-medium text-zinc-600 text-center leading-tight">{pill.name}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Products */}
+            <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-4">
+              {products.map((p, i) => (
+                <div key={i} className="w-[260px] flex-shrink-0 bg-white rounded-xl p-4 border border-zinc-200/60 shadow-sm hover:shadow-md transition-shadow flex flex-col">
+                  <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold tracking-widest w-fit mb-3">
+                    <Zap className="h-3 w-3" /> Flash deal
+                  </div>
+                  <div className="h-40 w-full rounded-xl mb-3 overflow-hidden flex items-center justify-center relative">
+                    <img src={p.img} alt={p.name} className="h-full object-contain mix-blend-multiply" />
+                  </div>
+                  <p className="font-normal text-zinc-950 text-[13px] leading-snug mb-1 line-clamp-2">{p.name} {p.spec}</p>
+                  <p className="text-[11px] text-zinc-500 mb-2">{p.grade}</p>
+                  <div className="flex items-center gap-1 mb-5">
+                    {[...Array(5)].map((_, k) => <Star key={k} className="h-3 w-3 fill-zinc-950 text-zinc-950" />)}
+                    <span className="text-[10px] font-bold text-zinc-500 ml-1">{p.rating}</span>
+                  </div>
+                  <div className="mt-auto pt-4 border-t border-zinc-100">
+                    <p className="text-2xl font-bold text-emerald-700 mb-0.5">
+                      £{p.price.split('.')[0]}
+                      <span className="text-sm font-bold relative -top-1.5">.{p.price.split('.')[1]}</span>
+                    </p>
+                    <p className="text-[10px] text-emerald-700 font-bold mb-1 flex items-center gap-1">After £20 off at checkout <span className="h-3 w-3 rounded-full border border-emerald-700 text-[8px] flex items-center justify-center font-bold">i</span></p>
+                    <p className="text-[11px] text-zinc-400 line-through mb-4">{p.was}</p>
+                    <button className="w-full h-10 border border-zinc-200 rounded-lg font-bold text-[13px] text-zinc-950 hover:border-zinc-950 transition-colors flex items-center justify-center gap-2">
+                      <span className="text-lg leading-none">+</span> Add to cart
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <div className="flex justify-end gap-3 mt-4">
+              <button className="h-10 w-10 rounded-full bg-zinc-100 text-zinc-400 flex items-center justify-center">
+                <span className="text-xl leading-none -mt-1">‹</span>
+              </button>
+              <button className="h-10 w-10 rounded-full bg-zinc-950 text-white flex items-center justify-center hover:bg-zinc-800 transition-colors">
+                <span className="text-xl leading-none -mt-1">›</span>
+              </button>
+            </div>
           </div>
-        </div>
-
-        {/* Deal cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {deals.map((deal, i) => {
-            const pct = Math.round((1 - parseInt(deal.price.replace(/[^0-9]/g, "")) / parseInt(deal.was.replace(/[^0-9]/g, ""))) * 100);
-            return (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.08 }}
-                className="group bg-zinc-900 border border-zinc-800 rounded-3xl p-5 cursor-pointer hover:border-zinc-600 transition-colors"
-              >
-                <div className="flex gap-4 mb-5">
-                  <div className="relative h-20 w-20 rounded-2xl overflow-hidden bg-zinc-800 flex-shrink-0">
-                    <img src={deal.img} alt={deal.name} className="h-full w-full object-cover" />
-                    <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 bg-accent text-zinc-950 text-[9px] font-bold rounded-full">
-                      -{pct}%
-                    </div>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className={`inline-block px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest mb-1.5 ${gradeColor[deal.grade]}`}>
-                      {deal.grade}
-                    </div>
-                    <p className="font-bold text-white text-sm leading-tight">{deal.name}</p>
-                    <p className="text-[11px] text-zinc-500 mt-0.5">{deal.spec}</p>
-                  </div>
-                </div>
-
-                {/* Stock bar */}
-                <div className="mb-4">
-                  <div className="flex justify-between text-[10px] font-bold mb-1.5">
-                    <span className="text-zinc-500">Stock remaining</span>
-                    <span className="text-amber-400">{deal.stock} left</span>
-                  </div>
-                  <div className="h-1.5 rounded-full bg-zinc-800 overflow-hidden">
-                    <div className="h-full rounded-full bg-amber-400" style={{ width: `${(deal.stock / 20) * 100}%` }} />
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="text-2xl font-bold text-white">{deal.price}</span>
-                    <span className="text-sm text-zinc-600 line-through ml-2">{deal.was}</span>
-                  </div>
-                  <button className="h-10 px-4 bg-accent text-zinc-950 rounded-xl font-bold text-xs flex items-center gap-1.5 hover:bg-accent/90 transition-colors">
-                    <ShoppingCart className="h-3.5 w-3.5" /> Add
-                  </button>
-                </div>
-              </motion.div>
-            );
-          })}
         </div>
       </div>
     </section>
@@ -1618,186 +1743,198 @@ function ProductCard({ name, type, spec, price, was, grade, img, index = 0 }: PC
 
 // ─── Featured Shop (sticky tabs + animated product grid) ──────────────────────
 function FeaturedShop() {
-  const cats = ["All", "Phones", "Laptops", "Tablets", "Audio", "Gaming", "Wearables"];
-  const [active, setActive] = useState("All");
+  const cats = ["Smartphones", "Laptops", "Tablets", "Audio", "Gaming", "Wearables"];
+  const [active, setActive] = useState("Smartphones");
 
-  const products: PCard[] = [
-    { name: "iPhone 15 Pro",       type: "Phones",    spec: "256GB · Natural Titanium",   price: "£799",   was: "£1,199", grade: "Excellent", img: "https://picsum.photos/seed/ip15px/400/400" },
-    { name: "iPhone 14",           type: "Phones",    spec: "128GB · Midnight",           price: "£499",   was: "£799",   grade: "Good",      img: "https://picsum.photos/seed/ip14x/400/400" },
-    { name: "Samsung Galaxy S24",  type: "Phones",    spec: "256GB · Marble Grey",        price: "£599",   was: "£1,099", grade: "Excellent", img: "https://picsum.photos/seed/sgs24x/400/400" },
-    { name: "Google Pixel 8",      type: "Phones",    spec: "128GB · Obsidian",           price: "£399",   was: "£599",   grade: "Pristine",  img: "https://picsum.photos/seed/px8x/400/400" },
-    { name: "OnePlus 12",          type: "Phones",    spec: "256GB · Flowy Emerald",      price: "£449",   was: "£799",   grade: "Excellent", img: "https://picsum.photos/seed/op12x/400/400" },
-    { name: "MacBook Air M3",      type: "Laptops",   spec: "8GB · 256GB SSD",           price: "£949",   was: "£1,299", grade: "Pristine",  img: "https://picsum.photos/seed/mbm3x/400/400" },
-    { name: "Dell XPS 15",         type: "Laptops",   spec: "16GB · 512GB SSD",          price: "£749",   was: "£1,199", grade: "Excellent", img: "https://picsum.photos/seed/dxpsx/400/400" },
-    { name: "Surface Laptop 5",    type: "Laptops",   spec: "16GB · 256GB · Platinum",   price: "£649",   was: "£999",   grade: "Good",      img: "https://picsum.photos/seed/sl5x/400/400" },
-    { name: "iPad Pro 12.9\"",     type: "Tablets",   spec: "M2 · 128GB · WiFi",         price: "£699",   was: "£1,099", grade: "Excellent", img: "https://picsum.photos/seed/ipadpx/400/400" },
-    { name: "Samsung Tab S9+",     type: "Tablets",   spec: "256GB · WiFi · Pink Gold",  price: "£599",   was: "£899",   grade: "Pristine",  img: "https://picsum.photos/seed/tabs9px/400/400" },
-    { name: "iPad 10th Gen",       type: "Tablets",   spec: "64GB · WiFi · Blue",        price: "£299",   was: "£499",   grade: "Good",      img: "https://picsum.photos/seed/ip10x/400/400" },
-    { name: "AirPods Pro 2",       type: "Audio",     spec: "USB-C · ANC · White",       price: "£149",   was: "£279",   grade: "Excellent", img: "https://picsum.photos/seed/app2x/400/400" },
-    { name: "Sony WH-1000XM5",    type: "Audio",     spec: "Wireless · Noise Cancelling", price: "£199",  was: "£380",   grade: "Good",      img: "https://picsum.photos/seed/xm5x/400/400" },
-    { name: "Bose QC45",           type: "Audio",     spec: "Wireless · White Smoke",    price: "£149",   was: "£329",   grade: "Excellent", img: "https://picsum.photos/seed/bqc45x/400/400" },
-    { name: "PS5 Disc Edition",    type: "Gaming",    spec: "825GB SSD · White",         price: "£349",   was: "£479",   grade: "Excellent", img: "https://picsum.photos/seed/ps5cx/400/400" },
-    { name: "Xbox Series X",       type: "Gaming",    spec: "1TB · Carbon Black",        price: "£299",   was: "£449",   grade: "Good",      img: "https://picsum.photos/seed/xbxx/400/400" },
-    { name: "Nintendo Switch OLED",type: "Gaming",    spec: "64GB · White",              price: "£219",   was: "£309",   grade: "Good",      img: "https://picsum.photos/seed/nswx/400/400" },
-    { name: "Apple Watch S9",      type: "Wearables", spec: "45mm · GPS · Midnight",     price: "£299",   was: "£429",   grade: "Pristine",  img: "https://picsum.photos/seed/aws9x/400/400" },
-    { name: "Samsung Watch 6",     type: "Wearables", spec: "44mm · LTE · Graphite",     price: "£199",   was: "£329",   grade: "Excellent", img: "https://picsum.photos/seed/sw6x/400/400" },
-    { name: "Garmin Fenix 7",      type: "Wearables", spec: "GPS · Solar · Black DLC",   price: "£349",   was: "£679",   grade: "Good",      img: "https://picsum.photos/seed/gf7x/400/400" },
-  ];
+  const products: Record<string, PCard[]> = {
+    "Smartphones": [
+      { name: "iPhone 15 Pro",       type: "Apple",     spec: "256GB · Natural Titanium",   price: "£799",   was: "£1,199", grade: "Excellent", img: "https://picsum.photos/seed/ip15px/400/400" },
+      { name: "Samsung Galaxy S24",  type: "Samsung",   spec: "256GB · Marble Grey",        price: "£599",   was: "£1,099", grade: "Excellent", img: "https://picsum.photos/seed/sgs24x/400/400" },
+      { name: "Google Pixel 8 Pro",  type: "Google",    spec: "128GB · Obsidian",           price: "£499",   was: "£899",   grade: "Pristine",  img: "https://picsum.photos/seed/px8x/400/400" },
+      { name: "iPhone 14 Pro",       type: "Apple",     spec: "128GB · Deep Purple",        price: "£549",   was: "£849",   grade: "Good",      img: "https://picsum.photos/seed/ip14x/400/400" },
+      { name: "OnePlus 12",          type: "OnePlus",   spec: "256GB · Flowy Emerald",      price: "£449",   was: "£799",   grade: "Excellent", img: "https://picsum.photos/seed/op12x/400/400" },
+      { name: "iPhone 13",           type: "Apple",     spec: "128GB · Midnight",           price: "£329",   was: "£599",   grade: "Good",      img: "https://picsum.photos/seed/ip13zx/400/400" },
+    ],
+    "Laptops": [
+      { name: "MacBook Air M3",      type: "Apple",   spec: "8GB · 256GB SSD",           price: "£949",   was: "£1,299", grade: "Pristine",  img: "https://picsum.photos/seed/mbm3x/400/400" },
+      { name: "Dell XPS 15",         type: "Dell",    spec: "16GB · 512GB SSD",          price: "£749",   was: "£1,199", grade: "Excellent", img: "https://picsum.photos/seed/dxpsx/400/400" },
+      { name: "Surface Laptop 5",    type: "Microsoft", spec: "16GB · 256GB · Platinum", price: "£649",   was: "£999",   grade: "Good",      img: "https://picsum.photos/seed/sl5x/400/400" },
+      { name: "MacBook Pro 14\"",    type: "Apple",   spec: "M2 Pro · 16GB",             price: "£1,299", was: "£1,899", grade: "Excellent", img: "https://picsum.photos/seed/mbp14cx/400/400" },
+      { name: "ThinkPad X1 Carbon",  type: "Lenovo",  spec: "16GB · 512GB",              price: "£699",   was: "£1,399", grade: "Good",      img: "https://picsum.photos/seed/tx1cx/400/400" },
+    ],
+    "Tablets": [
+      { name: "iPad Pro 12.9\"",     type: "Apple",   spec: "M2 · 128GB · WiFi",         price: "£699",   was: "£1,099", grade: "Excellent", img: "https://picsum.photos/seed/ipadpx/400/400" },
+      { name: "Samsung Tab S9+",     type: "Samsung", spec: "256GB · WiFi · Pink Gold",  price: "£599",   was: "£899",   grade: "Pristine",  img: "https://picsum.photos/seed/tabs9px/400/400" },
+      { name: "iPad 10th Gen",       type: "Apple",   spec: "64GB · WiFi · Blue",        price: "£299",   was: "£499",   grade: "Good",      img: "https://picsum.photos/seed/ip10x/400/400" },
+      { name: "iPad Mini 6",         type: "Apple",   spec: "64GB · Space Grey",         price: "£349",   was: "£499",   grade: "Excellent", img: "https://picsum.photos/seed/ipm6x/400/400" },
+    ],
+    "Audio": [
+      { name: "AirPods Pro 2",       type: "Apple",     spec: "USB-C · ANC · White",       price: "£149",   was: "£279",   grade: "Excellent", img: "https://picsum.photos/seed/app2x/400/400" },
+      { name: "Sony WH-1000XM5",     type: "Sony",      spec: "Wireless · Noise Cancelling", price: "£199",  was: "£380",   grade: "Good",      img: "https://picsum.photos/seed/xm5x/400/400" },
+      { name: "Bose QC45",           type: "Bose",      spec: "Wireless · White Smoke",    price: "£149",   was: "£329",   grade: "Excellent", img: "https://picsum.photos/seed/bqc45x/400/400" },
+      { name: "Samsung Buds2 Pro",   type: "Samsung",   spec: "Graphite",                  price: "£89",    was: "£229",   grade: "Good",      img: "https://picsum.photos/seed/sbb2x/400/400" },
+    ],
+    "Gaming": [
+      { name: "PS5 Disc Edition",    type: "Sony",      spec: "825GB SSD · White",         price: "£349",   was: "£479",   grade: "Excellent", img: "https://picsum.photos/seed/ps5cx/400/400" },
+      { name: "Xbox Series X",       type: "Microsoft", spec: "1TB · Carbon Black",        price: "£299",   was: "£449",   grade: "Good",      img: "https://picsum.photos/seed/xbxx/400/400" },
+      { name: "Nintendo Switch OLED",type: "Nintendo",  spec: "64GB · White",              price: "£219",   was: "£309",   grade: "Good",      img: "https://picsum.photos/seed/nswx/400/400" },
+      { name: "Steam Deck",          type: "Valve",     spec: "512GB NVMe",                price: "£379",   was: "£569",   grade: "Excellent", img: "https://picsum.photos/seed/stmdx/400/400" },
+    ],
+    "Wearables": [
+      { name: "Apple Watch S9",      type: "Apple",     spec: "45mm · GPS · Midnight",     price: "£299",   was: "£429",   grade: "Pristine",  img: "https://picsum.photos/seed/aws9x/400/400" },
+      { name: "Samsung Watch 6",     type: "Samsung",   spec: "44mm · LTE · Graphite",     price: "£199",   was: "£329",   grade: "Excellent", img: "https://picsum.photos/seed/sw6x/400/400" },
+      { name: "Garmin Fenix 7",      type: "Garmin",    spec: "GPS · Solar · Black DLC",   price: "£349",   was: "£679",   grade: "Good",      img: "https://picsum.photos/seed/gf7x/400/400" },
+      { name: "Apple Watch Ultra",   type: "Apple",     spec: "Cellular · Titanium",       price: "£499",   was: "£799",   grade: "Excellent", img: "https://picsum.photos/seed/awux/400/400" },
+    ],
+  };
 
-  const filtered = active === "All" ? products : products.filter(p => p.type === active);
+  const filtered = products[active] || [];
 
   return (
-    <section id="shop" className="border-t border-zinc-100">
-      {/* Sticky filter bar */}
-      <div className="sticky top-16 lg:top-20 z-30 bg-white/95 backdrop-blur-md border-b border-zinc-100 shadow-sm">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide py-3.5">
+    <section id="shop" className="py-24 border-t border-zinc-100 bg-white overflow-hidden">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-10">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-3">Shop our most wanted</p>
+            <h2 className="font-serif text-5xl md:text-6xl font-medium text-zinc-950 leading-none">
+              Where the world<br />shops <i>refurbished.</i>
+            </h2>
+          </div>
+          
+          {/* Tabs */}
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide py-1">
             {cats.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setActive(cat)}
-                className={`flex-shrink-0 h-9 px-5 rounded-full font-bold text-xs transition-all duration-200 ${
-                  active === cat ? "bg-zinc-950 text-white" : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 hover:text-zinc-950"
+                className={`flex-shrink-0 h-10 px-5 rounded-full font-bold text-sm transition-all duration-200 border ${
+                  active === cat 
+                    ? "bg-zinc-950 text-white border-zinc-950" 
+                    : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-950 hover:text-zinc-950"
                 }`}
               >
                 {cat}
               </button>
             ))}
-            <div className="ml-auto flex-shrink-0">
-              <a href="/shop" className="h-9 px-5 rounded-full border border-zinc-200 font-bold text-xs text-zinc-600 hover:border-zinc-950 hover:text-zinc-950 transition-all flex items-center gap-1.5 whitespace-nowrap">
-                View all <ArrowRight className="h-3.5 w-3.5" />
-              </a>
-            </div>
           </div>
         </div>
       </div>
 
-      {/* Grid */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
-        <div className="flex items-center justify-between mb-8">
-          <p className="text-sm font-bold text-zinc-400">{filtered.length} products</p>
-          <div className="flex items-center gap-2 text-xs font-bold text-zinc-400">
-            Sort:
-            <select className="text-zinc-950 font-bold bg-transparent outline-none cursor-pointer">
-              <option>Featured</option>
-              <option>Price ↑</option>
-              <option>Price ↓</option>
-              <option>Newest</option>
-            </select>
-          </div>
-        </div>
-
+      {/* Horizontal Scroll Grid */}
+      <div className="pl-4 sm:pl-6 lg:pl-8 mx-auto max-w-7xl">
         <AnimatePresence mode="wait">
           <motion.div
             key={active}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.18 }}
-            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3 }}
+            className="flex gap-5 overflow-x-auto scrollbar-hide pr-8 pb-8"
           >
-            {filtered.map((p, i) => <ProductCard key={`${active}-${i}`} {...p} index={i} />)}
+            {filtered.map((p, i) => (
+              <div key={`${active}-${i}`} className="w-[260px] md:w-[280px] flex-shrink-0">
+                <ProductCard {...p} index={i} />
+              </div>
+            ))}
+            
+            {/* View all card at the end */}
+            <div className="w-[260px] md:w-[280px] flex-shrink-0 flex items-center justify-center p-6 bg-zinc-50 rounded-2xl ring-1 ring-zinc-100">
+              <a href="/shop" className="flex flex-col items-center justify-center gap-4 text-zinc-500 hover:text-zinc-950 transition-colors group">
+                <div className="h-16 w-16 rounded-full border-2 border-current flex items-center justify-center group-hover:bg-zinc-950 group-hover:text-white group-hover:border-zinc-950 transition-all shadow-sm group-hover:shadow-lg">
+                  <ArrowRight className="h-6 w-6" />
+                </div>
+                <span className="font-bold text-sm uppercase tracking-widest text-center">See all<br/>{active}</span>
+              </a>
+            </div>
           </motion.div>
         </AnimatePresence>
-
-        <div className="mt-12 text-center">
-          <a href="/shop" className="inline-flex items-center gap-2 h-12 px-8 border-2 border-zinc-950 text-zinc-950 rounded-2xl font-bold text-sm hover:bg-zinc-950 hover:text-white transition-all duration-300">
-            See all {active === "All" ? "products" : active.toLowerCase()} <ArrowRight className="h-4 w-4" />
-          </a>
-        </div>
       </div>
     </section>
   );
 }
 
-// ─── Shop By Brand ─────────────────────────────────────────────────────────────
-function ShopByBrand() {
-  const [idx, setIdx] = useState(0);
-
+// ─── Top Brands Split ─────────────────────────────────────────────────────────
+function TopBrandsSplit() {
   const brands = [
-    {
-      name: "Apple", accent: "bg-zinc-950 text-white",
-      products: [
-        { name: "iPhone 15 Pro Max", type: "Apple", spec: "256GB · Black Titanium", price: "£999",   was: "£1,299", grade: "Excellent", img: "https://picsum.photos/seed/ip15pma/400/400" },
-        { name: "MacBook Pro M3",    type: "Apple", spec: "18GB · 512GB SSD",       price: "£1,699", was: "£2,499", grade: "Pristine",  img: "https://picsum.photos/seed/mbpm3a/400/400" },
-        { name: "iPad Air 5",        type: "Apple", spec: "64GB · WiFi · Purple",   price: "£399",   was: "£679",   grade: "Good",      img: "https://picsum.photos/seed/ipa5a/400/400" },
-        { name: "AirPods Max",       type: "Apple", spec: "Over-ear · Space Grey",  price: "£349",   was: "£549",   grade: "Excellent", img: "https://picsum.photos/seed/apma/400/400" },
-      ],
-    },
-    {
-      name: "Samsung", accent: "bg-blue-600 text-white",
-      products: [
-        { name: "Galaxy S24 Ultra",  type: "Samsung", spec: "256GB · Titanium Black", price: "£799", was: "£1,299", grade: "Pristine",  img: "https://picsum.photos/seed/s24ua/400/400" },
-        { name: "Galaxy Tab S9",     type: "Samsung", spec: "128GB · Beige · WiFi",   price: "£549", was: "£799",   grade: "Excellent", img: "https://picsum.photos/seed/s9ta/400/400" },
-        { name: "Galaxy Z Flip 5",   type: "Samsung", spec: "256GB · Lavender",       price: "£549", was: "£999",   grade: "Good",      img: "https://picsum.photos/seed/zf5a/400/400" },
-        { name: "Galaxy Buds 2 Pro", type: "Samsung", spec: "White · ANC",            price: "£89",  was: "£229",   grade: "Excellent", img: "https://picsum.photos/seed/gb2pa/400/400" },
-      ],
-    },
-    {
-      name: "Sony", accent: "bg-zinc-700 text-white",
-      products: [
-        { name: "Sony WH-1000XM5",  type: "Sony", spec: "Wireless ANC · Black",     price: "£199",   was: "£380",   grade: "Excellent", img: "https://picsum.photos/seed/xm5a/400/400" },
-        { name: "Sony WF-1000XM5",  type: "Sony", spec: "True Wireless · Black",    price: "£149",   was: "£299",   grade: "Good",      img: "https://picsum.photos/seed/wf5a/400/400" },
-        { name: "Sony A7 III",       type: "Sony", spec: "Full Frame · Body Only",   price: "£1,299", was: "£1,999", grade: "Excellent", img: "https://picsum.photos/seed/a7iiia/400/400" },
-        { name: "PS5 Digital",       type: "Sony", spec: "825GB SSD · White",        price: "£299",   was: "£449",   grade: "Good",      img: "https://picsum.photos/seed/ps5da/400/400" },
-      ],
-    },
-    {
-      name: "Google", accent: "bg-emerald-600 text-white",
-      products: [
-        { name: "Pixel 8 Pro",      type: "Google", spec: "256GB · Bay Blue",         price: "£599", was: "£999",  grade: "Pristine",  img: "https://picsum.photos/seed/px8proa/400/400" },
-        { name: "Pixel 8",          type: "Google", spec: "128GB · Hazel",            price: "£399", was: "£599",  grade: "Excellent", img: "https://picsum.photos/seed/px8ba/400/400" },
-        { name: "Pixel Watch 2",    type: "Google", spec: "GPS · LTE · Champagne",   price: "£249", was: "£379",  grade: "Good",      img: "https://picsum.photos/seed/pw2a/400/400" },
-        { name: "Pixel Buds Pro",   type: "Google", spec: "True Wireless · ANC",     price: "£99",  was: "£219",  grade: "Excellent", img: "https://picsum.photos/seed/pbpa/400/400" },
-      ],
-    },
+    { name: "Sage", logo: "Sage", style: "font-serif text-2xl" },
+    { name: "Apple", logo: "Apple", style: "font-sans font-black text-xl" },
+    { name: "Dyson", logo: "dyson", style: "font-sans font-normal text-xl" },
+    { name: "Ooni", logo: "ooni", style: "font-sans font-bold text-lg bg-zinc-950 text-white px-2 py-0.5 rounded-md" },
+    { name: "GoPro", logo: "GoPro", style: "font-sans font-black text-blue-600" },
+    { name: "Nintendo", logo: "Nintendo", style: "font-sans font-black text-red-600 border border-red-600 px-2 rounded-full text-xs" },
+    { name: "Garmin", logo: "GARMIN", style: "font-sans font-bold text-xl tracking-widest" },
+    { name: "Bose", logo: "BOSE", style: "font-sans font-black text-xl italic" },
   ];
 
-  const brand = brands[idx];
+  const products = [
+    { name: "Coffee maker with grinder", spec: "Without capsule Sage The...", price: "361.99", was: "£599.00 new", rating: "4.5/5 (130)", img: "https://picsum.photos/seed/cm1/400/400" },
+    { name: "Espresso machine Without", spec: "capsule Sage The Bambino...", price: "232.99", was: "£399.99 new", rating: "4.4/5 (16)", img: "https://picsum.photos/seed/em2/400/400" },
+    { name: "Espresso machine Sage", spec: "Bambino SES450BS...", price: "208.99", was: "£329.95 new", rating: "4.9/5 (13)", img: "https://picsum.photos/seed/em3/400/400" },
+  ];
 
   return (
-    <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-24">
-      <div className="flex items-end justify-between mb-12">
-        <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-3">Shop by brand</p>
-          <h2 className="font-serif text-5xl md:text-6xl font-medium text-zinc-950 leading-none">Your favourite <i>brands.</i></h2>
+    <section className="bg-zinc-50 py-16 md:py-24 border-t border-zinc-100 overflow-hidden">
+      <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
+        <h2 className="text-3xl md:text-4xl font-normal tracking-tight text-zinc-950 mb-6">Top brands, refurbished</h2>
+        
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+          {/* Left Image */}
+          <div className="w-full lg:w-[40%] xl:w-[450px] flex-shrink-0 relative rounded-2xl overflow-hidden aspect-[4/5] lg:aspect-auto lg:h-[500px]">
+            <img src="https://images.unsplash.com/photo-1616423640778-28d1b53229bd?w=800&h=1000&fit=crop" alt="Desk with tech" className="absolute inset-0 w-full h-full object-cover" />
+          </div>
+
+          {/* Right Content */}
+          <div className="flex-1 min-w-0 flex flex-col">
+            {/* Brands */}
+            <div className="flex gap-2.5 overflow-x-auto scrollbar-hide pb-4 mb-2">
+              {brands.map((brand, i) => (
+                <div key={i} className="flex flex-col items-center gap-1.5 flex-shrink-0 w-20 cursor-pointer group">
+                  <div className="h-12 w-20 rounded-xl bg-zinc-50 border border-transparent shadow-[0_1px_2px_rgba(0,0,0,0.02)] flex items-center justify-center overflow-hidden group-hover:bg-white group-hover:border-zinc-200 transition-colors">
+                    <span className={brand.style}>{brand.logo}</span>
+                  </div>
+                  <span className="text-[10px] font-medium text-zinc-600 text-center">{brand.name}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Products */}
+            <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-4">
+              {products.map((p, i) => (
+                <div key={i} className="w-[260px] flex-shrink-0 bg-white rounded-xl p-4 border border-zinc-200/60 shadow-sm hover:shadow-md transition-shadow flex flex-col relative group cursor-pointer">
+                  {i === 0 && (
+                    <div className="absolute top-4 left-4 z-10 text-[10px] font-bold text-violet-700 tracking-wide">
+                      Don't miss out
+                    </div>
+                  )}
+                  <div className="h-40 w-full rounded-xl mb-3 overflow-hidden flex items-center justify-center p-2">
+                    <img src={p.img} alt={p.name} className="h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-500" />
+                  </div>
+                  <p className="font-normal text-zinc-950 text-[13px] leading-snug mb-2 line-clamp-2">{p.name} {p.spec}</p>
+                  <div className="flex items-center gap-1 mb-5">
+                    {[...Array(5)].map((_, k) => <Star key={k} className={`h-3 w-3 ${k < 4 ? 'fill-zinc-950 text-zinc-950' : k===4&&p.rating.startsWith('4.9') ? 'fill-zinc-950 text-zinc-950' : 'fill-zinc-300 text-zinc-300'}`} />)}
+                    <span className="text-[10px] font-bold text-zinc-500 ml-1">{p.rating}</span>
+                  </div>
+                  <div className="mt-auto pt-2">
+                    <p className="text-2xl font-bold text-zinc-950 mb-0.5">
+                      £{p.price.split('.')[0]}
+                      <span className="text-sm font-bold relative -top-1.5">.{p.price.split('.')[1]}</span>
+                    </p>
+                    <p className="text-[11px] text-zinc-400 line-through mb-2">{p.was}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <div className="flex justify-end gap-3 mt-4">
+              <button className="h-10 w-10 rounded-full bg-zinc-100 text-zinc-400 flex items-center justify-center">
+                <span className="text-xl leading-none -mt-1">‹</span>
+              </button>
+              <button className="h-10 w-10 rounded-full bg-zinc-950 text-white flex items-center justify-center hover:bg-zinc-800 transition-colors">
+                <span className="text-xl leading-none -mt-1">›</span>
+              </button>
+            </div>
+          </div>
         </div>
-        <a href="/shop" className="hidden md:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-zinc-950 transition-colors border-b border-zinc-300 pb-1">
-          All brands <ArrowRight className="h-3.5 w-3.5" />
-        </a>
-      </div>
-
-      <div className="flex gap-3 mb-10 overflow-x-auto scrollbar-hide pb-1">
-        {brands.map((b, i) => (
-          <button
-            key={b.name}
-            onClick={() => setIdx(i)}
-            className={`flex-shrink-0 h-11 px-7 rounded-2xl font-bold text-sm transition-all duration-200 ${
-              idx === i ? b.accent + " shadow-lg" : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 hover:text-zinc-950"
-            }`}
-          >
-            {b.name}
-          </button>
-        ))}
-      </div>
-
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={idx}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{ duration: 0.2 }}
-          className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6"
-        >
-          {brand.products.map((p, i) => <ProductCard key={i} {...p} index={i} />)}
-        </motion.div>
-      </AnimatePresence>
-
-      <div className="mt-10 text-center">
-        <a href="/shop" className="inline-flex items-center gap-2 h-12 px-7 border border-zinc-200 text-zinc-950 rounded-2xl font-bold text-sm hover:bg-zinc-50 transition-colors">
-          All {brand.name} products <ArrowRight className="h-4 w-4" />
-        </a>
       </div>
     </section>
   );
@@ -1948,19 +2085,41 @@ function Newsletter() {
   );
 }
 
+// ─── As Seen In ───────────────────────────────────────────────────────────────
+function AsSeenIn() {
+  const logos = [
+    "The Guardian", "TechRadar", "WIRED", "BBC", "The Telegraph", "Forbes", "The Verge", "CNET"
+  ];
+  return (
+    <section className="border-t border-zinc-100 bg-white py-14 overflow-hidden">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 text-center mb-10">As seen in</p>
+        <div className="flex gap-10 md:gap-16 items-center justify-center flex-wrap opacity-40 grayscale">
+          {logos.map((logo, i) => (
+            <span key={i} className="text-xl md:text-2xl font-serif font-bold text-zinc-950 tracking-tight">
+              {logo}
+            </span>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function HomePage() {
   return (
     <main className="flex min-h-screen flex-col bg-white text-zinc-950 font-sans">
       <Navbar />
+      <PromoCarouselBanner />
       <MarqueeStrip />
       <Hero />
       <BrandsBar />
       <LiveFeed />
       <CategoryBento />
       <FeaturedShop />
-      <FlashDeals />
-      <ShopByBrand />
+      <BestDealsSplit />
+      <TopBrandsSplit />
       <NewArrivals />
       <BudgetPicks />
       <ShopByBudget />
@@ -1973,6 +2132,7 @@ export default function HomePage() {
       <Reviews />
       <SustainabilityBanner />
       <SellCTA />
+      <AsSeenIn />
       <Newsletter />
       <Footer />
     </main>

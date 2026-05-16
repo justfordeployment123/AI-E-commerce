@@ -44,7 +44,7 @@ export default function Navbar({ itemsCount = 0 }: { itemsCount?: number }) {
               {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
             <a href="/" className="text-xl md:text-2xl font-bold tracking-tighter text-black flex items-center gap-1">
-              TECHSTOP<span className="text-zinc-400 font-medium">LEICESTER</span>
+              TECHSTOP<span className="text-zinc-400 font-medium tracking-normal text-lg md:text-xl relative top-[1px]">LEICESTER</span>
             </a>
             <div className="hidden lg:flex items-center gap-8 text-xs font-bold uppercase tracking-widest text-zinc-500">
                <a href="/shop" className="hover:text-black transition-colors">Shop</a>
@@ -63,7 +63,7 @@ export default function Navbar({ itemsCount = 0 }: { itemsCount?: number }) {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 group-focus-within:text-black transition-colors" />
             </div>
 
-            <a href="/login" className="flex items-center gap-2 h-10 px-4 rounded-2xl hover:bg-zinc-100 transition-all font-bold text-xs uppercase tracking-widest">
+            <a href="/login" className="flex items-center gap-2 h-10 px-4 rounded-2xl hover:bg-zinc-100 transition-all font-bold text-xs uppercase tracking-wide">
               <User className="h-4 w-4" />
               <span className="hidden sm:inline">Log in</span>
             </a>
