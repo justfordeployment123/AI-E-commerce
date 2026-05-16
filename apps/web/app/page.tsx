@@ -409,41 +409,41 @@ function Hero() {
 
             {/* Floating badges */}
             <motion.div
-              animate={{ y: [0, -12, 0] }}
+              animate={{ y: [0, -10, 0] }}
               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute top-4 -left-12 z-20 bg-white border border-zinc-100 rounded-3xl px-5 py-4 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.12)] flex items-center gap-4"
+              className="absolute top-12 -left-8 z-20 bg-white border border-zinc-100 rounded-2xl px-4 py-3 shadow-xl flex items-center gap-3"
             >
-              <div className="h-11 w-11 rounded-2xl bg-emerald-50 flex items-center justify-center shadow-inner">
-                <BadgeCheck className="h-6 w-6 text-emerald-600" />
+              <div className="h-9 w-9 rounded-xl bg-emerald-50 flex items-center justify-center">
+                <BadgeCheck className="h-5 w-5 text-emerald-600" />
               </div>
               <div>
-                <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-0.5">Verified</p>
-                <p className="text-base font-black text-zinc-950">Expert Grade</p>
+                <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-0.5">Verified</p>
+                <p className="text-sm font-black text-zinc-950">Expert Grade</p>
               </div>
             </motion.div>
 
             <motion.div
-              animate={{ y: [0, 12, 0] }}
+              animate={{ y: [0, 10, 0] }}
               transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-              className="absolute top-1/2 -right-12 z-20 bg-zinc-950 rounded-3xl px-6 py-5 shadow-2xl"
+              className="absolute bottom-32 -right-8 z-20 bg-zinc-950 rounded-2xl px-5 py-4 shadow-2xl"
             >
-              <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5">Saved vs new</p>
-              <p className="text-2xl font-black text-white tracking-tight">- £340</p>
+              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Saved vs new</p>
+              <p className="text-xl font-black text-white tracking-tight">- £340</p>
             </motion.div>
 
             <motion.div
-              animate={{ y: [0, -8, 0] }}
+              animate={{ y: [0, -6, 0] }}
               transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-              className="absolute -bottom-6 left-12 z-20 bg-white border border-zinc-100 rounded-[1.5rem] px-5 py-4 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.12)] flex items-center gap-4"
+              className="absolute -bottom-4 right-12 z-20 bg-white border border-zinc-100 rounded-2xl px-4 py-3 shadow-xl flex items-center gap-3"
             >
-              <div className="flex -space-x-2">
+              <div className="flex -space-x-1.5">
                 {[1, 2, 3].map(i => (
-                  <div key={i} className="h-8 w-8 rounded-full border-2 border-white bg-zinc-200 overflow-hidden">
+                  <div key={i} className="h-7 w-7 rounded-full border-2 border-white bg-zinc-200 overflow-hidden">
                     <img src={`https://i.pravatar.cc/100?u=${i+10}`} alt="" className="h-full w-full object-cover" />
                   </div>
                 ))}
               </div>
-              <p className="text-xs font-black text-zinc-950 tracking-tight">1,240 bought this week</p>
+              <p className="text-[11px] font-black text-zinc-950">1.2K bought</p>
             </motion.div>
           </motion.div>
         </div>
@@ -2119,8 +2119,8 @@ export default function HomePage() {
       <CategoryBento />
       <FeaturedShop />
       <BestDealsSplit />
-      <TopBrandsSplit />
       <NewArrivals />
+      <TopBrandsSplit />
       <BudgetPicks />
       <ShopByBudget />
       <TrustPillars />
