@@ -200,9 +200,9 @@ export default function SellPage() {
         <section className="py-32 bg-white text-center">
            <div className="mx-auto max-w-4xl px-4">
               <h2 className="font-serif text-5xl md:text-8xl font-medium mb-12">Ready to cash in?</h2>
-              <button className="h-20 px-16 bg-accent text-black rounded-[2rem] font-bold text-lg transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-accent/20">
+              <a href="/trade-in" className="inline-flex items-center h-20 px-16 bg-accent text-black rounded-[2rem] font-bold text-lg transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-accent/20">
                  Start Trade-In Now
-              </button>
+              </a>
               <p className="mt-8 text-zinc-400 font-bold uppercase tracking-[0.2em] text-[10px]">Over 100,000 devices traded this year</p>
            </div>
         </section>

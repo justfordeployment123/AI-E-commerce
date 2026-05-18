@@ -2,7 +2,16 @@
   "permissions": {
     "allow": [
       "Bash(npm --version)",
-      "Read(//c/Users/HP/AppData/Local/Temp/claude/d--CODE-Projects-Markhor-Systems-Projects-smatway/faa7db64-5296-401d-a02f-067482be63e4/tasks/**)"
+      "Read(//c/Users/HP/AppData/Local/Temp/claude/d--CODE-Projects-Markhor-Systems-Projects-smatway/faa7db64-5296-401d-a02f-067482be63e4/tasks/**)",
+      "Bash(Get-ChildItem -Force)",
+      "Bash(Select-Object Name)",
+      "Skill(taste-skill)",
+      "Skill(taste-skill:*)",
+      "Bash(mkdir -p \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\\\\app\\\\trade-in\" && mkdir -p \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\\\\app\\\\shop\\\\[slug]\" && mkdir -p \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\\\\app\\\\checkout\" && mkdir -p \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\\\\app\\\\order-confirmation\" && mkdir -p \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\\\\app\\\\repair\" && mkdir -p \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\\\\app\\\\account\" && echo \"Dirs created\")",
+      "Read(//c/Users/HP/.claude/projects/d--CODE-Projects-Markhor-Systems-Projects-Ai-Ecommerce/**)"
+    ],
+    "additionalDirectories": [
+      "d:\\CODE\\Projects\\Markhor Systems Projects\\Ai-Ecommerce\\apps\\web\\app\\shop"
     ]
   }
 }

@@ -48,7 +48,8 @@ export default function Navbar({ itemsCount = 0 }: { itemsCount?: number }) {
             </a>
             <div className="hidden lg:flex items-center gap-8 text-xs font-bold uppercase tracking-widest text-zinc-500">
                <a href="/shop" className="hover:text-black transition-colors">Shop</a>
-               <a href="/sell" className="hover:text-black transition-colors">Sell</a>
+               <a href="/trade-in" className="hover:text-black transition-colors">Sell</a>
+               <a href="/repair" className="hover:text-black transition-colors">Repairs</a>
                <a href="/help" className="hover:text-black transition-colors">Help</a>
             </div>
           </div>
@@ -63,9 +64,9 @@ export default function Navbar({ itemsCount = 0 }: { itemsCount?: number }) {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 group-focus-within:text-black transition-colors" />
             </div>
 
-            <a href="/login" className="flex items-center gap-2 h-10 px-4 rounded-2xl hover:bg-zinc-100 transition-all font-bold text-xs uppercase tracking-wide">
+            <a href="/account" className="flex items-center gap-2 h-10 px-4 rounded-2xl hover:bg-zinc-100 transition-all font-bold text-xs uppercase tracking-wide">
               <User className="h-4 w-4" />
-              <span className="hidden sm:inline">Log in</span>
+              <span className="hidden sm:inline">Account</span>
             </a>
 
             <a href="/cart" className="relative flex items-center justify-center h-12 w-12 rounded-2xl bg-accent text-black transition-transform hover:scale-105 active:scale-95 shadow-xl shadow-accent/20">
@@ -90,7 +91,8 @@ export default function Navbar({ itemsCount = 0 }: { itemsCount?: number }) {
             >
               <div className="flex flex-col gap-8 font-bold uppercase tracking-[0.2em] text-xs text-black">
                 <a href="/shop" className="flex items-center justify-between">Shop All <ChevronRight className="h-4 w-4" /></a>
-                <a href="/sell" className="flex items-center justify-between">Sell Your Device <ChevronRight className="h-4 w-4" /></a>
+                <a href="/trade-in" className="flex items-center justify-between">Sell Your Device <ChevronRight className="h-4 w-4" /></a>
+                <a href="/repair" className="flex items-center justify-between">Book a Repair <ChevronRight className="h-4 w-4" /></a>
                 <a href="/help" className="flex items-center justify-between">Help Center <ChevronRight className="h-4 w-4" /></a>
                 
                 <div className="pt-8 mt-8 border-t border-zinc-100 space-y-6">
