@@ -8,10 +8,15 @@
       "Skill(taste-skill)",
       "Skill(taste-skill:*)",
       "Bash(mkdir -p \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\\\\app\\\\trade-in\" && mkdir -p \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\\\\app\\\\shop\\\\[slug]\" && mkdir -p \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\\\\app\\\\checkout\" && mkdir -p \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\\\\app\\\\order-confirmation\" && mkdir -p \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\\\\app\\\\repair\" && mkdir -p \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\\\\app\\\\account\" && echo \"Dirs created\")",
-      "Read(//c/Users/HP/.claude/projects/d--CODE-Projects-Markhor-Systems-Projects-Ai-Ecommerce/**)"
+      "Read(//c/Users/HP/.claude/projects/d--CODE-Projects-Markhor-Systems-Projects-Ai-Ecommerce/**)",
+      "Bash(dir /s /b \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\\\\app\\\\*page.tsx\")",
+      "Bash(mkdir -p \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\\\\app\\\\shop\\\\[category]\" && mkdir -p \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\admin\\\\app\\\\catalog\" && echo \"done\")",
+      "Bash(powershell -Command ' *)",
+      "Bash(Remove-Item -Recurse -Force \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\\\\app\\\\shop\\\\[slug]\")"
     ],
     "additionalDirectories": [
-      "d:\\CODE\\Projects\\Markhor Systems Projects\\Ai-Ecommerce\\apps\\web\\app\\shop"
+      "d:\\CODE\\Projects\\Markhor Systems Projects\\Ai-Ecommerce\\apps\\web\\app\\shop",
+      "d:\\CODE\\Projects\\Markhor Systems Projects\\Ai-Ecommerce\\apps\\web\\app\\shop\\[slug]"
     ]
   }
 }

@@ -4,12 +4,13 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import {
   LayoutDashboard, Package, RefreshCw, Wrench, ShoppingBag,
-  SlidersHorizontal, BarChart3, LogOut, Zap, ChevronRight
+  SlidersHorizontal, BarChart3, LogOut, Zap, ChevronRight, ListPlus
 } from "lucide-react";
 
 const NAV = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/products", label: "Products", icon: Package, section: "Catalog" },
+  { href: "/catalog", label: "Device Catalog", icon: ListPlus },
   { href: "/trade-ins", label: "Trade-Ins", icon: RefreshCw, section: "Operations" },
   { href: "/repairs", label: "Repairs", icon: Wrench },
   { href: "/orders", label: "Orders", icon: ShoppingBag },
@@ -22,11 +23,11 @@ export default function Sidebar() {
   let lastSection = "";
 
   return (
-    <aside className="w-[220px] flex-shrink-0 bg-sidebar text-sidebar-fg flex flex-col h-screen sticky top-0 overflow-y-auto scrollbar-hide">
+    <aside className="w-[220px] shrink-0 bg-sidebar text-sidebar-fg flex flex-col h-screen sticky top-0 overflow-y-auto scrollbar-hide">
       {/* Logo */}
       <div className="px-5 py-6 border-b border-white/10">
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl bg-accent flex items-center justify-center flex-shrink-0">
+          <div className="h-9 w-9 rounded-xl bg-accent flex items-center justify-center shrink-0">
             <Zap className="h-5 w-5 text-black" />
           </div>
           <div>
@@ -50,13 +51,13 @@ export default function Sidebar() {
               )}
               <Link
                 href={href}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-[0.75rem] text-sm font-medium transition-all group ${
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all group ${
                   active
                     ? "bg-white text-black"
                     : "text-white/60 hover:text-white hover:bg-white/10"
                 }`}
               >
-                <Icon className="h-4 w-4 flex-shrink-0" />
+                <Icon className="h-4 w-4 shrink-0" />
                 <span className="flex-1">{label}</span>
                 {active && <ChevronRight className="h-3.5 w-3.5 text-black/40" />}
               </Link>
@@ -68,7 +69,7 @@ export default function Sidebar() {
       {/* Footer */}
       <div className="px-3 py-4 border-t border-white/10">
         <div className="flex items-center gap-3 px-3 mb-3">
-          <div className="h-8 w-8 rounded-full bg-accent flex items-center justify-center flex-shrink-0">
+          <div className="h-8 w-8 rounded-full bg-accent flex items-center justify-center shrink-0">
             <span className="text-black font-bold text-xs">AD</span>
           </div>
           <div className="min-w-0">
@@ -76,7 +77,7 @@ export default function Sidebar() {
             <p className="text-[10px] text-white/40 truncate">admin@techstop.co.uk</p>
           </div>
         </div>
-        <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[0.75rem] text-sm font-medium text-white/40 hover:text-white hover:bg-white/5 transition-all">
+        <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-white/40 hover:text-white hover:bg-white/5 transition-all">
           <LogOut className="h-4 w-4" />
           Sign out
         </button>
