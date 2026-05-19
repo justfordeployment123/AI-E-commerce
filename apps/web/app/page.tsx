@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
 import {
   ShoppingCart, ShieldCheck, RefreshCw, Leaf, ArrowRight,
   Star, Search, Play, Recycle, TrendingUp, Package, BadgeCheck,
@@ -21,6 +22,7 @@ function PromoCarouselBanner() {
       bg: "bg-[#d4c3f4]", // Light purple
       accent: "text-purple-700",
       btn: "Save now",
+      link: "/shop/phones",
     },
     {
       title: "Student Discount",
@@ -29,6 +31,7 @@ function PromoCarouselBanner() {
       bg: "bg-[#b8e4d3]", // Light green
       accent: "text-emerald-700",
       btn: "Unlock code",
+      link: "/shop/laptops",
     },
     {
       title: "Trade-in Bonus",
@@ -37,6 +40,7 @@ function PromoCarouselBanner() {
       bg: "bg-[#ffdca8]", // Light orange
       accent: "text-orange-700",
       btn: "Get a quote",
+      link: "/shop/phones",
     }
   ];
 
@@ -102,7 +106,7 @@ function PromoCarouselBanner() {
                   {slides[idx].text}
                 </p>
                 <a 
-                  href="/shop" 
+                  href={slides[idx].link} 
                   className="group relative inline-flex h-14 px-10 items-center justify-center bg-zinc-950 text-white rounded-2xl font-bold text-sm overflow-hidden transition-all hover:pr-12"
                 >
                   <span className="relative z-10">{slides[idx].btn}</span>
@@ -179,14 +183,14 @@ function MarqueeStrip() {
 // ─── Brands Bar ───────────────────────────────────────────────────────────────
 function BrandsBar() {
   const brands = [
-    { name: "Apple",     count: "12,400+ items" },
-    { name: "Samsung",   count: "8,900+ items" },
-    { name: "Sony",      count: "4,200+ items" },
-    { name: "Google",    count: "2,100+ items" },
-    { name: "Microsoft", count: "1,800+ items" },
-    { name: "OnePlus",   count: "1,400+ items" },
-    { name: "Nintendo",  count: "3,600+ items" },
-    { name: "Dyson",     count: "900+ items" },
+    { name: "Apple",     count: "12,400+ items", link: "/shop/phones" },
+    { name: "Samsung",   count: "8,900+ items", link: "/shop/phones" },
+    { name: "Sony",      count: "4,200+ items", link: "/shop/audio" },
+    { name: "Google",    count: "2,100+ items", link: "/shop/phones" },
+    { name: "Microsoft", count: "1,800+ items", link: "/shop/tablets" },
+    { name: "OnePlus",   count: "1,400+ items", link: "/shop/phones" },
+    { name: "Nintendo",  count: "3,600+ items", link: "/shop/consoles" },
+    { name: "Dyson",     count: "900+ items", link: "/shop/audio" },
   ];
   return (
     <section className="border-y border-zinc-100 py-6 bg-white overflow-hidden">
@@ -200,7 +204,7 @@ function BrandsBar() {
             {brands.map((b) => (
               <a
                 key={b.name}
-                href="/shop"
+                href={b.link}
                 className="group flex-shrink-0 flex flex-col items-center justify-center h-14 px-6 rounded-2xl border border-zinc-100 hover:border-zinc-950 hover:bg-zinc-950 transition-all duration-200 cursor-pointer"
               >
                 <span className="text-sm font-bold text-zinc-700 group-hover:text-white transition-colors leading-none mb-0.5">
@@ -246,6 +250,15 @@ function Hero() {
     const t = setInterval(() => setGradeIdx(i => (i + 1) % grades.length), 2000);
     return () => clearInterval(t);
   }, []);
+
+  const getSearchLink = () => {
+    if (!heroSearchQuery) return "/shop/phones";
+    const match = MOCK_HERO_SEARCH_ITEMS.find((item) =>
+      item.title.toLowerCase().includes(heroSearchQuery.toLowerCase()) ||
+      item.brand.toLowerCase().includes(heroSearchQuery.toLowerCase())
+    );
+    return match ? `/shop/${match.category}/${match.id}` : `/shop/phones`;
+  };
 
   return (
     <section className="relative bg-white overflow-hidden">
@@ -317,7 +330,7 @@ function Hero() {
                   placeholder='Try "iPhone 15 Pro" or "MacBook Air"'
                   className="flex-1 bg-transparent text-sm font-medium outline-none placeholder:text-zinc-400"
                 />
-                <a href="/shop" className="h-9 px-5 bg-zinc-950 text-white rounded-xl font-bold text-xs flex-shrink-0 flex items-center">
+                <a href={getSearchLink()} className="h-9 px-5 bg-zinc-950 text-white rounded-xl font-bold text-xs flex-shrink-0 flex items-center">
                   Search
                 </a>
               </div>
@@ -356,7 +369,7 @@ function Hero() {
                           ).map((item) => (
                             <a
                               key={item.id}
-                              href="/shop"
+                              href={`/shop/${item.category}/${item.id}`}
                               className="flex items-center gap-4 p-2 rounded-xl hover:bg-zinc-50 transition-colors group"
                             >
                               <div className="h-10 w-10 bg-zinc-100 rounded-lg p-1.5 flex items-center justify-center shrink-0">
@@ -386,13 +399,13 @@ function Hero() {
                 <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Quick Categories:</span>
                 <div className="flex flex-wrap gap-2">
                   {[
-                    { name: "iPhones", icon: Smartphone },
-                    { name: "MacBooks", icon: Laptop },
-                    { name: "Tablets", icon: Tablet },
-                    { name: "Audio", icon: Headphones },
-                    { name: "Gaming", icon: Gamepad2 }
+                    { name: "iPhones", icon: Smartphone, slug: "phones" },
+                    { name: "MacBooks", icon: Laptop, slug: "laptops" },
+                    { name: "Tablets", icon: Tablet, slug: "tablets" },
+                    { name: "Audio", icon: Headphones, slug: "audio" },
+                    { name: "Gaming", icon: Gamepad2, slug: "consoles" }
                   ].map((cat) => (
-                    <a key={cat.name} href="/shop" className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl bg-zinc-100 hover:bg-zinc-950 text-zinc-600 hover:text-white transition-colors border border-zinc-200 hover:border-zinc-950">
+                    <a key={cat.name} href={`/shop/${cat.slug}`} className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl bg-zinc-100 hover:bg-zinc-950 text-zinc-600 hover:text-white transition-colors border border-zinc-200 hover:border-zinc-950">
                       <cat.icon className="h-3.5 w-3.5" />
                       {cat.name}
                     </a>
@@ -408,7 +421,7 @@ function Hero() {
               className="flex flex-col sm:flex-row gap-3 mb-14"
             >
               <a
-                href="/shop"
+                href="/shop/phones"
                 className="h-14 px-8 bg-zinc-950 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]"
               >
                 Shop all devices <ArrowRight className="h-4 w-4" />
@@ -546,26 +559,31 @@ function CategoryBento() {
       name: "Smartphones", sub: "From £149", count: "12,400+ devices",
       Icon: Smartphone, iconBg: "bg-blue-600",
       img: "/bento_smartphones.png",
+      slug: "phones",
     },
     {
       name: "Laptops", sub: "From £249", count: "4,200+ devices",
       Icon: Laptop, iconBg: "bg-violet-600",
       img: "/bento_laptops.png",
+      slug: "laptops",
     },
     {
       name: "Audio", sub: "From £39", count: "3,600+ devices",
       Icon: Headphones, iconBg: "bg-pink-600",
       img: "/bento_audio.png",
+      slug: "audio",
     },
     {
       name: "Gaming", sub: "From £89", count: "6,100+ devices",
       Icon: Gamepad2, iconBg: "bg-emerald-600",
       img: "/bento_gaming.png",
+      slug: "consoles",
     },
     {
       name: "Tablets", sub: "From £129", count: "2,800+ devices",
       Icon: Tablet, iconBg: "bg-amber-600",
       img: "/bento_tablets.png",
+      slug: "tablets",
     },
   ];
 
@@ -579,7 +597,7 @@ function CategoryBento() {
               Pick your <i>category.</i>
             </h2>
           </div>
-          <a href="/shop" className="hidden md:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-zinc-950 transition-colors border-b border-zinc-300 pb-1">
+          <a href="/shop/phones" className="hidden md:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-zinc-950 transition-colors border-b border-zinc-300 pb-1">
             All categories <ArrowRight className="h-3.5 w-3.5" />
           </a>
         </div>
@@ -587,7 +605,7 @@ function CategoryBento() {
         <div className="grid grid-cols-2 lg:grid-cols-4 lg:grid-rows-2 gap-5 h-auto lg:h-[600px]">
           {cats.map((cat, i) => (
             <motion.a
-              href="/shop"
+              href={`/shop/${cat.slug}`}
               key={i}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -673,10 +691,10 @@ function TrustPillars() {
 function TrendingDeals() {
   const featured = { name: "iPhone 15 Pro", spec: "256 GB · Natural Titanium", price: 739, was: 1199, grade: "Excellent", img: "/showcase_iphone.png" };
   const secondary = [
-    { name: "MacBook Air M3", spec: "8 GB · 256 GB SSD", price: 999,  was: 1499, grade: "Pristine",  img: "/showcase_macbook.png" },
-    { name: "Sony WH-1000XM5", spec: "Noise Cancelling · Black", price: 199, was: 380, grade: "Good", img: "/showcase_sony_wh1000xm5.png" },
-    { name: "iPad Pro 13\" M4", spec: "M4 · 128 GB · Wi-Fi", price: 899, was: 1299, grade: "Excellent", img: "/showcase_ipad_pro.png" },
-    { name: "Galaxy S24 Ultra", spec: "256 GB · Titanium Black", price: 819, was: 1249, grade: "Excellent", img: "/showcase_galaxy_s24.png" },
+    { name: "MacBook Air M3", spec: "8 GB · 256 GB SSD", price: 999,  was: 1499, grade: "Pristine",  img: "/showcase_macbook.png", link: "/shop/laptops/mbam2" },
+    { name: "Sony WH-1000XM5", spec: "Noise Cancelling · Black", price: 199, was: 380, grade: "Good", img: "/showcase_sony_wh1000xm5.png", link: "/shop/audio/wh1000" },
+    { name: "iPad Pro 13\" M4", spec: "M4 · 128 GB · Wi-Fi", price: 899, was: 1299, grade: "Excellent", img: "/showcase_ipad_pro.png", link: "/shop/tablets/ipadpro13" },
+    { name: "Galaxy S24 Ultra", spec: "256 GB · Titanium Black", price: 819, was: 1249, grade: "Excellent", img: "/showcase_galaxy_s24.png", link: "/shop/phones/sgs24u" },
   ];
 
   const gradeDot: Record<string, string> = {
@@ -694,7 +712,7 @@ function TrendingDeals() {
             <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-3">Hot right now</p>
             <h2 className="font-serif text-5xl md:text-6xl font-medium text-zinc-950 leading-none">Trending deals</h2>
           </div>
-          <a href="/shop" className="hidden md:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-zinc-950 transition-colors border-b border-zinc-300 pb-1">
+          <a href="/shop/phones" className="hidden md:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-zinc-950 transition-colors border-b border-zinc-300 pb-1">
             See all <ArrowRight className="h-3.5 w-3.5" />
           </a>
         </div>
@@ -743,7 +761,7 @@ function TrendingDeals() {
             {secondary.map((deal, i) => (
               <motion.a
                 key={deal.name}
-                href="/shop"
+                href={deal.link}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -1117,7 +1135,7 @@ function AppPreview() {
             </div>
 
             <div className="mt-12 flex items-center gap-5">
-              <a href="/shop" className="h-12 px-7 bg-zinc-950 text-white rounded-2xl font-bold text-sm flex items-center gap-2 hover:bg-zinc-800 transition-colors">
+              <a href="/shop/phones" className="h-12 px-7 bg-zinc-950 text-white rounded-2xl font-bold text-sm flex items-center gap-2 hover:bg-zinc-800 transition-colors">
                 Start shopping <ArrowRight className="h-4 w-4" />
               </a>
               <a href="/how-it-works" className="text-sm font-bold text-zinc-500 hover:text-zinc-950 transition-colors flex items-center gap-1.5">
@@ -1141,6 +1159,7 @@ function ShopByBudget() {
       tags: ["Earbuds", "Cables", "Smart Speakers", "Mice"],
       img: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=1200&h=700&fit=crop&q=80",
       accent: "bg-emerald-400",
+      link: "/shop/audio",
     },
     {
       label: "£100 – £300",
@@ -1149,6 +1168,7 @@ function ShopByBudget() {
       tags: ["Nintendo Switch", "Tablets", "Smartwatches", "Cameras"],
       img: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=1200&h=700&fit=crop&q=80",
       accent: "bg-sky-400",
+      link: "/shop/tablets",
     },
     {
       label: "£300 – £600",
@@ -1157,6 +1177,7 @@ function ShopByBudget() {
       tags: ["iPhone 14", "Pixel 8 Pro", "Galaxy S23", "iPad Pro"],
       img: "https://images.unsplash.com/photo-1616348436168-de43ad0db179?w=1200&h=700&fit=crop&q=80",
       accent: "bg-violet-400",
+      link: "/shop/phones",
     },
     {
       label: "£600 and over",
@@ -1165,6 +1186,7 @@ function ShopByBudget() {
       tags: ["MacBook Pro M3", "iPhone 15 Pro", "Surface Pro", "Dell XPS"],
       img: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=1200&h=700&fit=crop&q=80",
       accent: "bg-amber-400",
+      link: "/shop/laptops",
     },
   ];
 
@@ -1178,7 +1200,7 @@ function ShopByBudget() {
             Shop by <i>price.</i>
           </h2>
         </div>
-        <a href="/shop" className="hidden md:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-zinc-950 transition-colors border-b border-zinc-300 pb-1">
+        <a href="/shop/phones" className="hidden md:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-zinc-950 transition-colors border-b border-zinc-300 pb-1">
           All deals <ArrowRight className="h-3.5 w-3.5" />
         </a>
       </div>
@@ -1187,7 +1209,7 @@ function ShopByBudget() {
         {ranges.map((r, i) => (
           <motion.a
             key={i}
-            href="/shop"
+            href={r.link}
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -1337,12 +1359,12 @@ function BestDealsSplit() {
 // ─── New Arrivals ─────────────────────────────────────────────────────────────
 function NewArrivals() {
   const items = [
-    { name: "iPhone 15",          type: "Smartphone", price: "£699",   grade: "Pristine",  img: "https://picsum.photos/seed/ip15na/400/400" },
-    { name: "MacBook Pro 14\"",   type: "Laptop",     price: "£1,199", grade: "Excellent", img: "https://picsum.photos/seed/mbp14na/400/400" },
-    { name: "Samsung Tab S9",     type: "Tablet",     price: "£499",   grade: "Pristine",  img: "https://picsum.photos/seed/tabs9na/400/400" },
-    { name: "Pixel 8 Pro",        type: "Smartphone", price: "£499",   grade: "Excellent", img: "https://picsum.photos/seed/px8pna/400/400" },
-    { name: "DJI Mini 4 Pro",     type: "Camera",     price: "£549",   grade: "Good",      img: "https://picsum.photos/seed/djim4na/400/400" },
-    { name: "Apple Watch S9",     type: "Wearable",   price: "£299",   grade: "Excellent", img: "https://picsum.photos/seed/aws9na/400/400" },
+    { name: "iPhone 15",          type: "Smartphone", price: "£699",   grade: "Pristine",  img: "https://picsum.photos/seed/ip15na/400/400", slug: "phones" },
+    { name: "MacBook Pro 14\"",   type: "Laptop",     price: "£1,199", grade: "Excellent", img: "https://picsum.photos/seed/mbp14na/400/400", slug: "laptops" },
+    { name: "Samsung Tab S9",     type: "Tablet",     price: "£499",   grade: "Pristine",  img: "https://picsum.photos/seed/tabs9na/400/400", slug: "tablets" },
+    { name: "Pixel 8 Pro",        type: "Smartphone", price: "£499",   grade: "Excellent", img: "https://picsum.photos/seed/px8pna/400/400", slug: "phones" },
+    { name: "DJI Mini 4 Pro",     type: "Camera",     price: "£549",   grade: "Good",      img: "https://picsum.photos/seed/djim4na/400/400", slug: "consoles" },
+    { name: "Apple Watch S9",     type: "Wearable",   price: "£299",   grade: "Excellent", img: "https://picsum.photos/seed/aws9na/400/400", slug: "phones" },
   ];
 
   const gradeColor: Record<string, string> = {
@@ -1362,7 +1384,7 @@ function NewArrivals() {
             </div>
             <h2 className="font-serif text-5xl md:text-6xl font-medium text-zinc-950 leading-none">New arrivals</h2>
           </div>
-          <a href="/shop" className="hidden md:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-zinc-950 transition-colors border-b border-zinc-300 pb-1">
+          <a href="/shop/phones" className="hidden md:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-zinc-950 transition-colors border-b border-zinc-300 pb-1">
             See all <ArrowRight className="h-3.5 w-3.5" />
           </a>
         </div>
@@ -1370,14 +1392,7 @@ function NewArrivals() {
 
       <div className="flex gap-5 overflow-x-auto scrollbar-hide pl-4 sm:pl-6 lg:pl-8 pr-8 pb-2">
         {items.map((item, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, x: 20 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: i * 0.07 }}
-            className="group flex-shrink-0 w-[220px] md:w-[240px] cursor-pointer"
-          >
+          <Link href={`/shop/${item.slug}`} key={i} className="block group flex-shrink-0 w-[220px] md:w-[240px] cursor-pointer">
             <div className="relative aspect-square rounded-3xl bg-zinc-50 overflow-hidden mb-4">
               <img
                 src={item.img}
@@ -1397,7 +1412,7 @@ function NewArrivals() {
             <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1">{item.type}</p>
             <p className="font-bold text-zinc-950 mb-1 truncate">{item.name}</p>
             <p className="text-lg font-bold text-zinc-950">{item.price}</p>
-          </motion.div>
+          </Link>
         ))}
       </div>
     </section>
@@ -1691,7 +1706,7 @@ function GradeGuide() {
 
                 {/* CTA */}
                 <a
-                  href="/shop"
+                  href="/shop/phones"
                   className={`mt-auto flex items-center justify-center gap-2 h-11 rounded-2xl bg-zinc-800 hover:bg-accent text-zinc-300 hover:text-zinc-950 font-bold text-sm transition-all duration-200`}
                 >
                   Shop {g.name} <ArrowRight className="h-4 w-4" />
@@ -1824,7 +1839,7 @@ function SavingsComparison() {
         </div>
 
         <div className="mt-10 text-center">
-          <a href="/shop" className="inline-flex items-center gap-2 h-12 px-8 bg-zinc-950 text-white rounded-2xl font-bold text-sm hover:bg-zinc-800 transition-colors">
+          <a href="/shop/phones" className="inline-flex items-center gap-2 h-12 px-8 bg-zinc-950 text-white rounded-2xl font-bold text-sm hover:bg-zinc-800 transition-colors">
             Browse all deals <ArrowRight className="h-4 w-4" />
           </a>
         </div>
@@ -1837,38 +1852,41 @@ function SavingsComparison() {
 interface PCard {
   name: string; type: string; spec: string;
   price: string; was: string; grade: string; img: string; index?: number;
+  link?: string;
 }
 const GRADE_STYLE: Record<string, string> = {
   Pristine:  "bg-emerald-50 text-emerald-700",
   Excellent: "bg-sky-50 text-sky-700",
   Good:      "bg-amber-50 text-amber-700",
 };
-function ProductCard({ name, type, spec, price, was, grade, img, index = 0 }: PCard) {
+function ProductCard({ name, type, spec, price, was, grade, img, index = 0, link = "/shop/phones" }: PCard) {
   const pct = Math.round((1 - parseInt(price.replace(/[^0-9]/g,"")) / parseInt(was.replace(/[^0-9]/g,""))) * 100);
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 14 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.04, duration: 0.3 }}
-      className="group cursor-pointer"
-    >
-      <div className="relative aspect-square rounded-2xl bg-zinc-50 overflow-hidden mb-3 ring-1 ring-zinc-100 group-hover:ring-transparent group-hover:shadow-xl transition-all duration-300">
-        <img src={img} alt={name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
-        <div className={`absolute top-3 left-3 px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest ${GRADE_STYLE[grade] ?? "bg-zinc-100 text-zinc-600"}`}>{grade}</div>
-        <div className="absolute top-3 right-3 px-2 py-1 rounded-full bg-accent text-zinc-950 text-[9px] font-bold">-{pct}%</div>
-        <button className="absolute bottom-3 right-3 h-10 w-10 rounded-full bg-zinc-950 text-white flex items-center justify-center opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 shadow-lg">
-          <ShoppingCart className="h-4 w-4" />
-        </button>
-      </div>
-      <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-0.5">{type}</p>
-      <p className="font-bold text-zinc-950 text-sm leading-tight truncate mb-1">{name}</p>
-      <p className="text-[11px] text-zinc-400 mb-2 truncate">{spec}</p>
-      <div className="flex items-baseline gap-2">
-        <span className="text-lg font-bold text-zinc-950">{price}</span>
-        <span className="text-xs text-zinc-400 line-through">{was}</span>
-        <span className="text-xs font-bold text-emerald-600">-{pct}%</span>
-      </div>
-    </motion.div>
+    <Link href={link} className="block group">
+      <motion.div
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: index * 0.04, duration: 0.3 }}
+        className="cursor-pointer"
+      >
+        <div className="relative aspect-square rounded-2xl bg-zinc-50 overflow-hidden mb-3 ring-1 ring-zinc-100 group-hover:ring-transparent group-hover:shadow-xl transition-all duration-300">
+          <img src={img} alt={name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
+          <div className={`absolute top-3 left-3 px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest ${GRADE_STYLE[grade] ?? "bg-zinc-100 text-zinc-600"}`}>{grade}</div>
+          <div className="absolute top-3 right-3 px-2 py-1 rounded-full bg-accent text-zinc-950 text-[9px] font-bold">-{pct}%</div>
+          <button className="absolute bottom-3 right-3 h-10 w-10 rounded-full bg-zinc-950 text-white flex items-center justify-center opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 shadow-lg">
+            <ShoppingCart className="h-4 w-4" />
+          </button>
+        </div>
+        <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-0.5">{type}</p>
+        <p className="font-bold text-zinc-950 text-sm leading-tight truncate mb-1">{name}</p>
+        <p className="text-[11px] text-zinc-400 mb-2 truncate">{spec}</p>
+        <div className="flex items-baseline gap-2">
+          <span className="text-lg font-bold text-zinc-950">{price}</span>
+          <span className="text-xs text-zinc-400 line-through">{was}</span>
+          <span className="text-xs font-bold text-emerald-600">-{pct}%</span>
+        </div>
+      </motion.div>
+    </Link>
   );
 }
 
@@ -1876,6 +1894,15 @@ function ProductCard({ name, type, spec, price, was, grade, img, index = 0 }: PC
 function FeaturedShop() {
   const cats = ["Smartphones", "Laptops", "Tablets", "Audio", "Gaming", "Wearables"];
   const [active, setActive] = useState("Smartphones");
+
+  const catSlugMap: Record<string, string> = {
+    "Smartphones": "phones",
+    "Laptops": "laptops",
+    "Tablets": "tablets",
+    "Audio": "audio",
+    "Gaming": "consoles",
+    "Wearables": "phones",
+  };
 
   const products: Record<string, PCard[]> = {
     "Smartphones": [
@@ -1964,13 +1991,13 @@ function FeaturedShop() {
           >
             {filtered.map((p, i) => (
               <div key={`${active}-${i}`} className="w-[260px] md:w-[280px] flex-shrink-0">
-                <ProductCard {...p} index={i} />
+                <ProductCard {...p} index={i} link={`/shop/${catSlugMap[active] ?? "phones"}`} />
               </div>
             ))}
             
             {/* View all card at the end */}
             <div className="w-[260px] md:w-[280px] flex-shrink-0 flex items-center justify-center p-6 bg-zinc-50 rounded-2xl ring-1 ring-zinc-100">
-              <a href="/shop" className="flex flex-col items-center justify-center gap-4 text-zinc-500 hover:text-zinc-950 transition-colors group">
+              <a href={`/shop/${catSlugMap[active] ?? "phones"}`} className="flex flex-col items-center justify-center gap-4 text-zinc-500 hover:text-zinc-950 transition-colors group">
                 <div className="h-16 w-16 rounded-full border-2 border-current flex items-center justify-center group-hover:bg-zinc-950 group-hover:text-white group-hover:border-zinc-950 transition-all shadow-sm group-hover:shadow-lg">
                   <ArrowRight className="h-6 w-6" />
                 </div>
@@ -1987,20 +2014,20 @@ function FeaturedShop() {
 // ─── Top Brands Split ─────────────────────────────────────────────────────────
 function TopBrandsSplit() {
   const brands = [
-    { name: "Sage", logo: "Sage", style: "font-serif text-2xl" },
-    { name: "Apple", logo: "Apple", style: "font-sans font-black text-xl" },
-    { name: "Dyson", logo: "dyson", style: "font-sans font-normal text-xl" },
-    { name: "Ooni", logo: "ooni", style: "font-sans font-bold text-lg bg-zinc-950 text-white px-2 py-0.5 rounded-md" },
-    { name: "GoPro", logo: "GoPro", style: "font-sans font-black text-blue-600" },
-    { name: "Nintendo", logo: "Nintendo", style: "font-sans font-black text-red-600 border border-red-600 px-2 rounded-full text-xs" },
-    { name: "Garmin", logo: "GARMIN", style: "font-sans font-bold text-xl tracking-widest" },
-    { name: "Bose", logo: "BOSE", style: "font-sans font-black text-xl italic" },
+    { name: "Sage", logo: "Sage", style: "font-serif text-2xl", link: "/shop/audio" },
+    { name: "Apple", logo: "Apple", style: "font-sans font-black text-xl", link: "/shop/phones" },
+    { name: "Dyson", logo: "dyson", style: "font-sans font-normal text-xl", link: "/shop/audio" },
+    { name: "Ooni", logo: "ooni", style: "font-sans font-bold text-lg bg-zinc-950 text-white px-2 py-0.5 rounded-md", link: "/shop/audio" },
+    { name: "GoPro", logo: "GoPro", style: "font-sans font-black text-blue-600", link: "/shop/consoles" },
+    { name: "Nintendo", logo: "Nintendo", style: "font-sans font-black text-red-600 border border-red-600 px-2 rounded-full text-xs", link: "/shop/consoles" },
+    { name: "Garmin", logo: "GARMIN", style: "font-sans font-bold text-xl tracking-widest", link: "/shop/phones" },
+    { name: "Bose", logo: "BOSE", style: "font-sans font-black text-xl italic", link: "/shop/audio" },
   ];
 
   const products = [
-    { name: "Coffee maker with grinder", spec: "Without capsule Sage The...", price: "361.99", was: "£599.00 new", rating: "4.5/5 (130)", img: "https://picsum.photos/seed/cm1/400/400" },
-    { name: "Espresso machine Without", spec: "capsule Sage The Bambino...", price: "232.99", was: "£399.99 new", rating: "4.4/5 (16)", img: "https://picsum.photos/seed/em2/400/400" },
-    { name: "Espresso machine Sage", spec: "Bambino SES450BS...", price: "208.99", was: "£329.95 new", rating: "4.9/5 (13)", img: "https://picsum.photos/seed/em3/400/400" },
+    { name: "Coffee maker with grinder", spec: "Without capsule Sage The...", price: "361.99", was: "£599.00 new", rating: "4.5/5 (130)", img: "https://picsum.photos/seed/cm1/400/400", link: "/shop/audio" },
+    { name: "Espresso machine Without", spec: "capsule Sage The Bambino...", price: "232.99", was: "£399.99 new", rating: "4.4/5 (16)", img: "https://picsum.photos/seed/em2/400/400", link: "/shop/audio" },
+    { name: "Espresso machine Sage", spec: "Bambino SES450BS...", price: "208.99", was: "£329.95 new", rating: "4.9/5 (13)", img: "https://picsum.photos/seed/em3/400/400", link: "/shop/audio" },
   ];
 
   return (
@@ -2019,19 +2046,19 @@ function TopBrandsSplit() {
             {/* Brands */}
             <div className="flex gap-2.5 overflow-x-auto scrollbar-hide pb-4 mb-2">
               {brands.map((brand, i) => (
-                <div key={i} className="flex flex-col items-center gap-1.5 flex-shrink-0 w-20 cursor-pointer group">
+                <Link key={i} href={brand.link} className="flex flex-col items-center gap-1.5 flex-shrink-0 w-20 cursor-pointer group">
                   <div className="h-12 w-20 rounded-xl bg-zinc-50 border border-transparent shadow-[0_1px_2px_rgba(0,0,0,0.02)] flex items-center justify-center overflow-hidden group-hover:bg-white group-hover:border-zinc-200 transition-colors">
                     <span className={brand.style}>{brand.logo}</span>
                   </div>
                   <span className="text-[10px] font-medium text-zinc-600 text-center">{brand.name}</span>
-                </div>
+                </Link>
               ))}
             </div>
 
             {/* Products */}
             <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-4">
               {products.map((p, i) => (
-                <div key={i} className="w-[260px] flex-shrink-0 bg-white rounded-xl p-4 border border-zinc-200/60 shadow-sm hover:shadow-md transition-shadow flex flex-col relative group cursor-pointer">
+                <Link key={i} href={p.link} className="w-[260px] flex-shrink-0 bg-white rounded-xl p-4 border border-zinc-200/60 shadow-sm hover:shadow-md transition-shadow flex flex-col relative group cursor-pointer">
                   {i === 0 && (
                     <div className="absolute top-4 left-4 z-10 text-[10px] font-bold text-violet-700 tracking-wide">
                       Don't miss out
@@ -2051,8 +2078,7 @@ function TopBrandsSplit() {
                       <span className="text-sm font-bold relative -top-1.5">.{p.price.split('.')[1]}</span>
                     </p>
                     <p className="text-[11px] text-zinc-400 line-through mb-2">{p.was}</p>
-                  </div>
-                </div>
+                </Link>
               ))}
             </div>
             
@@ -2094,6 +2120,15 @@ function BudgetPicks() {
   ];
 
   function PriceRow({ title, badge, items }: { title: string; badge: string; items: PCard[] }) {
+    const typeSlugMap: Record<string, string> = {
+      "Phone": "phones",
+      "Laptop": "laptops",
+      "Tablet": "tablets",
+      "Audio": "audio",
+      "Gaming": "consoles",
+      "Wearable": "phones",
+    };
+
     return (
       <div className="mb-16 last:mb-0">
         <div className="flex items-center justify-between mb-8 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -2101,34 +2136,35 @@ function BudgetPicks() {
             <h3 className="font-serif text-3xl md:text-4xl font-medium text-zinc-950">{title}</h3>
             <span className="px-3 py-1 bg-accent text-zinc-950 text-[10px] font-bold uppercase tracking-widest rounded-full">{badge}</span>
           </div>
-          <a href="/shop" className="hidden sm:flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-zinc-950 transition-colors">
+          <a href="/shop/phones" className="hidden sm:flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-zinc-950 transition-colors">
             See all <ArrowRight className="h-3.5 w-3.5" />
           </a>
         </div>
         <div className="flex gap-4 overflow-x-auto scrollbar-hide pl-4 sm:pl-6 lg:pl-8 pr-8 pb-2">
           {items.map((p, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, x: 16 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.06 }}
-              className="flex-shrink-0 w-[190px] md:w-[210px] group cursor-pointer"
-            >
-              <div className="relative aspect-square rounded-2xl bg-zinc-100 overflow-hidden mb-3 group-hover:shadow-lg transition-shadow duration-300">
-                <img src={p.img} alt={p.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                <div className={`absolute top-2.5 left-2.5 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest ${GRADE_STYLE[p.grade] ?? "bg-zinc-100 text-zinc-600"}`}>{p.grade}</div>
-                <button className="absolute bottom-2.5 right-2.5 h-9 w-9 rounded-full bg-zinc-950 text-white flex items-center justify-center opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
-                  <ShoppingCart className="h-3.5 w-3.5" />
-                </button>
-              </div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-0.5">{p.type}</p>
-              <p className="font-bold text-zinc-950 text-xs leading-tight truncate mb-1.5">{p.name}</p>
-              <div className="flex items-baseline gap-2">
-                <span className="text-base font-bold text-zinc-950">{p.price}</span>
-                <span className="text-[11px] text-zinc-400 line-through">{p.was}</span>
-              </div>
-            </motion.div>
+            <Link href={`/shop/${typeSlugMap[p.type] ?? "phones"}`} key={i} className="block flex-shrink-0 w-[190px] md:w-[210px] group cursor-pointer">
+              <motion.div
+                initial={{ opacity: 0, x: 16 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.06 }}
+                className="w-full"
+              >
+                <div className="relative aspect-square rounded-2xl bg-zinc-100 overflow-hidden mb-3 group-hover:shadow-lg transition-shadow duration-300">
+                  <img src={p.img} alt={p.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <div className={`absolute top-2.5 left-2.5 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest ${GRADE_STYLE[p.grade] ?? "bg-zinc-100 text-zinc-600"}`}>{p.grade}</div>
+                  <button className="absolute bottom-2.5 right-2.5 h-9 w-9 rounded-full bg-zinc-950 text-white flex items-center justify-center opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+                    <ShoppingCart className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-0.5">{p.type}</p>
+                <p className="font-bold text-zinc-950 text-xs leading-tight truncate mb-1.5">{p.name}</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-base font-bold text-zinc-950">{p.price}</span>
+                  <span className="text-[11px] text-zinc-400 line-through">{p.was}</span>
+                </div>
+              </motion.div>
+            </Link>
           ))}
         </div>
       </div>
