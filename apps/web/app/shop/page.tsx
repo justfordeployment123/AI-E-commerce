@@ -1,296 +1,476 @@
 "use client";
 
-import { useState } from "react";
-import { 
-  Smartphone, 
-  Laptop, 
-  Tablet, 
-  Headphones, 
-  Gamepad2, 
-  Speaker, 
-  Watch, 
-  Camera,
-  Search,
-  ShoppingCart,
-  User,
-  Star,
-  ChevronDown,
-  Filter,
-  ArrowRight,
-  Zap,
-  ShieldCheck,
-  RefreshCw,
-  Check
+import React, { useState } from "react";
+import {
+  Smartphone, Laptop, Tablet, Headphones, Gamepad2,
+  ShoppingCart, Star, Check, ArrowRight, ArrowLeft, SlidersHorizontal,
+  ChevronDown, X, ShieldCheck, RefreshCw, Zap
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 
+const CATEGORIES = [
+  { id: "all",        label: "All Products",    icon: Zap,         count: 2847 },
+  { id: "phones",     label: "Smartphones",     icon: Smartphone,  count: 1240 },
+  { id: "laptops",    label: "Laptops",         icon: Laptop,      count: 384  },
+  { id: "tablets",    label: "Tablets",         icon: Tablet,      count: 291  },
+  { id: "consoles",   label: "Consoles",        icon: Gamepad2,    count: 417  },
+  { id: "audio",      label: "Audio",           icon: Headphones,  count: 515  },
+];
+
+const PRODUCTS = [
+  { id: "ip15pro",   title: "iPhone 15 Pro",          brand: "Apple",    category: "phones",   grade: "Excellent", storage: "256 GB",     price: 739,  was: 1199, rating: 4.9, reviews: 2847, img: "https://picsum.photos/seed/ip15pro/400/400" },
+  { id: "mbam3",     title: "MacBook Air 13\" M3",    brand: "Apple",    category: "laptops",  grade: "Pristine",  storage: "512 GB SSD", price: 1049, was: 1499, rating: 4.9, reviews: 1102, img: "https://picsum.photos/seed/mbairm3/400/400" },
+  { id: "s24u",      title: "Galaxy S24 Ultra",       brand: "Samsung",  category: "phones",   grade: "Excellent", storage: "256 GB",     price: 819,  was: 1249, rating: 4.8, reviews: 963,  img: "https://picsum.photos/seed/s24ult/400/400" },
+  { id: "ps5",       title: "PlayStation 5",          brand: "Sony",     category: "consoles", grade: "Excellent", storage: "825 GB",     price: 389,  was: 479,  rating: 4.8, reviews: 3412, img: "https://picsum.photos/seed/ps5disc/400/400" },
+  { id: "ipadpro",   title: "iPad Pro 13\" M4",       brand: "Apple",    category: "tablets",  grade: "Excellent", storage: "256 GB",     price: 899,  was: 1299, rating: 4.9, reviews: 711,  img: "https://picsum.photos/seed/ipadpro13/400/400" },
+  { id: "wh1000",    title: "Sony WH-1000XM5",        brand: "Sony",     category: "audio",    grade: "Pristine",  storage: "—",          price: 219,  was: 379,  rating: 4.9, reviews: 2841, img: "https://picsum.photos/seed/wh1000xm5/400/400" },
+  { id: "ip14",      title: "iPhone 14",              brand: "Apple",    category: "phones",   grade: "Very Good", storage: "128 GB",     price: 379,  was: 829,  rating: 4.7, reviews: 1584, img: "https://picsum.photos/seed/ip14std/400/400" },
+  { id: "xboxsx",    title: "Xbox Series X",          brand: "Microsoft",category: "consoles", grade: "Excellent", storage: "1 TB",       price: 349,  was: 449,  rating: 4.7, reviews: 892,  img: "https://picsum.photos/seed/xboxserx/400/400" },
+  { id: "mbpro14",   title: "MacBook Pro 14\" M3",    brand: "Apple",    category: "laptops",  grade: "Excellent", storage: "512 GB SSD", price: 1589, was: 1999, rating: 4.9, reviews: 447,  img: "https://picsum.photos/seed/mbpro14m3/400/400" },
+  { id: "s23",       title: "Galaxy S23",             brand: "Samsung",  category: "phones",   grade: "Good",      storage: "128 GB",     price: 329,  was: 749,  rating: 4.6, reviews: 724,  img: "https://picsum.photos/seed/s23base/400/400" },
+  { id: "airpodspro","title": "AirPods Pro 2nd Gen",  brand: "Apple",    category: "audio",    grade: "Excellent", storage: "—",          price: 159,  was: 279,  rating: 4.8, reviews: 1947, img: "https://picsum.photos/seed/app2gen/400/400" },
+  { id: "switcholed","title": "Switch OLED",          brand: "Nintendo", category: "consoles", grade: "Excellent", storage: "64 GB",      price: 239,  was: 309,  rating: 4.8, reviews: 1583, img: "https://picsum.photos/seed/switcholed/400/400" },
+];
+
+const GRADES = ["Pristine", "Excellent", "Very Good", "Good"];
+const BRANDS = ["Apple", "Samsung", "Sony", "Microsoft", "Nintendo"];
+
+const SORT_OPTIONS = [
+  { id: "featured",   label: "Featured" },
+  { id: "price-asc",  label: "Price: Low to High" },
+  { id: "price-desc", label: "Price: High to Low" },
+  { id: "rating",     label: "Top Rated" },
+];
+
 export default function ShopPage() {
-  const [activeCategory, setActiveCategory] = useState("All Products");
+  const [activeCategory, setActiveCategory] = useState("all");
+  const [activeGrades, setActiveGrades] = useState<string[]>([]);
+  const [activeBrands, setActiveBrands] = useState<string[]>([]);
+  const [sort, setSort] = useState("featured");
+  const [showSort, setShowSort] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
 
-  const categories = [
-    { name: "Smartphones", icon: Smartphone, mood: "var(--mood-sky)" },
-    { name: "Laptops", icon: Laptop, mood: "var(--mood-rose)" },
-    { name: "Tablets", icon: Tablet, mood: "var(--mood-amber)" },
-    { name: "Audio", icon: Headphones, mood: "var(--mood-emerald)" },
-    { name: "Gaming", icon: Gamepad2, mood: "var(--mood-violet)" },
-    { name: "Watches", icon: Watch, mood: "var(--mood-sky)" },
-  ];
+  function toggleFilter(item: string, list: string[], setList: (v: string[]) => void) {
+    setList(list.includes(item) ? list.filter(x => x !== item) : [...list, item]);
+  }
 
-  const products = [
-    {
-      title: "iPhone 14 Pro",
-      grade: "Excellent",
-      storage: "256 GB",
-      price: "$679.00",
-      rating: 4.8,
-      reviews: 1240,
-      image: "https://images.unsplash.com/photo-1616348436168-de43ad0db179?q=80&w=400&h=400&auto=format&fit=crop",
-    },
-    {
-      title: "MacBook Air M2",
-      grade: "Pristine",
-      storage: "16 GB / 512 GB",
-      price: "$899.00",
-      rating: 4.9,
-      reviews: 856,
-      image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?q=80&w=400&h=400&auto=format&fit=crop",
-    },
-    {
-      title: "Samsung Galaxy S23",
-      grade: "Very Good",
-      storage: "128 GB",
-      price: "$469.00",
-      rating: 4.7,
-      reviews: 420,
-      image: "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?q=80&w=400&h=400&auto=format&fit=crop",
-    },
-    {
-      title: "PlayStation 5",
-      grade: "Certified",
-      storage: "825 GB",
-      price: "$399.00",
-      rating: 4.8,
-      reviews: 2100,
-      image: "https://images.unsplash.com/photo-1607853202273-797f1c22a38e?q=80&w=500&auto=format&fit=crop",
-    },
-    {
-      title: "iPad Air 5",
-      grade: "Excellent",
-      storage: "64 GB",
-      price: "$429.00",
-      rating: 4.9,
-      reviews: 320,
-      image: "https://images.unsplash.com/photo-1544244015-c24b59b8102e?q=80&w=500&auto=format&fit=crop",
-    },
-    {
-      title: "Sony WH-1000XM5",
-      grade: "Pristine",
-      storage: "N/A",
-      price: "$279.00",
-      rating: 4.6,
-      reviews: 580,
-      image: "https://images.unsplash.com/photo-1618366712214-8c075189d0ad?q=80&w=400&h=400&auto=format&fit=crop",
-    },
-  ];
+  function handleAdd(id: string) {
+    setAddedIds(prev => new Set(prev).add(id));
+    setTimeout(() => setAddedIds(prev => { const s = new Set(prev); s.delete(id); return s; }), 2000);
+  }
+
+  let filtered = PRODUCTS.filter(p => {
+    const catMatch = activeCategory === "all" || p.category === activeCategory;
+    const gradeMatch = activeGrades.length === 0 || activeGrades.includes(p.grade);
+    const brandMatch = activeBrands.length === 0 || activeBrands.includes(p.brand);
+    return catMatch && gradeMatch && brandMatch;
+  });
+
+  if (sort === "price-asc")  filtered = [...filtered].sort((a, b) => a.price - b.price);
+  if (sort === "price-desc") filtered = [...filtered].sort((a, b) => b.price - a.price);
+  if (sort === "rating")     filtered = [...filtered].sort((a, b) => b.rating - a.rating);
+
+  const currentCatMeta = CATEGORIES.find(c => c.id === activeCategory)!;
 
   return (
-    <div className="flex min-h-screen flex-col bg-white text-black font-sans selection:bg-accent selection:text-black">
+    <div className="min-h-screen bg-[#f5f5f7] text-black font-sans selection:bg-accent selection:text-black">
       <Navbar />
 
-      <main className="flex-1">
-        {/* Category Rails (Back Market Style) */}
-        <div className="bg-zinc-50/50 border-b border-zinc-100">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 md:py-16">
-            <motion.h1 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="font-serif text-4xl md:text-6xl font-medium mb-10 text-center lg:text-left"
-            >
-              Shop by <i>mood</i>.
-            </motion.h1>
-            <div className="grid grid-cols-3 md:grid-cols-6 gap-4 md:gap-6">
-              {categories.map((cat, i) => (
-                <motion.button
-                  key={cat.name}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: i * 0.05 }}
-                  onClick={() => setActiveCategory(cat.name)}
-                  className="group flex flex-col items-center gap-3 p-4 rounded-[2rem] transition-all hover:shadow-xl hover:bg-white"
+      {/* ── Header ─────────────────────────────────────────────────── */}
+      <section className="bg-white border-b border-zinc-200 sticky top-[72px] z-30 shadow-sm">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-6">
+            {activeCategory === "all" ? "All refurbished tech" : currentCatMeta.label}
+          </h1>
+
+          {/* Category Rail - Back Market style pills */}
+          <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide pb-2">
+            {CATEGORIES.map((cat) => {
+              const Icon = cat.icon;
+              const active = activeCategory === cat.id;
+              return (
+                <Link
+                  key={cat.id}
+                  href={cat.id === "all" ? "/shop" : `/shop/${cat.id}`}
+                  className={`shrink-0 flex items-center gap-2 h-12 px-5 rounded-full text-sm font-bold transition-all border-2 ${
+                    active
+                      ? "bg-black border-black text-white"
+                      : "bg-white border-zinc-200 text-zinc-700 hover:border-black"
+                  }`}
                 >
-                  <div 
-                    className="h-16 w-16 md:h-20 md:w-20 rounded-full flex items-center justify-center transition-transform group-hover:scale-110"
-                    style={{ backgroundColor: cat.mood }}
-                  >
-                    <cat.icon className="h-6 w-6 md:h-8 md:w-8 text-black/70" />
-                  </div>
-                  <span className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-zinc-400 group-hover:text-black">
-                    {cat.name}
-                  </span>
-                </motion.button>
-              ))}
-            </div>
+                  <Icon className="h-4 w-4" />
+                  {cat.label}
+                </Link>
+              );
+            })}
           </div>
         </div>
+      </section>
 
-        <div className="mx-auto max-w-7xl w-full px-4 py-16 sm:px-6 lg:px-8">
-          <div className="flex flex-col lg:flex-row gap-16">
-            
-            {/* Sidebar Filters */}
-            <aside className="w-full lg:w-64 flex-shrink-0">
-              <div className="sticky top-24 space-y-12">
-                <div>
-                  <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-zinc-400 mb-6">Conditions</h3>
-                  <div className="space-y-4">
-                    {["Pristine", "Excellent", "Very Good", "Good", "Fair"].map((grade) => (
-                      <label key={grade} className="flex items-center gap-3 cursor-pointer group">
-                        <div className="relative flex h-5 w-5 items-center justify-center rounded-md border-2 border-zinc-200 group-hover:border-black transition-colors">
-                          <input type="checkbox" className="peer absolute h-full w-full opacity-0 cursor-pointer" />
-                          <Check className="h-3.5 w-3.5 text-black opacity-0 peer-checked:opacity-100 transition-opacity" />
-                        </div>
-                        <span className="text-sm font-bold text-zinc-500 group-hover:text-black transition-colors">{grade}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
+      {/* ── Quick Links ──────────────────────────────────────────────────────── */}
+      <div className="bg-white border-b border-zinc-200 py-4 mb-8">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex gap-3 overflow-x-auto scrollbar-hide">
+          <button onClick={() => { setActiveBrands(["Apple"]); setActiveGrades([]); }} className="shrink-0 h-10 px-6 rounded-full bg-zinc-100 font-bold text-sm hover:bg-zinc-200 transition-colors">Shop Apple</button>
+          <button onClick={() => { setActiveBrands(["Samsung"]); setActiveGrades([]); }} className="shrink-0 h-10 px-6 rounded-full bg-zinc-100 font-bold text-sm hover:bg-zinc-200 transition-colors">Shop Samsung</button>
+          <button onClick={() => { setSort("price-asc"); setActiveBrands([]); setActiveGrades([]); }} className="shrink-0 h-10 px-6 rounded-full bg-zinc-100 font-bold text-sm hover:bg-zinc-200 transition-colors">Budget Friendly</button>
+          <button onClick={() => { setActiveGrades(["Pristine", "Excellent"]); setActiveBrands([]); }} className="shrink-0 h-10 px-6 rounded-full bg-zinc-100 font-bold text-sm hover:bg-zinc-200 transition-colors">Like New</button>
+        </div>
+      </div>
 
-                <div>
-                  <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-zinc-400 mb-6">Price Range</h3>
-                  <div className="space-y-4">
-                    {["Under $200", "$200 - $500", "$500 - $1000", "$1000+"].map((range) => (
-                      <label key={range} className="flex items-center gap-3 cursor-pointer group">
-                        <div className="h-5 w-5 rounded-full border-2 border-zinc-200 group-hover:border-black transition-colors flex items-center justify-center">
-                           <div className="h-2 w-2 rounded-full bg-black opacity-0 peer-checked:opacity-100" />
-                           <input type="radio" name="price" className="peer absolute h-5 w-5 opacity-0 cursor-pointer" />
-                        </div>
-                        <span className="text-sm font-bold text-zinc-500 group-hover:text-black transition-colors">{range}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
+      {/* ── Body ─────────────────────────────────────────────────────────────── */}
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-12">
+        
+        {/* Vibrant Promo Banner */}
+        {activeCategory === "all" && (
+          <div className="mb-12 rounded-[32px] bg-gradient-to-r from-[#c3eb4e] to-[#a8d32d] p-8 md:p-12 relative overflow-hidden flex flex-col md:flex-row items-center justify-between border border-[#b2db3c] shadow-sm">
+             <div className="relative z-10 max-w-lg mb-6 md:mb-0 text-center md:text-left">
+               <span className="inline-block px-3 py-1 bg-black text-white text-xs font-bold uppercase tracking-widest rounded-full mb-4">Limited Time</span>
+               <h2 className="text-3xl md:text-5xl font-bold tracking-tight mb-4">Spring Tech Event</h2>
+               <p className="text-lg font-medium text-black/80">Get up to 40% off pristine refurbished devices. Fully tested, 2-year warranty included.</p>
+             </div>
+             <div className="relative z-10 shrink-0">
+               <button className="h-14 px-8 bg-black text-white rounded-full font-bold text-lg hover:scale-105 transition-transform flex items-center gap-2">
+                 Shop the sale <ArrowRight className="h-5 w-5" />
+               </button>
+             </div>
+             {/* Decorative element */}
+             <div className="absolute right-0 top-0 w-1/2 h-full opacity-20 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at right, white, transparent 70%)' }}></div>
+          </div>
+        )}
 
-                {/* Promo Card */}
-                <div className="rounded-[2rem] bg-zinc-950 p-6 text-white overflow-hidden relative group cursor-pointer">
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-accent/20 blur-2xl rounded-full" />
-                  <p className="text-[9px] font-bold uppercase tracking-widest text-accent mb-4">Trade-in</p>
-                  <h4 className="text-lg font-bold mb-4 leading-tight">Get up to $500 for your old tech.</h4>
-                  <button className="flex items-center gap-2 text-xs font-bold border-b border-white/30 pb-0.5 group-hover:text-accent transition-colors">
-                    Start trade-in <ArrowRight className="h-3 w-3" />
-                  </button>
+        <div className="flex flex-col">
+
+          {/* ── Top Picks Carousel ────────────────────────────────────────────────── */}
+          {activeCategory === "all" && (
+            <div className="mb-12">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold tracking-tight">Trending Tech</h2>
+                <div className="flex gap-2 hidden md:flex">
+                  <button className="h-10 w-10 rounded-full bg-white border border-zinc-200 flex items-center justify-center hover:bg-zinc-50"><ArrowLeft className="h-5 w-5" /></button>
+                  <button className="h-10 w-10 rounded-full bg-white border border-zinc-200 flex items-center justify-center hover:bg-zinc-50"><ArrowRight className="h-5 w-5" /></button>
                 </div>
               </div>
-            </aside>
-
-            {/* Product Grid */}
-            <div className="flex-1">
-              <div className="mb-12 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-                <div>
-                  <h2 className="text-3xl font-bold tracking-tight">{activeCategory}</h2>
-                  <p className="text-sm text-zinc-500 mt-1 font-medium">Showing {products.length} expertly certified results</p>
-                </div>
-                <div className="flex items-center gap-4">
-                  <button className="flex items-center gap-3 h-12 px-6 rounded-2xl bg-zinc-50 text-xs font-bold transition-all hover:bg-zinc-100">
-                    <Filter className="h-4 w-4" />
-                    Filters
-                  </button>
-                  <button className="flex items-center gap-3 h-12 px-6 rounded-2xl bg-zinc-50 text-xs font-bold transition-all hover:bg-zinc-100">
-                    Sort: Featured
-                    <ChevronDown className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-
-              <div className="grid gap-x-8 gap-y-16 sm:grid-cols-2 lg:grid-cols-3">
-                {products.map((product, i) => (
-                  <motion.article 
-                    key={i} 
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.05 }}
-                    className="group cursor-pointer"
-                  >
-                    <div className="relative aspect-square overflow-hidden rounded-[2.5rem] bg-zinc-50 p-8 md:p-10 transition-all group-hover:bg-white group-hover:shadow-2xl ring-1 ring-zinc-100 group-hover:ring-transparent">
-                      <div className="absolute top-6 left-6 z-10 rounded-full bg-white px-3 py-1 text-[9px] font-bold uppercase tracking-widest shadow-sm flex items-center gap-1">
-                        <CheckCircle2 className="h-3 w-3 text-accent" />
-                        {product.grade}
+              <div className="flex gap-4 md:gap-6 overflow-x-auto scrollbar-hide pb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
+                {PRODUCTS.slice(4, 8).map(product => (
+                  <a href={`/shop/${product.category}/${product.id}`} key={`top-${product.id}`} className="shrink-0 w-[240px] md:w-[280px] group block">
+                    <div className="bg-white rounded-[32px] p-3 border border-zinc-200 hover:border-black hover:shadow-xl transition-all duration-300 h-full flex flex-col">
+                      <div className="relative aspect-square rounded-[24px] bg-[#f5f5f7] mb-5 p-6 flex items-center justify-center">
+                        <span className="absolute top-4 left-4 inline-flex px-2.5 py-1 rounded-full bg-black text-[10px] font-bold text-white shadow-sm uppercase tracking-wider">
+                          Trending
+                        </span>
+                        <img src={product.img} alt={product.title} className="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform" />
                       </div>
-                      <img 
-                        src={product.image} 
-                        alt={product.title}
-                        className="h-full w-full object-contain transition-transform duration-700 group-hover:scale-110"
-                      />
-                      <button className="absolute bottom-6 right-6 h-12 w-12 rounded-full bg-black text-white flex items-center justify-center opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all shadow-xl">
-                        <ShoppingCart className="h-5 w-5" />
-                      </button>
-                    </div>
-                    <div className="mt-6 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <h3 className="font-bold text-lg">{product.title}</h3>
-                        <div className="flex items-center gap-1">
-                          <Star className="h-3 w-3 fill-accent text-accent" />
-                          <span className="text-xs font-bold">{product.rating}</span>
+                      <div className="px-2 flex flex-col flex-1 pb-2">
+                        <h3 className="font-bold text-lg leading-tight mb-1">{product.title}</h3>
+                        <div className="flex items-baseline gap-2 mt-auto pt-4">
+                          <span className="text-xl md:text-2xl font-bold tracking-tight">£{product.price}</span>
                         </div>
                       </div>
-                      <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">{product.storage}</p>
-                      <div className="flex items-baseline gap-3 pt-2">
-                        <span className="text-2xl font-bold">{product.price}</span>
-                        <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Free Shipping</span>
-                      </div>
                     </div>
-                  </motion.article>
+                  </a>
                 ))}
               </div>
+            </div>
+          )}
 
-              {/* Pagination */}
-              <div className="mt-24 flex items-center justify-center gap-4">
-                 <button className="h-12 px-8 rounded-2xl border-2 border-zinc-100 font-bold text-xs hover:bg-zinc-50 transition-colors">Load more products</button>
+          {/* ── Main Grid ───────────────────────────────────────────────────────── */}
+          <div className="flex-1 min-w-0">
+
+            {/* Toolbar & Horizontal Filters */}
+            <div className="mb-8 space-y-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-bold text-zinc-600">
+                  {filtered.length} products
+                </p>
+                
+                <div className="flex items-center gap-3">
+                  {/* Mobile Filter Toggle */}
+                  <button
+                    onClick={() => setShowFilters(true)}
+                    className="lg:hidden flex items-center gap-2 h-11 px-5 rounded-full bg-white border border-zinc-200 text-sm font-bold"
+                  >
+                    <SlidersHorizontal className="h-4 w-4" /> Filters
+                    {(activeGrades.length > 0 || activeBrands.length > 0) && (
+                      <span className="h-5 w-5 rounded-full bg-black text-white text-[10px] font-bold flex items-center justify-center ml-1">
+                        {activeGrades.length + activeBrands.length}
+                      </span>
+                    )}
+                  </button>
+
+                  {/* Sort Dropdown */}
+                  <div className="relative z-20">
+                    <button
+                      onClick={() => setShowSort(s => !s)}
+                      className="flex items-center gap-2 h-11 px-5 rounded-full bg-white border border-zinc-200 text-sm font-bold hover:border-black transition-colors"
+                    >
+                      Sort: {SORT_OPTIONS.find(o => o.id === sort)?.label}
+                      <ChevronDown className="h-4 w-4" />
+                    </button>
+                    <AnimatePresence>
+                      {showSort && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 4 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 4 }}
+                          className="absolute right-0 top-full mt-2 w-56 bg-white border border-zinc-200 rounded-[24px] shadow-xl overflow-hidden"
+                        >
+                          {SORT_OPTIONS.map(opt => (
+                            <button
+                             key={opt.id}
+                             onClick={() => { setSort(opt.id); setShowSort(false); }}
+                             className={`w-full text-left px-5 py-4 text-sm font-bold hover:bg-zinc-50 transition-colors ${sort === opt.id ? "text-black bg-zinc-50" : "text-zinc-600"}`}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </div>
+              </div>
+
+              {/* Desktop Horizontal Filters */}
+              <div className="hidden lg:flex flex-wrap items-center gap-6 bg-white p-3 px-5 rounded-full border border-zinc-200">
+                <div className="flex items-center gap-3">
+                  <span className="font-bold text-xs text-zinc-400 uppercase tracking-widest">Brand</span>
+                  <div className="flex gap-2">
+                    {BRANDS.map(brand => {
+                      const isActive = activeBrands.includes(brand);
+                      return (
+                        <button
+                          key={brand}
+                          onClick={() => toggleFilter(brand, activeBrands, setActiveBrands)}
+                          className={`px-3 py-1.5 rounded-full text-sm font-bold transition-all border ${
+                            isActive ? "bg-black text-white border-black" : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-400"
+                          }`}
+                        >
+                          {brand}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                
+                <div className="w-px h-6 bg-zinc-200"></div>
+                
+                <div className="flex items-center gap-3">
+                  <span className="font-bold text-xs text-zinc-400 uppercase tracking-widest">Condition</span>
+                  <div className="flex gap-2">
+                    {GRADES.map(g => {
+                      const isActive = activeGrades.includes(g);
+                      return (
+                        <button
+                          key={g}
+                          onClick={() => toggleFilter(g, activeGrades, setActiveGrades)}
+                          className={`px-3 py-1.5 rounded-full text-sm font-bold transition-all border ${
+                            isActive ? "bg-black text-white border-black" : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-400"
+                          }`}
+                        >
+                          {g}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* trust bar bottom */}
-        <div className="bg-zinc-50 py-12 border-t border-zinc-100">
-          <div className="mx-auto max-w-7xl px-4 flex flex-wrap justify-center gap-12 md:gap-24 opacity-30 grayscale hover:opacity-100 hover:grayscale-0 transition-all">
-             <div className="flex items-center gap-3">
-               <ShieldCheck className="h-6 w-6" />
-               <span className="text-xs font-bold uppercase tracking-widest">2-Year Warranty</span>
-             </div>
-             <div className="flex items-center gap-3">
-               <Zap className="h-6 w-6" />
-               <span className="text-xs font-bold uppercase tracking-widest">Free Express Shipping</span>
-             </div>
-             <div className="flex items-center gap-3">
-               <RefreshCw className="h-6 w-6" />
-               <span className="text-xs font-bold uppercase tracking-widest">30-Day Money Back</span>
-             </div>
+
+            {/* Active Filters Display (Mobile Only) */}
+            {(activeGrades.length > 0 || activeBrands.length > 0) && (
+              <div className="flex lg:hidden flex-wrap gap-2 mb-6">
+                {[...activeBrands, ...activeGrades].map(f => (
+                  <button
+                    key={f}
+                    onClick={() => {
+                      if (activeBrands.includes(f)) setActiveBrands(prev => prev.filter(x => x !== f));
+                      if (activeGrades.includes(f)) setActiveGrades(prev => prev.filter(x => x !== f));
+                    }}
+                    className="flex items-center gap-1.5 h-8 px-3 rounded-full bg-white border border-zinc-200 text-xs font-bold hover:border-zinc-400"
+                  >
+                    {f} <X className="h-3 w-3" />
+                  </button>
+                ))}
+                <button
+                  onClick={() => { setActiveBrands([]); setActiveGrades([]); }}
+                  className="h-8 px-3 text-xs font-bold text-zinc-500 hover:text-black underline"
+                >
+                  Clear all
+                </button>
+              </div>
+            )}
+
+            {/* Product Grid */}
+            {filtered.length === 0 ? (
+              <div className="py-20 text-center bg-white rounded-[32px] border border-zinc-200">
+                <p className="font-bold text-xl mb-3">No products found</p>
+                <p className="text-zinc-500 mb-6">Try adjusting your filters or category.</p>
+                <button
+                  onClick={() => { setActiveCategory("all"); setActiveBrands([]); setActiveGrades([]); }}
+                  className="h-12 px-8 rounded-full bg-black text-white font-bold"
+                >
+                  Clear all filters
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                {filtered.map((product, index) => {
+                  const added = addedIds.has(product.id);
+                  const isPromoSpot = index === 4; // Inject promo after 5th item
+                  
+                  return (
+                    <React.Fragment key={product.id}>
+                      {isPromoSpot && (
+                        <div className="bg-emerald-950 text-white rounded-[32px] p-8 flex flex-col justify-center items-start group relative overflow-hidden col-span-1 sm:col-span-2 lg:col-span-1">
+                           <div className="absolute bottom-0 right-0 w-64 h-64 bg-emerald-500/20 rounded-full blur-3xl translate-y-1/2 translate-x-1/2"></div>
+                           <h3 className="font-bold text-2xl mb-3 relative z-10">Student Discount</h3>
+                           <p className="text-zinc-300 font-medium mb-8 relative z-10">Verify your student status and get an extra 5% off everything.</p>
+                           <Link href="/students" className="h-12 px-6 rounded-full bg-white text-emerald-950 font-bold flex items-center gap-2 hover:scale-105 transition-transform relative z-10">
+                             Verify now <ArrowRight className="h-4 w-4" />
+                           </Link>
+                        </div>
+                      )}
+                      <Link href={`/shop/${product.category}/${product.id}`} className="group block">
+                      <div className="bg-white rounded-[32px] p-3 border border-zinc-200 hover:border-black hover:shadow-xl transition-all duration-300 h-full flex flex-col">
+                        
+                        {/* Image Container */}
+                        <div className="relative aspect-square rounded-[24px] bg-[#f5f5f7] mb-5 overflow-hidden flex items-center justify-center p-6">
+                          {/* Tags */}
+                          <div className="absolute top-4 left-4 z-10 flex flex-col gap-1.5">
+                            <span className="inline-flex px-2.5 py-1 rounded-full bg-white text-[10px] font-bold text-black border border-zinc-200 shadow-sm uppercase tracking-wider">
+                              {product.grade}
+                            </span>
+                          </div>
+                          
+                          <img
+                            src={product.img}
+                            alt={product.title}
+                            className="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-500"
+                          />
+
+                          {/* Quick Add Button */}
+                          <button
+                            onClick={e => { e.preventDefault(); handleAdd(product.id); }}
+                            className={`absolute bottom-4 right-4 h-11 w-11 rounded-full flex items-center justify-center shadow-md transition-all duration-300 ${
+                              added ? "bg-emerald-500 text-white scale-110" : "bg-white text-black hover:bg-black hover:text-white translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100"
+                            }`}
+                          >
+                            {added ? <Check className="h-5 w-5" strokeWidth={3} /> : <ShoppingCart className="h-5 w-5" />}
+                          </button>
+                        </div>
+
+                        {/* Product Info */}
+                        <div className="px-2 flex flex-col flex-1 pb-2">
+                          <h3 className="font-bold text-lg leading-tight mb-1">{product.title}</h3>
+                          <div className="flex items-center gap-2 mb-3">
+                            <span className="text-xs font-bold text-zinc-500 uppercase tracking-wide">{product.storage}</span>
+                            <span className="w-1 h-1 rounded-full bg-zinc-300" />
+                            <div className="flex items-center gap-1">
+                              <Star className="h-3.5 w-3.5 fill-black text-black" />
+                              <span className="text-xs font-bold">{product.rating}</span>
+                              <span className="text-xs text-zinc-400 font-medium">({product.reviews})</span>
+                            </div>
+                          </div>
+                          
+                          <div className="mt-auto pt-4 flex items-end justify-between">
+                            <div>
+                              <div className="flex items-baseline gap-2">
+                                <span className="text-2xl font-bold tracking-tight">£{product.price}</span>
+                              </div>
+                              <div className="text-sm font-bold text-zinc-400 line-through">
+                                £{product.was} new
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                      </div>
+                    </Link>
+                    </React.Fragment>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Load more */}
+            {filtered.length > 0 && (
+              <div className="mt-12 flex justify-center">
+                <button className="h-12 px-10 rounded-full border-2 border-zinc-200 font-bold text-sm hover:border-black transition-colors bg-white">
+                  Load more products
+                </button>
+              </div>
+            )}
           </div>
         </div>
-      </main>
+      </div>
+
+      {/* ── FAQ / SEO Block ──────────────────────────────────────────────────── */}
+      <div className="bg-white border-t border-zinc-200 py-16 mt-12">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">Why shop with TechStop?</h2>
+            <p className="text-zinc-500 font-medium text-lg">We're on a mission to bring you the best tech at the best prices, without costing the earth.</p>
+          </div>
+          
+          <div className="space-y-4">
+            {[
+              { q: `What is refurbished tech?`, a: `Refurbished tech is pre-owned equipment that has been rigorously tested, repaired, and cleaned by experts to work like new.` },
+              { q: "Do you offer a warranty?", a: "Yes! Every single device comes with a comprehensive 2-year warranty that covers all technical defects." },
+              { q: "What is your return policy?", a: "We offer a 30-day no-questions-asked return policy. If you're not entirely satisfied, just send it back for a full refund." }
+            ].map((faq, i) => (
+              <div key={i} className="border border-zinc-200 rounded-[24px] overflow-hidden">
+                <button 
+                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                  className="w-full px-6 py-5 flex items-center justify-between bg-white hover:bg-zinc-50 transition-colors"
+                >
+                  <span className="font-bold text-lg text-left">{faq.q}</span>
+                  <ChevronDown className={`h-5 w-5 transition-transform ${openFaq === i ? "rotate-180" : ""}`} />
+                </button>
+                <AnimatePresence>
+                  {openFaq === i && (
+                    <motion.div
+                      initial={{ height: 0 }}
+                      animate={{ height: "auto" }}
+                      exit={{ height: 0 }}
+                      className="overflow-hidden bg-zinc-50"
+                    >
+                      <div className="p-6 pt-0 text-zinc-600 font-medium">
+                        {faq.a}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Trust bar ────────────────────────────────────────────────────────── */}
+      <div className="border-t border-zinc-200 bg-white py-12">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-wrap justify-center gap-12 md:gap-24">
+          {[
+            { icon: ShieldCheck, text: "2-Year Warranty" },
+            { icon: Zap,         text: "Free Express Shipping" },
+            { icon: RefreshCw,   text: "30-Day Returns" },
+          ].map(({ icon: Icon, text }) => (
+            <div key={text} className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-accent flex items-center justify-center">
+                 <Icon className="h-5 w-5 text-black" />
+              </div>
+              <span className="text-sm font-bold">{text}</span>
+            </div>
+          ))}
+        </div>
+      </div>
 
       <Footer />
     </div>
   );
-}
-
-function CheckCircle2({ className }: { className?: string }) {
-  return (
-    <svg 
-      className={className}
-      xmlns="http://www.w3.org/2000/svg" 
-      width="24" 
-      height="24" 
-      viewBox="0 0 24 24" 
-      fill="none" 
-      stroke="currentColor" 
-      strokeWidth="2" 
-      strokeLinecap="round" 
-      strokeLinejoin="round"
-    >
-      <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
-      <path d="m9 12 2 2 4-4" />
-    </svg>
-  )
 }

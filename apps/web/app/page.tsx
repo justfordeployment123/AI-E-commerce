@@ -222,6 +222,26 @@ function BrandsBar() {
 function Hero() {
   const grades = ["Pristine", "Excellent", "Good"];
   const [gradeIdx, setGradeIdx] = useState(0);
+  const [heroSearchQuery, setHeroSearchQuery] = useState("");
+  const [isHeroSearchFocused, setIsHeroSearchFocused] = useState(false);
+
+  const MOCK_HERO_SEARCH_ITEMS = [
+    { id: "iphone-15-pro", title: "iPhone 15 Pro", category: "phones", brand: "Apple", price: "739", image: "https://picsum.photos/seed/iphone_wanted/100/100" },
+    { id: "iphone-13-pro-max", title: "iPhone 13 Pro Max", category: "phones", brand: "Apple", price: "529", image: "https://picsum.photos/seed/custphone1/100/100" },
+    { id: "galaxy-s24-ultra", title: "Galaxy S24 Ultra", category: "phones", brand: "Samsung", price: "819", image: "https://picsum.photos/seed/samsung_wanted/100/100" },
+    { id: "google-pixel-7", title: "Google Pixel 7", category: "phones", brand: "Google", price: "349", image: "https://picsum.photos/seed/google_wanted/100/100" },
+    { id: "macbook-air-m2", title: "MacBook Air M2", category: "laptops", brand: "Apple", price: "849", image: "https://picsum.photos/seed/macbook_wanted/100/100" },
+    { id: "playstation-5", title: "PlayStation 5 Disc Edition", category: "consoles", brand: "Sony", price: "389", image: "https://picsum.photos/seed/ps5_wanted/100/100" },
+  ];
+
+  const POPULAR_HERO_SEARCHES = [
+    "iPhone 15 Pro",
+    "Nintendo Switch OLED",
+    "MacBook Air M2",
+    "Galaxy Watch",
+    "PS5 Console",
+  ];
+
   useEffect(() => {
     const t = setInterval(() => setGradeIdx(i => (i + 1) % grades.length), 2000);
     return () => clearInterval(t);
@@ -277,17 +297,23 @@ function Hero() {
               Every device on TechStop is certified by expert refurbishers — rigorously tested, graded honestly, and priced fairly.
             </motion.p>
 
-            {/* Search bar */}
+            {/* Search bar with dynamic dropdown preview */}
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.18 }}
-              className="mb-8 max-w-[520px]"
+              className="mb-8 max-w-[520px] relative"
             >
               <div className="flex items-center gap-3 h-14 px-5 rounded-2xl bg-zinc-50 border border-zinc-200 focus-within:ring-2 focus-within:ring-zinc-950 focus-within:border-transparent focus-within:bg-white transition-all">
                 <Search className="h-5 w-5 text-zinc-400 flex-shrink-0" />
                 <input
                   type="text"
+                  value={heroSearchQuery}
+                  onChange={(e) => setHeroSearchQuery(e.target.value)}
+                  onFocus={() => setIsHeroSearchFocused(true)}
+                  onBlur={() => {
+                    setTimeout(() => setIsHeroSearchFocused(false), 200);
+                  }}
                   placeholder='Try "iPhone 15 Pro" or "MacBook Air"'
                   className="flex-1 bg-transparent text-sm font-medium outline-none placeholder:text-zinc-400"
                 />
@@ -295,6 +321,67 @@ function Hero() {
                   Search
                 </a>
               </div>
+
+              {/* Suggestions dropdown */}
+              <AnimatePresence>
+                {isHeroSearchFocused && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    className="absolute left-0 right-0 top-full mt-2 bg-white border border-zinc-200 rounded-[24px] shadow-2xl overflow-hidden z-30 p-5"
+                  >
+                    {heroSearchQuery === "" ? (
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2.5">Popular Searches</p>
+                        <div className="flex flex-wrap gap-2">
+                          {POPULAR_HERO_SEARCHES.map((term) => (
+                            <button
+                              key={term}
+                              onClick={() => setHeroSearchQuery(term)}
+                              className="px-3.5 py-1.5 rounded-xl bg-zinc-50 border border-zinc-200 text-xs font-bold hover:border-black hover:bg-white transition-colors"
+                            >
+                              {term}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-3">Refurbished Matching Items</p>
+                        <div className="space-y-2 max-h-[240px] overflow-y-auto pr-1">
+                          {MOCK_HERO_SEARCH_ITEMS.filter((item) =>
+                            item.title.toLowerCase().includes(heroSearchQuery.toLowerCase()) ||
+                            item.brand.toLowerCase().includes(heroSearchQuery.toLowerCase())
+                          ).map((item) => (
+                            <a
+                              key={item.id}
+                              href="/shop"
+                              className="flex items-center gap-4 p-2 rounded-xl hover:bg-zinc-50 transition-colors group"
+                            >
+                              <div className="h-10 w-10 bg-zinc-100 rounded-lg p-1.5 flex items-center justify-center shrink-0">
+                                <img src={item.image} alt={item.title} className="h-full w-full object-contain mix-blend-multiply" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-xs font-bold text-zinc-950 group-hover:text-black">{item.title}</p>
+                                <p className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider mt-0.5">{item.brand} • {item.category}</p>
+                              </div>
+                              <span className="text-xs font-extrabold text-zinc-950">£{item.price}</span>
+                            </a>
+                          ))}
+                          {MOCK_HERO_SEARCH_ITEMS.filter((item) =>
+                            item.title.toLowerCase().includes(heroSearchQuery.toLowerCase()) ||
+                            item.brand.toLowerCase().includes(heroSearchQuery.toLowerCase())
+                          ).length === 0 && (
+                            <p className="text-xs font-bold text-zinc-400 py-4 text-center">No matching refurbished items found.</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               <div className="flex flex-col gap-3 mt-4">
                 <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Quick Categories:</span>
                 <div className="flex flex-wrap gap-2">
@@ -584,65 +671,109 @@ function TrustPillars() {
 
 // ─── Trending Deals ───────────────────────────────────────────────────────────
 function TrendingDeals() {
-  const deals = [
-    { name: "iPhone 14 Pro", spec: "256GB · Space Black", price: "£679", was: "£1,099", grade: "Excellent", img: "https://picsum.photos/seed/iph14/400/400" },
-    { name: "MacBook Air M2", spec: "8GB · 256GB SSD", price: "£849", was: "£1,299", grade: "Pristine", img: "https://picsum.photos/seed/mbm2/400/400" },
-    { name: "Sony WH-1000XM5", spec: "Noise Cancelling", price: "£199", was: "£380", grade: "Good", img: "https://picsum.photos/seed/sony5/400/400" },
-    { name: "iPad Pro 12.9\"", spec: "M2 · 128GB · WiFi", price: "£699", was: "£1,099", grade: "Excellent", img: "https://picsum.photos/seed/ipadpro/400/400" },
+  const featured = { name: "iPhone 15 Pro", spec: "256 GB · Natural Titanium", price: 739, was: 1199, grade: "Excellent", img: "https://picsum.photos/seed/ip15protrend/800/600" };
+  const secondary = [
+    { name: "MacBook Air M3", spec: "8 GB · 256 GB SSD", price: 999,  was: 1499, grade: "Pristine",  img: "https://picsum.photos/seed/mbam3trend/600/400" },
+    { name: "Sony WH-1000XM5", spec: "Noise Cancelling · Black", price: 199, was: 380, grade: "Good", img: "https://picsum.photos/seed/sony5trend/600/400" },
+    { name: "iPad Pro 13\" M4", spec: "M4 · 128 GB · Wi-Fi", price: 899, was: 1299, grade: "Excellent", img: "https://picsum.photos/seed/ipadprom4trend/600/400" },
+    { name: "Galaxy S24 Ultra", spec: "256 GB · Titanium Black", price: 819, was: 1249, grade: "Excellent", img: "https://picsum.photos/seed/s24utrend/600/400" },
   ];
 
-  const gradeColor: Record<string, string> = {
-    Pristine: "bg-emerald-50 text-emerald-700",
-    Excellent: "bg-sky-50 text-sky-700",
-    Good: "bg-amber-50 text-amber-700",
+  const gradeDot: Record<string, string> = {
+    Pristine:   "bg-emerald-500",
+    Excellent:  "bg-blue-500",
+    "Very Good":"bg-violet-500",
+    Good:       "bg-amber-500",
   };
 
   return (
-    <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-24">
-      <div className="flex items-end justify-between mb-12">
-        <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-3">Hot right now</p>
-          <h2 className="font-serif text-5xl md:text-6xl font-medium text-zinc-950 leading-none">Trending deals</h2>
+    <section className="py-24 overflow-hidden">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex items-end justify-between mb-12">
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-3">Hot right now</p>
+            <h2 className="font-serif text-5xl md:text-6xl font-medium text-zinc-950 leading-none">Trending deals</h2>
+          </div>
+          <a href="/shop" className="hidden md:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-zinc-950 transition-colors border-b border-zinc-300 pb-1">
+            See all <ArrowRight className="h-3.5 w-3.5" />
+          </a>
         </div>
-        <a href="/shop" className="hidden md:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-zinc-950 transition-colors border-b border-zinc-300 pb-1">
-          See all <ArrowRight className="h-3.5 w-3.5" />
-        </a>
-      </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {deals.map((deal, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
+        {/* Asymmetric layout: large featured + right scroll-track */}
+        <div className="grid lg:grid-cols-[1fr_1fr] gap-5">
+
+          {/* Featured — large portrait card */}
+          <motion.a
+            href="/shop/phones/ip15pro"
+            initial={{ opacity: 0, x: -24 }}
+            whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            transition={{ delay: i * 0.08 }}
-            className="group cursor-pointer"
+            transition={{ type: "spring", stiffness: 220, damping: 26 }}
+            className="group relative overflow-hidden rounded-[2.5rem] bg-zinc-100 cursor-pointer block"
           >
-            <div className="relative aspect-square rounded-3xl overflow-hidden bg-zinc-50 mb-5">
-              <img
-                src={deal.img}
-                alt={deal.name}
-                className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
-              />
-              <div className={`absolute top-4 left-4 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${gradeColor[deal.grade]}`}>
-                {deal.grade}
+            <div className="aspect-4/3 lg:aspect-auto lg:h-[520px] w-full relative">
+              <img src={featured.img} alt={featured.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-700" />
+              <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/80 via-zinc-950/20 to-transparent" />
+
+              {/* Grade badge */}
+              <div className="absolute top-6 left-6 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/90 backdrop-blur-sm text-[10px] font-bold uppercase tracking-widest shadow-sm">
+                <span className={`h-2 w-2 rounded-full ${gradeDot[featured.grade]}`} />
+                {featured.grade}
               </div>
-              <button className="absolute bottom-4 right-4 h-11 w-11 rounded-full bg-zinc-950 text-white flex items-center justify-center opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 shadow-lg">
-                <ShoppingCart className="h-4 w-4" />
-              </button>
+
+              {/* Save pct badge */}
+              <div className="absolute top-6 right-6 px-3 py-1.5 rounded-full bg-accent text-[10px] font-bold shadow-sm">
+                -{Math.round((1 - featured.price / featured.was) * 100)}%
+              </div>
+
+              <div className="absolute bottom-0 left-0 right-0 p-8">
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/50 mb-2">Apple</p>
+                <h3 className="font-serif text-3xl font-medium text-white mb-1 leading-tight">{featured.name}</h3>
+                <p className="text-sm text-white/60 font-medium mb-5">{featured.spec}</p>
+                <div className="flex items-baseline gap-3">
+                  <span className="text-3xl font-bold text-white tracking-tighter">£{featured.price}</span>
+                  <span className="text-base text-white/40 line-through">£{featured.was}</span>
+                </div>
+              </div>
             </div>
-            <p className="font-bold text-zinc-950 mb-1">{deal.name}</p>
-            <p className="text-xs text-zinc-400 font-medium mb-3">{deal.spec}</p>
-            <div className="flex items-baseline gap-2.5">
-              <span className="text-xl font-bold text-zinc-950">{deal.price}</span>
-              <span className="text-sm text-zinc-400 line-through">{deal.was}</span>
-              <span className="text-xs font-bold text-emerald-600">
-                -{Math.round((1 - parseInt(deal.price.replace(/[^0-9]/g,"")) / parseInt(deal.was.replace(/[^0-9]/g,""))) * 100)}%
-              </span>
-            </div>
-          </motion.div>
-        ))}
+          </motion.a>
+
+          {/* Right: 2×2 grid */}
+          <div className="grid grid-cols-2 gap-5">
+            {secondary.map((deal, i) => (
+              <motion.a
+                key={deal.name}
+                href="/shop"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.07, type: "spring", stiffness: 240, damping: 24 }}
+                className="group cursor-pointer block"
+              >
+                <div className="relative aspect-square overflow-hidden rounded-3xl bg-zinc-100 mb-3">
+                  <img src={deal.img} alt={deal.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="absolute top-3 left-3 flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/90 backdrop-blur-sm text-[9px] font-bold uppercase tracking-widest shadow-sm">
+                    <span className={`h-1.5 w-1.5 rounded-full ${gradeDot[deal.grade]}`} />
+                    {deal.grade}
+                  </div>
+                  <span className="absolute top-3 right-3 px-2 py-1 rounded-full bg-accent text-[9px] font-bold shadow-sm">
+                    -{Math.round((1 - deal.price / deal.was) * 100)}%
+                  </span>
+                  <div className="absolute bottom-3 right-3 h-10 w-10 rounded-full bg-zinc-950 text-white flex items-center justify-center opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 shadow-lg">
+                    <ShoppingCart className="h-4 w-4" />
+                  </div>
+                </div>
+                <p className="font-bold text-zinc-950 text-sm truncate mb-0.5">{deal.name}</p>
+                <p className="text-[11px] text-zinc-400 font-medium mb-2 truncate">{deal.spec}</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-lg font-bold text-zinc-950">£{deal.price}</span>
+                  <span className="text-xs text-zinc-300 line-through">£{deal.was}</span>
+                </div>
+              </motion.a>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );
