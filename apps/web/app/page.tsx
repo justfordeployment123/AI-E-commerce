@@ -671,12 +671,12 @@ function TrustPillars() {
 
 // ─── Trending Deals ───────────────────────────────────────────────────────────
 function TrendingDeals() {
-  const featured = { name: "iPhone 15 Pro", spec: "256 GB · Natural Titanium", price: 739, was: 1199, grade: "Excellent", img: "https://picsum.photos/seed/ip15protrend/800/600" };
+  const featured = { name: "iPhone 15 Pro", spec: "256 GB · Natural Titanium", price: 739, was: 1199, grade: "Excellent", img: "/showcase_iphone.png" };
   const secondary = [
-    { name: "MacBook Air M3", spec: "8 GB · 256 GB SSD", price: 999,  was: 1499, grade: "Pristine",  img: "https://picsum.photos/seed/mbam3trend/600/400" },
-    { name: "Sony WH-1000XM5", spec: "Noise Cancelling · Black", price: 199, was: 380, grade: "Good", img: "https://picsum.photos/seed/sony5trend/600/400" },
-    { name: "iPad Pro 13\" M4", spec: "M4 · 128 GB · Wi-Fi", price: 899, was: 1299, grade: "Excellent", img: "https://picsum.photos/seed/ipadprom4trend/600/400" },
-    { name: "Galaxy S24 Ultra", spec: "256 GB · Titanium Black", price: 819, was: 1249, grade: "Excellent", img: "https://picsum.photos/seed/s24utrend/600/400" },
+    { name: "MacBook Air M3", spec: "8 GB · 256 GB SSD", price: 999,  was: 1499, grade: "Pristine",  img: "/showcase_macbook.png" },
+    { name: "Sony WH-1000XM5", spec: "Noise Cancelling · Black", price: 199, was: 380, grade: "Good", img: "/showcase_sony_wh1000xm5.png" },
+    { name: "iPad Pro 13\" M4", spec: "M4 · 128 GB · Wi-Fi", price: 899, was: 1299, grade: "Excellent", img: "/showcase_ipad_pro.png" },
+    { name: "Galaxy S24 Ultra", spec: "256 GB · Titanium Black", price: 819, was: 1249, grade: "Excellent", img: "/showcase_galaxy_s24.png" },
   ];
 
   const gradeDot: Record<string, string> = {
@@ -1760,10 +1760,10 @@ function LiveFeed() {
 // ─── Savings Comparison ───────────────────────────────────────────────────────
 function SavingsComparison() {
   const items = [
-    { device: "iPhone 15 Pro 256GB",      newPrice: 1199, ourPrice: 739,  grade: "Excellent", img: "https://picsum.photos/seed/cmp1/120/120" },
-    { device: "MacBook Air M2 8GB/256GB", newPrice: 1299, ourPrice: 849,  grade: "Pristine",  img: "https://picsum.photos/seed/cmp2/120/120" },
-    { device: "Samsung Galaxy S23 Ultra", newPrice: 1249, ourPrice: 599,  grade: "Excellent", img: "https://picsum.photos/seed/cmp3/120/120" },
-    { device: "Sony WH-1000XM5",          newPrice:  379, ourPrice: 199,  grade: "Good",      img: "https://picsum.photos/seed/cmp4/120/120" },
+    { device: "iPhone 15 Pro 256GB",      newPrice: 1199, ourPrice: 739,  grade: "Excellent", img: "/showcase_iphone.png" },
+    { device: "MacBook Air M2 8GB/256GB", newPrice: 1299, ourPrice: 849,  grade: "Pristine",  img: "/showcase_macbook.png" },
+    { device: "Samsung Galaxy S23 Ultra", newPrice: 1249, ourPrice: 599,  grade: "Excellent", img: "/showcase_galaxy_s24.png" },
+    { device: "Sony WH-1000XM5",          newPrice:  379, ourPrice: 199,  grade: "Good",      img: "/showcase_sony_wh1000xm5.png" },
   ];
 
   const gradeClr: Record<string, string> = {

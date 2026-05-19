@@ -578,8 +578,8 @@ export default function TradeInPage() {
                 {[
                   { name: "iPhone 15 Pro Max", val: "£780", img: "/showcase_iphone.png", category: "Phone", brand: "Apple" },
                   { name: "MacBook Pro 16\" M3 Max", val: "£1,800", img: "/showcase_macbook.png", category: "Laptop", brand: "Apple" },
-                  { name: "PS5 Disc Edition", val: "£340", img: "/bento_gaming.png", category: "Console", brand: "Sony PlayStation" },
-                  { name: "AirPods Max", val: "£260", img: "/showcase_airpods_pro.png", category: "Audio", brand: "Apple" }
+                  { name: "PS5 Disc Edition", val: "£340", img: "/showcase_ps5.png", category: "Console", brand: "Sony PlayStation" },
+                  { name: "AirPods Max", val: "£260", img: "/showcase_airpods_max.png", category: "Audio", brand: "Apple" }
                 ].map((item, i) => (
                   <motion.div
                     key={i}
