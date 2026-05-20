@@ -406,8 +406,8 @@ export default function CategoryPage() {
       <section className="bg-white border-b border-zinc-200">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-5">
           <div className="mb-4 flex items-center gap-2 text-[10px] md:text-xs font-bold text-zinc-500 uppercase tracking-wide">
-            <Link href="/shop" className="hover:text-black flex items-center gap-1">
-              <ArrowLeft className="h-3 w-3" /> Shop
+            <Link href="/" className="hover:text-black flex items-center gap-1">
+              <ArrowLeft className="h-3 w-3" /> Home
             </Link>
             <span>/</span>
             <span className="text-black">{meta.plural}</span>
@@ -463,7 +463,7 @@ export default function CategoryPage() {
               {ACCESSORIES[categorySlug].map((acc) => (
                 <Link
                   key={acc}
-                  href="/shop"
+                  href="/shop/phones"
                   className="shrink-0 h-9 px-4 rounded-full border border-zinc-200 text-xs font-bold hover:border-black transition-colors flex items-center bg-white text-zinc-700"
                 >
                   {acc}

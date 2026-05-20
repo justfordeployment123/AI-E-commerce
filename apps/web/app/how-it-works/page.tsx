@@ -61,7 +61,7 @@ export default function HowItWorksPage() {
                   transition={{ delay: 0.3 }}
                   className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
                 >
-                  <a href="/shop" className="h-16 px-10 bg-black text-white rounded-2xl font-bold flex items-center justify-center gap-3 transition-transform hover:scale-105 active:scale-95 shadow-2xl">
+                  <a href="/shop/phones" className="h-16 px-10 bg-black text-white rounded-2xl font-bold flex items-center justify-center gap-3 transition-transform hover:scale-105 active:scale-95 shadow-2xl">
                     Shop Refurbished
                     <ArrowRight className="h-5 w-5 text-accent" />
                   </a>
@@ -171,9 +171,9 @@ export default function HowItWorksPage() {
                  <Leaf className="h-10 w-10 text-emerald-600" />
               </div>
               <h2 className="font-serif text-5xl md:text-8xl font-medium mb-12 tracking-tighter leading-[0.9]">Save cash. <br/>Save the Earth.</h2>
-              <button className="h-20 px-12 bg-black text-white rounded-[2rem] font-bold text-lg transition-transform hover:scale-105 active:scale-95 shadow-2xl">
+              <a href="/shop/phones" className="h-20 px-12 bg-black text-white rounded-[2rem] font-bold text-lg transition-transform hover:scale-105 active:scale-95 shadow-2xl inline-flex items-center justify-center">
                  Shop with Impact
-              </button>
+              </a>
            </div>
         </section>
       </main>

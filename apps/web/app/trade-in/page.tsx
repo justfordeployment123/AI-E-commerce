@@ -250,31 +250,30 @@ function OptionButton({ label, selected, onClick, desc, icon: Icon }: {
 }) {
   return (
     <motion.button
-      whileHover={{ y: -2, scale: 1.01 }}
-      whileTap={{ scale: 0.99 }}
+      whileHover={{ scale: 1.02, y: -3 }}
+      whileTap={{ scale: 0.975 }}
       onClick={onClick}
-      className={`w-full group flex items-center gap-5 p-5 rounded-2xl border-2 text-left transition-all duration-250 ${
-        selected
-          ? "border-zinc-950 bg-zinc-950 text-white shadow-xl shadow-zinc-950/10"
-          : "border-zinc-200/80 bg-white hover:border-zinc-400 hover:shadow-md"
-      }`}
+      className={`w-full group flex items-start gap-5 p-6 rounded-3xl border-2 text-left transition-all duration-300 ${selected
+        ? "border-zinc-950 bg-zinc-950 text-white shadow-xl shadow-zinc-950/10"
+        : "border-zinc-200 bg-white hover:border-zinc-400 hover:shadow-lg"
+        }`}
     >
       {Icon && (
-        <div className={`h-12 w-12 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 ${selected ? "bg-white/15" : "bg-zinc-50 group-hover:bg-zinc-100"}`}>
-          <Icon className={`h-6 w-6 ${selected ? "text-white" : "text-zinc-500"}`} strokeWidth={1.5} />
+        <div className={`mt-0.5 h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 transition-all ${selected ? "bg-white/15" : "bg-zinc-100 group-hover:bg-zinc-50"}`}>
+          <Icon className={`h-6 w-6 ${selected ? "text-white" : "text-zinc-600"}`} strokeWidth={1.7} />
         </div>
       )}
-      <div className="flex-1 min-w-0">
-        <p className={`font-extrabold text-sm ${selected ? "text-white" : "text-zinc-900"}`}>{label}</p>
-        {desc && <p className={`text-xs mt-0.5 leading-relaxed font-semibold ${selected ? "text-white/60" : "text-zinc-400"}`}>{desc}</p>}
+      <div className="flex-1 pt-1 min-w-0">
+        <p className={`font-semibold text-[17px] ${selected ? "text-white" : "text-zinc-900"}`}>{label}</p>
+        {desc && <p className={`mt-2 text-sm leading-snug ${selected ? "text-white/70" : "text-zinc-500"}`}>{desc}</p>}
       </div>
       <motion.div
         initial={false}
         animate={{ scale: selected ? 1 : 0, opacity: selected ? 1 : 0 }}
         transition={{ type: "spring", stiffness: 450, damping: 25 }}
-        className="h-6 w-6 rounded-full bg-accent flex items-center justify-center shrink-0"
+        className="h-8 w-8 rounded-2xl bg-white flex items-center justify-center mt-1 shrink-0"
       >
-        <Check className="h-3.5 w-3.5 text-zinc-950" strokeWidth={3} />
+        <Check className="h-5 w-5 text-black" strokeWidth={3.5} />
       </motion.div>
     </motion.button>
   );
@@ -394,13 +393,13 @@ export default function TradeInPage() {
       {!isWizardActive ? (
         // ─── BUYBACK LANDING PAGE (VIBRANT & ULTRA PREMIUM STYLE) ───────────
         <div className="flex-1 bg-white relative">
-          
+
           {/* Subtle top background decorative orb */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[350px] bg-accent/10 blur-[130px] rounded-full pointer-events-none -z-10" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-150 h-87.5 bg-accent/10 blur-[130px] rounded-full pointer-events-none -z-10" />
 
           {/* Hero Section */}
           <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-24 pb-16 text-center">
-            
+
             {/* Trustpilot-style Rating Badge */}
             <div className="inline-flex flex-wrap items-center justify-center gap-2 rounded-full bg-emerald-50 border border-emerald-100/50 px-4 py-2 text-xs font-bold text-emerald-800 mb-8 shadow-sm">
               <span className="flex items-center gap-0.5 text-emerald-600">
@@ -417,7 +416,7 @@ export default function TradeInPage() {
 
             <h1 className="font-serif text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight text-zinc-950 mb-8 max-w-4xl mx-auto leading-none">
               Sell your tech for cash. <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-zinc-500 via-zinc-800 to-zinc-950">Fast. Fair. Easy.</span>
+              <span className="text-transparent bg-clip-text bg-linear-to-r from-zinc-500 via-zinc-800 to-zinc-950">Fast. Fair. Easy.</span>
             </h1>
             <p className="max-w-2xl mx-auto text-zinc-500 font-semibold text-base md:text-lg mb-10 leading-relaxed">
               Get an instant online offer on your phone, tablet, laptop, or gaming console. Free fully-insured Royal Mail shipping is included with every trade.
@@ -513,7 +512,7 @@ export default function TradeInPage() {
             <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-zinc-950 mb-12 text-center">
               Select category to get started
             </h2>
-            
+
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto mb-32 text-left">
               {CATEGORIES.map((cat) => {
                 return (
@@ -535,7 +534,7 @@ export default function TradeInPage() {
                     className={`flex flex-col rounded-3xl border-2 border-zinc-200/60 bg-white shadow-sm hover:shadow-xl hover:border-zinc-950 transition-all group overflow-hidden w-full ${cat.glow}`}
                   >
                     {/* Centered Image with custom gradient backdrop */}
-                    <div className="w-full aspect-[4/3] bg-gradient-to-b from-zinc-50 to-white border-b border-zinc-100 flex items-center justify-center p-4 relative overflow-hidden">
+                    <div className="w-full aspect-4/3 bg-linear-to-b from-zinc-50 to-white border-b border-zinc-100 flex items-center justify-center p-4 relative overflow-hidden">
                       <img
                         src={cat.img}
                         alt={cat.label}
@@ -584,9 +583,9 @@ export default function TradeInPage() {
                   <motion.div
                     key={i}
                     whileHover={{ y: -4, boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)" }}
-                    className="bg-white border border-zinc-200/80 rounded-[2rem] p-6 flex flex-col justify-between hover:border-zinc-950 transition-all group shadow-sm"
+                    className="bg-white border border-zinc-200/80 rounded-4xl p-6 flex flex-col justify-between hover:border-zinc-950 transition-all group shadow-sm"
                   >
-                    <div className="w-full aspect-[4/3] bg-zinc-50 rounded-2xl flex items-center justify-center p-4 mb-6 relative overflow-hidden">
+                    <div className="w-full aspect-4/3 bg-zinc-50 rounded-2xl flex items-center justify-center p-4 mb-6 relative overflow-hidden">
                       <img src={item.img} alt={item.name} className="h-full w-full object-contain filter drop-shadow-sm group-hover:scale-105 transition-transform" />
                     </div>
                     <div>
@@ -708,7 +707,7 @@ export default function TradeInPage() {
                   { step: "2", title: "Free Postage Label", desc: "Pack your device securely and dispatch it using our prepaid, fully-insured Royal Mail parcel shipping labels." },
                   { step: "3", title: "Direct Bank Transfer", desc: "Our technicians inspect the hardware. Upon verification, funds are released directly to your account within 48 hours." },
                 ].map((item) => (
-                  <div key={item.step} className="flex flex-col items-start p-8 rounded-[2rem] bg-zinc-50 border border-zinc-150/40 relative hover:shadow-md transition-all">
+                  <div key={item.step} className="flex flex-col items-start p-8 rounded-4xl bg-zinc-50 border border-zinc-150/40 relative hover:shadow-md transition-all">
                     <div className="h-10 w-10 rounded-xl bg-black text-white font-black text-sm flex items-center justify-center mb-6">
                       {item.step}
                     </div>
@@ -837,486 +836,391 @@ export default function TradeInPage() {
           </section>
         </div>
       ) : (
-        // ─── CENTERED WIZARD FLOW (ULTRA CLEAN MODERNIST STATE) ────────────
-        <div className="flex-1 bg-zinc-50/70 flex items-center justify-center py-16 px-4 relative">
-          
-          {/* Subtle background graphic blur circles */}
-          <div className="absolute top-1/4 left-1/4 w-80 h-80 bg-accent/5 blur-[120px] rounded-full pointer-events-none" />
-          <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-sky-500/5 blur-[120px] rounded-full pointer-events-none" />
-
-          <div className="w-full max-w-2xl bg-white border border-zinc-200/70 shadow-2xl rounded-[2.5rem] p-8 md:p-12 relative overflow-hidden z-10">
-            
-            {/* Header stepper */}
-            <div className="flex items-center justify-between mb-4">
-              <button
-                onClick={back}
-                className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-zinc-400 hover:text-zinc-950 transition-colors group"
-              >
-                <ArrowLeft className="h-4.5 w-4.5 group-hover:-translate-x-0.5 transition-transform" />
-                Back
-              </button>
-              <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">{stepLabels[step - 1]}</span>
-              <span className="text-xs font-bold text-zinc-400">{step} / {TOTAL_STEPS}</span>
-            </div>
-
-            {/* Stepper progress bar with dynamic glow */}
-            <div className="h-2 w-full bg-zinc-100 rounded-full overflow-hidden mb-10 relative">
-              <motion.div
-                className="h-full bg-zinc-950 rounded-full"
-                animate={{ width: `${(step / TOTAL_STEPS) * 100}%` }}
-                transition={{ duration: 0.3 }}
-              />
-            </div>
-
-            {/* Current device selected summary header */}
-            {state.category && step > 1 && step < 10 && (
-              <div className="mb-8 p-5 bg-zinc-50 rounded-2xl border border-zinc-150 flex items-center gap-4">
-                <div className="h-10 w-10 bg-black/5 rounded-xl flex items-center justify-center shrink-0">
-                  <Smartphone className="h-5.5 w-5.5 text-zinc-655" strokeWidth={1.5} />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-black text-zinc-950 truncate leading-tight">{state.model || state.category}</p>
-                  <p className="text-[9px] text-zinc-400 font-extrabold uppercase tracking-widest mt-1">
-                    {state.brand && `${state.brand} · `}
-                    {Object.values(state.specs).join(" · ")}
-                    {state.condition && ` · ${state.condition}`}
-                  </p>
-                </div>
-                {step >= 7 && offerPrice > 0 && (
-                  <span className="text-sm font-black text-zinc-950 font-mono">£{offerPrice}</span>
-                )}
+        // ─── IMPROVED WIZARD ─────────────────────────────────────────────
+        <div className="flex-1 bg-zinc-100 flex items-center justify-center py-10 px-4 relative">
+          <div className="w-full max-w-140 bg-white rounded-3xl shadow-2xl border border-zinc-200 overflow-hidden relative z-10">
+            <div className="px-8 pt-6">
+              <div className="flex items-center justify-between mb-4">
+                <button
+                  onClick={back}
+                  className="flex items-center gap-2 text-sm font-medium text-zinc-500 hover:text-black transition-colors"
+                >
+                  <ArrowLeft className="w-4 h-4" /> Back
+                </button>
+                <span className="text-xs font-mono tracking-widest text-zinc-400">STEP {step} OF 10</span>
               </div>
-            )}
 
-            {/* Animated card wizard screens */}
-            <AnimatePresence mode="wait" custom={dir}>
-              <motion.div
-                key={step === 4 ? `4-${specStep}` : step === 6 ? `6-${questionStep}` : step}
-                custom={dir}
-                variants={stepVariants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                transition={{ type: "spring", stiffness: 350, damping: 28 }}
-              >
-                {/* ── STEP 1 – Category Fallback ───────────────────── */}
-                {step === 1 && (
-                  <div>
-                    <StepHeader
-                      label="Select your device"
-                      sub="Pick the hardware category to start diagnostic evaluation."
-                    />
-                    <div className="space-y-3">
-                      {CATEGORIES.map((cat) => (
-                        <OptionButton
-                          key={cat.id}
-                          label={cat.label}
-                          desc={cat.sub}
-                          icon={cat.icon}
-                          onClick={() => {
-                            setState(s => ({ ...s, category: cat.id, brand: "", model: "", specs: {}, condition: "", answers: {} }));
-                            setSpecStep(0);
-                            setQuestionStep(0);
-                            go(1);
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
+              <div className="h-1 bg-zinc-100 rounded-full overflow-hidden mb-8">
+                <motion.div
+                  className="h-full bg-linear-to-r from-black to-zinc-800 rounded-full"
+                  animate={{ width: `${(step / 10) * 100}%` }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
+                />
+              </div>
+            </div>
 
-                {/* ── STEP 2 – Brand selection ─────────────────────── */}
-                {step === 2 && (
-                  <div>
-                    <StepHeader
-                      label="Which brand is it?"
-                      sub={`Select the brand of your device category: ${state.category.toLowerCase()}.`}
-                    />
-                    <div className="grid grid-cols-2 gap-4">
-                      {(BRANDS[state.category] ?? []).map(brand => (
-                        <OptionButton
-                          key={brand}
-                          label={brand}
-                          selected={state.brand === brand}
-                          onClick={() => {
-                            setState(s => ({ ...s, brand, model: "" }));
-                            go(1);
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* ── STEP 3 – Model Selection ─────────────────────── */}
-                {step === 3 && (
-                  <div>
-                    <StepHeader
-                      label="Select your model"
-                      sub={`Identify the exact specification of your ${state.brand} ${state.category.toLowerCase()}.`}
-                    />
-                    <div className="space-y-3 max-h-[380px] overflow-y-auto pr-1.5 scrollbar-thin scrollbar-thumb-zinc-200">
-                      {(MODELS[state.category]?.[state.brand] ?? []).map(model => (
-                        <OptionButton
-                          key={model}
-                          label={model}
-                          selected={state.model === model}
-                          onClick={() => {
-                            setState(s => ({ ...s, model }));
-                            go(1);
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* ── STEP 4 – Specifications ──────────────────────── */}
-                {step === 4 && currentSpec && (
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2">
-                      Device Specification {specStep + 1} of {currentSpecs.length}
-                    </p>
-                    <StepHeader label={`Choose ${currentSpec.label.toLowerCase()}`} />
-                    <div className="grid grid-cols-2 gap-4">
-                      {currentSpec.options.map(opt => (
-                        <OptionButton
-                          key={opt}
-                          label={opt}
-                          selected={state.specs[currentSpec.label] === opt}
-                          onClick={() => handleSpecSelect(opt)}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* ── STEP 5 – Condition Grading ───────────────────── */}
-                {step === 5 && (
-                  <div>
-                    <StepHeader
-                      label="Estimate overall condition"
-                      sub="We will inspect the hardware. Honest selections prevent adjusted quotes."
-                    />
-                    <div className="space-y-3">
-                      {CONDITIONS.map(c => (
-                        <motion.button
-                          key={c.id}
-                          whileHover={{ y: -2, scale: 1.01 }}
-                          whileTap={{ scale: 0.99 }}
-                          onClick={() => {
-                            setState(s => ({ ...s, condition: c.id }));
-                            go(1);
-                          }}
-                          className={`w-full flex items-center gap-5 p-5 rounded-2xl border-2 text-left transition-all duration-200 ${
-                            state.condition === c.id
-                              ? "border-zinc-950 bg-zinc-950 text-white shadow-xl shadow-zinc-950/10"
-                              : `${c.color} hover:border-zinc-400 hover:shadow-sm`
-                          }`}
-                        >
-                          <div className={`h-4.5 w-4.5 rounded-full shrink-0 ${state.condition === c.id ? "bg-accent border-zinc-950 border" : c.dot}`} />
-                          <div className="flex-1 min-w-0">
-                            <p className={`font-extrabold text-sm ${state.condition === c.id ? "text-white" : "text-zinc-900"}`}>{c.label}</p>
-                            <p className={`text-xs mt-0.5 leading-relaxed font-semibold ${state.condition === c.id ? "text-white/60" : "text-zinc-550"}`}>{c.desc}</p>
-                          </div>
-                          <motion.div
-                            initial={false}
-                            animate={{ scale: state.condition === c.id ? 1 : 0, opacity: state.condition === c.id ? 1 : 0 }}
-                            transition={{ type: "spring", stiffness: 450, damping: 25 }}
-                            className="h-6 w-6 rounded-full bg-accent flex items-center justify-center shrink-0"
-                          >
-                            <Check className="h-3.5 w-3.5 text-zinc-950" strokeWidth={3} />
-                          </motion.div>
-                        </motion.button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* ── STEP 6 – Functional Profile Questions ────────── */}
-                {step === 6 && currentQuestion && (
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-3">
-                      Diagnostic Question {questionStep + 1} of {currentQuestions.length}
-                    </p>
-                    <div className="flex gap-2 mb-8">
-                      {currentQuestions.map((_, i) => (
-                        <div
-                          key={i}
-                          className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${i <= questionStep ? "bg-zinc-950" : "bg-zinc-200"}`}
-                        />
-                      ))}
-                    </div>
-                    <StepHeader label={currentQuestion.question} />
-                    <div className="space-y-3">
-                      {currentQuestion.options.map(opt => (
-                        <OptionButton
-                          key={opt}
-                          label={opt}
-                          selected={state.answers[currentQuestion.id] === opt}
-                          onClick={() => handleAnswerSelect(opt)}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* ── STEP 7 – Cash Offer Dynamic Certificate ──────── */}
-                {step === 7 && (
-                  <div>
-                    <motion.div
-                      initial={{ scale: 0.94, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      transition={{ type: "spring", stiffness: 220, damping: 22 }}
-                      className="rounded-[2rem] bg-zinc-950 text-white p-8 md:p-10 mb-8 text-center relative overflow-hidden shadow-2xl border border-white/5"
-                    >
-                      {/* Gradient glows inside card */}
-                      <div className="absolute top-0 right-0 w-72 h-72 bg-accent/15 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2" />
-                      <div className="absolute bottom-0 left-0 w-72 h-72 bg-sky-500/10 blur-3xl rounded-full -translate-x-1/2 translate-y-1/2" />
-
-                      <div className="inline-flex items-center gap-1.5 rounded-full bg-accent/20 text-accent px-4 py-1.5 text-[9px] font-black uppercase tracking-widest mb-6 relative">
-                        <Award className="h-3.5 w-3.5 text-accent animate-pulse" />
-                        Guaranteed Payout locked
-                      </div>
-
-                      <div className="mb-4 relative">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Net payout estimate</span>
-                        <motion.p
-                          initial={{ scale: 0.8, opacity: 0 }}
-                          animate={{ scale: 1, opacity: 1 }}
-                          transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.12 }}
-                          className="text-7xl md:text-8xl font-black tracking-tighter my-2 font-mono text-white"
-                        >
-                          £{offerPrice}
-                        </motion.p>
-                        <p className="text-zinc-500 text-xs font-semibold">Live Leicester market pricing · Valid 14 days</p>
-                      </div>
-
-                      {/* Barcode Receipt design wrapper */}
-                      <div className="mt-8 pt-6 border-t border-dashed border-white/10 flex flex-col items-center">
-                        {/* Barcode lines */}
-                        <div className="flex gap-[2px] h-8 w-44 bg-transparent mb-4 opacity-30 select-none">
-                          {Array.from({ length: 44 }).map((_, i) => (
-                            <div
-                              key={i}
-                              style={{ width: i % 3 === 0 ? "3px" : i % 5 === 0 ? "1px" : "2px" }}
-                              className="h-full bg-white"
-                            />
-                          ))}
-                        </div>
-
-                        <div className="grid grid-cols-3 gap-3 w-full text-left">
-                          {[
-                            ["Device", state.model],
-                            ["Grade", state.condition],
-                            ["Capacity", state.specs["Storage"] ?? state.specs["RAM"] ?? "—"],
-                          ].map(([k, v]) => (
-                            <div key={k} className="bg-white/5 rounded-2xl p-4 border border-white/5">
-                              <p className="text-[9px] font-black uppercase tracking-widest text-white/40 mb-1 leading-none">{k}</p>
-                              <p className="text-xs font-extrabold truncate text-white leading-tight mt-1">{v}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </motion.div>
-
-                    <div className="space-y-4 mb-8">
-                      {[
-                        { Icon: Shield, text: "Includes fully-insured pre-addressed shipping label" },
-                        { Icon: Zap, text: "Leicester diagnostic clearing & payment within 48h" },
-                        { Icon: Clock, text: "Price guarantee locks payout rate against devaluation" },
-                      ].map(({ Icon, text }, i) => (
-                        <div key={i} className="flex items-center gap-3">
-                          <div className="h-9 w-9 rounded-xl bg-zinc-50 border border-zinc-150/40 flex items-center justify-center shrink-0">
-                            <Icon className="h-4.5 w-4.5 text-zinc-700" />
-                          </div>
-                          <p className="text-xs font-semibold text-zinc-500">{text}</p>
-                        </div>
-                      ))}
-                    </div>
-
-                    <motion.button
-                      whileHover={{ y: -2 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => go(1)}
-                      className="w-full h-14 bg-accent text-zinc-950 rounded-2xl font-black text-sm flex items-center justify-center gap-2.5 hover:bg-[#c8f050] transition-all shadow-xl shadow-accent/15"
-                    >
-                      Accept Cash Offer <ArrowRight className="h-4.5 w-4.5" />
-                    </motion.button>
-                  </div>
-                )}
-
-                {/* ── STEP 8 – Fulfillment option ──────────────────── */}
-                {step === 8 && (
-                  <div>
-                    <StepHeader
-                      label="Select shipment method"
-                      sub="Choose how you would like to transfer your device to our Leicester hub."
-                    />
-                    <div className="space-y-4">
-                      {[
-                        {
-                          id: "ship", title: "Ship via Royal Mail", icon: Truck,
-                          desc: "We email a prepaid shipping label. Pack your device and drop off at any local Post Office counter.",
-                          badge: { Icon: Gift, text: "Free Insured Shipping", cls: "bg-emerald-50 text-emerald-700 border-emerald-100" },
-                        },
-                        {
-                          id: "dropoff", title: "Drop off in Store", icon: MapPin,
-                          desc: "Visit TechStop Leicester. Hand in your device for direct inspection and instant in-hand cash payout.",
-                          badge: { Icon: Zap, text: "Instant in-store payout", cls: "bg-blue-50 text-blue-700 border-blue-100" },
-                        },
-                      ].map((opt) => {
-                        const selected = state.fulfillment === opt.id;
-                        const { icon: Icon } = opt;
-                        return (
-                          <motion.button
-                            key={opt.id}
-                            whileHover={{ y: -2 }}
-                            whileTap={{ scale: 0.985 }}
+            <div className="px-8 pb-10">
+              <AnimatePresence mode="wait" custom={dir}>
+                <motion.div
+                  key={step === 4 ? `4-${specStep}` : step === 6 ? `6-${questionStep}` : step}
+                  custom={dir}
+                  variants={stepVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={{ type: "spring", stiffness: 350, damping: 28 }}
+                >
+                  {/* ── STEP 1 – Category Fallback ───────────────────── */}
+                  {step === 1 && (
+                    <div>
+                      <StepHeader
+                        label="Select your device"
+                        sub="Pick the hardware category to start diagnostic evaluation."
+                      />
+                      <div className="space-y-3">
+                        {CATEGORIES.map((cat) => (
+                          <OptionButton
+                            key={cat.id}
+                            label={cat.label}
+                            desc={cat.sub}
+                            icon={cat.icon}
                             onClick={() => {
-                              setState(s => ({ ...s, fulfillment: opt.id }));
+                              setState(s => ({ ...s, category: cat.id, brand: "", model: "", specs: {}, condition: "", answers: {} }));
+                              setSpecStep(0);
+                              setQuestionStep(0);
                               go(1);
                             }}
-                            className={`w-full rounded-3xl border-2 p-6 text-left transition-all duration-200 ${
-                              selected
-                                ? "border-zinc-950 bg-zinc-950 text-white shadow-xl shadow-zinc-950/10"
-                                : "border-zinc-200 bg-zinc-50/50 hover:border-zinc-350 hover:bg-white"
-                            }`}
-                          >
-                            <div className="flex items-start gap-4">
-                              <div className={`h-12 w-12 rounded-xl flex items-center justify-center shrink-0 border transition-colors ${selected ? "bg-white/15 border-white/10" : "bg-white border-zinc-150 shadow-sm"}`}>
-                                <Icon className={`h-6 w-6 ${selected ? "text-white" : "text-zinc-650"}`} strokeWidth={1.5} />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className={`font-extrabold text-sm mb-1 ${selected ? "text-white" : "text-zinc-900"}`}>{opt.title}</p>
-                                <p className={`text-xs leading-relaxed ${selected ? "text-white/60" : "text-zinc-500 font-semibold"}`}>{opt.desc}</p>
-                                <div className={`mt-4 inline-flex items-center gap-1.5 border rounded-full px-3 py-1 text-[9px] font-black uppercase tracking-widest ${selected ? "bg-accent/25 text-accent border-accent/15" : opt.badge.cls}`}>
-                                  <opt.badge.Icon className="h-3 w-3" />
-                                  {opt.badge.text}
-                                </div>
-                              </div>
-                            </div>
-                          </motion.button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* ── STEP 9 – Contact forms ───────────────────────── */}
-                {step === 9 && (
-                  <div>
-                    <StepHeader
-                      label="Enter your details"
-                      sub={state.fulfillment === "ship" ? "Prepaid shipment labels will be dispatched to your email address." : "We'll confirm your Leicester hub drop-off slot."}
-                    />
-                    <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); go(1); }}>
-                      {[
-                        { key: "name", label: "Full Name", type: "text", placeholder: "E.g. Jordan Mitchell", required: true },
-                        { key: "email", label: "Email Address", type: "email", placeholder: "you@example.com", required: true },
-                        { key: "phone", label: "Phone Number", type: "tel", placeholder: "+44 7700 000000", required: true },
-                        ...(state.fulfillment === "ship" ? [
-                          { key: "address", label: "Collection Address", type: "text", placeholder: "Street address", required: true },
-                          { key: "postcode", label: "Postcode", type: "text", placeholder: "LE1 1AA", required: true },
-                        ] : []),
-                      ].map(({ key, label, type, placeholder, required }) => (
-                        <div key={key}>
-                          <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2">{label}</label>
-                          <input
-                            type={type}
-                            required={required}
-                            placeholder={placeholder}
-                            value={state.contact[key as keyof typeof state.contact]}
-                            onChange={e => setState(s => ({ ...s, contact: { ...s.contact, [key]: e.target.value } }))}
-                            className="w-full h-14 rounded-2xl border-2 border-zinc-200 px-5 text-sm font-semibold outline-none focus:border-zinc-950 transition-colors bg-white placeholder:text-zinc-400"
                           />
-                        </div>
-                      ))}
-                      <div className="pt-4">
-                        <motion.button
-                          type="submit"
-                          whileHover={{ y: -2 }}
-                          whileTap={{ scale: 0.98 }}
-                          className="w-full h-14 bg-zinc-950 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2.5 hover:bg-zinc-800 transition-all shadow-lg"
-                        >
-                          Submit Trade-In Request <ArrowRight className="h-4.5 w-4.5" />
-                        </motion.button>
-                        <p className="text-center text-[10px] text-zinc-400 font-semibold mt-3 leading-relaxed">
-                          By submitting this form you consent to our terms of buyback. Customer records are secured under SSL protection.
-                        </p>
-                      </div>
-                    </form>
-                  </div>
-                )}
-
-                {/* ── STEP 10 – Confirmation ──────────────────────── */}
-                {step === 10 && (
-                  <div>
-                    <motion.div
-                      initial={{ scale: 0.5, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      transition={{ type: "spring", stiffness: 280, damping: 22 }}
-                      className="h-16 w-16 bg-accent border border-black/5 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-accent/10 animate-bounce"
-                    >
-                      <CheckCircle2 className="h-8 w-8 text-zinc-950" strokeWidth={1.5} />
-                    </motion.div>
-                    <h2 className="font-serif text-3xl md:text-4xl font-medium mb-3 leading-tight tracking-tight text-zinc-950">You're all set!</h2>
-                    <p className="text-zinc-500 font-semibold mb-8 text-sm leading-relaxed">
-                      Trade-in request for your <strong className="text-zinc-950 font-black">{state.model}</strong> was processed. Your guaranteed payout estimate is <strong className="text-zinc-950 font-black">£{offerPrice}</strong>.
-                    </p>
-
-                    <div className="rounded-3xl bg-zinc-50 border border-zinc-150 overflow-hidden mb-8">
-                      <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-150 bg-zinc-100/50">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Shipment Timeline</p>
-                        <div className="flex items-center gap-2">
-                          {state.fulfillment === "ship"
-                            ? <Truck className="h-4.5 w-4.5 text-zinc-500" strokeWidth={1.5} />
-                            : <MapPin className="h-4.5 w-4.5 text-zinc-500" strokeWidth={1.5} />
-                          }
-                          <span className="text-xs font-black uppercase tracking-wider text-zinc-500">
-                            {state.fulfillment === "ship" ? "Insured Shipping" : "Leicester drop slot"}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="p-6 space-y-6 relative">
-                        {/* Connecting dashed line behind items */}
-                        <div className="absolute left-[34px] top-10 bottom-10 w-[2px] border-l-2 border-dashed border-zinc-200 -z-10" />
-                        
-                        {(state.fulfillment === "ship" ? [
-                          { n: "1", title: "Retrieve your shipping label", desc: `Prepaid label and packaging instructions have been sent to ${state.contact.email || "your inbox"}.`, hi: true },
-                          { n: "2", title: "Dispatch the package", desc: "Wrap the hardware securely inside bubble protective sheets, paste the label, and hand it to any Royal Mail counter.", hi: false },
-                          { n: "3", title: "Verification & bank payout", desc: " Leicester depot confirms diagnostics. Payout will clear directly to your bank within 48h.", hi: false },
-                        ] : [
-                          { n: "1", title: "Visit TechStop Leicester hub", desc: `We have registered your drop slot. Check ${state.contact.email || "your inbox"} for address and confirmation barcode.`, hi: true },
-                          { n: "2", title: "Five-minute in-store diagnostics", desc: "Our hardware technician inspects the device functionality, screen index, and resets to match description.", hi: false },
-                          { n: "3", title: `Instant direct bank deposit of £${offerPrice}`, desc: "Once diagnostic completes, funds are released directly to bank account, store voucher, or paid in cash.", hi: false },
-                        ]).map(item => (
-                          <div key={item.n} className="flex items-start gap-4 bg-transparent">
-                            <div className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 shadow-sm border ${item.hi ? "bg-zinc-950 text-white border-zinc-950" : "bg-white text-zinc-600 border-zinc-150"}`}>
-                              <span className="font-extrabold text-sm">{item.n}</span>
-                            </div>
-                            <div>
-                              <p className="font-extrabold text-sm text-zinc-900 leading-snug">{item.title}</p>
-                              <p className="text-xs text-zinc-550 mt-1 leading-relaxed font-semibold">{item.desc}</p>
-                            </div>
-                          </div>
                         ))}
                       </div>
                     </div>
+                  )}
 
-                    <button
-                      onClick={() => {
-                        setIsWizardActive(false);
-                        setStep(1);
-                      }}
-                      className="flex items-center justify-center gap-2 h-14 bg-zinc-950 text-white rounded-2xl font-black text-sm hover:bg-zinc-800 transition-all w-full shadow-lg"
-                    >
-                      Done <ArrowRight className="h-4.5 w-4.5" />
-                    </button>
-                  </div>
-                )}
-              </motion.div>
-            </AnimatePresence>
+                  {/* ── STEP 2 – Brand selection ─────────────────────── */}
+                  {step === 2 && (
+                    <div>
+                      <StepHeader
+                        label="Which brand is it?"
+                        sub={`Select the brand of your device category: ${state.category.toLowerCase()}.`}
+                      />
+                      <div className="grid grid-cols-2 gap-4">
+                        {(BRANDS[state.category] ?? []).map(brand => (
+                          <OptionButton
+                            key={brand}
+                            label={brand}
+                            selected={state.brand === brand}
+                            onClick={() => {
+                              setState(s => ({ ...s, brand, model: "" }));
+                              go(1);
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ── STEP 3 – Model Selection ─────────────────────── */}
+                  {step === 3 && (
+                    <div>
+                      <StepHeader
+                        label="Select your model"
+                        sub={`Identify the exact specification of your ${state.brand} ${state.category.toLowerCase()}.`}
+                      />
+                      <div className="space-y-3 max-h-95 overflow-y-auto pr-1.5 scrollbar-thin scrollbar-thumb-zinc-200">
+                        {(MODELS[state.category]?.[state.brand] ?? []).map(model => (
+                          <OptionButton
+                            key={model}
+                            label={model}
+                            selected={state.model === model}
+                            onClick={() => {
+                              setState(s => ({ ...s, model }));
+                              go(1);
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ── STEP 4 – Specifications ──────────────────────── */}
+                  {step === 4 && currentSpec && (
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2">
+                        Device Specification {specStep + 1} of {currentSpecs.length}
+                      </p>
+                      <StepHeader label={`Choose ${currentSpec.label.toLowerCase()}`} />
+                      <div className="grid grid-cols-2 gap-4">
+                        {currentSpec.options.map(opt => (
+                          <OptionButton
+                            key={opt}
+                            label={opt}
+                            selected={state.specs[currentSpec.label] === opt}
+                            onClick={() => handleSpecSelect(opt)}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ── STEP 5 – Condition Grading ───────────────────── */}
+                  {step === 5 && (
+                    <div>
+                      <StepHeader
+                        label="Estimate overall condition"
+                        sub="We will inspect the hardware. Honest selections prevent adjusted quotes."
+                      />
+                      <div className="space-y-3">
+                        {CONDITIONS.map(c => (
+                          <motion.button
+                            key={c.id}
+                            whileHover={{ y: -2, scale: 1.01 }}
+                            whileTap={{ scale: 0.99 }}
+                            onClick={() => {
+                              setState(s => ({ ...s, condition: c.id }));
+                              go(1);
+                            }}
+                            className={`w-full flex items-center gap-5 p-5 rounded-2xl border-2 text-left transition-all duration-200 ${state.condition === c.id
+                              ? "border-zinc-950 bg-zinc-950 text-white shadow-xl shadow-zinc-950/10"
+                              : `${c.color} hover:border-zinc-400 hover:shadow-sm`
+                              }`}
+                          >
+                            <div className={`h-4.5 w-4.5 rounded-full shrink-0 ${state.condition === c.id ? "bg-accent border-zinc-950 border" : c.dot}`} />
+                            <div className="flex-1 min-w-0">
+                              <p className={`font-extrabold text-sm ${state.condition === c.id ? "text-white" : "text-zinc-900"}`}>{c.label}</p>
+                              <p className={`text-xs mt-0.5 leading-relaxed font-semibold ${state.condition === c.id ? "text-white/60" : "text-zinc-550"}`}>{c.desc}</p>
+                            </div>
+                            <motion.div
+                              initial={false}
+                              animate={{ scale: state.condition === c.id ? 1 : 0, opacity: state.condition === c.id ? 1 : 0 }}
+                              transition={{ type: "spring", stiffness: 450, damping: 25 }}
+                              className="h-6 w-6 rounded-full bg-accent flex items-center justify-center shrink-0"
+                            >
+                              <Check className="h-3.5 w-3.5 text-zinc-950" strokeWidth={3} />
+                            </motion.div>
+                          </motion.button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ── STEP 6 – Functional Profile Questions ────────── */}
+                  {step === 6 && currentQuestion && (
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-3">
+                        Diagnostic Question {questionStep + 1} of {currentQuestions.length}
+                      </p>
+                      <div className="flex gap-2 mb-8">
+                        {currentQuestions.map((_, i) => (
+                          <div
+                            key={i}
+                            className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${i <= questionStep ? "bg-zinc-950" : "bg-zinc-200"}`}
+                          />
+                        ))}
+                      </div>
+                      <StepHeader label={currentQuestion.question} />
+                      <div className="space-y-3">
+                        {currentQuestion.options.map(opt => (
+                          <OptionButton
+                            key={opt}
+                            label={opt}
+                            selected={state.answers[currentQuestion.id] === opt}
+                            onClick={() => handleAnswerSelect(opt)}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ── STEP 7 – Cash Offer Dynamic Certificate ──────── */}
+                  {step === 7 && (
+                    <div className="text-center py-6">
+                      <div className="mx-auto w-20 h-20 bg-linear-to-br from-amber-400 to-yellow-500 rounded-2xl flex items-center justify-center mb-8 shadow-xl">
+                        <Award className="w-11 h-11 text-black" />
+                      </div>
+                      <h2 className="text-4xl font-bold mb-2">Your Offer</h2>
+                      <div className="text-8xl font-black font-mono tracking-tighter text-black mb-4">£{offerPrice}</div>
+                      <p className="text-emerald-600 font-semibold mb-8">Guaranteed for 14 days</p>
+
+                      <div className="bg-zinc-50 border border-zinc-100 rounded-2xl p-6 text-left space-y-4">
+                        <div className="flex justify-between"><span className="text-zinc-500">Device</span><span className="font-medium">{state.model}</span></div>
+                        <div className="flex justify-between"><span className="text-zinc-500">Condition</span><span className="font-medium">{state.condition}</span></div>
+                        <div className="flex justify-between"><span className="text-zinc-500">Estimated Payout</span><span className="font-bold">£{offerPrice}</span></div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ── STEP 8 – Fulfillment option ──────────────────── */}
+                  {step === 8 && (
+                    <div>
+                      <StepHeader
+                        label="Select shipment method"
+                        sub="Choose how you would like to transfer your device to our Leicester hub."
+                      />
+                      <div className="space-y-4">
+                        {[
+                          {
+                            id: "ship", title: "Ship via Royal Mail", icon: Truck,
+                            desc: "We email a prepaid shipping label. Pack your device and drop off at any local Post Office counter.",
+                            badge: { Icon: Gift, text: "Free Insured Shipping", cls: "bg-emerald-50 text-emerald-700 border-emerald-100" },
+                          },
+                          {
+                            id: "dropoff", title: "Drop off in Store", icon: MapPin,
+                            desc: "Visit TechStop Leicester. Hand in your device for direct inspection and instant in-hand cash payout.",
+                            badge: { Icon: Zap, text: "Instant in-store payout", cls: "bg-blue-50 text-blue-700 border-blue-100" },
+                          },
+                        ].map((opt) => {
+                          const selected = state.fulfillment === opt.id;
+                          const { icon: Icon } = opt;
+                          return (
+                            <motion.button
+                              key={opt.id}
+                              whileHover={{ y: -2 }}
+                              whileTap={{ scale: 0.985 }}
+                              onClick={() => {
+                                setState(s => ({ ...s, fulfillment: opt.id }));
+                                go(1);
+                              }}
+                              className={`w-full rounded-3xl border-2 p-6 text-left transition-all duration-200 ${selected
+                                ? "border-zinc-950 bg-zinc-950 text-white shadow-xl shadow-zinc-950/10"
+                                : "border-zinc-200 bg-zinc-50/50 hover:border-zinc-350 hover:bg-white"
+                                }`}
+                            >
+                              <div className="flex items-start gap-4">
+                                <div className={`h-12 w-12 rounded-xl flex items-center justify-center shrink-0 border transition-colors ${selected ? "bg-white/15 border-white/10" : "bg-white border-zinc-150 shadow-sm"}`}>
+                                  <Icon className={`h-6 w-6 ${selected ? "text-white" : "text-zinc-650"}`} strokeWidth={1.5} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className={`font-extrabold text-sm mb-1 ${selected ? "text-white" : "text-zinc-900"}`}>{opt.title}</p>
+                                  <p className={`text-xs leading-relaxed ${selected ? "text-white/60" : "text-zinc-500 font-semibold"}`}>{opt.desc}</p>
+                                  <div className={`mt-4 inline-flex items-center gap-1.5 border rounded-full px-3 py-1 text-[9px] font-black uppercase tracking-widest ${selected ? "bg-accent/25 text-accent border-accent/15" : opt.badge.cls}`}>
+                                    <opt.badge.Icon className="h-3 w-3" />
+                                    {opt.badge.text}
+                                  </div>
+                                </div>
+                              </div>
+                            </motion.button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ── STEP 9 – Contact forms ───────────────────────── */}
+                  {step === 9 && (
+                    <div>
+                      <StepHeader
+                        label="Enter your details"
+                        sub={state.fulfillment === "ship" ? "Prepaid shipment labels will be dispatched to your email address." : "We'll confirm your Leicester hub drop-off slot."}
+                      />
+                      <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); go(1); }}>
+                        {[
+                          { key: "name", label: "Full Name", type: "text", placeholder: "E.g. Jordan Mitchell", required: true },
+                          { key: "email", label: "Email Address", type: "email", placeholder: "you@example.com", required: true },
+                          { key: "phone", label: "Phone Number", type: "tel", placeholder: "+44 7700 000000", required: true },
+                          ...(state.fulfillment === "ship" ? [
+                            { key: "address", label: "Collection Address", type: "text", placeholder: "Street address", required: true },
+                            { key: "postcode", label: "Postcode", type: "text", placeholder: "LE1 1AA", required: true },
+                          ] : []),
+                        ].map(({ key, label, type, placeholder, required }) => (
+                          <div key={key}>
+                            <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2">{label}</label>
+                            <input
+                              type={type}
+                              required={required}
+                              placeholder={placeholder}
+                              value={state.contact[key as keyof typeof state.contact]}
+                              onChange={e => setState(s => ({ ...s, contact: { ...s.contact, [key]: e.target.value } }))}
+                              className="w-full h-14 rounded-2xl border-2 border-zinc-200 px-5 text-sm font-semibold outline-none focus:border-zinc-950 transition-colors bg-white placeholder:text-zinc-400"
+                            />
+                          </div>
+                        ))}
+                        <div className="pt-4">
+                          <motion.button
+                            type="submit"
+                            whileHover={{ y: -2 }}
+                            whileTap={{ scale: 0.98 }}
+                            className="w-full h-14 bg-zinc-950 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2.5 hover:bg-zinc-800 transition-all shadow-lg"
+                          >
+                            Submit Trade-In Request <ArrowRight className="h-4.5 w-4.5" />
+                          </motion.button>
+                          <p className="text-center text-[10px] text-zinc-400 font-semibold mt-3 leading-relaxed">
+                            By submitting this form you consent to our terms of buyback. Customer records are secured under SSL protection.
+                          </p>
+                        </div>
+                      </form>
+                    </div>
+                  )}
+
+                  {/* ── STEP 10 – Confirmation ──────────────────────── */}
+                  {step === 10 && (
+                    <div>
+                      <motion.div
+                        initial={{ scale: 0.5, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ type: "spring", stiffness: 280, damping: 22 }}
+                        className="h-16 w-16 bg-accent border border-black/5 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-accent/10 animate-bounce"
+                      >
+                        <CheckCircle2 className="h-8 w-8 text-zinc-950" strokeWidth={1.5} />
+                      </motion.div>
+                      <h2 className="font-serif text-3xl md:text-4xl font-medium mb-3 leading-tight tracking-tight text-zinc-950">You're all set!</h2>
+                      <p className="text-zinc-500 font-semibold mb-8 text-sm leading-relaxed">
+                        Trade-in request for your <strong className="text-zinc-950 font-black">{state.model}</strong> was processed. Your guaranteed payout estimate is <strong className="text-zinc-950 font-black">£{offerPrice}</strong>.
+                      </p>
+
+                      <div className="rounded-3xl bg-zinc-50 border border-zinc-150 overflow-hidden mb-8">
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-150 bg-zinc-100/50">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Shipment Timeline</p>
+                          <div className="flex items-center gap-2">
+                            {state.fulfillment === "ship"
+                              ? <Truck className="h-4.5 w-4.5 text-zinc-500" strokeWidth={1.5} />
+                              : <MapPin className="h-4.5 w-4.5 text-zinc-500" strokeWidth={1.5} />
+                            }
+                            <span className="text-xs font-black uppercase tracking-wider text-zinc-500">
+                              {state.fulfillment === "ship" ? "Insured Shipping" : "Leicester drop slot"}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="p-6 space-y-6 relative">
+                          {/* Connecting dashed line behind items */}
+                          <div className="absolute left-8.5 top-10 bottom-10 w-0.5 border-l-2 border-dashed border-zinc-200 -z-10" />
+
+                          {(state.fulfillment === "ship" ? [
+                            { n: "1", title: "Retrieve your shipping label", desc: `Prepaid label and packaging instructions have been sent to ${state.contact.email || "your inbox"}.`, hi: true },
+                            { n: "2", title: "Dispatch the package", desc: "Wrap the hardware securely inside bubble protective sheets, paste the label, and hand it to any Royal Mail counter.", hi: false },
+                            { n: "3", title: "Verification & bank payout", desc: " Leicester depot confirms diagnostics. Payout will clear directly to your bank within 48h.", hi: false },
+                          ] : [
+                            { n: "1", title: "Visit TechStop Leicester hub", desc: `We have registered your drop slot. Check ${state.contact.email || "your inbox"} for address and confirmation barcode.`, hi: true },
+                            { n: "2", title: "Five-minute in-store diagnostics", desc: "Our hardware technician inspects the device functionality, screen index, and resets to match description.", hi: false },
+                            { n: "3", title: `Instant direct bank deposit of £${offerPrice}`, desc: "Once diagnostic completes, funds are released directly to bank account, store voucher, or paid in cash.", hi: false },
+                          ]).map(item => (
+                            <div key={item.n} className="flex items-start gap-4 bg-transparent">
+                              <div className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 shadow-sm border ${item.hi ? "bg-zinc-950 text-white border-zinc-950" : "bg-white text-zinc-600 border-zinc-150"}`}>
+                                <span className="font-extrabold text-sm">{item.n}</span>
+                              </div>
+                              <div>
+                                <p className="font-extrabold text-sm text-zinc-900 leading-snug">{item.title}</p>
+                                <p className="text-xs text-zinc-550 mt-1 leading-relaxed font-semibold">{item.desc}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          setIsWizardActive(false);
+                          setStep(1);
+                        }}
+                        className="flex items-center justify-center gap-2 h-14 bg-zinc-950 text-white rounded-2xl font-black text-sm hover:bg-zinc-800 transition-all w-full shadow-lg"
+                      >
+                        Done <ArrowRight className="h-4.5 w-4.5" />
+                      </button>
+                    </div>
+                  )}
+                </motion.div>
+              </AnimatePresence>
+
+            </div>
 
           </div>
         </div>

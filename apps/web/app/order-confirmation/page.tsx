@@ -179,7 +179,7 @@ function OrderConfirmationContent() {
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row gap-4">
             <a
-              href="/shop"
+              href="/shop/phones"
               className="flex-1 flex items-center justify-center gap-2 h-16 bg-black text-white rounded-[1.5rem] font-bold text-base hover:bg-zinc-800 transition-colors"
             >
               Continue shopping <ArrowRight className="h-5 w-5" />

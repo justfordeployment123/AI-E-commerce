@@ -99,7 +99,7 @@ export default function AccountPage() {
                       <div className="text-center py-20 text-zinc-400">
                         <Package className="h-12 w-12 mx-auto mb-4 opacity-30" />
                         <p className="font-bold">No orders yet</p>
-                        <a href="/shop" className="mt-4 inline-flex items-center gap-2 text-black font-bold underline">Shop now</a>
+                        <a href="/shop/phones" className="mt-4 inline-flex items-center gap-2 text-black font-bold underline">Shop now</a>
                       </div>
                     ) : (
                       <div className="space-y-4">

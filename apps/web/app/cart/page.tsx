@@ -99,7 +99,7 @@ export default function CartPage() {
           <p className="text-zinc-500 mb-10 max-w-md font-medium text-lg">
             Ready to find your next favorite device? Discover our amazing deals on refurbished tech.
           </p>
-          <a href="/shop" className="h-14 px-8 bg-black text-white rounded-full font-bold flex items-center justify-center gap-3 transition-transform hover:scale-[1.02]">
+          <a href="/shop/phones" className="h-14 px-8 bg-black text-white rounded-full font-bold flex items-center justify-center gap-3 transition-transform hover:scale-[1.02]">
             Start shopping
             <ArrowRight className="h-5 w-5" />
           </a>

@@ -67,10 +67,10 @@ export default function Footer() {
             <div>
               <h4 className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em] mb-8">Shop</h4>
               <ul className="space-y-4 text-sm font-bold uppercase tracking-widest text-[10px]">
-                <li><a href="/shop" className="hover:text-accent transition-colors">Smartphones</a></li>
-                <li><a href="/shop" className="hover:text-accent transition-colors">Laptops</a></li>
-                <li><a href="/shop" className="hover:text-accent transition-colors">Gaming</a></li>
-                <li><a href="/shop" className="hover:text-accent transition-colors">Audio</a></li>
+                <li><a href="/shop/phones" className="hover:text-accent transition-colors">Smartphones</a></li>
+                <li><a href="/shop/laptops" className="hover:text-accent transition-colors">Laptops</a></li>
+                <li><a href="/shop/consoles" className="hover:text-accent transition-colors">Gaming</a></li>
+                <li><a href="/shop/audio" className="hover:text-accent transition-colors">Audio</a></li>
               </ul>
             </div>
             <div>

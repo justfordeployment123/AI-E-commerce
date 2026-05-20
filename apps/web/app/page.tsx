@@ -2078,6 +2078,7 @@ function TopBrandsSplit() {
                       <span className="text-sm font-bold relative -top-1.5">.{p.price.split('.')[1]}</span>
                     </p>
                     <p className="text-[11px] text-zinc-400 line-through mb-2">{p.was}</p>
+                  </div>
                 </Link>
               ))}
             </div>

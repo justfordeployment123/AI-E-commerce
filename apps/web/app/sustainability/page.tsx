@@ -61,7 +61,7 @@ export default function SustainabilityPage() {
                   transition={{ delay: 0.3 }}
                   className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
                 >
-                  <a href="/shop" className="h-16 px-10 bg-black text-white rounded-2xl font-bold flex items-center justify-center gap-3 transition-transform hover:scale-105 active:scale-95 shadow-2xl">
+                  <a href="/shop/phones" className="h-16 px-10 bg-black text-white rounded-2xl font-bold flex items-center justify-center gap-3 transition-transform hover:scale-105 active:scale-95 shadow-2xl">
                     Shop Sustainably
                     <ArrowRight className="h-5 w-5 text-accent" />
                   </a>
@@ -190,12 +190,12 @@ export default function SustainabilityPage() {
            <div className="mx-auto max-w-4xl px-4">
               <h2 className="font-serif text-5xl md:text-8xl font-medium mb-12">Join the movement.</h2>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                 <button className="h-20 px-16 bg-black text-white rounded-[2rem] font-bold text-lg transition-all hover:scale-105 active:scale-95 shadow-2xl">
-                    Browse All Tech
-                 </button>
-                 <button className="h-20 px-16 border-2 border-zinc-100 text-black rounded-[2rem] font-bold text-lg hover:bg-zinc-50 transition-all">
-                    Sell Your Device
-                 </button>
+                  <a href="/shop/phones" className="h-20 px-16 bg-black text-white rounded-[2rem] font-bold text-lg transition-all hover:scale-105 active:scale-95 shadow-2xl inline-flex items-center justify-center">
+                     Browse All Tech
+                  </a>
+                  <a href="/sell" className="h-20 px-16 border-2 border-zinc-100 text-black rounded-[2rem] font-bold text-lg hover:bg-zinc-50 transition-all inline-flex items-center justify-center">
+                     Sell Your Device
+                  </a>
               </div>
            </div>
         </section>

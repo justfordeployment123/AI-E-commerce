@@ -109,7 +109,7 @@ export default function ProductDetailPage() {
       {/* Breadcrumb */}
       <div className="bg-white border-b border-zinc-200 sticky top-0 z-30">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 flex items-center gap-2 text-xs font-bold text-zinc-500 uppercase tracking-wide">
-          <a href="/shop" className="hover:text-black flex items-center gap-1">
+          <a href="/shop/phones" className="hover:text-black flex items-center gap-1">
             <ArrowLeft className="h-3.5 w-3.5" /> Shop
           </a>
           <span>/</span>
