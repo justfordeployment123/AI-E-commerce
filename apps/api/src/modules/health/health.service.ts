@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import OpenAI from 'openai';
 import { PrismaService } from '../database/prisma.service';
 import { RedisService } from '../cache/redis.service';
-import { StorageService } from '../../common/services/storage.service';
 import { S3Client, HeadBucketCommand } from '@aws-sdk/client-s3';
 
 @Injectable()
@@ -12,7 +11,6 @@ export class HealthService {
     constructor(
         private readonly prisma: PrismaService,
         private readonly redisService: RedisService,
-        private readonly storageService: StorageService,
     ) { }
 
     async getStatus(): Promise<{
