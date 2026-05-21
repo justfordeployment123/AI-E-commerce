@@ -220,18 +220,28 @@ export default function Navbar({ itemsCount = 0 }: { itemsCount?: number }) {
             </nav>
 
             {/* Right: Utility Links */}
-            <div className="flex items-center gap-6 text-sm font-bold text-zinc-655">
-              <Link href="/trade-in" className="flex items-center gap-1.5 hover:text-black transition-colors text-zinc-500">
-                <RefreshCw className="h-4 w-4" />
-                Sell Your Device
-              </Link>
-              <Link href="/repair" className="flex items-center gap-1.5 hover:text-black transition-colors text-zinc-500">
-                <Wrench className="h-4 w-4" />
-                Book a Repair
-              </Link>
-              <Link href="/help" className="hover:text-black transition-colors text-zinc-500">
-                Help Centre
-              </Link>
+            <div className="flex items-center gap-2 text-xs font-bold">
+              {[
+                { label: "Sell Your Device", href: "/trade-in", icon: RefreshCw },
+                { label: "Book a Repair", href: "/repair", icon: Wrench },
+                { label: "Help Centre", href: "/help", icon: null },
+              ].map(({ label, href, icon: Icon }) => {
+                const isActive = pathname?.startsWith(href);
+                return (
+                  <Link
+                    key={label}
+                    href={href}
+                    className={`relative px-4 py-2 rounded-full flex items-center gap-1.5 transition-colors duration-250 ${
+                      isActive
+                        ? "bg-zinc-950 text-white shadow-sm font-extrabold"
+                        : "text-zinc-500 hover:text-black font-semibold hover:bg-zinc-100/60"
+                    }`}
+                  >
+                    {Icon && <Icon className={`h-3.5 w-3.5 ${isActive ? "text-white" : "text-zinc-500"}`} />}
+                    <span>{label}</span>
+                  </Link>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -289,15 +299,27 @@ export default function Navbar({ itemsCount = 0 }: { itemsCount?: number }) {
                 })}
 
                 <div className="pt-3 mt-3 border-t border-zinc-100 space-y-1">
-                  <Link href="/trade-in" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-zinc-50 text-sm font-bold">
-                    <RefreshCw className="h-4 w-4 text-zinc-400" /> Sell Your Device
-                  </Link>
-                  <Link href="/repair" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-zinc-50 text-sm font-bold">
-                    <Wrench className="h-4 w-4 text-zinc-400" /> Book a Repair
-                  </Link>
-                  <Link href="/help" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-zinc-50 text-sm font-bold">
-                    Help Centre
-                  </Link>
+                  {[
+                    { label: "Sell Your Device", href: "/trade-in", icon: RefreshCw },
+                    { label: "Book a Repair", href: "/repair", icon: Wrench },
+                    { label: "Help Centre", href: "/help", icon: null },
+                  ].map(({ label, href, icon: Icon }) => {
+                    const isActive = pathname?.startsWith(href);
+                    return (
+                      <Link
+                        key={label}
+                        href={href}
+                        onClick={() => setIsOpen(false)}
+                        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                          isActive ? "bg-black text-white" : "hover:bg-zinc-50 text-zinc-700"
+                        }`}
+                      >
+                        {Icon && <Icon className={`h-4 w-4 ${isActive ? "text-white" : "text-zinc-500"}`} strokeWidth={1.8} />}
+                        <span>{label}</span>
+                        <ChevronRight className={`h-4 w-4 ml-auto ${isActive ? "text-white" : "text-zinc-300"}`} />
+                      </Link>
+                    );
+                  })}
                 </div>
               </div>
             </motion.div>

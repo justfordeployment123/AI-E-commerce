@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { tradeInsApi } from "../../lib/api";
 import {
@@ -99,10 +99,10 @@ const SPECS: Record<string, { label: string; options: string[] }[]> = {
 };
 
 const CONDITIONS = [
-  { id: "Mint", label: "Mint", desc: "Like new — barely used, no marks whatsoever", color: "bg-emerald-50 border-emerald-200/60", dot: "bg-emerald-400", multiplier: 1.0 },
-  { id: "Good", label: "Good", desc: "Minor scuffs only — fully functional, no screen damage", color: "bg-blue-50 border-blue-200/60", dot: "bg-blue-400", multiplier: 0.82 },
-  { id: "Used", label: "Used", desc: "Visible wear — scratches or light marks, works perfectly", color: "bg-amber-50 border-amber-200/60", dot: "bg-amber-400", multiplier: 0.62 },
-  { id: "Damaged", label: "Damaged", desc: "Cracked screen or significant body damage", color: "bg-red-50 border-red-200/60", dot: "bg-red-400", multiplier: 0.3 },
+  { id: "Mint", label: "Mint", desc: "Like new, no marks or scuffs", color: "bg-emerald-50 border-emerald-200/60", dot: "bg-emerald-400", multiplier: 1.0 },
+  { id: "Good", label: "Good", desc: "Minor scuffs, fully working", color: "bg-blue-50 border-blue-200/60", dot: "bg-blue-400", multiplier: 0.82 },
+  { id: "Used", label: "Used", desc: "Moderate wear, fully working", color: "bg-amber-50 border-amber-200/60", dot: "bg-amber-400", multiplier: 0.62 },
+  { id: "Damaged", label: "Damaged", desc: "Cracked screen or body damage", color: "bg-red-50 border-red-200/60", dot: "bg-red-400", multiplier: 0.3 },
 ];
 
 const CONDITION_QUESTIONS: Record<string, { id: string; question: string; options: string[] }[]> = {
@@ -281,28 +281,59 @@ function OptionButton({ label, selected, onClick, desc, icon: Icon }: {
   );
 }
 
+function AnimatedPrice({ value }: { value: number }) {
+  const [displayValue, setDisplayValue] = useState(0);
+
+  useEffect(() => {
+    let start = 0;
+    const end = value;
+    if (start === end) {
+      setDisplayValue(end);
+      return;
+    }
+
+    const duration = 1200; // 1.2s for counting up
+    const startTime = performance.now();
+    let animationFrameId: number;
+
+    const updateNumber = (currentTime: number) => {
+      const elapsedTime = currentTime - startTime;
+      if (elapsedTime >= duration) {
+        setDisplayValue(end);
+      } else {
+        const progress = elapsedTime / duration;
+        const easeProgress = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+        const currentVal = Math.round(start + (end - start) * easeProgress);
+        setDisplayValue(currentVal);
+        animationFrameId = requestAnimationFrame(updateNumber);
+      }
+    };
+
+    animationFrameId = requestAnimationFrame(updateNumber);
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [value]);
+
+  return <span>£{displayValue}</span>;
+}
+
 function StepHeader({ label, sub }: { label: string; sub?: string }) {
   return (
-    <div className="mb-8">
-      <h2 className="font-serif text-3xl md:text-4xl font-bold leading-tight tracking-tight mb-2.5 text-zinc-950">{label}</h2>
-      {sub && <p className="text-zinc-400 font-semibold text-sm leading-relaxed">{sub}</p>}
+    <div className="space-y-1">
+      <h2 className="font-serif text-2xl md:text-3xl font-bold tracking-tight text-zinc-950">{label}</h2>
+      {sub && <p className="text-xs font-semibold text-zinc-400">{sub}</p>}
     </div>
   );
 }
 
-// ─── Main Page ──────────────────────────────────────────────────────────────
-
 export default function TradeInPage() {
   const [isWizardActive, setIsWizardActive] = useState(false);
-  const [step, setStep] = useState(1);
+  const [phase, setPhase] = useState(1);
   const [dir, setDir] = useState(1);
   const [state, setState] = useState<TradeInState>({
     category: "", brand: "", model: "", specs: {}, condition: "",
     answers: {}, fulfillment: "",
     contact: { name: "", email: "", phone: "", address: "", postcode: "" },
   });
-  const [specStep, setSpecStep] = useState(0);
-  const [questionStep, setQuestionStep] = useState(0);
 
   const [submitting, setSubmitting] = useState(false);
   const [submitRef, setSubmitRef] = useState("");
@@ -315,33 +346,91 @@ export default function TradeInPage() {
   const [aiPrice, setAiPrice] = useState<number | null>(null);
   const [aiLoadingText, setAiLoadingText] = useState("Analyzing your device...");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const modalScrollRef = useRef<HTMLDivElement>(null);
+
+  // Lock body scroll when wizard modal is active
+  useEffect(() => {
+    if (isWizardActive) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isWizardActive]);
 
   // Search autocomplete states
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
+  // Model search query inside Phase 1 wizard
+  const [wizardModelSearch, setWizardModelSearch] = useState("");
+
   // Sustainability impact calculator states
   const [calcCategory, setCalcCategory] = useState("Phone");
   const [calcQuantity, setCalcQuantity] = useState(1);
 
-  const go = useCallback((n: number) => {
-    setDir(n > 0 ? 1 : -1);
-    setStep(s => s + n);
-  }, []);
+  const scrollToTop = () => {
+    if (modalScrollRef.current) {
+      modalScrollRef.current.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
 
-  const back = () => {
-    if (step === 4 && specStep > 0) { setSpecStep(s => s - 1); return; }
-    if (step === 6 && questionStep > 0) { setQuestionStep(s => s - 1); return; }
-    if (step === 8) { setAiPrice(null); go(-1); return; }
-    if (step === 2) { setIsWizardActive(false); return; }
-    go(-1);
+  const handleCategorySelect = (catId: string) => {
+    setState(s => ({
+      ...s,
+      category: catId,
+      brand: "",
+      model: "",
+      specs: {},
+      answers: {},
+    }));
+    setWizardModelSearch("");
+    scrollToTop();
+  };
+
+  const handleBrandSelect = (brandName: string) => {
+    setState(s => ({
+      ...s,
+      brand: brandName,
+      model: "",
+      specs: {},
+      answers: {},
+    }));
+    setWizardModelSearch("");
+    scrollToTop();
+  };
+
+  const goToPhase = (p: number) => {
+    setPhase(p);
+    scrollToTop();
+  };
+
+  const handleBack = () => {
+    if (phase === 1) {
+      if (state.model) {
+        setState(s => ({ ...s, model: "" }));
+        setWizardModelSearch("");
+      } else if (state.brand) {
+        setState(s => ({ ...s, brand: "" }));
+      } else if (state.category) {
+        setState(s => ({ ...s, category: "" }));
+      } else {
+        setIsWizardActive(false);
+      }
+    } else {
+      if (phase === 4) {
+        setAiPrice(null);
+      }
+      setPhase(p => p - 1);
+      scrollToTop();
+    }
   };
 
   const currentSpecs = SPECS[state.category] ?? [];
-  const currentSpec = currentSpecs[specStep];
   const currentQuestions = CONDITION_QUESTIONS[state.category] ?? [];
-  const currentQuestion = currentQuestions[questionStep];
   const offerPrice = state.model ? computeOffer(state) : 0;
 
   async function compressImage(file: File): Promise<string> {
@@ -385,25 +474,24 @@ export default function TradeInPage() {
     }
   }
 
-  function handleSpecSelect(value: string) {
-    setState(s => ({ ...s, specs: { ...s.specs, [currentSpec.label]: value } }));
-    if (specStep < currentSpecs.length - 1) {
-      setSpecStep(s => s + 1);
-    } else {
-      go(1);
-    }
-  }
+  const startWizard = (catId?: string) => {
+    setState({
+      category: catId ?? "",
+      brand: "",
+      model: "",
+      specs: {},
+      condition: "",
+      answers: {},
+      fulfillment: "",
+      contact: { name: "", email: "", phone: "", address: "", postcode: "" },
+    });
+    setWizardModelSearch("");
+    setPhase(1);
+    setIsWizardActive(true);
+    scrollToTop();
+  };
 
-  function handleAnswerSelect(value: string) {
-    setState(s => ({ ...s, answers: { ...s.answers, [currentQuestion.id]: value } }));
-    if (questionStep < currentQuestions.length - 1) {
-      setQuestionStep(s => s + 1);
-    } else {
-      go(1);
-    }
-  }
-
-  function handleSelectSuggestion(suggestion: typeof ALL_MODELS[0]) {
+  const handleSelectSuggestion = (suggestion: typeof ALL_MODELS[0]) => {
     setState({
       category: suggestion.category,
       brand: suggestion.brand,
@@ -412,18 +500,21 @@ export default function TradeInPage() {
       condition: "",
       answers: {},
       fulfillment: "",
-      contact: { name: "", email: "", phone: "", address: "", postcode: "" }
+      contact: { name: "", email: "", phone: "", address: "", postcode: "" },
     });
-    setSpecStep(0);
-    setQuestionStep(0);
-    setStep(4); // Straight to specs
+    setPhase(2); // Jump straight to configuration & condition
     setIsWizardActive(true);
     setSearchQuery("");
-  }
+    scrollToTop();
+  };
 
-  const stepLabels = [
-    "Category", "Brand", "Model", "Specifications", "Condition",
-    "Diagnostics", "Device Photos", "Your Offer", "Fulfillment", "Contact Details", "Done"
+  const PHASE_LABELS = [
+    "Device Selection",
+    "Configuration & Condition",
+    "Diagnostics Questionnaire",
+    "Offer Valuation",
+    "Fulfillment & Details",
+    "Done"
   ];
 
   const suggestions = searchQuery.trim() === ""
@@ -443,12 +534,32 @@ export default function TradeInPage() {
     <div className="min-h-screen flex flex-col bg-white text-zinc-950 font-sans relative overflow-x-hidden">
       <Navbar />
 
-      {!isWizardActive ? (
-        // ─── BUYBACK LANDING PAGE (VIBRANT & ULTRA PREMIUM STYLE) ───────────
-        <div className="flex-1 bg-white relative">
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes spin-slow {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .animate-spin-slow {
+          animation: spin-slow 15s linear infinite;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #e4e4e7;
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #d4d4d8;
+        }
+      ` }} />
+      <div className="flex-1 bg-white relative">
 
           {/* Subtle top background decorative orb */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-150 h-87.5 bg-accent/10 blur-[130px] rounded-full pointer-events-none -z-10" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[600px] h-[350px] bg-sky-500/10 blur-[130px] rounded-full pointer-events-none -z-10" />
 
           {/* Hero Section */}
           <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-24 pb-16 text-center">
@@ -485,9 +596,9 @@ export default function TradeInPage() {
                   onFocus={() => setIsSearchFocused(true)}
                   onBlur={() => setTimeout(() => setIsSearchFocused(false), 220)}
                   placeholder="Search your device (e.g. iPhone 15 Pro, Watch Ultra, PS5...)"
-                  className="h-16 w-full rounded-2xl bg-zinc-100 border-2 border-transparent pl-14 pr-6 text-sm font-semibold outline-none focus:border-zinc-950 focus:bg-white transition-all shadow-lg hover:bg-zinc-150/70 placeholder:text-zinc-400"
+                  className="h-16 w-full rounded-2xl bg-zinc-100 border-2 border-transparent pl-14 pr-6 text-sm font-semibold outline-none focus:border-zinc-950 focus:bg-white transition-all shadow-lg hover:bg-zinc-200/50 placeholder:text-zinc-400"
                 />
-                <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5.5 w-5.5 text-zinc-400 group-focus-within:text-zinc-950 transition-colors" />
+                <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400 group-focus-within:text-zinc-950 transition-colors" />
               </div>
 
               <AnimatePresence>
@@ -496,7 +607,7 @@ export default function TradeInPage() {
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 12 }}
-                    className="absolute left-0 right-0 top-full mt-2 bg-white border border-zinc-200/80 rounded-2xl shadow-2xl overflow-hidden text-left z-30 p-2"
+                    className="absolute left-0 right-0 top-full mt-2 bg-white border border-zinc-200 rounded-2xl shadow-2xl overflow-hidden text-left z-30 p-2"
                   >
                     {suggestions.map((sug, i) => (
                       <button
@@ -524,7 +635,7 @@ export default function TradeInPage() {
             </div>
 
             {/* Popular quick links */}
-            <div className="flex flex-wrap items-center justify-center gap-2 mb-28 text-xs font-semibold text-zinc-450">
+            <div className="flex flex-wrap items-center justify-center gap-2 mb-28 text-xs font-semibold text-zinc-500">
               <span className="text-zinc-500 font-extrabold">Popular:</span>
               {[
                 { name: "iPhone 15 Pro Max", category: "Phone", brand: "Apple" },
@@ -544,7 +655,7 @@ export default function TradeInPage() {
             </div>
 
             {/* Value Proposition Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-5xl mx-auto border-t border-b border-zinc-150 py-10 mb-28">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-5xl mx-auto border-t border-b border-zinc-200 py-10 mb-28">
               {[
                 { Icon: Shield, title: "Highest Value Guaranteed", desc: "Always-updated market rates" },
                 { Icon: Zap, title: "Paid Within 48 Hours", desc: "Straight bank transfer deposit" },
@@ -552,7 +663,7 @@ export default function TradeInPage() {
                 { Icon: Clock, title: "14-Day Offer Lock-in", desc: "Protection against price drop" },
               ].map((item, idx) => (
                 <div key={idx} className="flex flex-col items-center text-center">
-                  <div className="h-12 w-12 bg-zinc-50 rounded-2xl border border-zinc-150/40 flex items-center justify-center mb-3">
+                  <div className="h-12 w-12 bg-zinc-50 rounded-2xl border border-zinc-200 flex items-center justify-center mb-3">
                     <item.Icon className="h-5.5 w-5.5 text-zinc-700" strokeWidth={1.8} />
                   </div>
                   <h4 className="text-xs font-black uppercase tracking-wider text-zinc-900 leading-tight mb-1">{item.title}</h4>
@@ -573,25 +684,15 @@ export default function TradeInPage() {
                     key={cat.id}
                     whileHover={{ y: -6, scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={() => {
-                      setState({
-                        category: cat.id, brand: "", model: "", specs: {}, condition: "",
-                        answers: {}, fulfillment: "",
-                        contact: { name: "", email: "", phone: "", address: "", postcode: "" }
-                      });
-                      setSpecStep(0);
-                      setQuestionStep(0);
-                      setStep(2); // Straight to brand select
-                      setIsWizardActive(true);
-                    }}
-                    className={`flex flex-col rounded-3xl border-2 border-zinc-200/60 bg-white shadow-sm hover:shadow-xl hover:border-zinc-950 transition-all group overflow-hidden w-full ${cat.glow}`}
+                    onClick={() => startWizard(cat.id)}
+                    className="flex flex-col rounded-3xl border border-zinc-200 bg-white shadow-sm hover:shadow-xl hover:border-zinc-950 transition-all group overflow-hidden w-full"
                   >
                     {/* Centered Image with custom gradient backdrop */}
-                    <div className="w-full aspect-4/3 bg-linear-to-b from-zinc-50 to-white border-b border-zinc-100 flex items-center justify-center p-4 relative overflow-hidden">
+                    <div className="w-full aspect-[4/3] bg-linear-to-b from-zinc-50 to-white border-b border-zinc-100 flex items-center justify-center p-4 relative overflow-hidden">
                       <img
                         src={cat.img}
                         alt={cat.label}
-                        className="h-full w-full object-contain filter drop-shadow-md transition-transform duration-500 group-hover:scale-108"
+                        className="h-full w-full object-contain filter drop-shadow-md transition-transform duration-500 group-hover:scale-[1.05]"
                       />
                     </div>
                     {/* Details section */}
@@ -613,8 +714,8 @@ export default function TradeInPage() {
             <div className="max-w-5xl mx-auto mb-32 text-left">
               <div className="flex flex-col md:flex-row md:items-end justify-between mb-12">
                 <div>
-                  <div className="inline-flex items-center gap-1.5 rounded-full bg-accent/20 text-accent border border-accent/25 px-3 py-1 text-[10px] font-black uppercase tracking-widest mb-3">
-                    <Sparkles className="h-3.5 w-3.5 fill-accent text-accent" />
+                  <div className="inline-flex items-center gap-1.5 rounded-full bg-sky-500/10 text-sky-600 border border-sky-500/20 px-3 py-1 text-[10px] font-black uppercase tracking-widest mb-3">
+                    <Sparkles className="h-3.5 w-3.5 fill-sky-600 text-sky-600" />
                     High Demand Valuations
                   </div>
                   <h2 className="font-serif text-4xl md:text-5xl font-bold tracking-tight text-zinc-950 leading-none">
@@ -636,9 +737,9 @@ export default function TradeInPage() {
                   <motion.div
                     key={i}
                     whileHover={{ y: -4, boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)" }}
-                    className="bg-white border border-zinc-200/80 rounded-4xl p-6 flex flex-col justify-between hover:border-zinc-950 transition-all group shadow-sm"
+                    className="bg-white border border-zinc-200 rounded-3xl p-6 flex flex-col justify-between hover:border-zinc-950 transition-all group shadow-sm"
                   >
-                    <div className="w-full aspect-4/3 bg-zinc-50 rounded-2xl flex items-center justify-center p-4 mb-6 relative overflow-hidden">
+                    <div className="w-full aspect-[4/3] bg-zinc-50 rounded-2xl flex items-center justify-center p-4 mb-6 relative overflow-hidden">
                       <img src={item.img} alt={item.name} className="h-full w-full object-contain filter drop-shadow-sm group-hover:scale-105 transition-transform" />
                     </div>
                     <div>
@@ -651,7 +752,7 @@ export default function TradeInPage() {
                         </div>
                         <button
                           onClick={() => handleSelectSuggestion({ name: item.name, category: item.category, brand: item.brand })}
-                          className="px-4 py-2 bg-zinc-950 hover:bg-accent hover:text-zinc-950 text-white rounded-xl text-xs font-black transition-colors"
+                          className="px-4 py-2 bg-zinc-950 hover:bg-zinc-800 text-white rounded-xl text-xs font-black transition-colors"
                         >
                           Sell Now
                         </button>
@@ -666,7 +767,7 @@ export default function TradeInPage() {
             <div className="max-w-5xl mx-auto mb-32 text-left">
               <div className="bg-zinc-950 text-white rounded-[2.5rem] p-8 md:p-12 relative overflow-hidden shadow-2xl border border-white/5">
                 <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 blur-[120px] rounded-full pointer-events-none -z-10" />
-                <div className="absolute bottom-0 left-0 w-96 h-96 bg-accent/5 blur-[120px] rounded-full pointer-events-none -z-10" />
+                <div className="absolute bottom-0 left-0 w-96 h-96 bg-sky-500/5 blur-[120px] rounded-full pointer-events-none -z-10" />
 
                 <div className="grid md:grid-cols-5 gap-8 items-center">
                   <div className="md:col-span-2 space-y-6">
@@ -687,7 +788,7 @@ export default function TradeInPage() {
                         <select
                           value={calcCategory}
                           onChange={(e) => setCalcCategory(e.target.value)}
-                          className="w-full h-12 bg-white/5 border border-white/10 rounded-xl px-4 text-xs font-bold text-white outline-none focus:border-accent transition-colors"
+                          className="w-full h-12 bg-white/5 border border-white/10 rounded-xl px-4 text-xs font-bold text-white outline-none focus:border-sky-500 transition-colors"
                         >
                           {Object.keys(CALC_STATS).map((cat) => (
                             <option key={cat} value={cat} className="bg-zinc-900 text-white">
@@ -700,7 +801,7 @@ export default function TradeInPage() {
                       <div>
                         <div className="flex justify-between items-center mb-2">
                           <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Quantity</label>
-                          <span className="text-xs font-black text-accent">{calcQuantity} {calcQuantity === 1 ? "device" : "devices"}</span>
+                          <span className="text-xs font-black text-sky-400">{calcQuantity} {calcQuantity === 1 ? "device" : "devices"}</span>
                         </div>
                         <input
                           type="range"
@@ -708,7 +809,7 @@ export default function TradeInPage() {
                           max="20"
                           value={calcQuantity}
                           onChange={(e) => setCalcQuantity(parseInt(e.target.value))}
-                          className="w-full accent-accent bg-white/10 h-1.5 rounded-lg appearance-none cursor-pointer"
+                          className="w-full accent-sky-400 bg-white/10 h-1.5 rounded-lg appearance-none cursor-pointer"
                         />
                       </div>
                     </div>
@@ -727,15 +828,15 @@ export default function TradeInPage() {
                         label: "Raw Materials Conserved",
                         val: `${CALC_STATS[calcCategory].raw * calcQuantity}g`,
                         desc: "Precious metals and copper protected from mining",
-                        color: "text-accent",
-                        glow: "shadow-accent/10"
+                        color: "text-sky-400",
+                        glow: "shadow-sky-500/10"
                       },
                       {
                         label: "Pure Water Saved",
                         val: `${CALC_STATS[calcCategory].water * calcQuantity}L`,
                         desc: "Avoided in battery & microchip production cooling",
-                        color: "text-sky-400",
-                        glow: "shadow-sky-500/10"
+                        color: "text-blue-400",
+                        glow: "shadow-blue-500/10"
                       }
                     ].map((stat, i) => (
                       <div key={i} className={`flex flex-col justify-between p-5 bg-white/5 rounded-2xl border border-white/5 ${stat.glow} hover:bg-white/10 transition-all`}>
@@ -760,7 +861,7 @@ export default function TradeInPage() {
                   { step: "2", title: "Free Postage Label", desc: "Pack your device securely and dispatch it using our prepaid, fully-insured Royal Mail parcel shipping labels." },
                   { step: "3", title: "Direct Bank Transfer", desc: "Our technicians inspect the hardware. Upon verification, funds are released directly to your account within 48 hours." },
                 ].map((item) => (
-                  <div key={item.step} className="flex flex-col items-start p-8 rounded-4xl bg-zinc-50 border border-zinc-150/40 relative hover:shadow-md transition-all">
+                  <div key={item.step} className="flex flex-col items-start p-8 rounded-[2rem] bg-zinc-50 border border-zinc-200 relative hover:shadow-md transition-all">
                     <div className="h-10 w-10 rounded-xl bg-black text-white font-black text-sm flex items-center justify-center mb-6">
                       {item.step}
                     </div>
@@ -800,11 +901,11 @@ export default function TradeInPage() {
                     review: "I decided to do the in-store drop off at Leicester center rather than shipping. Technicians tested my PS5 and had cash in my hand in less than 10 minutes. Extremely polite staff!"
                   }
                 ].map((rev, idx) => (
-                  <div key={idx} className="flex flex-col justify-between p-8 rounded-3xl bg-zinc-50 border border-zinc-150/40 relative hover:shadow-md transition-all shadow-sm">
+                  <div key={idx} className="flex flex-col justify-between p-8 rounded-3xl bg-zinc-50 border border-zinc-200 relative hover:shadow-md transition-all shadow-sm">
                     <div>
                       <div className="flex gap-0.5 text-zinc-900 mb-4">
                         {Array.from({ length: rev.rating }).map((_, i) => (
-                          <Star key={i} className="h-4 w-4 fill-accent text-accent border-none" />
+                          <Star key={i} className="h-4 w-4 fill-sky-400 text-sky-400 border-none" />
                         ))}
                       </div>
                       <h4 className="font-extrabold text-sm text-zinc-950 mb-2">"{rev.title}"</h4>
@@ -827,14 +928,14 @@ export default function TradeInPage() {
             {/* Impact section */}
             <div className="max-w-5xl mx-auto mb-32 text-left">
               <div className="bg-zinc-950 text-white rounded-[3rem] p-10 md:p-16 grid md:grid-cols-3 gap-12 relative overflow-hidden shadow-2xl">
-                <div className="absolute bottom-0 right-0 w-96 h-96 bg-accent/5 blur-[100px] rounded-full pointer-events-none" />
+                <div className="absolute bottom-0 right-0 w-96 h-96 bg-sky-500/5 blur-[100px] rounded-full pointer-events-none" />
                 {[
-                  { num: "1.5M+", title: "Devices Repurposed", desc: "We've saved over 1.5 million functional gadgets from leaking toxic chemical e-waste into regional landfills." },
+                  { num: "1.5M+", title: "Devices Repurposed", desc: "We've saved over 1.5 million functional gadgets from leaking toxic chemical e-waste into landfills." },
                   { num: "2x", title: "Lifespan Extension", desc: "Every smartphone or laptop refurbished doubles its operational lifetime, conserving precious raw minerals." },
                   { num: "5 Billion", title: "Idle Electronics", desc: "Global statistics show 5 billion mobile devices are sitting unused in cupboards. Let's recycle yours for cash." }
                 ].map((stat, i) => (
                   <div key={i} className="space-y-3 relative">
-                    <p className="font-serif text-5xl md:text-6xl font-black text-accent tracking-tighter leading-none">{stat.num}</p>
+                    <p className="font-serif text-5xl md:text-6xl font-black text-sky-400 tracking-tighter leading-none">{stat.num}</p>
                     <h4 className="font-extrabold text-sm text-white">{stat.title}</h4>
                     <p className="text-zinc-400 text-xs font-semibold leading-relaxed">{stat.desc}</p>
                   </div>
@@ -845,7 +946,6 @@ export default function TradeInPage() {
             {/* FAQs Accordion */}
             <div className="max-w-3xl mx-auto mb-20 text-left">
               <h2 className="font-serif text-4xl md:text-5xl font-medium tracking-tight text-center text-zinc-950 mb-14">
-
                 Frequently asked questions
               </h2>
               <div className="space-y-4">
@@ -856,7 +956,7 @@ export default function TradeInPage() {
                   { q: "What happens to the data on my device?", a: "We run hardware through an enterprise-grade sanitization wipe that permanently destroys all files and accounts. For safety, we recommend clearing personal iCloud, Google accounts, and factory resetting before dispatch." },
                   { q: "What if the device condition is different than described?", a: "If our in-store inspection reveals errors in grading (e.g., cracked back glass, dead pixels), we issue an adjusted quote. If you choose to decline, we mail the device back to you for free with return tracking provided." }
                 ].map((faq, idx) => (
-                  <div key={idx} className="border border-zinc-200/80 rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow">
+                  <div key={idx} className="border border-zinc-200 rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow">
                     <button
                       onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
                       className="w-full flex items-center justify-between p-6 text-left font-bold text-sm text-zinc-950 hover:bg-zinc-50 transition-colors"
@@ -885,434 +985,586 @@ export default function TradeInPage() {
                 ))}
               </div>
             </div>
-
           </section>
         </div>
-      ) : (
-        // ─── WIZARD ──────────────────────────────────────────────────────
-        <div className="flex-1 bg-zinc-50 py-8 px-4">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            multiple
-            className="hidden"
-            onChange={async (e) => {
-              const files = Array.from(e.target.files ?? []);
-              const compressed = await Promise.all(files.map(compressImage));
-              setImages(prev => [...prev, ...compressed].slice(0, 6));
-              e.target.value = "";
-            }}
-          />
 
-          <div className="w-full max-w-xl mx-auto">
-            {/* ── Header bar ── */}
-            <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm px-5 py-4 mb-4">
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={back}
-                  className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-zinc-950 transition-colors shrink-0"
+      {/* ─── HIGH-FIDELITY OVERHAULED WIZARD MODAL ─────────────────────────── */}
+      <AnimatePresence>
+        {isWizardActive && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-6 overflow-hidden animate-fade-in">
+            {/* Backdrop Overlay with blur */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsWizardActive(false)}
+              className="fixed inset-0 bg-zinc-950/60 backdrop-blur-md"
+            />
+
+            {/* Modal Dialog Container */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ type: "spring", duration: 0.4 }}
+              className="relative bg-zinc-50 rounded-[2.5rem] border border-zinc-200 shadow-2xl overflow-hidden w-full max-w-4xl min-h-[500px] flex flex-col z-10 max-h-[90vh]"
+            >
+              {/* Close Button */}
+              <button
+                type="button"
+                onClick={() => setIsWizardActive(false)}
+                className="absolute top-6 right-6 h-10 w-10 rounded-full border border-zinc-200 bg-white hover:border-zinc-950 flex items-center justify-center text-zinc-500 hover:text-zinc-950 transition-colors z-20 cursor-pointer shadow-sm"
+              >
+                <X className="h-5 w-5" />
+              </button>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={async (e) => {
+                  const files = Array.from(e.target.files ?? []);
+                  const compressed = await Promise.all(files.map(compressImage));
+                  setImages(prev => [...prev, ...compressed].slice(0, 6));
+                  e.target.value = "";
+                }}
+              />
+
+              {/* Wizard Content Inner wrapper with scroll */}
+              <div ref={modalScrollRef} className="p-6 md:p-10 flex-1 flex flex-col justify-between overflow-y-auto custom-scrollbar pt-14">
+                <div className="w-full max-w-4xl mx-auto space-y-6">
+
+                  {/* Wizard Navigation / Progress Header */}
+                  <div className="bg-white rounded-3xl border border-zinc-200/80 shadow-sm p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={handleBack}
+                        className="h-10 px-4 rounded-xl border border-zinc-200 hover:border-zinc-950 flex items-center gap-2 text-xs font-bold text-zinc-600 hover:text-zinc-950 transition-colors"
                 >
                   <ArrowLeft className="h-4 w-4" /> Back
                 </button>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">{stepLabels[step - 1]}</span>
-                    <span className="text-[10px] font-black font-mono text-zinc-400">{step} / {TOTAL_STEPS}</span>
-                  </div>
-                  <div className="h-1.5 bg-zinc-100 rounded-full overflow-hidden">
-                    <motion.div
-                      className="h-full bg-zinc-950 rounded-full"
-                      animate={{ width: `${(step / TOTAL_STEPS) * 100}%` }}
-                      transition={{ duration: 0.4, ease: "easeOut" }}
-                    />
-                  </div>
+                <div className="h-4 w-px bg-zinc-200 hidden md:block" />
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400 block">Step {phase} of 6</span>
+                  <span className="text-sm font-extrabold text-zinc-800">{PHASE_LABELS[phase - 1]}</span>
+                </div>
+              </div>
+
+              <div className="flex-1 max-w-xs md:ml-auto">
+                <div className="h-2 bg-zinc-100 rounded-full overflow-hidden">
+                  <motion.div
+                    className="h-full bg-zinc-950 rounded-full"
+                    animate={{ width: `${(phase / 6) * 100}%` }}
+                    transition={{ duration: 0.4, ease: "easeOut" }}
+                  />
                 </div>
               </div>
             </div>
 
-            {/* ── Breadcrumb ── */}
-            {step > 1 && (state.category || state.brand || state.model) && (
-              <div className="flex items-center gap-1.5 flex-wrap px-1 mb-3">
-                {state.category && <span className="text-[11px] font-black bg-white border border-zinc-200 rounded-full px-3 py-1 text-zinc-600">{state.category}</span>}
-                {state.brand && <><ChevronRight className="h-3 w-3 text-zinc-300" /><span className="text-[11px] font-black bg-white border border-zinc-200 rounded-full px-3 py-1 text-zinc-600">{state.brand}</span></>}
-                {state.model && <><ChevronRight className="h-3 w-3 text-zinc-300" /><span className="text-[11px] font-black bg-white border border-zinc-200 rounded-full px-3 py-1 text-zinc-900">{state.model}</span></>}
+            {/* Breadcrumb Indicators */}
+            {isWizardActive && (state.category || state.brand || state.model) && (
+              <div className="flex items-center gap-2 flex-wrap px-2">
+                {state.category && (
+                  <button
+                    onClick={() => {
+                      setState(s => ({ ...s, category: "", brand: "", model: "" }));
+                      setPhase(1);
+                    }}
+                    className="text-[11px] font-bold bg-white border border-zinc-200 rounded-full px-3 py-1 text-zinc-500 hover:border-red-400 hover:text-red-500 transition-colors"
+                  >
+                    Category: {state.category}
+                  </button>
+                )}
+                {state.brand && (
+                  <>
+                    <ChevronRight className="h-3.5 w-3.5 text-zinc-300" />
+                    <button
+                      onClick={() => {
+                        setState(s => ({ ...s, brand: "", model: "" }));
+                        setPhase(1);
+                      }}
+                      className="text-[11px] font-bold bg-white border border-zinc-200 rounded-full px-3 py-1 text-zinc-500 hover:border-red-400 hover:text-red-500 transition-colors"
+                    >
+                      Brand: {state.brand}
+                    </button>
+                  </>
+                )}
+                {state.model && (
+                  <>
+                    <ChevronRight className="h-3.5 w-3.5 text-zinc-300" />
+                    <span className="text-[11px] font-black bg-zinc-950 text-white rounded-full px-3 py-1 shadow-sm">
+                      Model: {state.model}
+                    </span>
+                  </>
+                )}
               </div>
             )}
 
-            {/* ── Step card ── */}
-            <div className="bg-white rounded-3xl border border-zinc-200 shadow-xl overflow-hidden">
-              <div className="p-6 md:p-8">
-                <AnimatePresence mode="wait" custom={dir}>
+            {/* Main Stepper Card */}
+            <div className="bg-white rounded-[2rem] border border-zinc-200 shadow-xl overflow-hidden min-h-[400px] flex flex-col">
+              <div className="p-8 md:p-10 flex-1 flex flex-col justify-between">
+                <AnimatePresence mode="wait">
                   <motion.div
-                    key={step === 4 ? `4-${specStep}` : step === 6 ? `6-${questionStep}` : step}
-                    custom={dir}
-                    variants={stepVariants}
-                    initial="enter"
-                    animate="center"
-                    exit="exit"
-                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                    key={phase}
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -15 }}
+                    transition={{ duration: 0.25 }}
+                    className="w-full flex-1 flex flex-col justify-between"
                   >
-
-                    {/* ── STEP 1 – Category ── */}
-                    {step === 1 && (
-                      <div>
-                        <StepHeader label="What are you selling?" sub="Pick a category to start your instant valuation." />
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                          {CATEGORIES.map((cat) => {
-                            const Icon = cat.icon;
-                            return (
-                              <motion.button
-                                key={cat.id}
-                                whileHover={{ y: -3, scale: 1.02 }}
-                                whileTap={{ scale: 0.97 }}
-                                onClick={() => {
-                                  setState(s => ({ ...s, category: cat.id, brand: "", model: "", specs: {}, condition: "", answers: {} }));
-                                  setSpecStep(0); setQuestionStep(0); go(1);
-                                }}
-                                className="flex flex-col items-center gap-2.5 p-5 rounded-2xl border-2 border-zinc-100 bg-zinc-50 hover:border-zinc-950 hover:bg-white transition-all text-center group"
-                              >
-                                <div className="h-11 w-11 rounded-xl bg-white border border-zinc-100 shadow-sm flex items-center justify-center group-hover:bg-zinc-950 group-hover:border-zinc-950 transition-all">
-                                  <Icon className="h-5 w-5 text-zinc-500 group-hover:text-white transition-colors" strokeWidth={1.8} />
-                                </div>
-                                <span className="text-xs font-black text-zinc-800 leading-tight">{cat.label}</span>
-                              </motion.button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* ── STEP 2 – Brand ── */}
-                    {step === 2 && (
-                      <div>
-                        <StepHeader label="Which brand?" sub={`Who makes your ${state.category.toLowerCase()}?`} />
-                        <div className="flex flex-wrap gap-2.5">
-                          {(BRANDS[state.category] ?? []).map(brand => (
-                            <motion.button
-                              key={brand}
-                              whileHover={{ scale: 1.04 }}
-                              whileTap={{ scale: 0.97 }}
-                              onClick={() => { setState(s => ({ ...s, brand, model: "" })); go(1); }}
-                              className={`px-5 py-3 rounded-full border-2 text-sm font-black transition-all ${
-                                state.brand === brand
-                                  ? "border-zinc-950 bg-zinc-950 text-white"
-                                  : "border-zinc-200 bg-white text-zinc-800 hover:border-zinc-950 hover:bg-zinc-50"
-                              }`}
+                    
+                    {/* ── PHASE 1: Device Selection ── */}
+                    {phase === 1 && (
+                      <div className="space-y-6 flex-1">
+                        <AnimatePresence mode="wait">
+                          {!state.category ? (
+                            <motion.div
+                              key="select-category"
+                              initial={{ opacity: 0, x: 15 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, x: -15 }}
+                              transition={{ duration: 0.2 }}
+                              className="space-y-6"
                             >
-                              {brand}
-                            </motion.button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* ── STEP 3 – Model ── */}
-                    {step === 3 && (
-                      <div>
-                        <StepHeader label="Select your model" sub={`Exact model of your ${state.brand} ${state.category.toLowerCase()}.`} />
-                        <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
-                          {(MODELS[state.category]?.[state.brand] ?? []).map(model => (
-                            <motion.button
-                              key={model}
-                              whileHover={{ x: 4 }}
-                              onClick={() => { setState(s => ({ ...s, model })); go(1); }}
-                              className={`w-full flex items-center justify-between px-5 py-3.5 rounded-2xl border-2 text-sm font-bold text-left transition-all ${
-                                state.model === model
-                                  ? "border-zinc-950 bg-zinc-950 text-white"
-                                  : "border-zinc-100 bg-zinc-50 text-zinc-800 hover:border-zinc-300 hover:bg-white"
-                              }`}
-                            >
-                              <span>{model}</span>
-                              <ChevronRight className={`h-4 w-4 shrink-0 ${state.model === model ? "text-white" : "text-zinc-400"}`} />
-                            </motion.button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* ── STEP 4 – Specifications ── */}
-                    {step === 4 && currentSpec && (
-                      <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-3">
-                          Spec {specStep + 1} of {currentSpecs.length}
-                        </p>
-                        <StepHeader label={`Choose ${currentSpec.label}`} />
-                        <div className="flex flex-wrap gap-2.5">
-                          {currentSpec.options.map(opt => (
-                            <motion.button
-                              key={opt}
-                              whileHover={{ scale: 1.04 }}
-                              whileTap={{ scale: 0.97 }}
-                              onClick={() => handleSpecSelect(opt)}
-                              className={`px-5 py-3 rounded-2xl border-2 text-sm font-bold transition-all ${
-                                state.specs[currentSpec.label] === opt
-                                  ? "border-zinc-950 bg-zinc-950 text-white"
-                                  : "border-zinc-200 bg-white text-zinc-800 hover:border-zinc-950"
-                              }`}
-                            >
-                              {opt}
-                            </motion.button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* ── STEP 5 – Condition ── */}
-                    {step === 5 && (
-                      <div>
-                        <StepHeader label="Overall condition?" sub="Be honest — we inspect all devices. Accurate grading prevents revised offers." />
-                        <div className="space-y-2.5">
-                          {CONDITIONS.map(c => (
-                            <motion.button
-                              key={c.id}
-                              whileHover={{ y: -2 }}
-                              whileTap={{ scale: 0.99 }}
-                              onClick={() => { setState(s => ({ ...s, condition: c.id })); go(1); }}
-                              className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 text-left transition-all ${
-                                state.condition === c.id ? "border-zinc-950 bg-zinc-950" : `${c.color} hover:border-zinc-400`
-                              }`}
-                            >
-                              <div className={`h-4 w-4 rounded-full shrink-0 ${c.dot}`} />
-                              <div className="flex-1 min-w-0">
-                                <p className={`font-black text-sm ${state.condition === c.id ? "text-white" : "text-zinc-900"}`}>{c.label}</p>
-                                <p className={`text-xs font-semibold mt-0.5 ${state.condition === c.id ? "text-white/60" : "text-zinc-500"}`}>{c.desc}</p>
+                              <StepHeader label="What device are we trading in?" sub="Select a category from our supported devices list." />
+                              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                {CATEGORIES.map((cat) => {
+                                  const Icon = cat.icon;
+                                  return (
+                                    <motion.button
+                                      key={cat.id}
+                                      whileHover={{ y: -4, scale: 1.02 }}
+                                      whileTap={{ scale: 0.98 }}
+                                      onClick={() => handleCategorySelect(cat.id)}
+                                      className={`flex flex-col items-center gap-4 p-6 rounded-2xl border border-zinc-200 hover:border-zinc-950 transition-all text-center group bg-zinc-50 hover:bg-white hover:shadow-lg ${cat.glow}`}
+                                    >
+                                      <div className={`h-14 w-14 rounded-2xl bg-white border border-zinc-100 flex items-center justify-center shadow-sm group-hover:${cat.mood} group-hover:border-transparent transition-all`}>
+                                        <Icon className={`h-6 w-6 text-zinc-500 group-hover:${cat.moodIcon} transition-colors`} strokeWidth={1.5} />
+                                      </div>
+                                      <div>
+                                        <p className="text-sm font-extrabold text-zinc-900">{cat.label}</p>
+                                        <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider mt-0.5">{cat.count}</p>
+                                      </div>
+                                    </motion.button>
+                                  );
+                                })}
                               </div>
-                              {state.condition === c.id && (
-                                <div className="h-6 w-6 rounded-full bg-accent flex items-center justify-center shrink-0">
-                                  <Check className="h-3.5 w-3.5 text-zinc-950" strokeWidth={3} />
-                                </div>
-                              )}
-                            </motion.button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* ── STEP 6 – Diagnostics ── */}
-                    {step === 6 && currentQuestion && (
-                      <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-3">
-                          Question {questionStep + 1} of {currentQuestions.length}
-                        </p>
-                        <div className="flex gap-1.5 mb-6">
-                          {currentQuestions.map((_, i) => (
-                            <div key={i} className={`h-1 flex-1 rounded-full transition-all duration-300 ${i <= questionStep ? "bg-zinc-950" : "bg-zinc-200"}`} />
-                          ))}
-                        </div>
-                        <StepHeader label={currentQuestion.question} />
-                        <div className="space-y-2">
-                          {currentQuestion.options.map(opt => (
-                            <motion.button
-                              key={opt}
-                              whileHover={{ x: 4 }}
-                              onClick={() => handleAnswerSelect(opt)}
-                              className={`w-full flex items-center justify-between px-5 py-3.5 rounded-2xl border-2 text-sm font-bold text-left transition-all ${
-                                state.answers[currentQuestion.id] === opt
-                                  ? "border-zinc-950 bg-zinc-950 text-white"
-                                  : "border-zinc-100 bg-zinc-50 text-zinc-800 hover:border-zinc-300 hover:bg-white"
-                              }`}
+                            </motion.div>
+                          ) : !state.brand ? (
+                            <motion.div
+                              key="select-brand"
+                              initial={{ opacity: 0, x: 15 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, x: -15 }}
+                              transition={{ duration: 0.2 }}
+                              className="space-y-6"
                             >
-                              <span>{opt}</span>
-                              {state.answers[currentQuestion.id] === opt && (
-                                <Check className="h-4 w-4 text-white shrink-0" strokeWidth={3} />
-                              )}
-                            </motion.button>
-                          ))}
-                        </div>
+                              <StepHeader label="Which brand is it?" sub={`Choose the manufacturer for your ${state.category.toLowerCase()}.`} />
+                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                {(BRANDS[state.category] ?? []).map((brand) => (
+                                  <motion.button
+                                    key={brand}
+                                    whileHover={{ y: -3, scale: 1.02, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.05)" }}
+                                    whileTap={{ scale: 0.98 }}
+                                    onClick={() => handleBrandSelect(brand)}
+                                    className="p-5 rounded-2xl border border-zinc-200 bg-white hover:border-zinc-950 text-center font-extrabold text-sm text-zinc-800 transition-all hover:shadow-md"
+                                  >
+                                    {brand}
+                                  </motion.button>
+                                ))}
+                              </div>
+                            </motion.div>
+                          ) : (
+                            <motion.div
+                              key="select-model"
+                              initial={{ opacity: 0, x: 15 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, x: -15 }}
+                              transition={{ duration: 0.2 }}
+                              className="space-y-6"
+                            >
+                              <StepHeader label="Select model" sub={`Choose your ${state.brand} ${state.category.toLowerCase()} model.`} />
+                              
+                              <div className="relative">
+                                <input
+                                  type="text"
+                                  placeholder={`Filter ${state.brand} models...`}
+                                  value={wizardModelSearch}
+                                  onChange={(e) => setWizardModelSearch(e.target.value)}
+                                  className="h-12 w-full rounded-xl bg-zinc-50 border border-zinc-200 pl-11 pr-4 text-xs font-semibold outline-none focus:border-zinc-950 focus:bg-white transition-all"
+                                />
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-zinc-400" />
+                                {wizardModelSearch && (
+                                  <button
+                                    onClick={() => setWizardModelSearch("")}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-zinc-400 hover:text-zinc-900"
+                                  >
+                                    Clear
+                                  </button>
+                                )}
+                              </div>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-72 overflow-y-auto pr-1 custom-scrollbar">
+                                {(MODELS[state.category]?.[state.brand] ?? [])
+                                  .filter(m => m.toLowerCase().includes(wizardModelSearch.toLowerCase()))
+                                  .map((model) => (
+                                    <motion.button
+                                      key={model}
+                                      whileHover={{ x: 4 }}
+                                      onClick={() => {
+                                        setState(s => ({ ...s, model }));
+                                        goToPhase(2);
+                                      }}
+                                      className="flex items-center justify-between px-5 py-4 rounded-xl border border-zinc-200 hover:border-zinc-950 hover:bg-zinc-50 bg-white text-xs font-bold text-left transition-all hover:shadow-sm group"
+                                    >
+                                      <span>{model}</span>
+                                      <ChevronRight className="h-4 w-4 text-zinc-400 group-hover:text-zinc-950 group-hover:translate-x-0.5 transition-all" />
+                                    </motion.button>
+                                  ))
+                                }
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </div>
                     )}
 
-                    {/* ── STEP 7 – Photo Upload ── */}
-                    {step === 7 && (
-                      <div>
-                        <StepHeader
-                          label="Add device photos"
-                          sub="Photos help our AI price more accurately. You can skip this — it's optional."
-                        />
-                        <motion.button
-                          whileHover={{ scale: 1.01 }}
-                          whileTap={{ scale: 0.99 }}
-                          onClick={() => fileInputRef.current?.click()}
-                          className="w-full border-2 border-dashed border-zinc-300 hover:border-zinc-950 rounded-2xl p-8 flex flex-col items-center gap-3 transition-all bg-zinc-50 hover:bg-white mb-4 group"
-                        >
-                          <div className="h-12 w-12 rounded-2xl bg-white border border-zinc-200 shadow-sm flex items-center justify-center group-hover:bg-zinc-950 group-hover:border-zinc-950 transition-all">
-                            <Upload className="h-5 w-5 text-zinc-400 group-hover:text-white transition-colors" />
-                          </div>
-                          <div className="text-center">
-                            <p className="text-sm font-black text-zinc-800">Tap to add photos</p>
-                            <p className="text-xs text-zinc-400 font-semibold mt-1">JPEG or PNG · up to 6 photos</p>
-                          </div>
-                        </motion.button>
+                    {/* ── PHASE 2: Configuration & Grading ── */}
+                    {phase === 2 && (
+                      <div className="space-y-8 flex-1 flex flex-col justify-between">
+                        <div className="space-y-6">
+                          <StepHeader label="Device Specifications & Condition" sub="Choose your configuration and select the overall physical state of the unit." />
 
-                        {images.length > 0 && (
-                          <div className="grid grid-cols-3 gap-2 mb-4">
-                            {images.map((img, i) => (
-                              <div key={i} className="relative aspect-square rounded-xl overflow-hidden border border-zinc-200 group">
-                                <img src={img} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
-                                <button
-                                  onClick={() => setImages(prev => prev.filter((_, idx) => idx !== i))}
-                                  className="absolute top-1 right-1 h-6 w-6 bg-zinc-950/80 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                                >
-                                  <X className="h-3.5 w-3.5 text-white" />
-                                </button>
+                          {/* Render Specification Selectors */}
+                          {currentSpecs.length > 0 && (
+                            <div className="space-y-4 border-b border-zinc-100 pb-6">
+                              <h4 className="text-xs font-black uppercase tracking-widest text-zinc-400">Specifications</h4>
+                              <div className="grid gap-4 sm:grid-cols-2">
+                                {currentSpecs.map((spec) => (
+                                  <div key={spec.label} className="space-y-2">
+                                    <span className="text-xs font-extrabold text-zinc-800">{spec.label}</span>
+                                    <div className="flex flex-wrap gap-1.5">
+                                      {spec.options.map((opt) => {
+                                        const isSelected = state.specs[spec.label] === opt;
+                                        return (
+                                          <button
+                                            key={opt}
+                                            onClick={() => setState(s => ({
+                                              ...s,
+                                              specs: { ...s.specs, [spec.label]: opt }
+                                            }))}
+                                            className={`px-3 py-2 rounded-xl border text-xs font-bold transition-all ${
+                                              isSelected
+                                                ? "border-zinc-950 bg-zinc-950 text-white shadow-sm"
+                                                : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-950"
+                                            }`}
+                                          >
+                                            {opt}
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                ))}
                               </div>
-                            ))}
-                            {images.length < 6 && (
-                              <button
-                                onClick={() => fileInputRef.current?.click()}
-                                className="aspect-square rounded-xl border-2 border-dashed border-zinc-200 flex items-center justify-center hover:border-zinc-950 hover:bg-zinc-50 transition-all"
-                              >
-                                <Plus className="h-5 w-5 text-zinc-400" />
-                              </button>
-                            )}
-                          </div>
-                        )}
+                            </div>
+                          )}
 
-                        <div className="flex gap-3">
+                          {/* Render Condition Selector */}
+                          <div className="space-y-4">
+                            <h4 className="text-xs font-black uppercase tracking-widest text-zinc-400">Physical Grade</h4>
+                            <div className="grid gap-3 sm:grid-cols-2">
+                              {CONDITIONS.map((c) => {
+                                const isSelected = state.condition === c.id;
+                                return (
+                                  <button
+                                    key={c.id}
+                                    onClick={() => setState(s => ({ ...s, condition: c.id }))}
+                                    className={`p-4 w-full rounded-2xl border text-left transition-all flex items-start gap-3 ${
+                                      isSelected
+                                        ? "border-zinc-950 bg-zinc-950 text-white shadow-md"
+                                        : `${c.color} hover:border-zinc-300 text-zinc-800`
+                                    }`}
+                                  >
+                                    <div className={`h-3 w-3 rounded-full mt-1 shrink-0 ${c.dot}`} />
+                                    <div className="flex-1">
+                                      <p className={`text-xs font-black ${isSelected ? "text-white" : "text-zinc-900"}`}>{c.label}</p>
+                                      <p className={`text-[10px] leading-snug mt-1 ${isSelected ? "text-white/70" : "text-zinc-500"}`}>{c.desc}</p>
+                                    </div>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Continue Button */}
+                        <div className="pt-6 border-t border-zinc-100 flex flex-col sm:flex-row sm:justify-end">
                           <motion.button
                             whileHover={{ y: -2 }}
                             whileTap={{ scale: 0.98 }}
-                            onClick={async () => { await fetchAiPrice(); go(1); }}
-                            disabled={aiLoading}
-                            className="flex-1 h-12 bg-zinc-950 hover:bg-zinc-800 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 disabled:opacity-60 transition-all shadow-lg"
+                            disabled={!(currentSpecs.every(s => state.specs[s.label]) && state.condition)}
+                            onClick={() => goToPhase(3)}
+                            className="w-full sm:w-auto h-12 px-8 bg-zinc-950 text-white hover:bg-zinc-800 disabled:opacity-50 disabled:pointer-events-none rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 shadow-lg shrink-0"
                           >
-                            {aiLoading ? (
-                              <>
-                                <motion.div
-                                  animate={{ rotate: 360 }}
-                                  transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-                                  className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full"
-                                />
-                                <span className="truncate">{aiLoadingText}</span>
-                              </>
-                            ) : (
-                              <><Sparkles className="h-4 w-4" /> Get My Offer</>
-                            )}
+                            <span className="whitespace-nowrap">Diagnostics Questionnaire</span>
+                            <ArrowRight className="h-4 w-4 shrink-0" />
                           </motion.button>
-                          {images.length === 0 && (
-                            <motion.button
-                              whileHover={{ y: -2 }}
-                              whileTap={{ scale: 0.98 }}
-                              onClick={async () => { await fetchAiPrice(); go(1); }}
-                              disabled={aiLoading}
-                              className="px-5 h-12 border-2 border-zinc-200 rounded-2xl font-bold text-sm text-zinc-600 hover:border-zinc-950 hover:text-zinc-950 transition-all disabled:opacity-60"
-                            >
-                              Skip
-                            </motion.button>
-                          )}
                         </div>
                       </div>
                     )}
 
-                    {/* ── STEP 8 – AI Offer Reveal ── */}
-                    {step === 8 && (
-                      <div className="text-center py-4">
-                        <motion.div
-                          initial={{ scale: 0.5, opacity: 0 }}
-                          animate={{ scale: 1, opacity: 1 }}
-                          transition={{ type: "spring", stiffness: 280, damping: 20 }}
-                          className="mx-auto h-16 w-16 rounded-2xl bg-linear-to-br from-accent to-yellow-400 flex items-center justify-center mb-6 shadow-xl shadow-accent/30"
-                        >
-                          <Sparkles className="h-8 w-8 text-zinc-950" />
-                        </motion.div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2">
-                          {images.length > 0 ? "AI Vision Offer" : "Instant Offer"}
-                        </p>
-                        <motion.div
-                          initial={{ y: 20, opacity: 0 }}
-                          animate={{ y: 0, opacity: 1 }}
-                          transition={{ delay: 0.15, duration: 0.5 }}
-                        >
-                          <div className="text-7xl md:text-8xl font-black font-mono tracking-tight text-zinc-950 mb-2">
-                            £{aiPrice ?? offerPrice}
+                    {/* ── PHASE 3: Diagnostics ── */}
+                    {phase === 3 && (
+                      <div className="space-y-6 flex-1 flex flex-col justify-between">
+                        <div className="space-y-6">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-100 pb-4">
+                            <StepHeader label="Device Diagnostics" sub="Tell us about the functional state of the device parts." />
+                            <div className="shrink-0 bg-zinc-100 rounded-full px-4 py-1.5 text-[10px] font-black text-zinc-600 tracking-wider">
+                              {Object.keys(state.answers).length} / {currentQuestions.length} ANSWERED
+                            </div>
                           </div>
-                          <p className="text-emerald-600 font-black text-sm mb-8">Guaranteed for 14 days</p>
-                        </motion.div>
-                        <div className="bg-zinc-50 border border-zinc-100 rounded-2xl p-5 text-left space-y-3 mb-8">
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs font-bold text-zinc-400">Device</span>
-                            <span className="text-sm font-black text-zinc-900">{state.model}</span>
-                          </div>
-                          <div className="h-px bg-zinc-100" />
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs font-bold text-zinc-400">Condition</span>
-                            <span className="text-sm font-black text-zinc-900">{state.condition}</span>
-                          </div>
-                          <div className="h-px bg-zinc-100" />
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs font-bold text-zinc-400">Photos assessed</span>
-                            <span className="text-sm font-black text-zinc-900">
-                              {images.length > 0 ? `${images.length} photo${images.length > 1 ? "s" : ""}` : "None (rule-based)"}
-                            </span>
-                          </div>
-                        </div>
-                        <motion.button
-                          whileHover={{ y: -2 }}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={() => go(1)}
-                          className="w-full h-12 bg-zinc-950 hover:bg-zinc-800 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 shadow-lg transition-all"
-                        >
-                          Accept Offer <ArrowRight className="h-4.5 w-4.5" />
-                        </motion.button>
-                      </div>
-                    )}
 
-                    {/* ── STEP 9 – Fulfillment ── */}
-                    {step === 9 && (
-                      <div>
-                        <StepHeader label="How to send it?" sub="Choose how you'd like to get your device to us." />
-                        <div className="space-y-3">
-                          {[
-                            {
-                              id: "ship", title: "Ship via Royal Mail", icon: Truck,
-                              desc: "Get a prepaid insured label by email. Drop at any Post Office.",
-                              badge: "Free insured shipping", badgeCls: "bg-emerald-50 text-emerald-700 border-emerald-100",
-                            },
-                            {
-                              id: "dropoff", title: "Drop off in Store", icon: MapPin,
-                              desc: "Visit TechStop Leicester for same-day inspection and instant cash.",
-                              badge: "Instant payout", badgeCls: "bg-blue-50 text-blue-700 border-blue-100",
-                            },
-                          ].map((opt) => {
-                            const Icon = opt.icon;
-                            const selected = state.fulfillment === opt.id;
-                            return (
-                              <motion.button
-                                key={opt.id}
-                                whileHover={{ y: -2 }}
-                                whileTap={{ scale: 0.99 }}
-                                onClick={() => { setState(s => ({ ...s, fulfillment: opt.id })); go(1); }}
-                                className={`w-full flex items-start gap-4 p-5 rounded-2xl border-2 text-left transition-all ${
-                                  selected ? "border-zinc-950 bg-zinc-950" : "border-zinc-200 bg-white hover:border-zinc-400"
-                                }`}
-                              >
-                                <div className={`h-12 w-12 rounded-xl flex items-center justify-center shrink-0 border ${selected ? "bg-white/15 border-white/10" : "bg-zinc-50 border-zinc-100"}`}>
-                                  <Icon className={`h-6 w-6 ${selected ? "text-white" : "text-zinc-600"}`} strokeWidth={1.5} />
+                          <div className="space-y-4">
+                            {currentQuestions.map((q) => {
+                              const isAnswered = !!state.answers[q.id];
+                              return (
+                                <div
+                                  key={q.id}
+                                  className={`p-5 rounded-2xl border transition-all duration-300 space-y-3 ${
+                                    isAnswered
+                                      ? "border-emerald-500/20 bg-emerald-500/[0.01]"
+                                      : "border-zinc-300/60 bg-zinc-50/50 hover:border-zinc-400"
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <label className="text-xs font-black text-zinc-900">{q.question}</label>
+                                    {isAnswered && (
+                                      <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 rounded-full px-2.5 py-0.5">
+                                        <Check className="h-3 w-3" strokeWidth={3} /> Answered
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    {q.options.map((opt) => {
+                                      const isSelected = state.answers[q.id] === opt;
+                                      return (
+                                        <button
+                                          key={opt}
+                                          type="button"
+                                          onClick={() => setState(s => ({
+                                            ...s,
+                                            answers: { ...s.answers, [q.id]: opt }
+                                          }))}
+                                          className={`px-4 py-3 rounded-xl border text-xs font-semibold text-left transition-all flex items-center justify-between ${
+                                            isSelected
+                                              ? "border-zinc-950 bg-zinc-950 text-white shadow-sm"
+                                              : "border-zinc-200 bg-white hover:border-zinc-400 text-zinc-700 hover:bg-zinc-50"
+                                          }`}
+                                        >
+                                          <span>{opt}</span>
+                                          {isSelected && <Check className="h-3.5 w-3.5 text-white shrink-0" strokeWidth={3} />}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className={`font-black text-sm mb-1 ${selected ? "text-white" : "text-zinc-900"}`}>{opt.title}</p>
-                                  <p className={`text-xs font-semibold ${selected ? "text-white/60" : "text-zinc-500"}`}>{opt.desc}</p>
-                                  <span className={`mt-3 inline-block text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border ${selected ? "bg-white/10 text-white border-white/15" : opt.badgeCls}`}>
-                                    {opt.badge}
-                                  </span>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Continue Button */}
+                        <div className="pt-6 border-t border-zinc-100 flex flex-col sm:flex-row sm:justify-end">
+                          <motion.button
+                            whileHover={{ y: -2 }}
+                            whileTap={{ scale: 0.98 }}
+                            disabled={Object.keys(state.answers).length < currentQuestions.length}
+                            onClick={() => goToPhase(4)}
+                            className="w-full sm:w-auto h-12 px-8 bg-zinc-950 text-white hover:bg-zinc-800 disabled:opacity-50 disabled:pointer-events-none rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 shadow-lg shrink-0"
+                          >
+                            <span className="whitespace-nowrap">Continue to Offer</span>
+                            <ArrowRight className="h-4 w-4 shrink-0" />
+                          </motion.button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ── PHASE 4: Valuation & Offer ── */}
+                    {phase === 4 && (
+                      <div className="space-y-6 flex-1 flex flex-col justify-between">
+                        
+                        {/* Loading State */}
+                        {aiLoading && (
+                          <div className="flex-1 flex flex-col items-center justify-center py-12 text-center">
+                            <motion.div
+                              animate={{ rotate: 360 }}
+                              transition={{ repeat: Infinity, duration: 1.2, ease: "linear" }}
+                              className="h-14 w-14 border-4 border-zinc-200 border-t-zinc-950 rounded-full mb-6"
+                            />
+                            <h3 className="text-lg font-black text-zinc-900 mb-2">Analyzing Valuation</h3>
+                            <p className="text-xs font-semibold text-zinc-400 tracking-wider animate-pulse uppercase">{aiLoadingText}</p>
+                          </div>
+                        )}
+
+                        {/* Setup Screen (Before Calculation) */}
+                        {!aiLoading && aiPrice === null && (
+                          <div className="space-y-6 flex-1 flex flex-col justify-between">
+                            <div className="space-y-6">
+                              <StepHeader label="Device Photos (Optional)" sub="Adding images can help our AI verify hardware details and increase accuracy." />
+
+                              <motion.button
+                                whileHover={{ scale: 1.01 }}
+                                whileTap={{ scale: 0.99 }}
+                                onClick={() => fileInputRef.current?.click()}
+                                className="w-full border-2 border-dashed border-zinc-300 hover:border-zinc-950 rounded-2xl p-8 flex flex-col items-center gap-3 transition-all bg-zinc-50 hover:bg-white group"
+                              >
+                                <div className="h-12 w-12 rounded-xl bg-white border border-zinc-200 shadow-sm flex items-center justify-center group-hover:bg-zinc-950 group-hover:border-zinc-950 transition-all">
+                                  <Upload className="h-5 w-5 text-zinc-400 group-hover:text-white transition-colors" />
+                                </div>
+                                <div className="text-center">
+                                  <p className="text-xs font-black text-zinc-800">Tap to upload photos</p>
+                                  <p className="text-[10px] text-zinc-400 font-bold mt-1">JPEG or PNG · max 6 photos</p>
                                 </div>
                               </motion.button>
-                            );
-                          })}
-                        </div>
+
+                              {images.length > 0 && (
+                                <div className="grid grid-cols-3 gap-2">
+                                  {images.map((img, i) => (
+                                    <div key={i} className="relative aspect-square rounded-xl overflow-hidden border border-zinc-200 group">
+                                      <img src={img} alt={`Preview ${i + 1}`} className="w-full h-full object-cover" />
+                                      <button
+                                        onClick={() => setImages(prev => prev.filter((_, idx) => idx !== i))}
+                                        className="absolute top-1.5 right-1.5 h-6 w-6 bg-zinc-950/80 hover:bg-red-500 rounded-full flex items-center justify-center transition-colors"
+                                      >
+                                        <X className="h-3.5 w-3.5 text-white" />
+                                      </button>
+                                    </div>
+                                  ))}
+                                  {images.length < 6 && (
+                                    <button
+                                      onClick={() => fileInputRef.current?.click()}
+                                      className="aspect-square rounded-xl border-2 border-dashed border-zinc-200 hover:border-zinc-950 bg-zinc-50 flex items-center justify-center transition-colors text-zinc-400 hover:text-zinc-900"
+                                    >
+                                      <Plus className="h-5 w-5" />
+                                    </button>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="pt-6 border-t border-zinc-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
+                              {images.length === 0 && (
+                                <button
+                                  onClick={fetchAiPrice}
+                                  className="w-full sm:w-auto h-12 px-6 border border-zinc-200 rounded-xl font-bold text-xs text-zinc-600 hover:border-zinc-950 hover:text-zinc-950 transition-colors flex items-center justify-center shrink-0"
+                                >
+                                  <span className="whitespace-nowrap">Skip Photos</span>
+                                </button>
+                              )}
+                              <button
+                                onClick={fetchAiPrice}
+                                className="w-full sm:w-auto h-12 px-8 bg-zinc-950 text-white hover:bg-zinc-800 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 shadow-lg shrink-0"
+                              >
+                                <Sparkles className="h-4 w-4 fill-white shrink-0" />
+                                <span className="whitespace-nowrap">Calculate Cash Offer</span>
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Offer Reveal Screen */}
+                        {!aiLoading && aiPrice !== null && (
+                          <div className="space-y-6 flex-1 flex flex-col justify-between animate-fade-in">
+                            <div className="text-center space-y-4">
+                              <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 text-emerald-700 border border-emerald-500/25 px-3 py-1 text-[10px] font-black uppercase tracking-wider mb-2">
+                                <Zap className="h-3.5 w-3.5 fill-emerald-600 text-emerald-600" />
+                                Instant Offer Generated
+                              </div>
+
+                              <div className="bg-linear-to-b from-emerald-500/5 to-emerald-500/10 border border-emerald-500/20 rounded-3xl p-8 relative overflow-hidden max-w-sm mx-auto shadow-sm">
+                                <div className="absolute -top-12 -right-12 w-24 h-24 bg-emerald-400/25 rounded-full blur-2xl pointer-events-none" />
+                                <div className="absolute -bottom-12 -left-12 w-24 h-24 bg-emerald-400/25 rounded-full blur-2xl pointer-events-none" />
+                                <div className="text-[10px] font-black uppercase tracking-widest text-emerald-700 relative z-10">Guaranteed Offer</div>
+                                <div className="text-6xl font-black font-mono text-zinc-950 my-2 relative z-10">
+                                  <AnimatedPrice value={aiPrice} />
+                                </div>
+                                <div className="text-[10px] font-bold text-emerald-600 flex items-center justify-center gap-1 relative z-10">
+                                  <Clock className="h-3.5 w-3.5" /> Price locked for 14 days
+                                </div>
+                              </div>
+
+                              {/* Price adjustment breakdown details */}
+                              <div className="max-w-md mx-auto bg-zinc-50 border border-zinc-200 rounded-2xl p-5 text-left space-y-3">
+                                <div className="flex justify-between items-center text-xs">
+                                  <span className="font-extrabold text-zinc-400 uppercase tracking-wide">Device Model</span>
+                                  <span className="font-black text-zinc-900">{state.model}</span>
+                                </div>
+                                <div className="h-px bg-zinc-200/60" />
+                                <div className="flex justify-between items-center text-xs">
+                                  <span className="font-extrabold text-zinc-400 uppercase tracking-wide">Specs selected</span>
+                                  <span className="font-black text-zinc-900">
+                                    {Object.entries(state.specs).map(([lbl, val]) => `${val}`).join(" · ")}
+                                  </span>
+                                </div>
+                                <div className="h-px bg-zinc-200/60" />
+                                <div className="flex justify-between items-center text-xs">
+                                  <span className="font-extrabold text-zinc-400 uppercase tracking-wide">Grade</span>
+                                  <span className="font-black text-zinc-900">{state.condition}</span>
+                                </div>
+                                {Object.entries(state.answers).some(([k, v]) => v.toLowerCase().includes("crack") || v.toLowerCase().includes("faulty") || v.toLowerCase().includes("issue") || v.toLowerCase().includes("no")) && (
+                                  <>
+                                    <div className="h-px bg-zinc-200/60" />
+                                    <div className="space-y-1.5">
+                                      <span className="text-[10px] font-black uppercase tracking-widest text-red-500 block">Condition Adjustments</span>
+                                      <div className="flex flex-wrap gap-1.5">
+                                        {Object.entries(state.answers).map(([qid, ans]) => {
+                                          if (ans.toLowerCase().includes("crack") || ans.toLowerCase().includes("faulty") || ans.toLowerCase().includes("issue") || ans.toLowerCase().includes("no")) {
+                                            return (
+                                              <span key={qid} className="inline-block bg-red-50 border border-red-100 text-red-600 font-bold text-[9px] px-2 py-0.5 rounded-md">
+                                                {ans}
+                                              </span>
+                                            );
+                                          }
+                                          return null;
+                                        })}
+                                      </div>
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="pt-6 border-t border-zinc-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
+                              <button
+                                onClick={() => {
+                                  setAiPrice(null);
+                                  setImages([]);
+                                }}
+                                className="w-full sm:w-auto h-12 px-6 border border-zinc-200 rounded-xl font-bold text-xs text-zinc-600 hover:border-zinc-950 hover:text-zinc-950 transition-colors flex items-center justify-center shrink-0"
+                              >
+                                <span className="whitespace-nowrap">Recalculate</span>
+                              </button>
+                              <button
+                                onClick={() => goToPhase(5)}
+                                className="w-full sm:w-auto h-12 px-8 bg-zinc-950 text-white hover:bg-zinc-800 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 shadow-lg shrink-0"
+                              >
+                                <span className="whitespace-nowrap">Accept Cash Offer</span>
+                                <ArrowRight className="h-4 w-4 shrink-0" />
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
 
-                    {/* ── STEP 10 – Contact ── */}
-                    {step === 10 && (
-                      <div>
-                        <StepHeader
-                          label="Your details"
-                          sub={state.fulfillment === "ship" ? "We'll email your prepaid shipping label here." : "We'll confirm your drop-off slot by email."}
-                        />
+                    {/* ── PHASE 5: Fulfillment & Details ── */}
+                    {phase === 5 && (
+                      <div className="space-y-6 flex-1 flex flex-col justify-between">
                         <form
-                          className="space-y-4"
+                          className="space-y-6 flex-1 flex flex-col justify-between"
                           onSubmit={async (e) => {
                             e.preventDefault();
                             setSubmitting(true);
@@ -1326,7 +1578,7 @@ export default function TradeInPage() {
                               });
                               setSubmitRef(result.reference);
                               setServerOfferPrice(result.offerPrice);
-                              go(1);
+                              goToPhase(6);
                             } catch (err) {
                               setSubmitError(err instanceof Error ? err.message : "Submission failed");
                             } finally {
@@ -1334,107 +1586,272 @@ export default function TradeInPage() {
                             }
                           }}
                         >
-                          {[
-                            { key: "name", label: "Full Name", type: "text", placeholder: "Jordan Mitchell", required: true },
-                            { key: "email", label: "Email Address", type: "email", placeholder: "you@example.com", required: true },
-                            { key: "phone", label: "Phone Number", type: "tel", placeholder: "+44 7700 000000", required: true },
-                            ...(state.fulfillment === "ship" ? [
-                              { key: "address", label: "Collection Address", type: "text", placeholder: "Street address", required: true },
-                              { key: "postcode", label: "Postcode", type: "text", placeholder: "LE1 1AA", required: true },
-                            ] : []),
-                          ].map(({ key, label, type, placeholder, required }) => (
-                            <div key={key}>
-                              <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-1.5">{label}</label>
-                              <input
-                                type={type}
-                                required={required}
-                                placeholder={placeholder}
-                                value={state.contact[key as keyof typeof state.contact]}
-                                onChange={e => setState(s => ({ ...s, contact: { ...s.contact, [key]: e.target.value } }))}
-                                className="w-full h-12 rounded-xl border-2 border-zinc-200 px-4 text-sm font-semibold outline-none focus:border-zinc-950 transition-colors placeholder:text-zinc-400"
-                              />
+                          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                            {/* Left Column: Form Controls */}
+                            <div className="lg:col-span-2 space-y-6">
+                              <StepHeader label="Fulfillment & Contact" sub="Select shipping preference and fill out your verification info." />
+
+                              {/* Fulfillment method select */}
+                              <div className="space-y-3">
+                                <span className="text-xs font-black uppercase tracking-widest text-zinc-400 block">Collection Choice</span>
+                                <div className="grid gap-4 sm:grid-cols-2">
+                                  {[
+                                    {
+                                      id: "ship", title: "Ship via Royal Mail", icon: Truck,
+                                      desc: "Prepaid insured label emailed instantly. Drop at any Post Office.",
+                                      badge: "Free Insured Shipping"
+                                    },
+                                    {
+                                      id: "dropoff", title: "Drop off In Store", icon: MapPin,
+                                      desc: "Visit TechStop Leicester for instant inspection and cash hand-off.",
+                                      badge: "Instant Cash Payout"
+                                    }
+                                  ].map((m) => {
+                                    const Icon = m.icon;
+                                    const isSelected = state.fulfillment === m.id;
+                                    return (
+                                      <button
+                                        key={m.id}
+                                        type="button"
+                                        onClick={() => setState(s => ({ ...s, fulfillment: m.id }))}
+                                        className={`p-5 rounded-2xl border text-left transition-all flex items-start gap-4 ${
+                                          isSelected
+                                            ? "border-zinc-950 bg-zinc-950 text-white shadow-md"
+                                            : "border-zinc-200 bg-white hover:border-zinc-400 text-zinc-800 hover:bg-zinc-50"
+                                        }`}
+                                      >
+                                        <div className={`h-11 w-11 rounded-xl flex items-center justify-center border shrink-0 ${isSelected ? "bg-white/10 border-white/20 text-white" : "bg-zinc-50 border-zinc-200 text-zinc-600"}`}>
+                                          <Icon className="h-5 w-5" strokeWidth={1.6} />
+                                        </div>
+                                        <div className="space-y-1">
+                                          <p className="text-xs font-black">{m.title}</p>
+                                          <p className={`text-[10px] leading-normal ${isSelected ? "text-white/70" : "text-zinc-500"}`}>{m.desc}</p>
+                                          <span className={`inline-block text-[9px] font-extrabold px-2 py-0.5 rounded-full border mt-2 ${
+                                            isSelected ? "bg-white/10 text-white border-white/20" : "bg-zinc-100 text-zinc-700 border-zinc-200"
+                                          }`}>
+                                            {m.badge}
+                                          </span>
+                                        </div>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+
+                              {/* Contact Form Details */}
+                              {state.fulfillment && (
+                                <div className="space-y-4 pt-4 border-t border-zinc-100 animate-fade-in">
+                                  <span className="text-xs font-black uppercase tracking-widest text-zinc-400 block">Personal Details</span>
+                                  <div className="grid gap-4 sm:grid-cols-2">
+                                    {[
+                                      { key: "name", label: "Full Name", type: "text", placeholder: "e.g. Jordan Mitchell" },
+                                      { key: "email", label: "Email Address", type: "email", placeholder: "e.g. you@domain.com" },
+                                      { key: "phone", label: "Phone Number", type: "tel", placeholder: "e.g. +44 7700 900077" },
+                                      ...(state.fulfillment === "ship" ? [
+                                        { key: "address", label: "Collection / Return Address", type: "text", placeholder: "e.g. 10 High Street" },
+                                        { key: "postcode", label: "Postcode", type: "text", placeholder: "e.g. LE1 1AA" },
+                                      ] : [])
+                                    ].map((inp) => (
+                                      <div key={inp.key} className={inp.key === "address" ? "sm:col-span-2" : ""}>
+                                        <label className="text-xs font-bold text-zinc-700 block mb-1.5">{inp.label}</label>
+                                        <input
+                                          type={inp.type}
+                                          required
+                                          placeholder={inp.placeholder}
+                                          value={state.contact[inp.key as keyof typeof state.contact] || ""}
+                                          onChange={(e) => setState(s => ({
+                                            ...s,
+                                            contact: { ...s.contact, [inp.key]: e.target.value }
+                                          }))}
+                                          className="h-12 w-full rounded-xl border border-zinc-300 px-4 text-xs font-semibold outline-none focus:border-zinc-950 transition-colors"
+                                        />
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {submitError && (
+                                <p className="text-xs font-bold text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3">{submitError}</p>
+                              )}
                             </div>
-                          ))}
-                          {submitError && (
-                            <p className="text-sm font-bold text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3">{submitError}</p>
-                          )}
-                          <div className="pt-2">
+
+                            {/* Right Column: Sticky Summary Card */}
+                            <div className="lg:col-span-1 lg:sticky lg:top-6 space-y-4">
+                              <div className="bg-zinc-50 border border-zinc-200 rounded-2xl p-5 text-left space-y-4 shadow-sm">
+                                <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400 block">Trade-In Summary</span>
+                                
+                                <div className="space-y-1">
+                                  <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-wide block">Device</span>
+                                  <p className="text-sm font-black text-zinc-900">{state.brand} {state.model}</p>
+                                  <span className="inline-block bg-zinc-200/60 text-zinc-700 font-bold text-[9px] px-2 py-0.5 rounded-md mt-0.5">
+                                    {state.category}
+                                  </span>
+                                </div>
+
+                                <div className="h-px bg-zinc-200/60" />
+
+                                <div className="space-y-1">
+                                  <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-wide block">Specifications</span>
+                                  <div className="flex flex-wrap gap-1 mt-1">
+                                    {Object.entries(state.specs).map(([lbl, val]) => (
+                                      <span key={lbl} className="bg-white border border-zinc-200 text-zinc-800 text-[10px] font-bold px-2 py-0.5 rounded-md">
+                                        {val}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                <div className="h-px bg-zinc-200/60" />
+
+                                <div className="space-y-1">
+                                  <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-wide block">Condition Grade</span>
+                                  <p className="text-xs font-black text-emerald-700 flex items-center gap-1">
+                                    <span className="inline-block bg-emerald-50 border border-emerald-100 text-emerald-700 font-bold text-[10px] px-2 py-0.5 rounded-md">
+                                      Grade {state.condition}
+                                    </span>
+                                  </p>
+                                  {Object.entries(state.answers).some(([k, v]) => v.toLowerCase().includes("crack") || v.toLowerCase().includes("faulty") || v.toLowerCase().includes("issue") || v.toLowerCase().includes("no")) && (
+                                    <div className="space-y-1 mt-2">
+                                      <span className="text-[9px] font-black uppercase tracking-widest text-red-500 block">Reported Issues</span>
+                                      <div className="flex flex-wrap gap-1">
+                                        {Object.entries(state.answers).map(([qid, ans]) => {
+                                          if (ans.toLowerCase().includes("crack") || ans.toLowerCase().includes("faulty") || ans.toLowerCase().includes("issue") || ans.toLowerCase().includes("no")) {
+                                            return (
+                                              <span key={qid} className="inline-block bg-red-50 border border-red-100 text-red-600 font-bold text-[9px] px-2 py-0.5 rounded-md">
+                                                {ans}
+                                              </span>
+                                            );
+                                          }
+                                          return null;
+                                        })}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {state.fulfillment && (
+                                  <>
+                                    <div className="h-px bg-zinc-200/60" />
+                                    <div className="space-y-1">
+                                      <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-wide block">Fulfillment Method</span>
+                                      <p className="text-xs font-bold text-zinc-900 flex items-center gap-1.5 mt-1">
+                                        {state.fulfillment === "ship" ? (
+                                          <>
+                                            <Truck className="h-4 w-4 text-zinc-500" /> Free Insured Shipping
+                                          </>
+                                        ) : (
+                                          <>
+                                            <MapPin className="h-4 w-4 text-zinc-500" /> Store Drop off (Leicester)
+                                          </>
+                                        )}
+                                      </p>
+                                    </div>
+                                  </>
+                                )}
+
+                                <div className="h-px bg-zinc-200/60" />
+
+                                <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3.5 text-center">
+                                  <span className="text-[9px] font-black uppercase tracking-widest text-emerald-800 block">Total Offer Value</span>
+                                  <p className="text-3xl font-black font-mono text-emerald-950 mt-1">£{aiPrice ?? offerPrice}</p>
+                                  <div className="text-[9px] font-bold text-emerald-600 flex items-center justify-center gap-1 mt-1">
+                                    <Clock className="h-3 w-3" /> Locked for 14 days
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="pt-6 border-t border-zinc-100 flex flex-col sm:flex-row sm:justify-end">
                             <motion.button
-                              type="submit"
-                              disabled={submitting}
                               whileHover={{ y: -2 }}
                               whileTap={{ scale: 0.98 }}
-                              className="w-full h-12 bg-zinc-950 hover:bg-zinc-800 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 disabled:opacity-60 shadow-lg transition-all"
+                              type="submit"
+                              disabled={submitting || !state.fulfillment}
+                              className="w-full sm:w-auto h-12 px-8 bg-zinc-950 text-white hover:bg-zinc-800 disabled:opacity-50 disabled:pointer-events-none rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 shadow-lg shrink-0"
                             >
-                              {submitting ? "Submitting…" : <><span>Submit Trade-In</span><ArrowRight className="h-4.5 w-4.5" /></>}
+                              {submitting ? (
+                                <span className="whitespace-nowrap">Submitting Trade-In...</span>
+                              ) : (
+                                <>
+                                  <span className="whitespace-nowrap">Submit Trade-In</span>
+                                  <ArrowRight className="h-4 w-4 shrink-0" />
+                                </>
+                              )}
                             </motion.button>
-                            <p className="text-center text-[10px] text-zinc-400 font-semibold mt-3">
-                              By submitting you agree to our terms. Data secured under SSL.
-                            </p>
                           </div>
                         </form>
                       </div>
                     )}
 
-                    {/* ── STEP 11 – Confirmation ── */}
-                    {step === 11 && (
-                      <div>
-                        <motion.div
-                          initial={{ scale: 0.5, opacity: 0 }}
-                          animate={{ scale: 1, opacity: 1 }}
-                          transition={{ type: "spring", stiffness: 280, damping: 22 }}
-                          className="h-16 w-16 bg-accent border border-black/5 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-accent/20"
-                        >
-                          <CheckCircle2 className="h-8 w-8 text-zinc-950" strokeWidth={1.5} />
-                        </motion.div>
-                        <h2 className="font-serif text-3xl font-bold mb-2 tracking-tight text-zinc-950">You're all set!</h2>
-                        {submitRef && (
-                          <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-3">Ref: {submitRef}</p>
-                        )}
-                        <p className="text-zinc-500 font-semibold mb-8 text-sm leading-relaxed">
-                          Trade-in for <strong className="text-zinc-950 font-black">{state.model}</strong> submitted. Your guaranteed offer is <strong className="text-zinc-950 font-black">£{serverOfferPrice ?? aiPrice ?? offerPrice}</strong>.
-                        </p>
-                        <div className="rounded-2xl bg-zinc-50 border border-zinc-100 overflow-hidden mb-6">
-                          <div className="flex items-center justify-between px-5 py-3 border-b border-zinc-100 bg-zinc-100/50">
-                            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Next Steps</p>
-                            {state.fulfillment === "ship"
-                              ? <Truck className="h-4 w-4 text-zinc-500" strokeWidth={1.5} />
-                              : <MapPin className="h-4 w-4 text-zinc-500" strokeWidth={1.5} />
-                            }
+                    {/* ── PHASE 6: Done ── */}
+                    {phase === 6 && (
+                      <div className="space-y-6 flex-1 flex flex-col justify-between">
+                        <div className="text-center space-y-6 py-6">
+                          <motion.div
+                            initial={{ scale: 0.5, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ type: "spring", stiffness: 280, damping: 20 }}
+                            className="mx-auto h-16 w-16 bg-emerald-500 rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/10 text-white"
+                          >
+                            <CheckCircle2 className="h-9 w-9" strokeWidth={1.8} />
+                          </motion.div>
+
+                          <div className="space-y-2">
+                            <h2 className="font-serif text-3xl font-bold tracking-tight text-zinc-950">Valuation Confirmed!</h2>
+                            <p className="text-xs font-semibold text-zinc-400 uppercase tracking-widest">
+                              Reference ID: <strong className="text-zinc-800 font-mono font-black">{submitRef}</strong>
+                            </p>
+                            <p className="text-sm font-semibold text-zinc-500 max-w-md mx-auto leading-relaxed pt-2">
+                              Your device is registered for buyback. We have locked in a trade offer value of <strong className="text-zinc-950 font-black">£{serverOfferPrice ?? aiPrice ?? offerPrice}</strong>.
+                            </p>
                           </div>
-                          <div className="p-5 space-y-5">
-                            {(state.fulfillment === "ship" ? [
-                              { n: "1", title: "Check your email", desc: `Prepaid Royal Mail label sent to ${state.contact.email || "your inbox"}.`, hi: true },
-                              { n: "2", title: "Pack & drop off", desc: "Wrap securely and hand to any Royal Mail counter.", hi: false },
-                              { n: "3", title: "Get paid within 48h", desc: "Funds sent directly to your bank after verification.", hi: false },
-                            ] : [
-                              { n: "1", title: "Check your email", desc: `Drop-off confirmation sent to ${state.contact.email || "your inbox"}.`, hi: true },
-                              { n: "2", title: "Visit TechStop Leicester", desc: "Bring your device for a 5-minute in-store inspection.", hi: false },
-                              { n: "3", title: `Receive £${serverOfferPrice ?? aiPrice ?? offerPrice}`, desc: "Cash, bank transfer, or store credit — your choice.", hi: false },
-                            ]).map(item => (
-                              <div key={item.n} className="flex items-start gap-3">
-                                <div className={`h-8 w-8 rounded-xl flex items-center justify-center shrink-0 border text-xs font-black ${item.hi ? "bg-zinc-950 text-white border-zinc-950" : "bg-white text-zinc-600 border-zinc-200"}`}>
-                                  {item.n}
+
+                          {/* Interactive Vertical Roadmap Steps */}
+                          <div className="max-w-md mx-auto bg-zinc-50 border border-zinc-200/80 rounded-2xl overflow-hidden text-left">
+                            <div className="px-5 py-3 border-b border-zinc-200 bg-zinc-100/50 flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-zinc-500">
+                              <span>Your Checklist</span>
+                              {state.fulfillment === "ship" ? <Truck className="h-4 w-4" /> : <MapPin className="h-4 w-4" />}
+                            </div>
+                            <div className="p-5 space-y-5">
+                              {(state.fulfillment === "ship" ? [
+                                { step: "1", title: "Prepaid shipping slip", desc: `Insured shipping label sent to ${state.contact.email}.` },
+                                { step: "2", title: "Pack & Ship", desc: "Place the device safely inside a box and post it free of charge." },
+                                { step: "3", title: "Verify & Get Paid", desc: "Once processed at our depot, bank payout is deposited within 48h." },
+                              ] : [
+                                { step: "1", title: "Drop-off appointment confirmation", desc: `Slot details sent to ${state.contact.email}.` },
+                                { step: "2", title: "Visit TechStop Leicester", desc: "Bring your unit in-store for a quick, 5-minute technical validation check." },
+                                { step: "3", title: "Instant Bank / Cash payout", desc: "Collect your payment immediately after inspection." },
+                              ]).map((item) => (
+                                <div key={item.step} className="flex gap-4">
+                                  <div className="h-8 w-8 rounded-lg bg-zinc-950 text-white font-mono font-black flex items-center justify-center shrink-0 text-xs shadow-sm">
+                                    {item.step}
+                                  </div>
+                                  <div>
+                                    <p className="text-xs font-black text-zinc-900">{item.title}</p>
+                                    <p className="text-[10px] font-bold text-zinc-400 leading-relaxed mt-0.5">{item.desc}</p>
+                                  </div>
                                 </div>
-                                <div>
-                                  <p className="font-black text-sm text-zinc-900">{item.title}</p>
-                                  <p className="text-xs text-zinc-500 mt-0.5 font-semibold">{item.desc}</p>
-                                </div>
-                              </div>
-                            ))}
+                              ))}
+                            </div>
                           </div>
                         </div>
-                        <button
-                          onClick={() => {
-                            setIsWizardActive(false);
-                            setStep(1);
-                            setImages([]);
-                            setAiPrice(null);
-                          }}
-                          className="w-full h-12 bg-zinc-950 hover:bg-zinc-800 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 shadow-lg transition-all"
-                        >
-                          Done <ArrowRight className="h-4.5 w-4.5" />
-                        </button>
+
+                        {/* Back to Home Button */}
+                        <div className="pt-6 border-t border-zinc-100 flex items-center justify-center">
+                          <button
+                            onClick={() => {
+                              setIsWizardActive(false);
+                              setPhase(1);
+                              setImages([]);
+                              setAiPrice(null);
+                            }}
+                            className="h-12 w-full max-w-xs bg-zinc-950 text-white hover:bg-zinc-800 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 shadow-lg"
+                          >
+                            Return to Homepage <ArrowRight className="h-4 w-4" />
+                          </button>
+                        </div>
                       </div>
                     )}
 
@@ -1442,9 +1859,13 @@ export default function TradeInPage() {
                 </AnimatePresence>
               </div>
             </div>
-          </div>
-        </div>
-      )}
+
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
 
       <Footer />
     </div>
