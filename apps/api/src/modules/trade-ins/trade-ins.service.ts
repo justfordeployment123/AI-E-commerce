@@ -184,8 +184,14 @@ Respond with ONLY valid JSON, no extra text: {"price": <number>}`;
             });
 
             const raw = response.choices[0]?.message?.content ?? '{}';
+            this.logger.log(`OpenAI raw response: ${raw}`);
             const parsed = JSON.parse(raw) as { price?: number };
-            return { price: this.applyMargin(parsed.price ?? 0), aiUsed: true };
+            const marketPrice = parsed.price && parsed.price > 0 ? parsed.price : null;
+            if (!marketPrice) {
+                this.logger.warn(`OpenAI returned invalid price (${parsed.price}) — falling back to rule-based pricing`);
+                return { price: this.applyMargin(computeOffer(dto.model, dto.condition, dto.answers)), aiUsed: false };
+            }
+            return { price: this.applyMargin(marketPrice), aiUsed: true };
         } catch (err) {
             this.logger.warn(`OpenAI pricing failed — using fallback rule-based pricing. Reason: ${err instanceof Error ? err.message : String(err)}`);
             return { price: this.applyMargin(computeOffer(dto.model, dto.condition, dto.answers)), aiUsed: false };
