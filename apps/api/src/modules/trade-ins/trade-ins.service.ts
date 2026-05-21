@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import OpenAI from 'openai';
 import { PrismaService } from '../database/prisma.service';
 import { CreateTradeInDto } from './dto/create-trade-in.dto';
@@ -11,6 +11,8 @@ import { computeOffer } from './pricing';
 
 @Injectable()
 export class TradeInsService {
+    private readonly logger = new Logger(TradeInsService.name);
+
     constructor(private readonly prisma: PrismaService) {}
 
     private applyMargin(marketPrice: number): number {
@@ -129,11 +131,12 @@ export class TradeInsService {
         });
     }
 
-    async aiPrice(dto: AiPriceDto): Promise<{ price: number }> {
+    async aiPrice(dto: AiPriceDto): Promise<{ price: number; aiUsed: boolean }> {
         const apiKey = process.env.OPENAI_API_KEY;
 
         if (!apiKey) {
-            return { price: this.applyMargin(computeOffer(dto.model, dto.condition, dto.answers)) };
+            this.logger.warn('OPENAI_API_KEY not set — using fallback rule-based pricing');
+            return { price: this.applyMargin(computeOffer(dto.model, dto.condition, dto.answers)), aiUsed: false };
         }
 
         const openai = new OpenAI({ apiKey });
@@ -182,9 +185,10 @@ Respond with ONLY valid JSON, no extra text: {"price": <number>}`;
 
             const raw = response.choices[0]?.message?.content ?? '{}';
             const parsed = JSON.parse(raw) as { price?: number };
-            return { price: this.applyMargin(parsed.price ?? 0) };
-        } catch {
-            return { price: this.applyMargin(computeOffer(dto.model, dto.condition, dto.answers)) };
+            return { price: this.applyMargin(parsed.price ?? 0), aiUsed: true };
+        } catch (err) {
+            this.logger.warn(`OpenAI pricing failed — using fallback rule-based pricing. Reason: ${err instanceof Error ? err.message : String(err)}`);
+            return { price: this.applyMargin(computeOffer(dto.model, dto.condition, dto.answers)), aiUsed: false };
         }
     }
 

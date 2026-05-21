@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import OpenAI from 'openai';
 import { PrismaService } from '../database/prisma.service';
 import { RedisService } from '../cache/redis.service';
 import { StorageService } from '../../common/services/storage.service';
@@ -17,24 +18,29 @@ export class HealthService {
         postgres: boolean;
         redis: boolean;
         garage: boolean;
+        openAi: boolean;
         postgresError?: string;
         redisError?: string;
         garageError?: string;
+        openAiError?: string;
         databaseUrlConfigured: boolean;
         redisUrlConfigured: boolean;
         garageConfigured: boolean;
+        openAiKeyConfigured: boolean;
         database?: { tableCount: number; tables: string[] };
         timestamp: string;
     }> {
-        const [postgresCheck, redisCheck, garageCheck] = await Promise.all([
+        const [postgresCheck, redisCheck, garageCheck, openAiCheck] = await Promise.all([
             this.checkPostgres(),
             this.checkRedis(),
             this.checkGarage(),
+            this.checkOpenAi(),
         ]);
 
         const postgres = postgresCheck.ok;
         const redis = redisCheck.ok;
         const garage = garageCheck.ok;
+        const openAi = openAiCheck.ok;
         const status = postgres && redis && garage ? 'ok' : 'degraded';
 
         return {
@@ -42,12 +48,15 @@ export class HealthService {
             postgres,
             redis,
             garage,
+            openAi,
             postgresError: postgresCheck.error,
             redisError: redisCheck.error,
             garageError: garageCheck.error,
+            openAiError: openAiCheck.error,
             databaseUrlConfigured: Boolean(process.env.DATABASE_URL),
             redisUrlConfigured: Boolean(process.env.REDIS_URL),
             garageConfigured: Boolean(process.env.GARAGE_ENDPOINT),
+            openAiKeyConfigured: Boolean(process.env.OPENAI_API_KEY),
             database: postgresCheck.ok ? postgresCheck.database : undefined,
             timestamp: new Date().toISOString(),
         };
@@ -104,6 +113,21 @@ export class HealthService {
                 ok: false,
                 error: this.sanitizeError(error),
             };
+        }
+    }
+
+    private async checkOpenAi(): Promise<{ ok: boolean; error?: string }> {
+        const apiKey = process.env.OPENAI_API_KEY;
+        if (!apiKey) {
+            return { ok: false, error: 'OPENAI_API_KEY not configured' };
+        }
+        try {
+            const openai = new OpenAI({ apiKey });
+            // List models is the lightest call — no tokens consumed, just auth check
+            await openai.models.list();
+            return { ok: true };
+        } catch (error) {
+            return { ok: false, error: this.sanitizeError(error) };
         }
     }
 

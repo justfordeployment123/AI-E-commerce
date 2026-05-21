@@ -118,7 +118,7 @@ export const tradeInsApi = {
     model: string; brand: string; category: string;
     condition: string; specs: Record<string, string>;
     answers: Record<string, string>; images?: string[];
-  }) => apiFetch<{ price: number }>('/trade-ins/ai-price', {
+  }) => apiFetch<{ price: number; aiUsed: boolean }>('/trade-ins/ai-price', {
     method: 'POST',
     body: JSON.stringify(data),
   }),
