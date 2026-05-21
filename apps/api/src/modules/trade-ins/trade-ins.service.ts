@@ -1,19 +1,26 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import OpenAI from 'openai';
 import { PrismaService } from '../database/prisma.service';
 import { CreateTradeInDto } from './dto/create-trade-in.dto';
 import { UpdateTradeInDto } from './dto/update-trade-in.dto';
 import { ApproveTradeInDto } from './dto/approve-trade-in.dto';
 import { RejectTradeInDto } from './dto/reject-trade-in.dto';
 import { CounterOfferTradeInDto } from './dto/counter-offer-trade-in.dto';
+import { AiPriceDto } from './dto/ai-price.dto';
 import { computeOffer } from './pricing';
 
 @Injectable()
 export class TradeInsService {
     constructor(private readonly prisma: PrismaService) {}
 
+    private applyMargin(marketPrice: number): number {
+        const pct = Math.min(100, Math.max(0, parseFloat(process.env.PROFIT_MARGIN_PCT ?? '30')));
+        return Math.max(Math.round(marketPrice * (1 - pct / 100) / 5) * 5, 10);
+    }
+
     async submit(dto: CreateTradeInDto, userId?: string) {
-        // Recompute offer server-side to prevent tampering
-        const serverOffer = computeOffer(dto.model, dto.condition, dto.answers);
+        // Recompute offer server-side and apply profit margin
+        const serverOffer = this.applyMargin(computeOffer(dto.model, dto.condition, dto.answers));
 
         return this.prisma.tradeIn.create({
             data: {
@@ -120,6 +127,65 @@ export class TradeInsService {
                 adminNotes: dto.adminNotes,
             },
         });
+    }
+
+    async aiPrice(dto: AiPriceDto): Promise<{ price: number }> {
+        const apiKey = process.env.OPENAI_API_KEY;
+
+        if (!apiKey) {
+            return { price: this.applyMargin(computeOffer(dto.model, dto.condition, dto.answers)) };
+        }
+
+        const openai = new OpenAI({ apiKey });
+
+        const specsText = Object.entries(dto.specs).map(([k, v]) => `${k}: ${v}`).join(', ');
+        const answersText = Object.entries(dto.answers).map(([k, v]) => `${k}: ${v}`).join(', ');
+
+        const prompt = `You are a UK refurbished electronics pricing expert.
+
+Device details:
+- Model: ${dto.model}
+- Category: ${dto.category}
+- Brand: ${dto.brand}
+- Condition grade: ${dto.condition}
+- Specifications: ${specsText || 'Not provided'}
+- Diagnostic answers: ${answersText || 'Not provided'}
+
+${dto.images?.length ? `The user has uploaded ${dto.images.length} photo(s). Assess actual physical condition carefully — look for screen damage, scratches, dents, and wear. Adjust price down if condition is worse than reported.` : 'No photos provided — rely solely on the diagnostic answers.'}
+
+Return the current UK resale market price in GBP for this device in its described condition, based on mid-2025 prices from BackMarket, CEX, and Music Magpie.
+
+Rules:
+- Return the fair current market resale value (NOT a trade-in offer — that margin is applied separately)
+- Adjust downward if photos show worse condition than reported
+- Round to the nearest £5
+- Minimum value is £10
+
+Respond with ONLY valid JSON, no extra text: {"price": <number>}`;
+
+        const content: OpenAI.Chat.ChatCompletionContentPart[] = [{ type: 'text', text: prompt }];
+
+        if (dto.images?.length) {
+            for (const img of dto.images.slice(0, 4)) {
+                content.push({ type: 'image_url', image_url: { url: img, detail: 'high' } });
+            }
+        }
+
+        try {
+            const response = await openai.chat.completions.create({
+                model: 'gpt-4o',
+                messages: [{ role: 'user', content }],
+                temperature: 0,
+                max_tokens: 50,
+                response_format: { type: 'json_object' },
+            });
+
+            const raw = response.choices[0]?.message?.content ?? '{}';
+            const parsed = JSON.parse(raw) as { price?: number };
+            return { price: this.applyMargin(parsed.price ?? 0) };
+        } catch {
+            return { price: this.applyMargin(computeOffer(dto.model, dto.condition, dto.answers)) };
+        }
     }
 
     async complete(id: string) {

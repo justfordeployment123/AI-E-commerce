@@ -46,4 +46,4 @@ USER nestjs
 
 EXPOSE 3002
 
-CMD ["npm", "run", "start:prod"]
+CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy && npm run start:prod"]

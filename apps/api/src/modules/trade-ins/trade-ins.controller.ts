@@ -19,6 +19,7 @@ import { UpdateTradeInDto } from './dto/update-trade-in.dto';
 import { ApproveTradeInDto } from './dto/approve-trade-in.dto';
 import { RejectTradeInDto } from './dto/reject-trade-in.dto';
 import { CounterOfferTradeInDto } from './dto/counter-offer-trade-in.dto';
+import { AiPriceDto } from './dto/ai-price.dto';
 
 @Controller('trade-ins')
 export class TradeInsController {
@@ -35,6 +36,12 @@ export class TradeInsController {
     @UseGuards(JwtAuthGuard)
     findMine(@CurrentUser() user: { id: string }) {
         return this.tradeInsService.findByUser(user.id);
+    }
+
+    // Public — AI-powered price estimate (uses OpenAI Vision if images provided)
+    @Post('ai-price')
+    aiPrice(@Body() dto: AiPriceDto) {
+        return this.tradeInsService.aiPrice(dto);
     }
 
     // Public reference lookup (for confirmation page)

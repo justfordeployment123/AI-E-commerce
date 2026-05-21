@@ -113,6 +113,15 @@ export const tradeInsApi = {
     apiFetch<TradeIn>('/trade-ins', { method: 'POST', body: JSON.stringify(data) }),
 
   my: () => apiFetch<TradeIn[]>('/trade-ins/my', { auth: true }),
+
+  aiPrice: (data: {
+    model: string; brand: string; category: string;
+    condition: string; specs: Record<string, string>;
+    answers: Record<string, string>; images?: string[];
+  }) => apiFetch<{ price: number }>('/trade-ins/ai-price', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
 };
 
 // ── Repairs ───────────────────────────────────────────────────────────────────
