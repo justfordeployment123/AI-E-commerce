@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import OpenAI from 'openai';
 import { PrismaService } from '../database/prisma.service';
 import { RedisService } from '../cache/redis.service';
@@ -7,6 +7,8 @@ import { S3Client, HeadBucketCommand } from '@aws-sdk/client-s3';
 
 @Injectable()
 export class HealthService {
+    private readonly logger = new Logger(HealthService.name);
+
     constructor(
         private readonly prisma: PrismaService,
         private readonly redisService: RedisService,
@@ -109,10 +111,9 @@ export class HealthService {
             await s3Client.send(command);
             return { ok: true };
         } catch (error) {
-            return {
-                ok: false,
-                error: this.sanitizeError(error),
-            };
+            const msg = this.sanitizeError(error);
+            this.logger.warn(`Garage health check failed: ${msg}`);
+            return { ok: false, error: msg };
         }
     }
 
@@ -132,10 +133,11 @@ export class HealthService {
     }
 
     private sanitizeError(error: unknown): string {
-        if (error instanceof Error && error.message) {
-            return error.message.replace(/(postgres(?:ql)?:\/\/)[^\s@]+@/gi, '$1***:***@');
+        if (error instanceof Error) {
+            const msg = error.message || error.name || 'Unknown error';
+            return msg.replace(/(postgres(?:ql)?:\/\/)[^\s@]+@/gi, '$1***:***@');
         }
-
-        return 'Unknown error';
+        if (typeof error === 'string') return error;
+        try { return JSON.stringify(error); } catch { return 'Unknown error'; }
     }
 }
