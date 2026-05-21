@@ -5,3 +5,169 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+enum TradeInStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  COUNTER_OFFERED
+  COMPLETED
+  CANCELLED
+}
+
+enum RepairStatus {
+  SUBMITTED
+  QUOTE_SENT
+  APPROVED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+// ─── Models ───────────────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String?
+  name         String
+  phone        String?
+  role         Role     @default(CUSTOMER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  orders   Order[]
+  tradeIns TradeIn[]
+  repairs  Repair[]
+
+  @@map("users")
+}
+
+model Product {
+  id           String   @id @default(uuid())
+  name         String
+  slug         String   @unique
+  category     String
+  brand        String
+  model        String
+  condition    String   // Mint, Good, Refurbished, Excellent
+  price        Float
+  comparePrice Float?
+  stock        Int      @default(0)
+  images       String[]
+  specs        Json     @default("{}")
+  description  String?
+  rating       Float    @default(0)
+  reviewCount  Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  orderItems OrderItem[]
+
+  @@map("products")
+}
+
+model Order {
+  id              String      @id @default(uuid())
+  userId          String?
+  user            User?       @relation(fields: [userId], references: [id])
+  status          OrderStatus @default(PENDING)
+  subtotal        Float
+  shipping        Float       @default(0)
+  total           Float
+  shippingAddress Json
+  paymentMethod   String?
+  trackingNumber  String?
+  notes           String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  items OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String  @id @default(uuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Float
+
+  @@map("order_items")
+}
+
+model TradeIn {
+  id           String        @id @default(uuid())
+  reference    String        @unique @default(cuid())
+  userId       String?
+  user         User?         @relation(fields: [userId], references: [id])
+  category     String
+  brand        String
+  model        String
+  specs        Json          @default("{}")
+  condition    String
+  answers      Json          @default("{}")
+  fulfillment  String        // ship | dropoff
+  offerPrice   Float
+  status       TradeInStatus @default(SUBMITTED)
+  contact      Json
+  adminNotes   String?
+  counterOffer Float?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@map("trade_ins")
+}
+
+model Repair {
+  id          String       @id @default(uuid())
+  reference   String       @unique @default(cuid())
+  userId      String?
+  user        User?        @relation(fields: [userId], references: [id])
+  deviceType  String
+  brand       String
+  model       String
+  issue       String
+  issueNotes  String?
+  fulfillment String       // ship | dropoff
+  status      RepairStatus @default(SUBMITTED)
+  quote       Float?
+  contact     Json
+  adminNotes  String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@map("repairs")
+}
+
+model PricingConfig {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     Float
+  label     String?
+  updatedAt DateTime @updatedAt
+
+  @@map("pricing_configs")
+}

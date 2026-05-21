@@ -4,23 +4,18 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Shield, Lock, ChevronRight, Check, CreditCard, Truck,
-  Tag, ArrowLeft, X, Zap
+  Tag, ArrowLeft, Zap, ShoppingCart, ArrowRight
 } from "lucide-react";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
+import { useCart } from "../../context/cart-context";
+import { ordersApi } from "../../lib/api";
 
 const STEPS = ["Delivery", "Payment", "Review"];
 
-const CART_ITEMS = [
-  { id: 1, name: "iPhone 14 Pro", grade: "Excellent", storage: "256 GB", color: "Space Black", price: 579, image: "https://picsum.photos/seed/ip14pro/120/120" },
-  { id: 2, name: "Sony WH-1000XM5", grade: "Pristine", storage: "—", color: "Black", price: 219, image: "https://picsum.photos/seed/wh1000/120/120" },
-];
-
-const subtotal = CART_ITEMS.reduce((sum, i) => sum + i.price, 0);
-const shipping = 0;
-const total = subtotal + shipping;
-
 export default function CheckoutPage() {
+  const { items, subtotal, clearCart } = useCart();
+
   const [step, setStep] = useState(0);
   const [promoCode, setPromoCode] = useState("");
   const [promoApplied, setPromoApplied] = useState(false);
@@ -28,6 +23,9 @@ export default function CheckoutPage() {
   const [saveInfo, setSaveInfo] = useState(true);
   const [payMethod, setPayMethod] = useState<"card" | "paypal">("card");
   const [orderPlaced, setOrderPlaced] = useState(false);
+  const [orderId, setOrderId] = useState("");
+  const [placing, setPlacing] = useState(false);
+  const [placeError, setPlaceError] = useState("");
 
   const [delivery, setDelivery] = useState({
     firstName: "", lastName: "", email: "", phone: "",
@@ -38,6 +36,10 @@ export default function CheckoutPage() {
     number: "", name: "", expiry: "", cvv: "",
   });
 
+  const shipping = 0;
+  const discount = promoApplied ? subtotal * 0.1 : 0;
+  const total = subtotal - discount + shipping;
+
   function applyPromo() {
     if (promoCode.toUpperCase() === "TECHSTOP10") {
       setPromoApplied(true);
@@ -45,6 +47,49 @@ export default function CheckoutPage() {
     } else {
       setPromoError("Invalid code — try TECHSTOP10");
     }
+  }
+
+  async function placeOrder() {
+    setPlacing(true);
+    setPlaceError("");
+    try {
+      const order = await ordersApi.create({
+        items: items.map(i => ({ productId: i.productId, quantity: i.quantity })),
+        shippingAddress: {
+          name: `${delivery.firstName} ${delivery.lastName}`.trim() || "Customer",
+          address: delivery.address,
+          city: delivery.city,
+          postcode: delivery.postcode,
+          country: delivery.country,
+        },
+        paymentMethod: payMethod,
+      });
+      setOrderId(order.id);
+      await clearCart();
+      setOrderPlaced(true);
+    } catch (err) {
+      setPlaceError(err instanceof Error ? err.message : "Failed to place order");
+    } finally {
+      setPlacing(false);
+    }
+  }
+
+  if (items.length === 0 && !orderPlaced) {
+    return (
+      <div className="flex min-h-screen flex-col bg-white font-sans">
+        <Navbar />
+        <main className="flex-1 flex flex-col items-center justify-center px-4 py-20 text-center">
+          <div className="h-32 w-32 bg-zinc-100 rounded-full flex items-center justify-center mb-8">
+            <ShoppingCart className="h-12 w-12 text-zinc-300" />
+          </div>
+          <h1 className="text-3xl font-bold mb-4">Your cart is empty</h1>
+          <a href="/shop/phones" className="h-14 px-8 bg-black text-white rounded-full font-bold flex items-center justify-center gap-2">
+            Start shopping <ArrowRight className="h-5 w-5" />
+          </a>
+        </main>
+        <Footer />
+      </div>
+    );
   }
 
   if (orderPlaced) {
@@ -68,7 +113,7 @@ export default function CheckoutPage() {
             </motion.div>
             <h1 className="font-serif text-5xl font-medium mb-4">Order confirmed!</h1>
             <p className="text-zinc-500 text-lg font-medium mb-8 leading-relaxed">
-              Your order <strong className="text-black">#TS-28471</strong> is confirmed. A receipt has been sent to <strong className="text-black">{delivery.email || "your email"}</strong>.
+              Your order <strong className="text-black">#{orderId.slice(0, 8).toUpperCase()}</strong> is confirmed. A receipt has been sent to <strong className="text-black">{delivery.email || "your email"}</strong>.
             </p>
             <div className="rounded-[2rem] bg-zinc-50 border border-zinc-100 p-6 mb-8 text-sm text-left space-y-4">
               <div className="flex items-center gap-3">
@@ -104,7 +149,6 @@ export default function CheckoutPage() {
             <a href="/cart" className="flex items-center gap-2 text-sm font-bold text-zinc-400 hover:text-black transition-colors">
               <ArrowLeft className="h-4 w-4" /> Cart
             </a>
-            {/* Step indicator */}
             <div className="flex items-center gap-2">
               {STEPS.map((s, i) => (
                 <div key={s} className="flex items-center gap-2">
@@ -143,8 +187,8 @@ export default function CheckoutPage() {
                     <h1 className="text-3xl font-bold mb-8">Delivery details</h1>
                     <div className="grid grid-cols-2 gap-4 mb-4">
                       {[
-                        { key: "firstName", label: "First name", col: 1 },
-                        { key: "lastName", label: "Last name", col: 1 },
+                        { key: "firstName", label: "First name" },
+                        { key: "lastName", label: "Last name" },
                       ].map(({ key, label }) => (
                         <div key={key} className="flex flex-col gap-2">
                           <label className="text-xs font-bold uppercase tracking-widest text-zinc-400">{label}</label>
@@ -179,7 +223,6 @@ export default function CheckoutPage() {
                       ))}
                     </div>
 
-                    {/* Shipping method */}
                     <div className="mb-8">
                       <p className="text-xs font-bold uppercase tracking-widest text-zinc-400 mb-3">Shipping method</p>
                       <div className="space-y-3">
@@ -222,7 +265,6 @@ export default function CheckoutPage() {
                     </button>
                     <h2 className="text-3xl font-bold mb-8">Payment</h2>
 
-                    {/* Pay method toggle */}
                     <div className="flex gap-3 mb-8">
                       {[
                         { id: "card", label: "Card" },
@@ -343,9 +385,9 @@ export default function CheckoutPage() {
 
                     <div className="space-y-4 mb-8">
                       {[
-                        { label: "Delivering to", value: `${delivery.firstName} ${delivery.lastName}, ${delivery.address}, ${delivery.city} ${delivery.postcode}` || "123 High Street, Leicester LE1 1AA" },
-                        { label: "Email", value: delivery.email || "customer@example.com" },
-                        { label: "Payment", value: payMethod === "card" ? `Card ending ····${card.number.slice(-4) || "3456"}` : "PayPal" },
+                        { label: "Delivering to", value: `${delivery.firstName} ${delivery.lastName}, ${delivery.address}, ${delivery.city} ${delivery.postcode}`.trim().replace(/^,\s*/, "") || "—" },
+                        { label: "Email", value: delivery.email || "—" },
+                        { label: "Payment", value: payMethod === "card" ? `Card ending ····${card.number.replace(/\s/g, "").slice(-4) || "????"}` : "PayPal" },
                       ].map(({ label, value }) => (
                         <div key={label} className="flex justify-between py-4 border-b border-zinc-100">
                           <span className="text-xs font-bold uppercase tracking-widest text-zinc-400">{label}</span>
@@ -354,13 +396,21 @@ export default function CheckoutPage() {
                       ))}
                     </div>
 
+                    {placeError && (
+                      <p className="text-sm font-bold text-red-500 bg-red-50 border border-red-100 rounded-2xl px-4 py-3 mb-4">{placeError}</p>
+                    )}
+
                     <motion.button
                       whileTap={{ scale: 0.98 }}
-                      onClick={() => setOrderPlaced(true)}
-                      className="w-full h-18 py-5 bg-accent text-black rounded-[1.5rem] font-bold text-lg flex items-center justify-center gap-2 hover:bg-accent-dark transition-colors active:scale-[0.99] shadow-xl shadow-accent/20"
+                      onClick={placeOrder}
+                      disabled={placing}
+                      className="w-full py-5 bg-accent text-black rounded-[1.5rem] font-bold text-lg flex items-center justify-center gap-2 hover:bg-accent-dark transition-colors active:scale-[0.99] shadow-xl shadow-accent/20 disabled:opacity-60 disabled:cursor-not-allowed"
                     >
-                      <Zap className="h-5 w-5" />
-                      Place order — £{promoApplied ? (total * 0.9).toFixed(2) : total.toFixed(2)}
+                      {placing ? (
+                        "Placing order…"
+                      ) : (
+                        <><Zap className="h-5 w-5" /> Place order — £{total.toFixed(2)}</>
+                      )}
                     </motion.button>
                     <p className="text-center text-[10px] text-zinc-400 font-medium mt-3">
                       By placing your order you agree to our Terms of Service and Privacy Policy.
@@ -376,16 +426,19 @@ export default function CheckoutPage() {
                 <h2 className="font-bold text-lg mb-6">Order summary</h2>
 
                 <div className="space-y-4 mb-6">
-                  {CART_ITEMS.map(item => (
-                    <div key={item.id} className="flex gap-4">
-                      <div className="h-16 w-16 rounded-[1rem] bg-white border border-zinc-100 overflow-hidden flex-shrink-0">
-                        <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
+                  {items.map(item => (
+                    <div key={item.productId} className="flex gap-4">
+                      <div className="h-16 w-16 rounded-[1rem] bg-white border border-zinc-100 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                        {item.image
+                          ? <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
+                          : <ShoppingCart className="h-6 w-6 text-zinc-300" />
+                        }
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-bold text-sm truncate">{item.name}</p>
-                        <p className="text-xs text-zinc-400 mt-0.5">{item.grade} · {item.storage}</p>
+                        <p className="text-xs text-zinc-400 mt-0.5">Qty: {item.quantity}</p>
                       </div>
-                      <p className="font-bold text-sm flex-shrink-0">£{item.price}</p>
+                      <p className="font-bold text-sm flex-shrink-0">£{(item.price * item.quantity).toFixed(2)}</p>
                     </div>
                   ))}
                 </div>
@@ -421,12 +474,12 @@ export default function CheckoutPage() {
                 <div className="space-y-3 pb-6 border-b border-zinc-200">
                   <div className="flex justify-between text-sm font-medium">
                     <span className="text-zinc-500">Subtotal</span>
-                    <span>£{subtotal}</span>
+                    <span>£{subtotal.toFixed(2)}</span>
                   </div>
                   {promoApplied && (
                     <div className="flex justify-between text-sm font-medium text-emerald-600">
                       <span>Promo (TECHSTOP10)</span>
-                      <span>-£{(subtotal * 0.1).toFixed(2)}</span>
+                      <span>-£{discount.toFixed(2)}</span>
                     </div>
                   )}
                   <div className="flex justify-between text-sm font-medium">
@@ -437,7 +490,7 @@ export default function CheckoutPage() {
 
                 <div className="flex justify-between pt-5 font-bold text-xl">
                   <span>Total</span>
-                  <span>£{promoApplied ? (total * 0.9).toFixed(2) : total}</span>
+                  <span>£{total.toFixed(2)}</span>
                 </div>
 
                 <div className="mt-6 space-y-3">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useCart } from "../../../../context/cart-context";
 import { useParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -79,6 +80,7 @@ export default function ProductDetailPage() {
   const [added, setAdded] = useState(false);
   const [expandedSection, setExpandedSection] = useState<string | null>("description");
   const [wishlisted, setWishlisted] = useState(false);
+  const { addItem } = useCart();
 
   // Scroll to top on mount
   useEffect(() => {
@@ -95,7 +97,17 @@ export default function ProductDetailPage() {
 
   const storages = [...new Set(PRODUCT.variants.map(v => v.storage))];
 
-  function handleAddToCart() {
+  async function handleAddToCart() {
+    try {
+      await addItem({
+        productId: PRODUCT.id,
+        quantity: 1,
+        price: currentVariant.price,
+        name: `${PRODUCT.title} — ${selectedStorage}, ${selectedGrade}`,
+        slug: PRODUCT.id,
+        image: PRODUCT.images[0],
+      });
+    } catch { /* cart context handles offline fallback */ }
     setAdded(true);
     setTimeout(() => setAdded(false), 2200);
   }

@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { config as loadEnv } from 'dotenv';
-import { Logger } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import cookieParser from 'cookie-parser';
 
@@ -29,6 +29,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.use(cookieParser());
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.enableCors({
     origin: (process.env.ALLOWED_REDIRECT_URLS ?? 'http://localhost:3000')
       .split(',')

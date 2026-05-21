@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { tradeInsApi } from "../../lib/api";
 import {
   Smartphone, Tablet, Gamepad2, Laptop, ArrowLeft, ArrowRight,
   Check, ChevronRight, MapPin, Zap, Shield, Clock,
@@ -301,6 +302,11 @@ export default function TradeInPage() {
   });
   const [specStep, setSpecStep] = useState(0);
   const [questionStep, setQuestionStep] = useState(0);
+
+  const [submitting, setSubmitting] = useState(false);
+  const [submitRef, setSubmitRef] = useState("");
+  const [submitError, setSubmitError] = useState("");
+  const [serverOfferPrice, setServerOfferPrice] = useState<number | null>(null);
 
   // Search autocomplete states
   const [searchQuery, setSearchQuery] = useState("");
@@ -1112,7 +1118,31 @@ export default function TradeInPage() {
                         label="Enter your details"
                         sub={state.fulfillment === "ship" ? "Prepaid shipment labels will be dispatched to your email address." : "We'll confirm your Leicester hub drop-off slot."}
                       />
-                      <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); go(1); }}>
+                      <form className="space-y-4" onSubmit={async (e) => {
+                          e.preventDefault();
+                          setSubmitting(true);
+                          setSubmitError("");
+                          try {
+                            const result = await tradeInsApi.submit({
+                              category: state.category,
+                              brand: state.brand,
+                              model: state.model,
+                              specs: state.specs,
+                              condition: state.condition,
+                              answers: state.answers,
+                              fulfillment: state.fulfillment,
+                              offerPrice: offerPrice,
+                              contact: state.contact,
+                            });
+                            setSubmitRef(result.reference);
+                            setServerOfferPrice(result.offerPrice);
+                            go(1);
+                          } catch (err) {
+                            setSubmitError(err instanceof Error ? err.message : "Submission failed");
+                          } finally {
+                            setSubmitting(false);
+                          }
+                        }}>
                         {[
                           { key: "name", label: "Full Name", type: "text", placeholder: "E.g. Jordan Mitchell", required: true },
                           { key: "email", label: "Email Address", type: "email", placeholder: "you@example.com", required: true },
@@ -1134,14 +1164,18 @@ export default function TradeInPage() {
                             />
                           </div>
                         ))}
+                        {submitError && (
+                          <p className="text-sm font-bold text-red-500 bg-red-50 border border-red-100 rounded-2xl px-4 py-3">{submitError}</p>
+                        )}
                         <div className="pt-4">
                           <motion.button
                             type="submit"
+                            disabled={submitting}
                             whileHover={{ y: -2 }}
                             whileTap={{ scale: 0.98 }}
-                            className="w-full h-14 bg-zinc-950 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2.5 hover:bg-zinc-800 transition-all shadow-lg"
+                            className="w-full h-14 bg-zinc-950 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2.5 hover:bg-zinc-800 transition-all shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
                           >
-                            Submit Trade-In Request <ArrowRight className="h-4.5 w-4.5" />
+                            {submitting ? "Submitting…" : <><span>Submit Trade-In Request</span><ArrowRight className="h-4.5 w-4.5" /></>}
                           </motion.button>
                           <p className="text-center text-[10px] text-zinc-400 font-semibold mt-3 leading-relaxed">
                             By submitting this form you consent to our terms of buyback. Customer records are secured under SSL protection.
@@ -1163,8 +1197,11 @@ export default function TradeInPage() {
                         <CheckCircle2 className="h-8 w-8 text-zinc-950" strokeWidth={1.5} />
                       </motion.div>
                       <h2 className="font-serif text-3xl md:text-4xl font-medium mb-3 leading-tight tracking-tight text-zinc-950">You're all set!</h2>
+                      {submitRef && (
+                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2">Ref: {submitRef}</p>
+                      )}
                       <p className="text-zinc-500 font-semibold mb-8 text-sm leading-relaxed">
-                        Trade-in request for your <strong className="text-zinc-950 font-black">{state.model}</strong> was processed. Your guaranteed payout estimate is <strong className="text-zinc-950 font-black">£{offerPrice}</strong>.
+                        Trade-in request for your <strong className="text-zinc-950 font-black">{state.model}</strong> was processed. Your guaranteed payout estimate is <strong className="text-zinc-950 font-black">£{serverOfferPrice ?? offerPrice}</strong>.
                       </p>
 
                       <div className="rounded-3xl bg-zinc-50 border border-zinc-150 overflow-hidden mb-8">
@@ -1191,7 +1228,7 @@ export default function TradeInPage() {
                           ] : [
                             { n: "1", title: "Visit TechStop Leicester hub", desc: `We have registered your drop slot. Check ${state.contact.email || "your inbox"} for address and confirmation barcode.`, hi: true },
                             { n: "2", title: "Five-minute in-store diagnostics", desc: "Our hardware technician inspects the device functionality, screen index, and resets to match description.", hi: false },
-                            { n: "3", title: `Instant direct bank deposit of £${offerPrice}`, desc: "Once diagnostic completes, funds are released directly to bank account, store voucher, or paid in cash.", hi: false },
+                            { n: "3", title: `Instant direct bank deposit of £${serverOfferPrice ?? offerPrice}`, desc: "Once diagnostic completes, funds are released directly to bank account, store voucher, or paid in cash.", hi: false },
                           ]).map(item => (
                             <div key={item.n} className="flex items-start gap-4 bg-transparent">
                               <div className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 shadow-sm border ${item.hi ? "bg-zinc-950 text-white border-zinc-950" : "bg-white text-zinc-600 border-zinc-150"}`}>

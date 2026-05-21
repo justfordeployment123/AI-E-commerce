@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { notFound, useParams } from "next/navigation";
+import { useCart } from "../../../context/cart-context";
+import { productsApi } from "../../../lib/api";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import {
@@ -370,13 +372,56 @@ export default function CategoryPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [activeTabBrand, setActiveTabBrand] = useState<string>("all");
   const [selectedDiagnostic, setSelectedDiagnostic] = useState<string>("battery");
+  const [displayProducts, setDisplayProducts] = useState(PRODUCTS[categorySlug] ?? []);
+
+  const { addItem } = useCart();
+
+  const CATEGORY_API_MAP: Record<string, string> = {
+    phones: "Phone", tablets: "Tablet", consoles: "Console", laptops: "Laptop", audio: "Audio",
+  };
+
+  useEffect(() => {
+    const apiCategory = CATEGORY_API_MAP[categorySlug];
+    if (!apiCategory) return;
+    productsApi.list({ category: apiCategory, limit: 50 })
+      .then(res => {
+        if (res.items.length > 0) {
+          setDisplayProducts(res.items.map(p => ({
+            id: p.id,
+            title: p.name,
+            brand: p.brand,
+            grade: p.condition,
+            storage: String((p.specs as Record<string, unknown>)?.storage ?? "—"),
+            price: p.price,
+            originalPrice: p.comparePrice ?? p.price,
+            rating: p.rating,
+            reviews: p.reviewCount,
+            image: p.images[0] ?? "",
+          })));
+        }
+      })
+      .catch(() => {});
+  }, [categorySlug]);
 
   if (!meta) {
     notFound();
     return null;
   }
 
-  function handleAdd(id: string) {
+  async function handleAdd(id: string) {
+    const product = displayProducts.find(p => p.id === id);
+    if (product) {
+      try {
+        await addItem({
+          productId: product.id,
+          quantity: 1,
+          price: product.price,
+          name: product.title,
+          slug: product.id,
+          image: product.image,
+        });
+      } catch { /* offline fallback handled by cart context */ }
+    }
     setAddedIds(prev => new Set(prev).add(id));
     setTimeout(() => setAddedIds(prev => { const s = new Set(prev); s.delete(id); return s; }), 2000);
   }
@@ -386,7 +431,7 @@ export default function CategoryPage() {
   }
 
   const CategoryIcon = meta.icon;
-  const allProducts = PRODUCTS[categorySlug] ?? [];
+  const allProducts = displayProducts;
 
   let filtered = allProducts.filter(p => {
     const matchBrand = activeBrands.length === 0 || activeBrands.includes(p.brand);

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { repairsApi } from "../../lib/api";
 import {
   Smartphone, Tablet, Gamepad2, Laptop, ArrowLeft, ArrowRight,
   Check, MapPin, Truck, Wrench, Clock, Shield, CheckCircle2,
@@ -86,6 +87,10 @@ export default function RepairPage() {
     fulfillment: "",
     contact: { name: "", email: "", phone: "", address: "", postcode: "" },
   });
+
+  const [submitting, setSubmitting] = useState(false);
+  const [submitRef, setSubmitRef] = useState("");
+  const [submitError, setSubmitError] = useState("");
 
   // Estimator states
   const [calcCategory, setCalcCategory] = useState("Phone");
@@ -704,7 +709,28 @@ export default function RepairPage() {
                       <p className="text-zinc-400 font-medium mb-10">Our technician will reach out to confirm the booking and pricing.</p>
                       <form
                         className="space-y-4"
-                        onSubmit={e => { e.preventDefault(); go(1); }}
+                        onSubmit={async (e) => {
+                          e.preventDefault();
+                          setSubmitting(true);
+                          setSubmitError("");
+                          try {
+                            const result = await repairsApi.submit({
+                              deviceType: state.deviceType,
+                              brand: state.brand,
+                              model: state.model,
+                              issue: state.issue,
+                              issueNotes: state.issueNotes,
+                              fulfillment: state.fulfillment === "mail" ? "ship" : state.fulfillment,
+                              contact: state.contact,
+                            });
+                            setSubmitRef(result.reference);
+                            go(1);
+                          } catch (err) {
+                            setSubmitError(err instanceof Error ? err.message : "Submission failed");
+                          } finally {
+                            setSubmitting(false);
+                          }
+                        }}
                       >
                         {[
                           { key: "name", label: "Full Name", type: "text", placeholder: "E.g. Alex Turner" },
@@ -727,9 +753,12 @@ export default function RepairPage() {
                             />
                           </div>
                         ))}
+                        {submitError && (
+                          <p className="text-sm font-bold text-red-500 bg-red-50 border border-red-100 rounded-2xl px-4 py-3">{submitError}</p>
+                        )}
                         <div className="pt-4">
-                          <button type="submit" className="w-full h-16 bg-black text-white rounded-[1.5rem] font-bold text-base flex items-center justify-center gap-2 hover:bg-zinc-800 transition-colors">
-                            Book Repair <ArrowRight className="h-5 w-5" />
+                          <button type="submit" disabled={submitting} className="w-full h-16 bg-black text-white rounded-[1.5rem] font-bold text-base flex items-center justify-center gap-2 hover:bg-zinc-800 transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
+                            {submitting ? "Submitting…" : "Book Repair"} {!submitting && <ArrowRight className="h-5 w-5" />}
                           </button>
                           <p className="text-center text-[10px] text-zinc-400 font-medium mt-3">
                             No payment now — you approve the quote before any work begins.
@@ -758,6 +787,7 @@ export default function RepairPage() {
                       <div className="rounded-[2rem] bg-zinc-50 border border-zinc-100 p-8 mb-10 text-left">
                         <div className="space-y-4 text-sm">
                           {[
+                            ...(submitRef ? [["Reference", submitRef]] : []),
                             ["Device", `${state.brand} ${state.model}`],
                             ["Issue", ISSUES[state.deviceType]?.find(i => i.id === state.issue)?.label ?? state.issue],
                             ["Method", state.fulfillment === "dropoff" ? "Drop-off in store" : "Post to us"],
