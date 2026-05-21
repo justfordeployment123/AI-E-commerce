@@ -7,9 +7,10 @@ WORKDIR /app
 RUN apt-get update -y && apt-get install -y --no-install-recommends openssl ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Install dependencies from app-local package manifest.
+# Install ALL dependencies (including devDeps) regardless of NODE_ENV.
+# Build tools like @nestjs/cli are devDeps and must be present in the builder stage.
 COPY package*.json ./
-RUN npm install --no-audit --no-fund
+RUN npm install --include=dev --no-audit --no-fund
 
 FROM node:24-bookworm-slim AS builder
 WORKDIR /app
@@ -23,10 +24,20 @@ COPY . .
 RUN npm run prisma:generate
 RUN npm run build
 
+FROM node:24-bookworm-slim AS prod-deps
+WORKDIR /app
+
+# Needed for Prisma's query engine binary.
+RUN apt-get update -y && apt-get install -y --no-install-recommends openssl ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY package*.json ./
+RUN npm install --omit=dev --no-audit --no-fund
+
 FROM node:24-bookworm-slim AS runner
 WORKDIR /app
 
-# And once more for the runtime: Prisma's client loads the engine at boot.
+# Prisma loads the engine binary at boot.
 RUN apt-get update -y && apt-get install -y --no-install-recommends openssl ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
@@ -35,12 +46,11 @@ ENV PORT=3002
 
 RUN groupadd -r nodejs && useradd -r -g nodejs nestjs
 
-# Runtime needs dist plus Prisma schema/migrations and installed modules.
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
-COPY --from=builder /app/node_modules ./node_modules
+COPY --from=prod-deps /app/node_modules ./node_modules
 
 USER nestjs
 
