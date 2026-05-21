@@ -133,8 +133,14 @@ export class HealthService {
     }
 
     private sanitizeError(error: unknown): string {
+        if (error instanceof AggregateError && error.errors?.length) {
+            const inner = error.errors.map((e: NodeJS.ErrnoException) => e.message || e.code || String(e)).join('; ');
+            return `${error.message ? error.message + ': ' : ''}${inner}`;
+        }
         if (error instanceof Error) {
-            const msg = error.message || error.name || 'Unknown error';
+            const base = (error as NodeJS.ErrnoException);
+            const parts = [base.message, base.code].filter(Boolean);
+            const msg = parts.join(' ') || error.name || 'Unknown error';
             return msg.replace(/(postgres(?:ql)?:\/\/)[^\s@]+@/gi, '$1***:***@');
         }
         if (typeof error === 'string') return error;
