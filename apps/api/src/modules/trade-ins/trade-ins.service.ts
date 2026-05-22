@@ -144,27 +144,23 @@ export class TradeInsService {
         const specsText = Object.entries(dto.specs).map(([k, v]) => `${k}: ${v}`).join(', ');
         const answersText = Object.entries(dto.answers).map(([k, v]) => `${k}: ${v}`).join(', ');
 
-        const prompt = `You are a UK refurbished electronics pricing expert.
+        const systemMessage = `You are a UK second-hand electronics pricing expert for a refurbished device buyback service. You must always respond with a JSON object containing a "price" field. Never return an empty object. If uncertain, give your best estimate based on similar devices.`;
 
-Device details:
+        const prompt = `Estimate the current UK resale market value in GBP for this device.
+
+Device:
+- Brand: ${dto.brand}
 - Model: ${dto.model}
 - Category: ${dto.category}
-- Brand: ${dto.brand}
-- Condition grade: ${dto.condition}
-- Specifications: ${specsText || 'Not provided'}
-- Diagnostic answers: ${answersText || 'Not provided'}
+- Condition: ${dto.condition}
+- Specs: ${specsText || 'standard'}
+- Diagnostic answers: ${answersText || 'none'}
 
-${dto.images?.length ? `The user has uploaded ${dto.images.length} photo(s). Assess actual physical condition carefully — look for screen damage, scratches, dents, and wear. Adjust price down if condition is worse than reported.` : 'No photos provided — rely solely on the diagnostic answers.'}
+${dto.images?.length ? `${dto.images.length} photo(s) attached — assess physical condition from the images and adjust price accordingly.` : 'No photos — use condition grade and diagnostic answers only.'}
 
-Return the current UK resale market price in GBP for this device in its described condition, based on mid-2025 prices from BackMarket, CEX, and Music Magpie.
+Base your estimate on mid-2025 UK prices from BackMarket, CEX, Music Magpie, and eBay completed listings. This is the raw market resale value before any trade-in margin is applied.
 
-Rules:
-- Return the fair current market resale value (NOT a trade-in offer — that margin is applied separately)
-- Adjust downward if photos show worse condition than reported
-- Round to the nearest £5
-- Minimum value is £10
-
-Respond with ONLY valid JSON, no extra text: {"price": <number>}`;
+Respond with ONLY: {"price": <number rounded to nearest 5, minimum 10>}`;
 
         const content: OpenAI.Chat.ChatCompletionContentPart[] = [{ type: 'text', text: prompt }];
 
@@ -174,17 +170,33 @@ Respond with ONLY valid JSON, no extra text: {"price": <number>}`;
             }
         }
 
+        if (dto.images?.length) {
+            const imgSample = dto.images[0]?.substring(0, 80) ?? '';
+            this.logger.log(`Images attached: ${dto.images.length}, first URL prefix: ${imgSample}`);
+        }
+
         try {
             const response = await openai.chat.completions.create({
                 model: 'gpt-4o',
-                messages: [{ role: 'user', content }],
+                messages: [
+                    { role: 'system', content: systemMessage },
+                    { role: 'user', content },
+                ],
                 temperature: 0,
-                max_tokens: 50,
+                max_tokens: 100,
                 response_format: { type: 'json_object' },
             });
 
-            const raw = response.choices[0]?.message?.content ?? '{}';
-            this.logger.log(`OpenAI raw response: ${raw}`);
+            const choice = response.choices[0];
+            const finishReason = choice?.finish_reason;
+            const raw = choice?.message?.content ?? '{}';
+            this.logger.log(`OpenAI finish_reason: ${finishReason} | raw: ${raw}`);
+
+            if (finishReason === 'content_filter') {
+                this.logger.warn('OpenAI refused the request (content_filter) — falling back to rule-based pricing');
+                return { price: this.applyMargin(computeOffer(dto.model, dto.condition, dto.answers)), aiUsed: false };
+            }
+
             const parsed = JSON.parse(raw) as { price?: number };
             const marketPrice = parsed.price && parsed.price > 0 ? parsed.price : null;
             if (!marketPrice) {
