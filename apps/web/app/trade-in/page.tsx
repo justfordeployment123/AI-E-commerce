@@ -150,78 +150,11 @@ const CONDITION_QUESTIONS: Record<string, { id: string; question: string; option
   ],
 };
 
-const BASE_PRICES: Record<string, { base: number }> = {
-  "iPhone 15 Pro Max": { base: 780 }, "iPhone 15 Pro": { base: 680 }, "iPhone 15 Plus": { base: 580 },
-  "iPhone 15": { base: 520 }, "iPhone 14 Pro Max": { base: 620 }, "iPhone 14 Pro": { base: 540 },
-  "iPhone 14 Plus": { base: 430 }, "iPhone 14": { base: 380 }, "iPhone 13 Pro Max": { base: 480 },
-  "iPhone 13 Pro": { base: 420 }, "iPhone 13": { base: 340 }, "iPhone 12 Pro Max": { base: 320 },
-  "iPhone 12 Pro": { base: 280 }, "iPhone 12": { base: 230 }, "iPhone 11 Pro Max": { base: 220 },
-  "iPhone 11 Pro": { base: 190 }, "iPhone 11": { base: 160 },
-  "Galaxy S24 Ultra": { base: 720 }, "Galaxy S24+": { base: 580 }, "Galaxy S24": { base: 480 },
-  "Galaxy S23 Ultra": { base: 580 }, "Galaxy S23+": { base: 440 }, "Galaxy S23": { base: 360 },
-  "Galaxy S22 Ultra": { base: 440 }, "Galaxy S22+": { base: 320 }, "Galaxy S22": { base: 260 },
-  "Galaxy S21 Ultra": { base: 300 }, "Galaxy S21+": { base: 220 }, "Galaxy S21": { base: 175 },
-  "Pixel 8 Pro": { base: 560 }, "Pixel 8": { base: 420 }, "Pixel 7 Pro": { base: 380 },
-  "Pixel 7": { base: 280 }, "Pixel 6 Pro": { base: 240 }, "Pixel 6": { base: 180 },
-  "PS5 Disc Edition": { base: 340 }, "PS5 Digital Edition": { base: 280 }, "PS4 Pro": { base: 170 },
-  "PS4 Slim": { base: 120 }, "PS4": { base: 95 }, "PS3 Slim": { base: 55 }, "PS3": { base: 40 },
-  "Xbox Series X": { base: 320 }, "Xbox Series S": { base: 190 }, "Xbox One X": { base: 140 },
-  "Xbox One S": { base: 90 }, "Xbox One": { base: 70 }, "Xbox 360 S": { base: 40 }, "Xbox 360": { base: 30 },
-  "Nintendo Switch OLED": { base: 210 }, "Nintendo Switch (V2)": { base: 155 }, "Nintendo Switch Lite": { base: 110 },
-  "MacBook Pro 16\" M3 Max": { base: 1800 }, "MacBook Pro 16\" M3 Pro": { base: 1500 },
-  "MacBook Pro 14\" M3 Max": { base: 1600 }, "MacBook Pro 14\" M3 Pro": { base: 1200 },
-  "MacBook Air 15\" M3": { base: 900 }, "MacBook Air 13\" M3": { base: 780 },
-  "MacBook Pro 16\" M2 Max": { base: 1400 }, "MacBook Pro 16\" M2 Pro": { base: 1150 },
-  "MacBook Pro 14\" M2 Pro": { base: 1050 }, "MacBook Air 15\" M2": { base: 780 },
-  "MacBook Air 13\" M2": { base: 680 }, "MacBook Air 13\" M1": { base: 500 },
-  "Apple Watch Ultra 2": { base: 410 }, "Apple Watch Series 9": { base: 220 }, "Apple Watch Series 8": { base: 160 }, "Apple Watch SE (2nd Gen)": { base: 105 },
-  "Galaxy Watch 6 Classic": { base: 150 }, "Galaxy Watch 6": { base: 110 }, "Galaxy Watch 5 Pro": { base: 90 }, "Galaxy Watch 5": { base: 65 },
-  "Fitbit Sense 2": { base: 85 }, "Fitbit Versa 4": { base: 60 }, "Fitbit Charge 6": { base: 45 },
-  "AirPods Max": { base: 260 }, "AirPods Pro 2": { base: 115 }, "AirPods Pro": { base: 75 }, "AirPods 3rd Gen": { base: 60 },
-  "WH-1000XM5": { base: 170 }, "WF-1000XM5": { base: 100 }, "WH-1000XM4": { base: 100 },
-  "QuietComfort Ultra": { base: 175 }, "QuietComfort II Headphones": { base: 110 }, "QuietComfort Earbuds II": { base: 85 },
-};
-
-function computeOffer(state: TradeInState): number {
-  const base = BASE_PRICES[state.model]?.base ?? 200;
-  const condition = CONDITIONS.find(c => c.id === state.condition);
-  const mult = condition?.multiplier ?? 0.5;
-  let price = base * mult;
-  if (state.answers.screen === "Cracked but display works") price *= 0.75;
-  if (state.answers.screen === "Shattered / unusable display" || state.answers.screen === "Shattered") price *= 0.4;
-  if (state.answers.battery === "70–79% (Fair)") price *= 0.92;
-  if (state.answers.battery === "Below 70% / Unknown") price *= 0.82;
-  if (state.answers.battery === "Drains quickly (1–3 hours)") price *= 0.88;
-  if (state.answers.battery === "Very poor under 1 hour" || state.answers.battery === "Very poor under 3 hours") price *= 0.75;
-  if (state.answers.charging === "No / Loose" || state.answers.charging === "No / loose connection") price *= 0.85;
-  if (state.answers.biometrics === "No / Faulty") price *= 0.9;
-  if (state.answers.power === "No, won't power on" || state.answers.power === "No" || state.answers.power === "Won't power on") price *= 0.25;
-  if (state.answers.power === "Yes but has some issues" || state.answers.power === "Powers on but has screen/sensor issues") price *= 0.7;
-  if (state.answers.back === "Cracked back glass") price *= 0.88;
-  if (state.answers.body === "Significant damage" || state.answers.body === "Heavy wear or staining") price *= 0.7;
-  if (state.answers.body === "Dents or significant marks" || state.answers.body === "Minor scratches or wear on case") price *= 0.8;
-  if (state.answers.screen === "Cracked" || state.answers.screen === "Cracked screen") price *= 0.65;
-  if (state.answers.screen === "Deep scratches or chips") price *= 0.75;
-  if (state.answers.input === "Major issues") price *= 0.6;
-  if (state.answers.sound === "Muffled sound or static in one ear") price *= 0.5;
-  if (state.answers.sound === "No sound in one/both ears") price *= 0.15;
-  return Math.max(Math.round(price / 5) * 5, 10);
-}
-
-const ALL_MODELS = Object.keys(BASE_PRICES).map(modelName => {
-  let category = "Phone";
-  let brand = "";
-  for (const [catId, brandsMap] of Object.entries(MODELS)) {
-    for (const [brandName, modelsList] of Object.entries(brandsMap)) {
-      if (modelsList.includes(modelName)) {
-        category = catId;
-        brand = brandName;
-        break;
-      }
-    }
-  }
-  return { name: modelName, category, brand };
-});
+const ALL_MODELS = Object.entries(MODELS).flatMap(([catId, brandsMap]) =>
+  Object.entries(brandsMap).flatMap(([brandName, modelsList]) =>
+    modelsList.map(modelName => ({ name: modelName, category: catId, brand: brandName }))
+  )
+);
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -344,6 +277,7 @@ export default function TradeInPage() {
   const [images, setImages] = useState<string[]>([]);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiPrice, setAiPrice] = useState<number | null>(null);
+  const [aiError, setAiError] = useState(false);
   const [aiLoadingText, setAiLoadingText] = useState("Analyzing your device...");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const modalScrollRef = useRef<HTMLDivElement>(null);
@@ -423,6 +357,7 @@ export default function TradeInPage() {
     } else {
       if (phase === 4) {
         setAiPrice(null);
+        setAiError(false);
       }
       setPhase(p => p - 1);
       scrollToTop();
@@ -431,7 +366,6 @@ export default function TradeInPage() {
 
   const currentSpecs = SPECS[state.category] ?? [];
   const currentQuestions = CONDITION_QUESTIONS[state.category] ?? [];
-  const offerPrice = state.model ? computeOffer(state) : 0;
 
   async function compressImage(file: File): Promise<string> {
     return new Promise((resolve) => {
@@ -466,8 +400,9 @@ export default function TradeInPage() {
         images: images.length > 0 ? images : undefined,
       });
       setAiPrice(result.price);
+      setAiError(false);
     } catch {
-      setAiPrice(computeOffer(state));
+      setAiError(true);
     } finally {
       clearInterval(interval);
       setAiLoading(false);
@@ -1409,8 +1344,27 @@ export default function TradeInPage() {
                           </div>
                         )}
 
+                        {/* Error Screen */}
+                        {!aiLoading && aiError && aiPrice === null && (
+                          <div className="flex-1 flex flex-col items-center justify-center gap-6 py-8">
+                            <div className="h-14 w-14 rounded-full bg-red-50 border border-red-200 flex items-center justify-center">
+                              <X className="h-6 w-6 text-red-500" />
+                            </div>
+                            <div className="text-center space-y-2">
+                              <p className="text-sm font-black text-zinc-950">Could not reach pricing service</p>
+                              <p className="text-xs font-semibold text-zinc-400 max-w-xs">Check your connection and try again. No fallback price will be shown.</p>
+                            </div>
+                            <button
+                              onClick={() => { setAiError(false); fetchAiPrice(); }}
+                              className="h-11 px-6 bg-zinc-950 text-white rounded-xl text-xs font-black hover:bg-zinc-800 transition-colors"
+                            >
+                              Retry
+                            </button>
+                          </div>
+                        )}
+
                         {/* Setup Screen (Before Calculation) */}
-                        {!aiLoading && aiPrice === null && (
+                        {!aiLoading && !aiError && aiPrice === null && (
                           <div className="space-y-6 flex-1 flex flex-col justify-between">
                             <div className="space-y-6">
                               <StepHeader label="Device Photos (Optional)" sub="Adding images can help our AI verify hardware details and increase accuracy." />
@@ -1541,6 +1495,7 @@ export default function TradeInPage() {
                               <button
                                 onClick={() => {
                                   setAiPrice(null);
+                                  setAiError(false);
                                   setImages([]);
                                 }}
                                 className="w-full sm:w-auto h-12 px-6 border border-zinc-200 rounded-xl font-bold text-xs text-zinc-600 hover:border-zinc-950 hover:text-zinc-950 transition-colors flex items-center justify-center shrink-0"
@@ -1573,7 +1528,7 @@ export default function TradeInPage() {
                               const result = await tradeInsApi.submit({
                                 category: state.category, brand: state.brand, model: state.model,
                                 specs: state.specs, condition: state.condition, answers: state.answers,
-                                fulfillment: state.fulfillment, offerPrice: aiPrice ?? offerPrice,
+                                fulfillment: state.fulfillment, offerPrice: aiPrice!,
                                 contact: state.contact,
                               });
                               setSubmitRef(result.reference);
@@ -1754,7 +1709,7 @@ export default function TradeInPage() {
 
                                 <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3.5 text-center">
                                   <span className="text-[9px] font-black uppercase tracking-widest text-emerald-800 block">Total Offer Value</span>
-                                  <p className="text-3xl font-black font-mono text-emerald-950 mt-1">£{aiPrice ?? offerPrice}</p>
+                                  <p className="text-3xl font-black font-mono text-emerald-950 mt-1">£{aiPrice}</p>
                                   <div className="text-[9px] font-bold text-emerald-600 flex items-center justify-center gap-1 mt-1">
                                     <Clock className="h-3 w-3" /> Locked for 14 days
                                   </div>
@@ -1804,7 +1759,7 @@ export default function TradeInPage() {
                               Reference ID: <strong className="text-zinc-800 font-mono font-black">{submitRef}</strong>
                             </p>
                             <p className="text-sm font-semibold text-zinc-500 max-w-md mx-auto leading-relaxed pt-2">
-                              Your device is registered for buyback. We have locked in a trade offer value of <strong className="text-zinc-950 font-black">£{serverOfferPrice ?? aiPrice ?? offerPrice}</strong>.
+                              Your device is registered for buyback. We have locked in a trade offer value of <strong className="text-zinc-950 font-black">£{serverOfferPrice ?? aiPrice}</strong>.
                             </p>
                           </div>
 

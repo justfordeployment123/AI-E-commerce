@@ -8,6 +8,11 @@ RUN npm install --no-audit --no-fund
 FROM node:24-bookworm-slim AS builder
 WORKDIR /app
 
+# Bake the public API URL into the Next.js client bundle at build time.
+# Pass via: docker build --build-arg NEXT_PUBLIC_API_URL=https://api.yourdomain.com
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
