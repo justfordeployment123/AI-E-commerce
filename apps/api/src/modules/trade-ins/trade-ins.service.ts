@@ -21,15 +21,15 @@ export class TradeInsService {
             const byKey: Record<string, number | undefined> = Object.fromEntries(rows.map((r) => [r.key, r.value]));
             return {
                 conditionMultipliers: {
-                    Mint:    byKey['multiplier_mint']    ?? DEFAULT_PRICING_CONFIG.conditionMultipliers.Mint,
-                    Good:    byKey['multiplier_good']    ?? DEFAULT_PRICING_CONFIG.conditionMultipliers.Good,
-                    Used:    byKey['multiplier_used']    ?? DEFAULT_PRICING_CONFIG.conditionMultipliers.Used,
-                    Damaged: byKey['multiplier_damaged'] ?? DEFAULT_PRICING_CONFIG.conditionMultipliers.Damaged,
+                    Mint:    (byKey['multiplier_mint']    ?? DEFAULT_PRICING_CONFIG.conditionMultipliers.Mint)!,
+                    Good:    (byKey['multiplier_good']    ?? DEFAULT_PRICING_CONFIG.conditionMultipliers.Good)!,
+                    Used:    (byKey['multiplier_used']    ?? DEFAULT_PRICING_CONFIG.conditionMultipliers.Used)!,
+                    Damaged: (byKey['multiplier_damaged'] ?? DEFAULT_PRICING_CONFIG.conditionMultipliers.Damaged)!,
                 },
-                marginPct:            byKey['margin_pct']              ?? DEFAULT_PRICING_CONFIG.marginPct,
-                penaltyCrackedScreen: byKey['penalty_cracked_screen']  ?? DEFAULT_PRICING_CONFIG.penaltyCrackedScreen,
-                penaltyBattery:       byKey['penalty_battery']         ?? DEFAULT_PRICING_CONFIG.penaltyBattery,
-                penaltyCharging:      byKey['penalty_charging']        ?? DEFAULT_PRICING_CONFIG.penaltyCharging,
+                marginPct:            (byKey['margin_pct']             ?? DEFAULT_PRICING_CONFIG.marginPct)!,
+                penaltyCrackedScreen: (byKey['penalty_cracked_screen'] ?? DEFAULT_PRICING_CONFIG.penaltyCrackedScreen)!,
+                penaltyBattery:       (byKey['penalty_battery']        ?? DEFAULT_PRICING_CONFIG.penaltyBattery)!,
+                penaltyCharging:      (byKey['penalty_charging']       ?? DEFAULT_PRICING_CONFIG.penaltyCharging)!,
             };
         } catch {
             return DEFAULT_PRICING_CONFIG;

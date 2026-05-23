@@ -5,8 +5,6 @@ import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 
-const googleConfigured = !!process.env.GOOGLE_CLIENT_ID;
-
 @Controller('auth')
 export class AuthController {
     constructor(private readonly authService: AuthService) {}
@@ -23,18 +21,16 @@ export class AuthController {
     }
 
     @Get('google')
-    googleAuth(@Res() res: Response) {
-        if (!googleConfigured) return res.status(501).json({ message: 'Google OAuth is not configured on this server.' });
-        return AuthGuard('google')(res.req, res, () => {});
+    @UseGuards(AuthGuard('google'))
+    googleAuth() {
+        // Guard redirects to Google
     }
 
     @Get('google/callback')
+    @UseGuards(AuthGuard('google'))
     googleCallback(@Req() req: Request, @Res() res: Response) {
-        if (!googleConfigured) return res.status(501).json({ message: 'Google OAuth is not configured on this server.' });
-        return AuthGuard('google')(req, res, () => {
-            const { token } = req.user as { token: string };
-            const frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:3000';
-            res.redirect(`${frontendUrl}/auth/callback?token=${token}`);
-        });
+        const { token } = req.user as { token: string };
+        const frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:3000';
+        res.redirect(`${frontendUrl}/auth/callback?token=${token}`);
     }
 }
