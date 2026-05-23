@@ -30,7 +30,7 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-white text-black font-sans selection:bg-accent selection:text-black items-center justify-center p-4 relative overflow-hidden">
+    <div className="h-screen bg-white text-black font-sans selection:bg-accent selection:text-black flex items-center justify-center p-4 relative overflow-hidden">
       <div className="absolute top-0 left-0 w-1/2 h-full bg-mood-rose/30 skew-x-12 -translate-x-32 pointer-events-none" />
       <div className="absolute bottom-0 right-0 w-1/3 h-1/2 bg-mood-emerald/30 blur-[120px] rounded-full pointer-events-none" />
 
@@ -40,22 +40,23 @@ export default function SignupPage() {
         transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
         className="w-full max-w-md relative z-10"
       >
-        <div className="mb-12">
-          <a href="/" className="inline-flex items-center gap-2 text-zinc-400 hover:text-black transition-colors text-xs font-bold uppercase tracking-widest mb-12 group">
+        {/* Header */}
+        <div className="mb-6">
+          <a href="/" className="inline-flex items-center gap-2 text-zinc-400 hover:text-black transition-colors text-xs font-bold uppercase tracking-widest mb-5 group">
             <ChevronLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
             Back to home
           </a>
           <div className="text-center lg:text-left">
-            <a href="/" className="text-3xl font-bold tracking-tighter inline-block mb-10">
+            <a href="/" className="text-2xl font-bold tracking-tighter inline-block mb-3">
               TECHSTOP<span className="text-zinc-400 font-medium">LEICESTER</span>
             </a>
-            <h1 className="font-serif text-5xl md:text-6xl font-medium leading-[1.1] mb-4">Start your <br /><i>journey</i>.</h1>
-            <p className="text-zinc-500 font-medium text-lg">Join 2M+ users saving the planet with premium tech.</p>
+            <h1 className="font-serif text-4xl md:text-5xl font-medium leading-[1.1] mb-2">Start your <i>journey</i>.</h1>
+            <p className="text-zinc-500 font-medium">Join 2M+ users saving the planet with premium tech.</p>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-1.5">
             <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 ml-1">Full Name</label>
             <div className="relative group">
               <input
@@ -64,13 +65,13 @@ export default function SignupPage() {
                 onChange={e => setName(e.target.value)}
                 placeholder="John Doe"
                 required
-                className="w-full h-18 rounded-[1.5rem] bg-zinc-50 px-12 text-base font-bold focus:ring-2 focus:ring-black outline-none border-2 border-transparent transition-all focus:bg-white shadow-sm"
+                className="w-full h-13 rounded-2xl bg-zinc-50 px-12 text-sm font-bold focus:ring-2 focus:ring-black outline-none border-2 border-transparent transition-all focus:bg-white shadow-sm"
               />
-              <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-300 group-focus-within:text-black transition-colors" />
+              <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-300 group-focus-within:text-black transition-colors" />
             </div>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-1.5">
             <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 ml-1">Email address</label>
             <div className="relative group">
               <input
@@ -79,13 +80,13 @@ export default function SignupPage() {
                 onChange={e => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 required
-                className="w-full h-18 rounded-[1.5rem] bg-zinc-50 px-12 text-base font-bold focus:ring-2 focus:ring-black outline-none border-2 border-transparent transition-all focus:bg-white shadow-sm"
+                className="w-full h-13 rounded-2xl bg-zinc-50 px-12 text-sm font-bold focus:ring-2 focus:ring-black outline-none border-2 border-transparent transition-all focus:bg-white shadow-sm"
               />
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-300 group-focus-within:text-black transition-colors" />
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-300 group-focus-within:text-black transition-colors" />
             </div>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-1.5">
             <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 ml-1">Password</label>
             <div className="relative group">
               <input
@@ -95,9 +96,9 @@ export default function SignupPage() {
                 placeholder="••••••••"
                 required
                 minLength={8}
-                className="w-full h-18 rounded-[1.5rem] bg-zinc-50 px-12 text-base font-bold focus:ring-2 focus:ring-black outline-none border-2 border-transparent transition-all focus:bg-white shadow-sm"
+                className="w-full h-13 rounded-2xl bg-zinc-50 px-12 text-sm font-bold focus:ring-2 focus:ring-black outline-none border-2 border-transparent transition-all focus:bg-white shadow-sm"
               />
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-300 group-focus-within:text-black transition-colors" />
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-300 group-focus-within:text-black transition-colors" />
             </div>
           </div>
 
@@ -108,14 +109,14 @@ export default function SignupPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full h-18 bg-black text-white rounded-[1.5rem] font-bold mt-4 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-3 shadow-2xl shadow-black/20 text-lg disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full h-13 bg-black text-white rounded-2xl font-bold transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-3 shadow-2xl shadow-black/20 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {loading ? "Creating account…" : "Create Account"}
-            {!loading && <ArrowRight className="h-5 w-5 text-accent" />}
+            {!loading && <ArrowRight className="h-4 w-4 text-accent" />}
           </button>
         </form>
 
-        <p className="text-center text-sm text-zinc-500 mt-16 font-medium">
+        <p className="text-center text-sm text-zinc-500 mt-6 font-medium">
           Already a user?{" "}
           <a href="/login" className="text-black font-bold border-b-2 border-accent pb-0.5 hover:border-black transition-all">
             Log in here
@@ -123,8 +124,8 @@ export default function SignupPage() {
         </p>
       </motion.div>
 
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-6 opacity-20 grayscale">
-        <CheckCircle2 className="h-5 w-5" />
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4 opacity-20 grayscale">
+        <CheckCircle2 className="h-4 w-4" />
         <span className="h-1 w-1 rounded-full bg-black" />
         <span className="text-[9px] font-bold uppercase tracking-widest">Secure 256-bit Encryption</span>
       </div>

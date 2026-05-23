@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
-  ShoppingCart, User, Search, Menu, ChevronRight, X, Zap, ArrowRight,
-  Smartphone, Tablet, Gamepad2, Laptop, Headphones, RefreshCw, Wrench
+  ShoppingCart, Search, Menu, ChevronRight, X, Zap, ArrowRight,
+  Smartphone, Tablet, Gamepad2, Laptop, Headphones, RefreshCw, Wrench,
+  Package, Settings, LogOut, LogIn
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "../context/auth-context";
 
 const SHOP_CATEGORIES = [
   { label: "Phones", href: "/shop/phones", icon: Smartphone },
@@ -21,7 +23,10 @@ export default function Navbar({ itemsCount = 0 }: { itemsCount?: number }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
+  const { user, loading, logout } = useAuth();
 
   const MOCK_SEARCH_ITEMS = [
     { id: "iphone-15-pro", title: "iPhone 15 Pro", category: "phones", brand: "Apple", price: "739", image: "https://picsum.photos/seed/iphone_wanted/100/100" },
@@ -170,10 +175,85 @@ export default function Navbar({ itemsCount = 0 }: { itemsCount?: number }) {
 
             {/* Right: Account + Cart */}
             <div className="flex items-center gap-2 md:gap-3 shrink-0">
-              <Link href="/account" className="flex items-center gap-2 h-10 px-4 rounded-xl hover:bg-zinc-100 transition-all font-bold text-xs uppercase tracking-wide">
-                <User className="h-4 w-4" />
-                <span className="hidden sm:inline">Account</span>
-              </Link>
+
+              {/* Auth button */}
+              {loading ? (
+                <div className="h-10 w-10 rounded-[14px] bg-zinc-100 animate-pulse" />
+              ) : user ? (
+                /* Logged-in avatar + dropdown */
+                <div ref={profileRef} className="relative">
+                  <button
+                    onClick={() => setProfileOpen((o) => !o)}
+                    className="flex items-center justify-center h-10 w-10 md:h-11 md:w-11 rounded-[14px] bg-zinc-950 text-accent font-black text-sm uppercase tracking-tight transition-transform hover:scale-105 active:scale-95 shadow-md shadow-black/10 select-none"
+                    aria-label="Profile menu"
+                  >
+                    {user.name.charAt(0)}
+                  </button>
+
+                  <AnimatePresence>
+                    {profileOpen && (
+                      <>
+                        {/* Backdrop */}
+                        <div className="fixed inset-0 z-40" onClick={() => setProfileOpen(false)} />
+
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.95, y: 8 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.95, y: 8 }}
+                          transition={{ duration: 0.15 }}
+                          className="absolute right-0 top-full mt-2 w-56 bg-white border border-zinc-200 rounded-2xl shadow-2xl z-50 overflow-hidden"
+                        >
+                          {/* User info header */}
+                          <div className="px-4 py-3 border-b border-zinc-100">
+                            <p className="text-xs font-black text-zinc-950 truncate">{user.name}</p>
+                            <p className="text-[10px] text-zinc-400 font-semibold truncate mt-0.5">{user.email}</p>
+                          </div>
+
+                          {/* Menu items */}
+                          <div className="p-1.5 space-y-0.5">
+                            <Link
+                              href="/account"
+                              onClick={() => setProfileOpen(false)}
+                              className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold text-zinc-700 hover:bg-zinc-50 hover:text-zinc-950 transition-colors"
+                            >
+                              <Settings className="h-3.5 w-3.5 text-zinc-400" />
+                              My Account
+                            </Link>
+                            <Link
+                              href="/account/orders"
+                              onClick={() => setProfileOpen(false)}
+                              className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold text-zinc-700 hover:bg-zinc-50 hover:text-zinc-950 transition-colors"
+                            >
+                              <Package className="h-3.5 w-3.5 text-zinc-400" />
+                              My Orders
+                            </Link>
+                          </div>
+
+                          {/* Sign out */}
+                          <div className="p-1.5 border-t border-zinc-100">
+                            <button
+                              onClick={() => { logout(); setProfileOpen(false); }}
+                              className="flex w-full items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold text-red-500 hover:bg-red-50 transition-colors"
+                            >
+                              <LogOut className="h-3.5 w-3.5" />
+                              Sign Out
+                            </button>
+                          </div>
+                        </motion.div>
+                      </>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ) : (
+                /* Not logged in */
+                <Link
+                  href="/account"
+                  className="flex items-center gap-2 h-10 px-4 rounded-xl bg-zinc-950 text-white hover:bg-zinc-800 transition-all font-bold text-xs uppercase tracking-wide"
+                >
+                  <LogIn className="h-4 w-4" />
+                  <span className="hidden sm:inline">Sign In</span>
+                </Link>
+              )}
 
               <Link href="/cart" className="relative flex items-center justify-center h-10 w-10 md:h-11 md:w-11 rounded-[14px] bg-accent text-black transition-transform hover:scale-105 active:scale-95 shadow-md shadow-accent/20">
                 <ShoppingCart className="h-4 w-4 md:h-5 md:w-5" />
@@ -320,6 +400,49 @@ export default function Navbar({ itemsCount = 0 }: { itemsCount?: number }) {
                       </Link>
                     );
                   })}
+                </div>
+
+                {/* Mobile account section */}
+                <div className="pt-3 mt-3 border-t border-zinc-100">
+                  {user ? (
+                    <>
+                      <div className="flex items-center gap-3 px-3 py-2.5 mb-1">
+                        <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-zinc-950 text-accent font-black text-sm shrink-0">
+                          {user.name.charAt(0)}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-black text-zinc-950 truncate">{user.name}</p>
+                          <p className="text-[10px] text-zinc-400 font-semibold truncate">{user.email}</p>
+                        </div>
+                      </div>
+                      <Link href="/account" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold hover:bg-zinc-50 text-zinc-700 transition-all">
+                        <Settings className="h-4 w-4 text-zinc-400" strokeWidth={1.8} />
+                        <span>My Account</span>
+                        <ChevronRight className="h-4 w-4 ml-auto text-zinc-300" />
+                      </Link>
+                      <Link href="/account/orders" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold hover:bg-zinc-50 text-zinc-700 transition-all">
+                        <Package className="h-4 w-4 text-zinc-400" strokeWidth={1.8} />
+                        <span>My Orders</span>
+                        <ChevronRight className="h-4 w-4 ml-auto text-zinc-300" />
+                      </Link>
+                      <button
+                        onClick={() => { logout(); setIsOpen(false); }}
+                        className="flex w-full items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-red-500 hover:bg-red-50 transition-all"
+                      >
+                        <LogOut className="h-4 w-4" strokeWidth={1.8} />
+                        <span>Sign Out</span>
+                      </button>
+                    </>
+                  ) : (
+                    <Link
+                      href="/account"
+                      onClick={() => setIsOpen(false)}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold bg-zinc-950 text-white transition-all"
+                    >
+                      <LogIn className="h-4 w-4" strokeWidth={1.8} />
+                      <span>Sign In / Create Account</span>
+                    </Link>
+                  )}
                 </div>
               </div>
             </motion.div>

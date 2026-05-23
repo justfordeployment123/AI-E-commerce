@@ -38,7 +38,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-white text-black font-sans selection:bg-accent selection:text-black items-center justify-center p-4 relative overflow-hidden">
+    <div className="h-screen bg-white text-black font-sans selection:bg-accent selection:text-black flex items-center justify-center p-4 relative overflow-hidden">
       <div className="absolute top-0 right-0 w-1/2 h-full bg-mood-sky/30 -skew-x-12 translate-x-32 pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-1/3 h-1/2 bg-mood-amber/30 blur-[120px] rounded-full pointer-events-none" />
 
@@ -48,22 +48,23 @@ export default function LoginPage() {
         transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
         className="w-full max-w-md relative z-10"
       >
-        <div className="mb-12">
-          <a href="/" className="inline-flex items-center gap-2 text-zinc-400 hover:text-black transition-colors text-xs font-bold uppercase tracking-widest mb-12 group">
+        {/* Header */}
+        <div className="mb-6">
+          <a href="/" className="inline-flex items-center gap-2 text-zinc-400 hover:text-black transition-colors text-xs font-bold uppercase tracking-widest mb-5 group">
             <ChevronLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
             Back to home
           </a>
           <div className="text-center lg:text-left">
-            <a href="/" className="text-3xl font-bold tracking-tighter inline-block mb-10">
+            <a href="/" className="text-2xl font-bold tracking-tighter inline-block mb-3">
               TECHSTOP<span className="text-zinc-400 font-medium">LEICESTER</span>
             </a>
-            <h1 className="font-serif text-5xl md:text-6xl font-medium leading-[1.1] mb-4">Welcome <br /><i>back</i>.</h1>
-            <p className="text-zinc-500 font-medium text-lg">Log in to track your tech and manage your sell-ins.</p>
+            <h1 className="font-serif text-4xl md:text-5xl font-medium leading-[1.1] mb-2">Welcome <i>back</i>.</h1>
+            <p className="text-zinc-500 font-medium">Log in to track your tech and manage your sell-ins.</p>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-1.5">
             <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 ml-1">Email address</label>
             <div className="relative group">
               <input
@@ -72,16 +73,14 @@ export default function LoginPage() {
                 onChange={e => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 required
-                className="w-full h-18 rounded-[1.5rem] bg-zinc-50 px-12 text-base font-bold focus:ring-2 focus:ring-black outline-none border-2 border-transparent transition-all focus:bg-white shadow-sm"
+                className="w-full h-13 rounded-2xl bg-zinc-50 px-12 text-sm font-bold focus:ring-2 focus:ring-black outline-none border-2 border-transparent transition-all focus:bg-white shadow-sm"
               />
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-300 group-focus-within:text-black transition-colors" />
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-300 group-focus-within:text-black transition-colors" />
             </div>
           </div>
 
-          <div className="space-y-3">
-            <div className="flex justify-between items-center ml-1">
-              <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400">Password</label>
-            </div>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 ml-1">Password</label>
             <div className="relative group">
               <input
                 type="password"
@@ -89,9 +88,9 @@ export default function LoginPage() {
                 onChange={e => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                className="w-full h-18 rounded-[1.5rem] bg-zinc-50 px-12 text-base font-bold focus:ring-2 focus:ring-black outline-none border-2 border-transparent transition-all focus:bg-white shadow-sm"
+                className="w-full h-13 rounded-2xl bg-zinc-50 px-12 text-sm font-bold focus:ring-2 focus:ring-black outline-none border-2 border-transparent transition-all focus:bg-white shadow-sm"
               />
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-300 group-focus-within:text-black transition-colors" />
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-300 group-focus-within:text-black transition-colors" />
             </div>
           </div>
 
@@ -102,13 +101,13 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full h-18 bg-black text-white rounded-[1.5rem] font-bold mt-4 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-3 shadow-2xl shadow-black/20 text-lg disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full h-13 bg-black text-white rounded-2xl font-bold transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-3 shadow-2xl shadow-black/20 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {loading ? "Logging in…" : "Log in"}
-            {!loading && <ArrowRight className="h-5 w-5 text-accent" />}
+            {!loading && <ArrowRight className="h-4 w-4 text-accent" />}
           </button>
 
-          <div className="flex items-center gap-4 mt-2">
+          <div className="flex items-center gap-4">
             <div className="flex-1 h-px bg-zinc-200" />
             <span className="text-xs font-bold uppercase tracking-widest text-zinc-400">or</span>
             <div className="flex-1 h-px bg-zinc-200" />
@@ -117,7 +116,7 @@ export default function LoginPage() {
           <button
             type="button"
             onClick={handleGoogleLogin}
-            className="w-full h-18 bg-white border-2 border-zinc-200 rounded-[1.5rem] font-bold transition-all hover:scale-[1.02] hover:border-zinc-400 active:scale-[0.98] flex items-center justify-center gap-3 text-base text-zinc-700 shadow-sm"
+            className="w-full h-13 bg-white border-2 border-zinc-200 rounded-2xl font-bold transition-all hover:scale-[1.02] hover:border-zinc-400 active:scale-[0.98] flex items-center justify-center gap-3 text-sm text-zinc-700 shadow-sm"
           >
             <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -129,7 +128,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="text-center text-sm text-zinc-500 mt-16 font-medium">
+        <p className="text-center text-sm text-zinc-500 mt-6 font-medium">
           New to TechStop?{" "}
           <a href="/signup" className="text-black font-bold border-b-2 border-accent pb-0.5 hover:border-black transition-all">
             Create an account
@@ -137,8 +136,8 @@ export default function LoginPage() {
         </p>
       </motion.div>
 
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-6 opacity-20 grayscale">
-        <Zap className="h-5 w-5" />
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4 opacity-20 grayscale">
+        <Zap className="h-4 w-4" />
         <span className="h-1 w-1 rounded-full bg-black" />
         <span className="text-[9px] font-bold uppercase tracking-widest">Certified Refurbished Marketplace</span>
       </div>
