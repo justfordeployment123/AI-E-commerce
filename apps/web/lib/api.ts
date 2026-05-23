@@ -102,7 +102,7 @@ export const cartApi = {
 // ── Orders ────────────────────────────────────────────────────────────────────
 export const ordersApi = {
   create: (data: CreateOrderPayload) =>
-    apiFetch<Order>('/orders', { method: 'POST', body: JSON.stringify(data) }),
+    apiFetch<Order>('/orders', { method: 'POST', auth: true, body: JSON.stringify(data) }),
 
   myOrders: () => apiFetch<Order[]>('/orders/my', { auth: true }),
 };
@@ -110,7 +110,7 @@ export const ordersApi = {
 // ── Trade-ins ─────────────────────────────────────────────────────────────────
 export const tradeInsApi = {
   submit: (data: TradeInPayload) =>
-    apiFetch<TradeIn>('/trade-ins', { method: 'POST', body: JSON.stringify(data) }),
+    apiFetch<TradeIn>('/trade-ins', { method: 'POST', auth: true, body: JSON.stringify(data) }),
 
   my: () => apiFetch<TradeIn[]>('/trade-ins/my', { auth: true }),
 
@@ -127,7 +127,7 @@ export const tradeInsApi = {
 // ── Repairs ───────────────────────────────────────────────────────────────────
 export const repairsApi = {
   submit: (data: RepairPayload) =>
-    apiFetch<Repair>('/repairs', { method: 'POST', body: JSON.stringify(data) }),
+    apiFetch<Repair>('/repairs', { method: 'POST', auth: true, body: JSON.stringify(data) }),
 
   my: () => apiFetch<Repair[]>('/repairs/my', { auth: true }),
 };

@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Param, Patch, Post, Query, Request, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../../common/guards/optional-jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -14,6 +15,7 @@ export class RepairsController {
     constructor(private readonly repairsService: RepairsService) {}
 
     @Post()
+    @UseGuards(OptionalJwtAuthGuard)
     submit(@Body() dto: CreateRepairDto, @Request() req: { user?: { id: string } }) {
         return this.repairsService.submit(dto, req.user?.id);
     }

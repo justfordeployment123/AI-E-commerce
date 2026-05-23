@@ -29,7 +29,7 @@ function CartPageContent() {
     return (
       <div className="flex min-h-screen flex-col bg-[#f5f5f7] text-black font-sans">
         <Navbar />
-        <main className="flex-1 flex items-center justify-center">
+        <main className="flex-1 flex items-center justify-center min-h-screen">
           <div className="h-12 w-12 border-4 border-zinc-200 border-t-black rounded-full animate-spin" />
         </main>
         <Footer />
@@ -40,24 +40,26 @@ function CartPageContent() {
   if (items.length === 0) {
     return (
       <div className="flex min-h-screen flex-col bg-[#f5f5f7] text-black font-sans">
-        <Navbar />
-        <main className="flex-1 flex flex-col items-center justify-center px-4 py-20 text-center">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="h-32 w-32 bg-white rounded-full flex items-center justify-center mb-8 border border-zinc-200 shadow-sm"
-          >
-            <ShoppingCart className="h-12 w-12 text-zinc-300" />
-          </motion.div>
-          <h1 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight">Your cart is empty</h1>
-          <p className="text-zinc-500 mb-10 max-w-md font-medium text-lg">
-            Ready to find your next favorite device? Discover our amazing deals on refurbished tech.
-          </p>
-          <a href="/shop/phones" className="h-14 px-8 bg-black text-white rounded-full font-bold flex items-center justify-center gap-3 transition-transform hover:scale-[1.02]">
-            Start shopping
-            <ArrowRight className="h-5 w-5" />
-          </a>
-        </main>
+        <div className="min-h-screen">
+          <Navbar />
+          <main className="flex-1 flex flex-col items-center justify-center px-4 py-20 text-center">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="h-32 w-32 bg-white rounded-full flex items-center justify-center mb-8 border border-zinc-200 shadow-sm"
+            >
+              <ShoppingCart className="h-12 w-12 text-zinc-300" />
+            </motion.div>
+            <h1 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight">Your cart is empty</h1>
+            <p className="text-zinc-500 mb-10 max-w-md font-medium text-lg">
+              Ready to find your next favorite device? Discover our amazing deals on refurbished tech.
+            </p>
+            <a href="/shop/phones" className="h-14 px-8 bg-black text-white rounded-full font-bold flex items-center justify-center gap-3 transition-transform hover:scale-[1.02]">
+              Start shopping
+              <ArrowRight className="h-5 w-5" />
+            </a>
+          </main>
+        </div>
         <Footer />
       </div>
     );
@@ -201,8 +203,8 @@ function CartPageContent() {
                     <Leaf className="h-6 w-6 text-[#c3eb4e]" />
                   </div>
                   <div>
-                     <h4 className="font-bold text-lg leading-tight">Your impact</h4>
-                     <p className="text-xs font-bold text-emerald-700/70 uppercase tracking-wide">By choosing refurbished</p>
+                    <h4 className="font-bold text-lg leading-tight">Your impact</h4>
+                    <p className="text-xs font-bold text-emerald-700/70 uppercase tracking-wide">By choosing refurbished</p>
                   </div>
                 </div>
                 <div className="space-y-3">
@@ -220,12 +222,12 @@ function CartPageContent() {
               {/* Support Trust Signals */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-white p-4 rounded-[20px] border border-zinc-200 flex flex-col items-center text-center gap-2">
-                   <ShieldCheck className="h-6 w-6 text-black" strokeWidth={1.5} />
-                   <p className="text-xs font-bold">2-Year Warranty</p>
+                  <ShieldCheck className="h-6 w-6 text-black" strokeWidth={1.5} />
+                  <p className="text-xs font-bold">2-Year Warranty</p>
                 </div>
                 <div className="bg-white p-4 rounded-[20px] border border-zinc-200 flex flex-col items-center text-center gap-2">
-                   <RefreshCw className="h-6 w-6 text-black" strokeWidth={1.5} />
-                   <p className="text-xs font-bold">30-Day Returns</p>
+                  <RefreshCw className="h-6 w-6 text-black" strokeWidth={1.5} />
+                  <p className="text-xs font-bold">30-Day Returns</p>
                 </div>
               </div>
 

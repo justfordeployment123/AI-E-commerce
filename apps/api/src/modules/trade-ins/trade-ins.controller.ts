@@ -10,6 +10,7 @@ import {
     UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../../common/guards/optional-jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -25,8 +26,9 @@ import { AiPriceDto } from './dto/ai-price.dto';
 export class TradeInsController {
     constructor(private readonly tradeInsService: TradeInsService) {}
 
-    // Public – submit without account
+    // Public – submit without account, but links to user if authenticated
     @Post()
+    @UseGuards(OptionalJwtAuthGuard)
     submit(@Body() dto: CreateTradeInDto, @Request() req: { user?: { id: string } }) {
         return this.tradeInsService.submit(dto, req.user?.id);
     }
