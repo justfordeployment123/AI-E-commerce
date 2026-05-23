@@ -17,8 +17,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import { useCart } from "../../context/cart-context";
+import RequireAuth from "../../components/RequireAuth";
 
-export default function CartPage() {
+function CartPageContent() {
   const { items, count, subtotal, loading, updateItem, removeItem } = useCart();
 
   const shipping = 0;
@@ -236,5 +237,13 @@ export default function CartPage() {
 
       <Footer />
     </div>
+  );
+}
+
+export default function CartPage() {
+  return (
+    <RequireAuth>
+      <CartPageContent />
+    </RequireAuth>
   );
 }

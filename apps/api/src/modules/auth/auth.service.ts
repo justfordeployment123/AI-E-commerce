@@ -38,6 +38,26 @@ export class AuthService {
         return { user: safeUser, token };
     }
 
+    async googleLogin(dto: { googleId: string; email: string; name: string }) {
+        let user = await this.prisma.user.findFirst({
+            where: { OR: [{ googleId: dto.googleId }, { email: dto.email }] },
+        });
+
+        if (!user) {
+            user = await this.prisma.user.create({
+                data: { email: dto.email, name: dto.name, googleId: dto.googleId },
+            });
+        } else if (!user.googleId) {
+            user = await this.prisma.user.update({
+                where: { id: user.id },
+                data: { googleId: dto.googleId },
+            });
+        }
+
+        const token = this.signToken(user.id, user.email, user.role);
+        return { token };
+    }
+
     private signToken(userId: string, email: string, role: string) {
         return this.jwt.sign({ sub: userId, email, role });
     }

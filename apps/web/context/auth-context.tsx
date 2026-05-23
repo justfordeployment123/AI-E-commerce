@@ -8,13 +8,14 @@ interface AuthContextValue {
   token: string | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  loginWithToken: (token: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextValue>({
   user: null, token: null, loading: true,
-  login: async () => {}, register: async () => {}, logout: () => {},
+  login: async () => {}, loginWithToken: async () => {}, register: async () => {}, logout: () => {},
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -47,6 +48,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     persist(res.user, res.token);
   }, [persist]);
 
+  const loginWithToken = useCallback(async (token: string) => {
+    localStorage.setItem("ts_token", token);
+    setToken(token);
+    const user = await authApi.me();
+    setUser(user);
+  }, []);
+
   const register = useCallback(async (name: string, email: string, password: string) => {
     const res = await authApi.register(name, email, password);
     persist(res.user, res.token);
@@ -59,7 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, token, loading, login, loginWithToken, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { tradeInsApi } from "../../lib/api";
 import {
@@ -12,6 +13,20 @@ import {
 } from "lucide-react";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
+import { useAuth } from "../../context/auth-context";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002";
+
+function GoogleIcon() {
+  return (
+    <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05" />
+      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+    </svg>
+  );
+}
 
 // ─── Data ──────────────────────────────────────────────────────────────────
 
@@ -281,6 +296,37 @@ export default function TradeInPage() {
   const [aiLoadingText, setAiLoadingText] = useState("Analyzing your device...");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const modalScrollRef = useRef<HTMLDivElement>(null);
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
+
+  // Restore wizard state after Google OAuth redirect
+  useEffect(() => {
+    const saved = sessionStorage.getItem("ts_wizard_tradein");
+    if (saved) {
+      try {
+        const { state: s, phase: savedPhase } = JSON.parse(saved);
+        setState(s);
+        setPhase(savedPhase);
+        setIsWizardActive(true);
+      } catch {}
+      sessionStorage.removeItem("ts_wizard_tradein");
+    }
+  }, []);
+
+  // Auto-fill contact from logged-in user
+  useEffect(() => {
+    if (user) {
+      setState(s => ({
+        ...s,
+        contact: {
+          ...s.contact,
+          name: s.contact.name || user.name,
+          email: s.contact.email || user.email,
+          phone: s.contact.phone || user.phone || "",
+        },
+      }));
+    }
+  }, [user]);
 
   // Lock body scroll when wizard modal is active
   useEffect(() => {
@@ -409,38 +455,52 @@ export default function TradeInPage() {
     }
   }
 
+  const guardedOpen = (action: () => void) => {
+    if (authLoading) return;
+    if (!user) {
+      sessionStorage.setItem("ts_login_redirect", "/trade-in");
+      router.push("/login?redirect=%2Ftrade-in");
+      return;
+    }
+    action();
+  };
+
   const startWizard = (catId?: string) => {
-    setState({
-      category: catId ?? "",
-      brand: "",
-      model: "",
-      specs: {},
-      condition: "",
-      answers: {},
-      fulfillment: "",
-      contact: { name: "", email: "", phone: "", address: "", postcode: "" },
+    guardedOpen(() => {
+      setState({
+        category: catId ?? "",
+        brand: "",
+        model: "",
+        specs: {},
+        condition: "",
+        answers: {},
+        fulfillment: "",
+        contact: { name: "", email: "", phone: "", address: "", postcode: "" },
+      });
+      setWizardModelSearch("");
+      setPhase(1);
+      setIsWizardActive(true);
+      scrollToTop();
     });
-    setWizardModelSearch("");
-    setPhase(1);
-    setIsWizardActive(true);
-    scrollToTop();
   };
 
   const handleSelectSuggestion = (suggestion: typeof ALL_MODELS[0]) => {
-    setState({
-      category: suggestion.category,
-      brand: suggestion.brand,
-      model: suggestion.name,
-      specs: {},
-      condition: "",
-      answers: {},
-      fulfillment: "",
-      contact: { name: "", email: "", phone: "", address: "", postcode: "" },
+    guardedOpen(() => {
+      setState({
+        category: suggestion.category,
+        brand: suggestion.brand,
+        model: suggestion.name,
+        specs: {},
+        condition: "",
+        answers: {},
+        fulfillment: "",
+        contact: { name: "", email: "", phone: "", address: "", postcode: "" },
+      });
+      setPhase(2);
+      setIsWizardActive(true);
+      setSearchQuery("");
+      scrollToTop();
     });
-    setPhase(2); // Jump straight to configuration & condition
-    setIsWizardActive(true);
-    setSearchQuery("");
-    scrollToTop();
   };
 
   const PHASE_LABELS = [
@@ -1597,6 +1657,34 @@ export default function TradeInPage() {
                               {state.fulfillment && (
                                 <div className="space-y-4 pt-4 border-t border-zinc-100 animate-fade-in">
                                   <span className="text-xs font-black uppercase tracking-widest text-zinc-400 block">Personal Details</span>
+
+                                  {user ? (
+                                    <div className="flex items-center gap-2.5 bg-emerald-50 border border-emerald-200 rounded-2xl px-4 py-3">
+                                      <div className="h-8 w-8 rounded-full bg-emerald-100 border border-emerald-200 flex items-center justify-center font-black text-xs text-emerald-700 shrink-0">
+                                        {user.name[0]}
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-xs font-black text-emerald-900 truncate">{user.name}</p>
+                                        <p className="text-[10px] font-bold text-emerald-600">Details filled from your account</p>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="space-y-3">
+                                      <a
+                                        href={`${API_URL}/auth/google`}
+                                        onClick={() => sessionStorage.setItem("ts_wizard_tradein", JSON.stringify({ state, phase }))}
+                                        className="w-full h-12 bg-white border-2 border-zinc-200 rounded-2xl font-bold transition-all hover:scale-[1.02] hover:border-zinc-400 active:scale-[0.98] flex items-center justify-center gap-3 text-sm text-zinc-700 shadow-sm"
+                                      >
+                                        <GoogleIcon />
+                                        Continue with Google
+                                      </a>
+                                      <div className="flex items-center gap-3">
+                                        <div className="flex-1 h-px bg-zinc-200" />
+                                        <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">or fill manually</span>
+                                        <div className="flex-1 h-px bg-zinc-200" />
+                                      </div>
+                                    </div>
+                                  )}
                                   <div className="grid gap-4 sm:grid-cols-2">
                                     {[
                                       { key: "name", label: "Full Name", type: "text", placeholder: "e.g. Jordan Mitchell" },
