@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Mail, Lock, ArrowRight, ChevronLeft, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "../../context/auth-context";
 
-export default function LoginPage() {
+function LoginForm() {
   const { login } = useAuth();
   const router = useRouter();
   const params = useSearchParams();
@@ -48,7 +48,6 @@ export default function LoginPage() {
         transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
         className="w-full max-w-md relative z-10"
       >
-        {/* Header */}
         <div className="mb-6">
           <a href="/" className="inline-flex items-center gap-2 text-zinc-400 hover:text-black transition-colors text-xs font-bold uppercase tracking-widest mb-5 group">
             <ChevronLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
@@ -142,5 +141,13 @@ export default function LoginPage() {
         <span className="text-[9px] font-bold uppercase tracking-widest">Certified Refurbished Marketplace</span>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="h-screen bg-white" />}>
+      <LoginForm />
+    </Suspense>
   );
 }
