@@ -18,7 +18,7 @@ export class TradeInsService {
     private async loadPricingConfig(): Promise<ServerPricingConfig> {
         try {
             const rows = await this.prisma.pricingConfig.findMany();
-            const byKey: Record<string, number> = Object.fromEntries(rows.map((r) => [r.key, r.value]));
+            const byKey: Record<string, number | undefined> = Object.fromEntries(rows.map((r) => [r.key, r.value]));
             return {
                 conditionMultipliers: {
                     Mint:    byKey['multiplier_mint']    ?? DEFAULT_PRICING_CONFIG.conditionMultipliers.Mint,

@@ -2,17 +2,17 @@ import { IsArray, IsBoolean, IsOptional, IsString } from 'class-validator';
 
 export class UpsertDeviceDto {
     @IsString()
-    brand: string;
+    brand!: string;
 
     @IsString()
-    model: string;
+    model!: string;
 
     @IsString()
-    category: string;
+    category!: string;
 
     @IsArray()
     @IsString({ each: true })
-    storageOptions: string[];
+    storageOptions!: string[];
 
     @IsBoolean()
     @IsOptional()
