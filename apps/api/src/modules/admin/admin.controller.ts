@@ -15,6 +15,11 @@ export class AdminController {
         return this.adminService.getDashboard();
     }
 
+    @Get('analytics')
+    getAnalytics() {
+        return this.adminService.getAnalytics();
+    }
+
     @Get('users')
     getUsers(
         @Query('page') page?: string,

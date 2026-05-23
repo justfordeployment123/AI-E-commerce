@@ -3,8 +3,8 @@ import { AuthGuard } from '@nestjs/passport';
 
 @Injectable()
 export class OptionalJwtAuthGuard extends AuthGuard('jwt') {
-    handleRequest(_err: unknown, user: unknown) {
-        // Unlike JwtAuthGuard, never throw — just return user or null
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    handleRequest<TUser = any>(_err: any, user: any): TUser {
         return user ?? null;
     }
 

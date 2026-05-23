@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Zap, Eye, EyeOff, ArrowRight, ShieldCheck } from "lucide-react";
+import { Eye, EyeOff, ArrowRight, ShieldCheck, BarChart3, Package, RefreshCw } from "lucide-react";
+import { useAdminAuth } from "../../context/auth-context";
 
 export default function AdminLoginPage() {
+  const { login } = useAdminAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -15,38 +17,85 @@ export default function AdminLoginPage() {
     e.preventDefault();
     setError("");
     setLoading(true);
-    await new Promise(r => setTimeout(r, 900));
-    if (email === "admin@techstop.co.uk" && password === "admin") {
+    try {
+      await login(email, password);
       window.location.href = "/";
-    } else {
-      setError("Invalid email or password.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Invalid email or password.");
       setLoading(false);
     }
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
-      {/* Background grid */}
-      <div
-        className="fixed inset-0 opacity-[0.03] pointer-events-none"
-        style={{
-          backgroundImage: `linear-gradient(#ffffff 1px, transparent 1px), linear-gradient(90deg, #ffffff 1px, transparent 1px)`,
-          backgroundSize: "40px 40px",
-        }}
-      />
+    <div className="min-h-screen w-full bg-zinc-950 flex">
+      {/* Left panel */}
+      <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-between p-12 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-zinc-900 via-zinc-950 to-black" />
+        <div
+          className="absolute inset-0 opacity-[0.04]"
+          style={{
+            backgroundImage: `linear-gradient(#ffffff 1px, transparent 1px), linear-gradient(90deg, #ffffff 1px, transparent 1px)`,
+            backgroundSize: "32px 32px",
+          }}
+        />
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#d7ff5f]/5 rounded-full blur-[120px] pointer-events-none" />
 
-      <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ type: "spring", stiffness: 260, damping: 22 }}
-        className="relative w-full max-w-sm"
-      >
-        {/* Card */}
-        <div className="bg-zinc-900 border border-white/10 rounded-3xl p-8 shadow-2xl shadow-black/60">
-          {/* Logo */}
-          <div className="flex items-center gap-3 mb-10">
-            <div className="h-10 w-10 rounded-xl bg-[#d7ff5f] flex items-center justify-center shrink-0">
-              <Zap className="h-5 w-5 text-black" />
+        <div className="relative z-10">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl overflow-hidden shrink-0 shadow-lg">
+              <img src="/icon.png" alt="TechStop" className="w-full h-full object-cover" />
+            </div>
+            <div>
+              <p className="font-bold text-white text-sm leading-tight">TechStop Leicester</p>
+              <p className="text-[10px] text-white/30 font-medium uppercase tracking-widest">Admin Panel</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="relative z-10 space-y-8">
+          <div>
+            <h1 className="text-4xl font-bold text-white leading-tight mb-3">
+              Manage your store<br />from one place.
+            </h1>
+            <p className="text-white/40 text-sm font-medium leading-relaxed max-w-sm">
+              Full visibility over orders, trade-ins, repairs, pricing, and analytics — built for the TechStop team.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            {[
+              { icon: BarChart3, label: "Live sales & revenue analytics" },
+              { icon: RefreshCw, label: "Trade-in pricing & queue management" },
+              { icon: Package, label: "Product catalog & order fulfilment" },
+            ].map(({ icon: Icon, label }) => (
+              <div key={label} className="flex items-center gap-3">
+                <div className="h-8 w-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                  <Icon className="h-3.5 w-3.5 text-[#d7ff5f]" />
+                </div>
+                <span className="text-sm font-medium text-white/50">{label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="relative z-10 flex items-center gap-2 text-[11px] text-white/20 font-medium">
+          <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
+          Restricted access — authorised personnel only
+        </div>
+      </div>
+
+      {/* Right panel — form */}
+      <div className="flex-1 flex items-center justify-center p-6 bg-zinc-950 lg:bg-zinc-900/40">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: "spring", stiffness: 260, damping: 22 }}
+          className="w-full max-w-sm"
+        >
+          {/* Mobile logo */}
+          <div className="flex items-center gap-3 mb-10 lg:hidden">
+            <div className="h-10 w-10 rounded-xl overflow-hidden shrink-0">
+              <img src="/icon.png" alt="TechStop" className="w-full h-full object-cover" />
             </div>
             <div>
               <p className="font-bold text-white text-sm leading-tight">TechStop Leicester</p>
@@ -54,12 +103,14 @@ export default function AdminLoginPage() {
             </div>
           </div>
 
-          <h1 className="text-2xl font-bold text-white mb-1">Sign in</h1>
-          <p className="text-sm text-white/40 font-medium mb-8">Enter your admin credentials to continue.</p>
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-white mb-1">Welcome back</h2>
+            <p className="text-sm text-white/40 font-medium">Sign in to your admin account.</p>
+          </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-white/50 uppercase tracking-widest">Email</label>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Email</label>
               <input
                 type="email"
                 required
@@ -67,12 +118,12 @@ export default function AdminLoginPage() {
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="admin@techstop.co.uk"
-                className="w-full h-12 rounded-xl bg-white/5 border border-white/10 px-4 text-sm text-white placeholder-white/20 outline-none focus:border-[#d7ff5f]/60 focus:bg-white/8 transition-all"
+                className="w-full h-12 rounded-xl bg-white/[0.06] border border-white/10 px-4 text-sm text-white placeholder-white/20 outline-none focus:border-[#d7ff5f]/50 focus:bg-white/[0.08] transition-all"
               />
             </div>
 
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-white/50 uppercase tracking-widest">Password</label>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Password</label>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
@@ -81,12 +132,12 @@ export default function AdminLoginPage() {
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full h-12 rounded-xl bg-white/5 border border-white/10 px-4 pr-12 text-sm text-white placeholder-white/20 outline-none focus:border-[#d7ff5f]/60 focus:bg-white/8 transition-all"
+                  className="w-full h-12 rounded-xl bg-white/[0.06] border border-white/10 px-4 pr-12 text-sm text-white placeholder-white/20 outline-none focus:border-[#d7ff5f]/50 focus:bg-white/[0.08] transition-all"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/25 hover:text-white/60 transition-colors"
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -106,31 +157,24 @@ export default function AdminLoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full h-12 rounded-xl bg-[#d7ff5f] text-black font-bold text-sm flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed disabled:scale-100 mt-2"
+              className="w-full h-12 rounded-xl bg-[#d7ff5f] text-black font-bold text-sm flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed mt-2"
             >
               {loading ? (
-                <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none">
+                <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                 </svg>
               ) : (
-                <>
-                  Sign in <ArrowRight className="h-4 w-4" />
-                </>
+                <>Sign in <ArrowRight className="h-4 w-4" /></>
               )}
             </button>
           </form>
 
-          <div className="mt-8 pt-6 border-t border-white/5 flex items-center gap-2 text-[11px] text-white/20 font-medium">
-            <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
-            Restricted access — authorised personnel only
-          </div>
-        </div>
-
-        <p className="text-center text-[11px] text-white/15 font-medium mt-6">
-          TechStop Leicester &copy; {new Date().getFullYear()}
-        </p>
-      </motion.div>
+          <p className="text-center text-[11px] text-white/15 font-medium mt-10">
+            TechStop Leicester &copy; {new Date().getFullYear()}
+          </p>
+        </motion.div>
+      </div>
     </div>
   );
 }

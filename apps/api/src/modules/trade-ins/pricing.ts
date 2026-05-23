@@ -1,5 +1,21 @@
 // Mirrors the frontend pricing logic so the server can validate/recompute offers.
 
+export interface ServerPricingConfig {
+    conditionMultipliers: Record<string, number>;
+    marginPct: number;
+    penaltyCrackedScreen: number;
+    penaltyBattery: number;
+    penaltyCharging: number;
+}
+
+export const DEFAULT_PRICING_CONFIG: ServerPricingConfig = {
+    conditionMultipliers: { Mint: 1.0, Good: 0.82, Used: 0.62, Damaged: 0.3 },
+    marginPct: 30,
+    penaltyCrackedScreen: 25,
+    penaltyBattery: 15,
+    penaltyCharging: 12,
+};
+
 const BASE_PRICES: Record<string, number> = {
     "iPhone 15 Pro Max": 780, "iPhone 15 Pro": 680, "iPhone 15 Plus": 580,
     "iPhone 15": 520, "iPhone 14 Pro Max": 620, "iPhone 14 Pro": 540,
@@ -34,36 +50,42 @@ const BASE_PRICES: Record<string, number> = {
     "QuietComfort Ultra": 175, "QuietComfort II Headphones": 110, "QuietComfort Earbuds II": 85,
 };
 
-const CONDITION_MULTIPLIERS: Record<string, number> = {
-    Mint: 1.0,
-    Good: 0.82,
-    Used: 0.62,
-    Damaged: 0.3,
-};
-
-export function computeOffer(model: string, condition: string, answers: Record<string, string>): number {
+export function computeOffer(
+    model: string,
+    condition: string,
+    answers: Record<string, string>,
+    cfg: ServerPricingConfig = DEFAULT_PRICING_CONFIG,
+): number {
     const base = BASE_PRICES[model] ?? 200;
-    const mult = CONDITION_MULTIPLIERS[condition] ?? 0.5;
+    const mult = cfg.conditionMultipliers[condition] ?? 0.5;
     let price = base * mult;
 
-    if (answers.screen === 'Cracked but display works') price *= 0.75;
+    const crackedMult  = 1 - cfg.penaltyCrackedScreen / 100;
+    const batteryMult  = 1 - cfg.penaltyBattery / 100;
+    const chargingMult = 1 - cfg.penaltyCharging / 100;
+
+    if (answers.screen === 'Cracked but display works') price *= crackedMult;
     if (answers.screen === 'Shattered / unusable display' || answers.screen === 'Shattered') price *= 0.4;
     if (answers.battery === '70–79% (Fair)') price *= 0.92;
-    if (answers.battery === 'Below 70% / Unknown') price *= 0.82;
+    if (answers.battery === 'Below 70% / Unknown') price *= batteryMult;
     if (answers.battery === 'Drains quickly (1–3 hours)') price *= 0.88;
-    if (answers.battery === 'Very poor under 1 hour' || answers.battery === 'Very poor under 3 hours') price *= 0.75;
-    if (answers.charging === 'No / Loose' || answers.charging === 'No / loose connection') price *= 0.85;
+    if (answers.battery === 'Very poor under 1 hour' || answers.battery === 'Very poor under 3 hours') price *= batteryMult;
+    if (answers.charging === 'No / Loose' || answers.charging === 'No / loose connection') price *= chargingMult;
     if (answers.biometrics === 'No / Faulty') price *= 0.9;
     if (answers.power === 'No, won\'t power on' || answers.power === 'No' || answers.power === 'Won\'t power on') price *= 0.25;
     if (answers.power === 'Yes but has some issues' || answers.power === 'Powers on but has screen/sensor issues') price *= 0.7;
     if (answers.back === 'Cracked back glass') price *= 0.88;
     if (answers.body === 'Significant damage' || answers.body === 'Heavy wear or staining') price *= 0.7;
     if (answers.body === 'Dents or significant marks' || answers.body === 'Minor scratches or wear on case') price *= 0.8;
-    if (answers.screen === 'Cracked' || answers.screen === 'Cracked screen') price *= 0.65;
-    if (answers.screen === 'Deep scratches or chips') price *= 0.75;
+    if (answers.screen === 'Cracked' || answers.screen === 'Cracked screen') price *= crackedMult;
+    if (answers.screen === 'Deep scratches or chips') price *= crackedMult;
     if (answers.input === 'Major issues') price *= 0.6;
     if (answers.sound === 'Muffled sound or static in one ear') price *= 0.5;
     if (answers.sound === 'No sound in one/both ears') price *= 0.15;
 
     return Math.max(Math.round(price / 5) * 5, 10);
+}
+
+export function applyMargin(marketPrice: number, marginPct: number): number {
+    return Math.max(Math.round(marketPrice * (1 - marginPct / 100) / 5) * 5, 10);
 }

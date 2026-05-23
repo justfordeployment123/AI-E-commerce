@@ -172,3 +172,17 @@ model PricingConfig {
 
   @@map("pricing_configs")
 }
+
+model DeviceCatalog {
+  id             String   @id @default(uuid())
+  brand          String
+  model          String
+  category       String
+  storageOptions String[]
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([brand, model])
+  @@map("device_catalog")
+}

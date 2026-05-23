@@ -1,11 +1,12 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   LayoutDashboard, Package, RefreshCw, Wrench, ShoppingBag,
-  SlidersHorizontal, BarChart3, LogOut, Zap, ChevronRight, ListPlus
+  SlidersHorizontal, BarChart3, LogOut, ChevronRight, ListPlus
 } from "lucide-react";
+import { useAdminAuth } from "../context/auth-context";
 
 const NAV = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -20,15 +21,22 @@ const NAV = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, logout } = useAdminAuth();
   let lastSection = "";
 
+  function handleLogout() {
+    logout();
+    router.push("/login");
+  }
+
   return (
-    <aside className="w-[220px] shrink-0 bg-sidebar text-sidebar-fg flex flex-col h-screen sticky top-0 overflow-y-auto scrollbar-hide">
+    <aside className="w-55 shrink-0 bg-sidebar text-sidebar-fg flex flex-col h-screen sticky top-0 overflow-y-auto scrollbar-hide">
       {/* Logo */}
       <div className="px-5 py-6 border-b border-white/10">
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl bg-accent flex items-center justify-center shrink-0">
-            <Zap className="h-5 w-5 text-black" />
+          <div className="h-9 w-9 rounded-xl overflow-hidden shrink-0">
+            <img src="/icon.png" alt="TechStop" className="w-full h-full object-cover" />
           </div>
           <div>
             <p className="font-bold text-sm leading-tight">TechStop</p>
@@ -68,16 +76,21 @@ export default function Sidebar() {
 
       {/* Footer */}
       <div className="px-3 py-4 border-t border-white/10">
-        <div className="flex items-center gap-3 px-3 mb-3">
-          <div className="h-8 w-8 rounded-full bg-accent flex items-center justify-center shrink-0">
-            <span className="text-black font-bold text-xs">AD</span>
+        {user && (
+          <div className="flex items-center gap-3 px-3 mb-3">
+            <div className="h-8 w-8 rounded-full bg-accent flex items-center justify-center shrink-0">
+              <span className="text-black font-bold text-xs">{user.name.charAt(0).toUpperCase()}</span>
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-bold truncate">{user.name}</p>
+              <p className="text-[10px] text-white/40 truncate">{user.email}</p>
+            </div>
           </div>
-          <div className="min-w-0">
-            <p className="text-xs font-bold truncate">Admin User</p>
-            <p className="text-[10px] text-white/40 truncate">admin@techstop.co.uk</p>
-          </div>
-        </div>
-        <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-white/40 hover:text-white hover:bg-white/5 transition-all">
+        )}
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-white/40 hover:text-white hover:bg-white/5 transition-all"
+        >
           <LogOut className="h-4 w-4" />
           Sign out
         </button>

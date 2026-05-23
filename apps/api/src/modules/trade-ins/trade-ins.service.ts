@@ -7,7 +7,7 @@ import { ApproveTradeInDto } from './dto/approve-trade-in.dto';
 import { RejectTradeInDto } from './dto/reject-trade-in.dto';
 import { CounterOfferTradeInDto } from './dto/counter-offer-trade-in.dto';
 import { AiPriceDto } from './dto/ai-price.dto';
-import { computeOffer } from './pricing';
+import { computeOffer, applyMargin, DEFAULT_PRICING_CONFIG, type ServerPricingConfig } from './pricing';
 
 @Injectable()
 export class TradeInsService {
@@ -15,14 +15,31 @@ export class TradeInsService {
 
     constructor(private readonly prisma: PrismaService) {}
 
-    private applyMargin(marketPrice: number): number {
-        const pct = Math.min(100, Math.max(0, parseFloat(process.env.PROFIT_MARGIN_PCT ?? '30')));
-        return Math.max(Math.round(marketPrice * (1 - pct / 100) / 5) * 5, 10);
+    private async loadPricingConfig(): Promise<ServerPricingConfig> {
+        try {
+            const rows = await this.prisma.pricingConfig.findMany();
+            const byKey: Record<string, number> = Object.fromEntries(rows.map((r) => [r.key, r.value]));
+            return {
+                conditionMultipliers: {
+                    Mint:    byKey['multiplier_mint']    ?? DEFAULT_PRICING_CONFIG.conditionMultipliers.Mint,
+                    Good:    byKey['multiplier_good']    ?? DEFAULT_PRICING_CONFIG.conditionMultipliers.Good,
+                    Used:    byKey['multiplier_used']    ?? DEFAULT_PRICING_CONFIG.conditionMultipliers.Used,
+                    Damaged: byKey['multiplier_damaged'] ?? DEFAULT_PRICING_CONFIG.conditionMultipliers.Damaged,
+                },
+                marginPct:            byKey['margin_pct']              ?? DEFAULT_PRICING_CONFIG.marginPct,
+                penaltyCrackedScreen: byKey['penalty_cracked_screen']  ?? DEFAULT_PRICING_CONFIG.penaltyCrackedScreen,
+                penaltyBattery:       byKey['penalty_battery']         ?? DEFAULT_PRICING_CONFIG.penaltyBattery,
+                penaltyCharging:      byKey['penalty_charging']        ?? DEFAULT_PRICING_CONFIG.penaltyCharging,
+            };
+        } catch {
+            return DEFAULT_PRICING_CONFIG;
+        }
     }
 
     async submit(dto: CreateTradeInDto, userId?: string) {
-        // Recompute offer server-side and apply profit margin
-        const serverOffer = this.applyMargin(computeOffer(dto.model, dto.condition, dto.answers));
+        const pricingConfig = await this.loadPricingConfig();
+        const marketPrice = computeOffer(dto.model, dto.condition, dto.answers, pricingConfig);
+        const serverOffer = applyMargin(marketPrice, pricingConfig.marginPct);
 
         return this.prisma.tradeIn.create({
             data: {
@@ -132,11 +149,12 @@ export class TradeInsService {
     }
 
     async aiPrice(dto: AiPriceDto): Promise<{ price: number; aiUsed: boolean }> {
+        const pricingConfig = await this.loadPricingConfig();
         const apiKey = process.env.OPENAI_API_KEY;
 
         if (!apiKey) {
             this.logger.warn('OPENAI_API_KEY not set — using fallback rule-based pricing');
-            return { price: this.applyMargin(computeOffer(dto.model, dto.condition, dto.answers)), aiUsed: false };
+            return { price: applyMargin(computeOffer(dto.model, dto.condition, dto.answers, pricingConfig), pricingConfig.marginPct), aiUsed: false };
         }
 
         const openai = new OpenAI({ apiKey });
@@ -194,19 +212,19 @@ Respond with ONLY: {"price": <number rounded to nearest 5, minimum 10>}`;
 
             if (finishReason === 'content_filter') {
                 this.logger.warn('OpenAI refused the request (content_filter) — falling back to rule-based pricing');
-                return { price: this.applyMargin(computeOffer(dto.model, dto.condition, dto.answers)), aiUsed: false };
+                return { price: applyMargin(computeOffer(dto.model, dto.condition, dto.answers, pricingConfig), pricingConfig.marginPct), aiUsed: false };
             }
 
             const parsed = JSON.parse(raw) as { price?: number };
             const marketPrice = parsed.price && parsed.price > 0 ? parsed.price : null;
             if (!marketPrice) {
                 this.logger.warn(`OpenAI returned invalid price (${parsed.price}) — falling back to rule-based pricing`);
-                return { price: this.applyMargin(computeOffer(dto.model, dto.condition, dto.answers)), aiUsed: false };
+                return { price: applyMargin(computeOffer(dto.model, dto.condition, dto.answers, pricingConfig), pricingConfig.marginPct), aiUsed: false };
             }
-            return { price: this.applyMargin(marketPrice), aiUsed: true };
+            return { price: applyMargin(marketPrice, pricingConfig.marginPct), aiUsed: true };
         } catch (err) {
             this.logger.warn(`OpenAI pricing failed — using fallback rule-based pricing. Reason: ${err instanceof Error ? err.message : String(err)}`);
-            return { price: this.applyMargin(computeOffer(dto.model, dto.condition, dto.answers)), aiUsed: false };
+            return { price: applyMargin(computeOffer(dto.model, dto.condition, dto.answers, pricingConfig), pricingConfig.marginPct), aiUsed: false };
         }
     }
 

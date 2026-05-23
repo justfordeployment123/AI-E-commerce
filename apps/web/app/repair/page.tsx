@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { repairsApi } from "../../lib/api";
 import {
@@ -122,8 +121,7 @@ export default function RepairPage() {
   const [calcIssue, setCalcIssue] = useState("screen");
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
-  const { user, loading: authLoading } = useAuth();
-  const router = useRouter();
+  const { user } = useAuth();
   const modalScrollRef = useRef<HTMLDivElement>(null);
 
   // Restore wizard state after Google OAuth redirect
@@ -179,40 +177,26 @@ export default function RepairPage() {
     go(-1);
   };
 
-  const guardedOpen = (action: () => void) => {
-    if (authLoading) return;
-    if (!user) {
-      sessionStorage.setItem("ts_login_redirect", "/repair");
-      router.push("/login?redirect=%2Frepair");
-      return;
-    }
-    action();
-  };
-
   const openWizardWithDevice = (deviceId: string) => {
-    guardedOpen(() => {
-      setState({ deviceType: deviceId, brand: "", model: "", issue: [], issueNotes: "", fulfillment: "", contact: { name: "", email: "", phone: "", address: "", postcode: "" } });
-      setStep(1);
-      setIsWizardActive(true);
-    });
+    setState({ deviceType: deviceId, brand: "", model: "", issue: [], issueNotes: "", fulfillment: "", contact: { name: "", email: "", phone: "", address: "", postcode: "" } });
+    setStep(1);
+    setIsWizardActive(true);
   };
 
   const progress = Math.round(((step - 1) / (TOTAL_STEPS - 1)) * 100);
 
   function handleEstimatorBook() {
-    guardedOpen(() => {
-      setState({
-        deviceType: calcCategory,
-        brand: calcBrand,
-        model: `${calcBrand} ${calcCategory} (Est. Repair)`,
-        issue: [calcIssue],
-        issueNotes: "Booked via interactive estimator.",
-        fulfillment: "",
-        contact: { name: "", email: "", phone: "", address: "", postcode: "" }
-      });
-      setStep(3);
-      setIsWizardActive(true);
+    setState({
+      deviceType: calcCategory,
+      brand: calcBrand,
+      model: `${calcBrand} ${calcCategory} (Est. Repair)`,
+      issue: [calcIssue],
+      issueNotes: "Booked via interactive estimator.",
+      fulfillment: "",
+      contact: { name: "", email: "", phone: "", address: "", postcode: "" }
     });
+    setStep(3);
+    setIsWizardActive(true);
   }
 
   const estimatorBrands = BRANDS[calcCategory] ?? [];
@@ -272,7 +256,7 @@ export default function RepairPage() {
               ].map((item, i) => (
                 <button
                   key={i}
-                  onClick={() => guardedOpen(() => {
+                  onClick={() => {
                     setState({
                       deviceType: item.category, brand: item.brand,
                       model: `${item.brand} ${item.category} (Est. Repair)`,
@@ -281,7 +265,7 @@ export default function RepairPage() {
                     });
                     setStep(3);
                     setIsWizardActive(true);
-                  })}
+                  }}
                   className="px-3.5 py-1.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 rounded-full transition-colors font-bold shadow-sm"
                 >
                   {item.name}

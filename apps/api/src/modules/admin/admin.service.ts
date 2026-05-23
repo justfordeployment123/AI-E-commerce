@@ -81,6 +81,105 @@ export class AdminService {
         };
     }
 
+    async getAnalytics() {
+        // Last 6 calendar months
+        const months: { year: number; month: number; label: string; start: Date; end: Date }[] = [];
+        const now = new Date();
+        for (let i = 5; i >= 0; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const start = new Date(d.getFullYear(), d.getMonth(), 1);
+            const end = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999);
+            months.push({
+                year: d.getFullYear(),
+                month: d.getMonth() + 1,
+                label: d.toLocaleString('en-GB', { month: 'short' }),
+                start,
+                end,
+            });
+        }
+
+        const [monthlyData, topProducts, categorySplit, recentTradeIns] = await Promise.all([
+            // Monthly orders, trade-ins, repairs, revenue
+            Promise.all(
+                months.map(async (m) => {
+                    const [orders, tradeIns, repairs, revenue] = await Promise.all([
+                        this.prisma.order.count({ where: { createdAt: { gte: m.start, lte: m.end } } }),
+                        this.prisma.tradeIn.count({ where: { createdAt: { gte: m.start, lte: m.end } } }),
+                        this.prisma.repair.count({ where: { createdAt: { gte: m.start, lte: m.end } } }),
+                        this.prisma.order.aggregate({
+                            where: { createdAt: { gte: m.start, lte: m.end }, status: { notIn: ['CANCELLED', 'REFUNDED'] } },
+                            _sum: { total: true },
+                        }),
+                    ]);
+                    return { month: m.label, year: m.year, orders, tradeIns, repairs, revenue: revenue._sum.total ?? 0 };
+                }),
+            ),
+            // Top 5 products by units sold
+            this.prisma.orderItem.groupBy({
+                by: ['productId'],
+                _sum: { quantity: true, price: true },
+                orderBy: { _sum: { quantity: 'desc' } },
+                take: 5,
+            }).then(async (rows) => {
+                const products = await this.prisma.product.findMany({
+                    where: { id: { in: rows.map((r) => r.productId) } },
+                    select: { id: true, name: true, category: true },
+                });
+                const byId = Object.fromEntries(products.map((p) => [p.id, p]));
+                return rows.map((r) => ({
+                    productId: r.productId,
+                    name: byId[r.productId]?.name ?? 'Unknown',
+                    category: byId[r.productId]?.category ?? '—',
+                    units: r._sum.quantity ?? 0,
+                    revenue: r._sum.price ?? 0,
+                }));
+            }),
+            // Category split by units sold
+            this.prisma.orderItem.findMany({
+                include: { product: { select: { category: true } } },
+            }).then((items) => {
+                const totals: Record<string, number> = {};
+                let grand = 0;
+                for (const item of items) {
+                    const cat = item.product.category;
+                    totals[cat] = (totals[cat] ?? 0) + item.quantity;
+                    grand += item.quantity;
+                }
+                if (grand === 0) return [];
+                return Object.entries(totals)
+                    .map(([cat, count]) => ({ category: cat, pct: Math.round((count / grand) * 100) }))
+                    .sort((a, b) => b.pct - a.pct);
+            }),
+            // Most traded devices (top 5 by count)
+            this.prisma.tradeIn.groupBy({
+                by: ['brand', 'model'],
+                _count: { id: true },
+                _avg: { offerPrice: true },
+                orderBy: { _count: { id: 'desc' } },
+                take: 5,
+            }).then((rows) =>
+                rows.map((r) => ({
+                    device: `${r.brand} ${r.model}`,
+                    count: r._count.id,
+                    avgOffer: Math.round(r._avg.offerPrice ?? 0),
+                })),
+            ),
+        ]);
+
+        const totalRevenue = monthlyData.reduce((s, m) => s + m.revenue, 0);
+        const totalOrders = monthlyData.reduce((s, m) => s + m.orders, 0);
+        const totalTradeIns = monthlyData.reduce((s, m) => s + m.tradeIns, 0);
+        const avgOrderValue = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
+
+        return {
+            summary: { totalRevenue, totalOrders, totalTradeIns, avgOrderValue },
+            monthly: monthlyData,
+            topProducts,
+            categorySplit,
+            topTradeIns: recentTradeIns,
+        };
+    }
+
     async getUsers(query: { page?: number; limit?: number; search?: string }) {
         const { page = 1, limit = 20, search } = query;
         const skip = (page - 1) * limit;
