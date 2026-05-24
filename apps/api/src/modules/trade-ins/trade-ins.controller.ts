@@ -40,6 +40,24 @@ export class TradeInsController {
         return this.tradeInsService.findByUser(user.id);
     }
 
+    @Get('my/:id')
+    @UseGuards(JwtAuthGuard)
+    findMineById(@Param('id') id: string, @CurrentUser() user: { id: string }) {
+        return this.tradeInsService.findByIdForUser(id, user.id);
+    }
+
+    @Post('my/:id/accept-counter')
+    @UseGuards(JwtAuthGuard)
+    acceptCounter(@Param('id') id: string, @CurrentUser() user: { id: string }) {
+        return this.tradeInsService.acceptCounterOffer(id, user.id);
+    }
+
+    @Post('my/:id/decline-counter')
+    @UseGuards(JwtAuthGuard)
+    declineCounter(@Param('id') id: string, @CurrentUser() user: { id: string }) {
+        return this.tradeInsService.declineCounterOffer(id, user.id);
+    }
+
     // Public — AI-powered price estimate (uses OpenAI Vision if images provided)
     @Post('ai-price')
     aiPrice(@Body() dto: AiPriceDto) {

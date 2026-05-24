@@ -146,6 +146,14 @@ export const tradeInsApi = {
 
   my: () => apiFetch<TradeIn[]>('/trade-ins/my', { auth: true }),
 
+  myById: (id: string) => apiFetch<TradeInDetail>(`/trade-ins/my/${id}`, { auth: true }),
+
+  acceptCounter: (id: string) =>
+    apiFetch<TradeIn>(`/trade-ins/my/${id}/accept-counter`, { method: 'POST', auth: true }),
+
+  declineCounter: (id: string) =>
+    apiFetch<TradeIn>(`/trade-ins/my/${id}/decline-counter`, { method: 'POST', auth: true }),
+
   aiPrice: (data: {
     model: string; brand: string; category: string;
     condition: string; specs: Record<string, string>;
@@ -241,9 +249,20 @@ export interface TradeIn {
   model: string;
   condition: string;
   offerPrice: number;
+  counterOffer?: number;
   status: string;
   fulfillment: string;
   createdAt: string;
+}
+
+export interface TradeInDetail extends TradeIn {
+  specs: Record<string, string>;
+  answers: Record<string, string>;
+  adminNotes?: string;
+  images: string[];
+  contact: Record<string, string>;
+  storeId?: string;
+  updatedAt: string;
 }
 
 export interface Repair {

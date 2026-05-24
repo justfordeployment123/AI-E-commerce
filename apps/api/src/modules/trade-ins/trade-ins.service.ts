@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, InternalServerErrorException, Logger, 
 import OpenAI from 'openai';
 import { PrismaService } from '../database/prisma.service';
 import { StorageService } from '../../common/services/storage.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreateTradeInDto } from './dto/create-trade-in.dto';
 import { UpdateTradeInDto } from './dto/update-trade-in.dto';
 import { ApproveTradeInDto } from './dto/approve-trade-in.dto';
@@ -20,6 +21,7 @@ export class TradeInsService {
     constructor(
         private readonly prisma: PrismaService,
         private readonly storage: StorageService,
+        private readonly notifications: NotificationsService,
     ) {}
 
     async submit(dto: CreateTradeInDto, userId?: string) {
@@ -98,6 +100,36 @@ export class TradeInsService {
         });
     }
 
+    async findByIdForUser(id: string, userId: string) {
+        const tradeIn = await this.prisma.tradeIn.findFirst({ where: { id, userId } });
+        if (!tradeIn) throw new NotFoundException('Trade-in not found');
+        const imageUrls = await Promise.all(
+            tradeIn.images.map(key => this.storage.generatePresignedUrl(key).catch(() => null)),
+        );
+        return { ...tradeIn, images: imageUrls.filter(Boolean) as string[] };
+    }
+
+    async acceptCounterOffer(id: string, userId: string) {
+        const tradeIn = await this.prisma.tradeIn.findFirst({ where: { id, userId } });
+        if (!tradeIn) throw new NotFoundException('Trade-in not found');
+        if (tradeIn.status !== 'COUNTER_OFFERED') {
+            throw new BadRequestException('No counter offer to accept');
+        }
+        return this.prisma.tradeIn.update({
+            where: { id },
+            data: { status: 'APPROVED', offerPrice: tradeIn.counterOffer ?? tradeIn.offerPrice },
+        });
+    }
+
+    async declineCounterOffer(id: string, userId: string) {
+        const tradeIn = await this.prisma.tradeIn.findFirst({ where: { id, userId } });
+        if (!tradeIn) throw new NotFoundException('Trade-in not found');
+        if (tradeIn.status !== 'COUNTER_OFFERED') {
+            throw new BadRequestException('No counter offer to decline');
+        }
+        return this.prisma.tradeIn.update({ where: { id }, data: { status: 'CANCELLED' } });
+    }
+
     async update(id: string, dto: UpdateTradeInDto) {
         await this.findById(id);
         return this.prisma.tradeIn.update({ where: { id }, data: dto as never });
@@ -116,10 +148,20 @@ export class TradeInsService {
         if (!['SUBMITTED', 'UNDER_REVIEW', 'COUNTER_OFFERED'].includes(tradeIn.status)) {
             throw new BadRequestException(`Cannot approve a trade-in with status ${tradeIn.status}`);
         }
-        return this.prisma.tradeIn.update({
+        const updated = await this.prisma.tradeIn.update({
             where: { id },
             data: { status: 'APPROVED', adminNotes: dto.adminNotes },
         });
+        if (tradeIn.userId) {
+            await this.notifications.create(
+                tradeIn.userId,
+                'trade_in_approved',
+                'Trade-in Approved!',
+                `Your ${tradeIn.brand} ${tradeIn.model} trade-in has been approved. We'll be in touch shortly to arrange collection.`,
+                { tradeInId: id, reference: tradeIn.reference, price: tradeIn.offerPrice },
+            );
+        }
+        return updated;
     }
 
     async reject(id: string, dto: RejectTradeInDto) {
@@ -127,18 +169,28 @@ export class TradeInsService {
         if (['COMPLETED', 'CANCELLED', 'REJECTED'].includes(tradeIn.status)) {
             throw new BadRequestException(`Cannot reject a trade-in with status ${tradeIn.status}`);
         }
-        return this.prisma.tradeIn.update({
+        const updated = await this.prisma.tradeIn.update({
             where: { id },
             data: { status: 'REJECTED', adminNotes: dto.adminNotes },
         });
+        if (tradeIn.userId) {
+            await this.notifications.create(
+                tradeIn.userId,
+                'trade_in_rejected',
+                'Trade-in Not Accepted',
+                `Unfortunately we're unable to accept your ${tradeIn.brand} ${tradeIn.model} trade-in at this time.${dto.adminNotes ? ` Reason: ${dto.adminNotes}` : ''}`,
+                { tradeInId: id, reference: tradeIn.reference },
+            );
+        }
+        return updated;
     }
 
     async counterOffer(id: string, dto: CounterOfferTradeInDto) {
         const tradeIn = await this.findById(id);
-        if (!['SUBMITTED', 'UNDER_REVIEW'].includes(tradeIn.status)) {
+        if (!['SUBMITTED', 'UNDER_REVIEW', 'COUNTER_OFFERED'].includes(tradeIn.status)) {
             throw new BadRequestException(`Cannot counter-offer a trade-in with status ${tradeIn.status}`);
         }
-        return this.prisma.tradeIn.update({
+        const updated = await this.prisma.tradeIn.update({
             where: { id },
             data: {
                 status: 'COUNTER_OFFERED',
@@ -146,6 +198,16 @@ export class TradeInsService {
                 adminNotes: dto.adminNotes,
             },
         });
+        if (tradeIn.userId) {
+            await this.notifications.create(
+                tradeIn.userId,
+                'trade_in_counter_offer',
+                'New Offer on Your Trade-in',
+                `We've reviewed your ${tradeIn.brand} ${tradeIn.model} and are offering £${dto.counterOffer}. Check your trade-in to accept or decline.`,
+                { tradeInId: id, reference: tradeIn.reference, counterOffer: dto.counterOffer },
+            );
+        }
+        return updated;
     }
 
     private async getMarginPct(): Promise<number> {

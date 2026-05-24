@@ -10,6 +10,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "../context/auth-context";
+import { NotificationBell } from "./NotificationBell";
 
 const SHOP_CATEGORIES = [
   { label: "Phones", href: "/shop/phones", icon: Smartphone },
@@ -254,6 +255,8 @@ export default function Navbar({ itemsCount = 0 }: { itemsCount?: number }) {
                   <span className="hidden sm:inline">Sign In</span>
                 </Link>
               )}
+
+              {user && <NotificationBell />}
 
               <Link href="/cart" className="relative flex items-center justify-center h-10 w-10 md:h-11 md:w-11 rounded-[14px] bg-accent text-black transition-transform hover:scale-105 active:scale-95 shadow-md shadow-accent/20">
                 <ShoppingCart className="h-4 w-4 md:h-5 md:w-5" />

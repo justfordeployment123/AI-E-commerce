@@ -1,0 +1,16 @@
+{
+  "name": "TechStop",
+  "short_name": "TechStop",
+  "description": "Buy, sell and repair refurbished devices",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "173x173",
+      "type": "image/png"
+    }
+  ]
+}

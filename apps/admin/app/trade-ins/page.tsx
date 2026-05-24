@@ -25,9 +25,11 @@ export default function TradeInsPage() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [selected, setSelected] = useState<TradeIn | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
-  const [counterOffer, setCounterOffer] = useState("");
-  const [showCounter, setShowCounter] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [modal, setModal] = useState<{ type: "approve" | "reject" | "counter"; id: string } | null>(null);
+  const [modalNotes, setModalNotes] = useState("");
+  const [modalCounter, setModalCounter] = useState("");
 
   async function load() {
     setLoading(true);
@@ -50,37 +52,43 @@ export default function TradeInsPage() {
     return matchSearch && matchStatus;
   });
 
-  async function approve(id: string, price: number) {
-    setSaving(true);
+  async function refreshSelected(id: string) {
     try {
-      const updated = await tradeInsApi.approve(id, price);
-      setItems(ts => ts.map(t => t.id === id ? updated : t));
-      setSelected(updated);
-    } catch { /* ignore */ }
-    finally { setSaving(false); }
+      const full = await tradeInsApi.getById(id);
+      setSelected(full);
+      setItems(ts => ts.map(t => t.id === id ? full : t));
+    } catch { }
   }
 
-  async function reject(id: string) {
-    setSaving(true);
-    try {
-      const updated = await tradeInsApi.reject(id);
-      setItems(ts => ts.map(t => t.id === id ? updated : t));
-      setSelected(updated);
-    } catch { /* ignore */ }
-    finally { setSaving(false); }
+  function openModal(type: "approve" | "reject" | "counter", id: string) {
+    setActionError(null);
+    setModalNotes("");
+    setModalCounter(type === "counter" && selected?.counterOffer ? String(selected.counterOffer) : "");
+    setModal({ type, id });
   }
 
-  async function sendCounter(id: string) {
-    const amount = Number(counterOffer);
-    if (!amount) return;
-    setSaving(true);
+  function closeModal() {
+    setModal(null);
+    setModalNotes("");
+    setModalCounter("");
+    setActionError(null);
+  }
+
+  async function handleModalConfirm() {
+    if (!modal) return;
+    if (modal.type === "counter" && !modalCounter) return;
+    setSaving(true); setActionError(null);
     try {
-      const updated = await tradeInsApi.counterOffer(id, amount);
-      setItems(ts => ts.map(t => t.id === id ? updated : t));
-      setSelected(updated);
-      setShowCounter(false);
-      setCounterOffer("");
-    } catch { /* ignore */ }
+      if (modal.type === "approve") {
+        await tradeInsApi.approve(modal.id, modalNotes || undefined);
+      } else if (modal.type === "reject") {
+        await tradeInsApi.reject(modal.id, modalNotes || undefined);
+      } else {
+        await tradeInsApi.counterOffer(modal.id, Number(modalCounter), modalNotes || undefined);
+      }
+      await refreshSelected(modal.id);
+      closeModal();
+    } catch (e: any) { setActionError(e?.message ?? "Action failed"); }
     finally { setSaving(false); }
   }
 
@@ -162,6 +170,7 @@ export default function TradeInsPage() {
                         onClick={async () => {
                           if (selected?.id === t.id) { setSelected(null); return; }
                           setSelected(t);
+                          setActionError(null);
                           setDetailLoading(true);
                           try {
                             const full = await tradeInsApi.getById(t.id);
@@ -288,35 +297,31 @@ export default function TradeInsPage() {
                 </div>
               )}
 
+              {/* Admin notes (read-only display) */}
+              {selected.adminNotes && (
+                <div className="rounded-2xl bg-amber-50 border border-amber-100 px-4 py-3 mb-2">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-amber-600 mb-1">Note to customer</p>
+                  <p className="text-xs text-amber-800">{selected.adminNotes}</p>
+                </div>
+              )}
+
               {/* Actions */}
-              {selected.status === "SUBMITTED" && (
+              {["SUBMITTED", "UNDER_REVIEW", "COUNTER_OFFERED"].includes(selected.status) && (
                 <div className="space-y-2.5 pt-1">
                   <div className="grid grid-cols-2 gap-2.5">
-                    <button onClick={() => approve(selected.id, selected.offerPrice)} disabled={saving}
+                    <button onClick={() => openModal("approve", selected.id)} disabled={saving}
                       className="h-11 rounded-2xl bg-approve text-approve-fg font-bold text-sm flex items-center justify-center gap-2 hover:bg-approve-hover active:scale-95 transition-all disabled:opacity-50">
                       <Check className="h-4 w-4" /> Approve
                     </button>
-                    <button onClick={() => reject(selected.id)} disabled={saving}
+                    <button onClick={() => openModal("reject", selected.id)} disabled={saving}
                       className="h-11 rounded-2xl bg-reject text-reject-fg font-bold text-sm flex items-center justify-center gap-2 hover:bg-reject-hover active:scale-95 transition-all disabled:opacity-50">
                       <X className="h-4 w-4" /> Reject
                     </button>
                   </div>
-                  {!showCounter ? (
-                    <button onClick={() => setShowCounter(true)}
-                      className="w-full h-11 rounded-2xl border-2 border-zinc-200 font-bold text-sm hover:border-zinc-900 hover:bg-zinc-900 hover:text-white active:scale-95 transition-all flex items-center justify-center gap-2">
-                      <Minus className="h-4 w-4" /> Counter offer
-                    </button>
-                  ) : (
-                    <div className="flex gap-2">
-                      <input type="number" placeholder="Counter amount (£)" value={counterOffer}
-                        onChange={e => setCounterOffer(e.target.value)}
-                        className="flex-1 h-11 rounded-2xl border-2 border-zinc-200 px-3 text-sm font-mono outline-none focus:border-black transition-colors" />
-                      <button onClick={() => sendCounter(selected.id)} disabled={saving || !counterOffer}
-                        className="h-11 px-5 rounded-2xl bg-black text-white font-bold text-sm hover:bg-zinc-800 active:scale-95 transition-all disabled:opacity-50">
-                        Send
-                      </button>
-                    </div>
-                  )}
+                  <button onClick={() => openModal("counter", selected.id)} disabled={saving}
+                    className="w-full h-11 rounded-2xl border-2 border-zinc-200 font-bold text-sm hover:border-zinc-900 hover:bg-zinc-900 hover:text-white active:scale-95 transition-all flex items-center justify-center gap-2">
+                    <Minus className="h-4 w-4" /> {selected.counterOffer ? `Update offer (£${selected.counterOffer})` : "Counter offer"}
+                  </button>
                 </div>
               )}
               {selected.status === "APPROVED" && (
@@ -339,6 +344,94 @@ export default function TradeInsPage() {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Action modal */}
+      <AnimatePresence>
+        {modal && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+            onClick={closeModal}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ type: "spring", duration: 0.25 }}
+              onClick={e => e.stopPropagation()}
+              className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6"
+            >
+              <h3 className="text-lg font-bold mb-0.5">
+                {modal.type === "approve" ? "Approve Trade-In" : modal.type === "reject" ? "Reject Trade-In" : "Counter Offer"}
+              </h3>
+              <p className="text-sm text-zinc-400 mb-5">
+                {selected?.brand} {selected?.model} · {selected?.reference}
+              </p>
+
+              {modal.type === "counter" && (
+                <div className="mb-4">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 block mb-1.5">
+                    Counter Amount (£)
+                  </label>
+                  <input
+                    type="number"
+                    value={modalCounter}
+                    onChange={e => setModalCounter(e.target.value)}
+                    placeholder="e.g. 150"
+                    autoFocus
+                    className="w-full h-11 rounded-2xl border-2 border-zinc-200 px-4 text-sm font-mono outline-none focus:border-black transition-colors"
+                  />
+                </div>
+              )}
+
+              <div className="mb-5">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 block mb-1.5">
+                  Note to customer <span className="normal-case font-normal text-zinc-400">(optional)</span>
+                </label>
+                <textarea
+                  value={modalNotes}
+                  onChange={e => setModalNotes(e.target.value)}
+                  rows={3}
+                  autoFocus={modal.type !== "counter"}
+                  placeholder={
+                    modal.type === "approve" ? "Any collection instructions or next steps..." :
+                    modal.type === "reject"  ? "Reason for rejection..." :
+                    "Explain the revised offer..."
+                  }
+                  className="w-full rounded-2xl border-2 border-zinc-200 px-4 py-3 text-sm outline-none focus:border-black transition-colors resize-none"
+                />
+              </div>
+
+              {actionError && (
+                <div className="rounded-xl bg-red-50 border border-red-200 px-3 py-2 text-xs text-red-600 font-medium mb-4">
+                  {actionError}
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <button onClick={closeModal}
+                  className="flex-1 h-11 rounded-2xl border-2 border-zinc-200 font-bold text-sm hover:border-zinc-400 transition-all">
+                  Cancel
+                </button>
+                <button
+                  onClick={handleModalConfirm}
+                  disabled={saving || (modal.type === "counter" && !modalCounter)}
+                  className={`flex-1 h-11 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50 ${
+                    modal.type === "approve" ? "bg-emerald-600 hover:bg-emerald-700 text-white" :
+                    modal.type === "reject"  ? "bg-red-600 hover:bg-red-700 text-white" :
+                    "bg-black hover:bg-zinc-800 text-white"
+                  }`}
+                >
+                  {saving
+                    ? <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    : modal.type === "approve" ? <><Check className="h-4 w-4" /> Approve</>
+                    : modal.type === "reject"  ? <><X className="h-4 w-4" /> Reject</>
+                    : <><Minus className="h-4 w-4" /> Send Offer</>
+                  }
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

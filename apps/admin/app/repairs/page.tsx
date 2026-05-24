@@ -48,56 +48,59 @@ export default function RepairsPage() {
     return matchSearch && matchStatus;
   });
 
+  async function refreshSelected(id: string) {
+    try {
+      const full = await repairsApi.getById(id);
+      setSelected(full);
+      setItems(rs => rs.map(r => r.id === id ? full : r));
+    } catch { }
+  }
+
   async function sendQuote(id: string) {
     const amount = Number(quoteInput);
     if (!amount) return;
     setSaving(true);
     try {
-      const updated = await repairsApi.setQuote(id, amount);
-      setItems(rs => rs.map(r => r.id === id ? updated : r));
-      setSelected(updated);
+      await repairsApi.setQuote(id, amount);
+      await refreshSelected(id);
       setQuoteInput("");
-    } catch { /* ignore */ }
+    } catch { }
     finally { setSaving(false); }
   }
 
   async function approveQuote(id: string) {
     setSaving(true);
     try {
-      const updated = await repairsApi.approveQuote(id);
-      setItems(rs => rs.map(r => r.id === id ? updated : r));
-      setSelected(updated);
-    } catch { /* ignore */ }
+      await repairsApi.approveQuote(id);
+      await refreshSelected(id);
+    } catch { }
     finally { setSaving(false); }
   }
 
   async function startRepair(id: string) {
     setSaving(true);
     try {
-      const updated = await repairsApi.start(id);
-      setItems(rs => rs.map(r => r.id === id ? updated : r));
-      setSelected(updated);
-    } catch { /* ignore */ }
+      await repairsApi.start(id);
+      await refreshSelected(id);
+    } catch { }
     finally { setSaving(false); }
   }
 
   async function completeRepair(id: string) {
     setSaving(true);
     try {
-      const updated = await repairsApi.complete(id);
-      setItems(rs => rs.map(r => r.id === id ? updated : r));
-      setSelected(updated);
-    } catch { /* ignore */ }
+      await repairsApi.complete(id);
+      await refreshSelected(id);
+    } catch { }
     finally { setSaving(false); }
   }
 
   async function cancelRepair(id: string) {
     setSaving(true);
     try {
-      const updated = await repairsApi.cancel(id);
-      setItems(rs => rs.map(r => r.id === id ? updated : r));
-      setSelected(updated);
-    } catch { /* ignore */ }
+      await repairsApi.cancel(id);
+      await refreshSelected(id);
+    } catch { }
     finally { setSaving(false); }
   }
 

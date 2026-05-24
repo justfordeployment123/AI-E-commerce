@@ -20,6 +20,7 @@ import { PricingConfigModule } from './modules/pricing-config/pricing-config.mod
 import { DeviceCatalogModule } from './modules/device-catalog/device-catalog.module';
 import { StoresModule } from './modules/stores/stores.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { UploadsModule } from './modules/uploads/uploads.module';
     DeviceCatalogModule,
     StoresModule,
     UploadsModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [

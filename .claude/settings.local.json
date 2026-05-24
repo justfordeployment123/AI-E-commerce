@@ -38,7 +38,14 @@
       "Bash(dir /s /b src\\\\modules\\\\admin src\\\\modules\\\\pricing-config)",
       "Bash(python -c ' *)",
       "PowerShell($tmpDir = \"$env:TEMP\\\\api-lock-gen\"; New-Item -ItemType Directory -Force $tmpDir | Out-Null; Copy-Item \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\api\\\\package.json\" \"$tmpDir\\\\package.json\"; Set-Location $tmpDir; npm install --no-audit --no-fund --ignore-scripts 2>&1 | Select-Object -Last 5; Write-Host \"Lock file exists: $\\(Test-Path \"$tmpDir\\\\package-lock.json\"\\)\")",
-      "PowerShell(Copy-Item \"$env:TEMP\\\\api-lock-gen\\\\package-lock.json\" \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\api\\\\package-lock.json\"; Write-Host \"Copied. Size: $\\(\\(Get-Item 'd:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\api\\\\package-lock.json'\\).Length / 1KB\\) KB\")"
+      "PowerShell(Copy-Item \"$env:TEMP\\\\api-lock-gen\\\\package-lock.json\" \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\api\\\\package-lock.json\"; Write-Host \"Copied. Size: $\\(\\(Get-Item 'd:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\api\\\\package-lock.json'\\).Length / 1KB\\) KB\")",
+      "PowerShell(New-Item -ItemType Directory -Force \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\api\\\\prisma\\\\migrations\\\\20260525000001_add_notifications\")",
+      "PowerShell(New-Item -ItemType Directory -Force \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\api\\\\src\\\\modules\\\\notifications\")",
+      "PowerShell(New-Item -ItemType Directory -Force \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\\\\hooks\")",
+      "PowerShell(New-Item -ItemType Directory -Force \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\")",
+      "Bash(copy \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\\\\app\\\\icon.png\" \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\\\\public\\\\icon.png\")",
+      "PowerShell(Copy-Item \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\\\\app\\\\icon.png\" \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\\\\public\\\\icon.png\")",
+      "PowerShell($file = Get-Item \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\\\\public\\\\icon.png\"; Write-Host \"Size: $\\($file.Length\\) bytes\"; Add-Type -AssemblyName System.Drawing; $img = [System.Drawing.Image]::FromFile\\($file.FullName\\); Write-Host \"Dimensions: $\\($img.Width\\) x $\\($img.Height\\)\"; $img.Dispose\\(\\))"
     ]
   },
   "enabledMcpjsonServers": [

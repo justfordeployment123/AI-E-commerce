@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { StorageService } from '../../common/services/storage.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreateRepairDto } from './dto/create-repair.dto';
 import { UpdateRepairDto } from './dto/update-repair.dto';
 import { SetQuoteDto } from './dto/set-quote.dto';
@@ -11,6 +12,7 @@ export class RepairsService {
     constructor(
         private readonly prisma: PrismaService,
         private readonly storage: StorageService,
+        private readonly notifications: NotificationsService,
     ) {}
 
     async submit(dto: CreateRepairDto, userId?: string) {
@@ -93,10 +95,20 @@ export class RepairsService {
         if (!['SUBMITTED', 'APPROVED'].includes(repair.status)) {
             throw new BadRequestException(`Cannot set quote on a repair with status ${repair.status}`);
         }
-        return this.prisma.repair.update({
+        const updated = await this.prisma.repair.update({
             where: { id },
             data: { status: 'QUOTE_SENT', quote: dto.quote, adminNotes: dto.adminNotes },
         });
+        if (repair.userId) {
+            await this.notifications.create(
+                repair.userId,
+                'repair_quote_sent',
+                'Repair Quote Ready',
+                `Your ${repair.brand} ${repair.model} repair quote is ready: £${dto.quote}. Log in to approve and proceed.`,
+                { repairId: id, reference: repair.reference, quote: dto.quote },
+            );
+        }
+        return updated;
     }
 
     async approveQuote(id: string) {
@@ -112,7 +124,17 @@ export class RepairsService {
         if (repair.status !== 'APPROVED') {
             throw new BadRequestException(`Cannot start a repair with status ${repair.status}`);
         }
-        return this.prisma.repair.update({ where: { id }, data: { status: 'IN_PROGRESS' } });
+        const updated = await this.prisma.repair.update({ where: { id }, data: { status: 'IN_PROGRESS' } });
+        if (repair.userId) {
+            await this.notifications.create(
+                repair.userId,
+                'repair_in_progress',
+                'Repair Started',
+                `Your ${repair.brand} ${repair.model} repair is now in progress. We'll notify you when it's ready.`,
+                { repairId: id, reference: repair.reference },
+            );
+        }
+        return updated;
     }
 
     async completeRepair(id: string, dto: CompleteRepairDto) {
@@ -120,10 +142,20 @@ export class RepairsService {
         if (repair.status !== 'IN_PROGRESS') {
             throw new BadRequestException(`Cannot complete a repair with status ${repair.status}`);
         }
-        return this.prisma.repair.update({
+        const updated = await this.prisma.repair.update({
             where: { id },
             data: { status: 'COMPLETED', adminNotes: dto.adminNotes ?? repair.adminNotes },
         });
+        if (repair.userId) {
+            await this.notifications.create(
+                repair.userId,
+                'repair_completed',
+                'Repair Complete!',
+                `Your ${repair.brand} ${repair.model} repair is done and ready for collection or dispatch.`,
+                { repairId: id, reference: repair.reference },
+            );
+        }
+        return updated;
     }
 
     async cancelRepair(id: string) {

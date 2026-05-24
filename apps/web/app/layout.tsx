@@ -33,6 +33,7 @@ export const metadata: Metadata = {
   title: "TechStop Leicester | Certified Refurbished Tech",
   description:
     "Premium marketplace for certified refurbished electronics with warranty, quality grading, and fast delivery.",
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({

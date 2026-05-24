@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { RefreshCw, ArrowRight } from "lucide-react";
+import { RefreshCw, ArrowRight, ChevronRight } from "lucide-react";
+import Link from "next/link";
 import { useAuth } from "../../../context/auth-context";
 import { tradeInsApi, type TradeIn } from "../../../lib/api";
 import { statusCfg, fmtDate } from "../_utils";
@@ -49,10 +50,11 @@ export default function TradeInsPage() {
             const cfg = statusCfg(t.status);
             const StatusIcon = cfg.icon;
             return (
-              <div key={t.id} className="rounded-[1.25rem] border border-zinc-100 p-5 sm:p-6 hover:border-zinc-200 hover:shadow-sm transition-all">
+              <Link key={t.id} href={`/account/trade-ins/${t.id}`}
+                className="block rounded-[1.25rem] border border-zinc-100 p-5 sm:p-6 hover:border-zinc-200 hover:shadow-sm transition-all group">
                 <div className="flex items-start justify-between gap-4 mb-4">
                   <div>
-                    <p className="font-bold">{t.model}</p>
+                    <p className="font-bold">{t.brand} {t.model}</p>
                     <p className="text-xs text-zinc-400 font-medium mt-0.5">{t.reference} · {fmtDate(t.createdAt)}</p>
                   </div>
                   <span className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-widest shrink-0 ${cfg.color}`}>
@@ -63,10 +65,16 @@ export default function TradeInsPage() {
                 <div className="flex items-center justify-between pt-4 border-t border-zinc-100">
                   <div>
                     <p className="text-xs text-zinc-400 font-medium">Condition: {t.condition}</p>
-                    <p className="font-bold text-lg mt-0.5">£{t.offerPrice}</p>
+                    <p className="font-bold text-lg mt-0.5">
+                      £{t.counterOffer ?? t.offerPrice}
+                      {t.counterOffer && t.counterOffer !== t.offerPrice && (
+                        <span className="ml-2 text-xs text-zinc-400 line-through font-normal">£{t.offerPrice}</span>
+                      )}
+                    </p>
                   </div>
+                  <ChevronRight className="h-4 w-4 text-zinc-300 group-hover:text-zinc-600 transition-colors" />
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>

@@ -153,14 +153,14 @@ export const tradeInsApi = {
 
   getById: (id: string) => apiFetch<TradeIn>(`/trade-ins/${id}`),
 
-  approve: (id: string, finalPrice: number) =>
-    apiFetch<TradeIn>(`/trade-ins/${id}/approve`, { method: 'POST', body: JSON.stringify({ finalPrice }) }),
+  approve: (id: string, adminNotes?: string) =>
+    apiFetch<TradeIn>(`/trade-ins/${id}/approve`, { method: 'POST', body: JSON.stringify({ adminNotes }) }),
 
-  reject: (id: string, reason?: string) =>
-    apiFetch<TradeIn>(`/trade-ins/${id}/reject`, { method: 'POST', body: JSON.stringify({ reason }) }),
+  reject: (id: string, adminNotes?: string) =>
+    apiFetch<TradeIn>(`/trade-ins/${id}/reject`, { method: 'POST', body: JSON.stringify({ adminNotes }) }),
 
-  counterOffer: (id: string, counterPrice: number) =>
-    apiFetch<TradeIn>(`/trade-ins/${id}/counter-offer`, { method: 'POST', body: JSON.stringify({ counterPrice }) }),
+  counterOffer: (id: string, counterOffer: number, adminNotes?: string) =>
+    apiFetch<TradeIn>(`/trade-ins/${id}/counter-offer`, { method: 'POST', body: JSON.stringify({ counterOffer, adminNotes }) }),
 
   complete: (id: string) =>
     apiFetch<TradeIn>(`/trade-ins/${id}/complete`, { method: 'POST' }),
