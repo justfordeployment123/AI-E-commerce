@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { repairsApi } from "../../lib/api";
 import {
@@ -122,6 +123,9 @@ export default function RepairPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   const { user } = useAuth();
+  const router = useRouter();
+  const [missingDetailsOpen, setMissingDetailsOpen] = useState(false);
+  const [missingFields, setMissingFields] = useState<string[]>([]);
   const modalScrollRef = useRef<HTMLDivElement>(null);
 
   // Restore wizard state after Google OAuth redirect
@@ -702,7 +706,42 @@ export default function RepairPage() {
 
                           {/* STEP 4 – Contact */}
                           {step === 4 && (
-                            <div className="flex-1 flex flex-col justify-between">
+                            <form
+                              className="flex-1 flex flex-col justify-between"
+                              onSubmit={async (e) => {
+                                e.preventDefault();
+                                if (user) {
+                                  const missing: string[] = [];
+                                  if (!user.phone)   missing.push("Phone number");
+                                  if (!user.address) missing.push("Street address");
+                                  if (!user.city)    missing.push("City");
+                                  if (missing.length > 0) {
+                                    setMissingFields(missing);
+                                    setMissingDetailsOpen(true);
+                                    return;
+                                  }
+                                }
+                                setSubmitting(true);
+                                setSubmitError("");
+                                try {
+                                  const result = await repairsApi.submit({
+                                    deviceType: state.deviceType,
+                                    brand: state.brand,
+                                    model: state.model,
+                                    issue: state.issue.join(", "),
+                                    issueNotes: state.issueNotes,
+                                    fulfillment: state.fulfillment === "mail" ? "ship" : state.fulfillment,
+                                    contact: state.contact,
+                                  });
+                                  setSubmitRef(result.reference);
+                                  go(1);
+                                } catch (err) {
+                                  setSubmitError(err instanceof Error ? err.message : "Submission failed");
+                                } finally {
+                                  setSubmitting(false);
+                                }
+                              }}
+                            >
                               <div className="space-y-4">
                                 <div>
                                   <h2 className="font-serif text-3xl md:text-4xl font-medium mb-2">Your contact details</h2>
@@ -736,67 +775,44 @@ export default function RepairPage() {
                                     </div>
                                   </div>
                                 )}
-                                <form
-                                  id="repair-contact-form"
-                                  className="space-y-4"
-                                  onSubmit={async (e) => {
-                                    e.preventDefault();
-                                    setSubmitting(true);
-                                    setSubmitError("");
-                                    try {
-                                      const result = await repairsApi.submit({
-                                        deviceType: state.deviceType,
-                                        brand: state.brand,
-                                        model: state.model,
-                                        issue: state.issue.join(", "),
-                                        issueNotes: state.issueNotes,
-                                        fulfillment: state.fulfillment === "mail" ? "ship" : state.fulfillment,
-                                        contact: state.contact,
-                                      });
-                                      setSubmitRef(result.reference);
-                                      go(1);
-                                    } catch (err) {
-                                      setSubmitError(err instanceof Error ? err.message : "Submission failed");
-                                    } finally {
-                                      setSubmitting(false);
-                                    }
-                                  }}
-                                >
-                                  {(() => {
-                                    const allFields = [
-                                      { key: "name",     label: "Full Name",          type: "text",  placeholder: "E.g. Alex Turner",    profileValue: user?.name },
-                                      { key: "email",    label: "Email Address",       type: "email", placeholder: "you@example.com",      profileValue: user?.email },
-                                      { key: "phone",    label: "Phone Number",        type: "tel",   placeholder: "+44 7700 000000",      profileValue: user?.phone },
-                                      ...(state.fulfillment === "mail" ? [
-                                        { key: "address",  label: "Collection Address", type: "text",  placeholder: "Street address",       profileValue: user?.address },
-                                        { key: "postcode", label: "Postcode",           type: "text",  placeholder: "LE1 1AA",              profileValue: undefined },
-                                      ] : []),
-                                    ];
-                                    return allFields
-                                      .filter(f => !user || !f.profileValue)
-                                      .map(({ key, label, type, placeholder }) => (
-                                        <div key={key} className="flex flex-col gap-2">
-                                          <label className="text-xs font-bold uppercase tracking-widest text-zinc-400">{label}</label>
-                                          <input
-                                            type={type}
-                                            required
-                                            placeholder={placeholder}
-                                            value={state.contact[key as keyof typeof state.contact]}
-                                            onChange={e => setState(s => ({ ...s, contact: { ...s.contact, [key]: e.target.value } }))}
-                                            className="h-14 rounded-[1rem] border-2 border-zinc-200 px-5 text-sm font-medium outline-none focus:border-black transition-colors"
-                                          />
-                                        </div>
-                                      ));
-                                  })()}
-                                  {submitError && (
-                                    <p className="text-sm font-bold text-red-500 bg-red-50 border border-red-100 rounded-2xl px-4 py-3">{submitError}</p>
-                                  )}
-                                </form>
+
+                                {(() => {
+                                  const allFields = [
+                                    { key: "name",     label: "Full Name",          type: "text",  placeholder: "E.g. Alex Turner" },
+                                    { key: "email",    label: "Email Address",       type: "email", placeholder: "you@example.com" },
+                                    { key: "phone",    label: "Phone Number",        type: "tel",   placeholder: "+44 7700 000000" },
+                                    ...(state.fulfillment === "mail" ? [
+                                      { key: "address",  label: "Collection Address", type: "text",  placeholder: "Street address" },
+                                      { key: "postcode", label: "Postcode",           type: "text",  placeholder: "LE1 1AA" },
+                                    ] : []),
+                                  ];
+                                  const visibleFields = user
+                                    ? allFields.filter(f => f.key === "postcode")
+                                    : allFields;
+                                  if (visibleFields.length === 0) return null;
+                                  return visibleFields.map(({ key, label, type, placeholder }) => (
+                                    <div key={key} className="flex flex-col gap-2">
+                                      <label className="text-xs font-bold uppercase tracking-widest text-zinc-400">{label}</label>
+                                      <input
+                                        type={type}
+                                        required
+                                        placeholder={placeholder}
+                                        value={state.contact[key as keyof typeof state.contact]}
+                                        onChange={e => setState(s => ({ ...s, contact: { ...s.contact, [key]: e.target.value } }))}
+                                        className="h-14 rounded-[1rem] border-2 border-zinc-200 px-5 text-sm font-medium outline-none focus:border-black transition-colors"
+                                      />
+                                    </div>
+                                  ));
+                                })()}
+
+                                {submitError && (
+                                  <p className="text-sm font-bold text-red-500 bg-red-50 border border-red-100 rounded-2xl px-4 py-3">{submitError}</p>
+                                )}
                               </div>
+
                               <div className="pt-6 border-t border-zinc-100">
                                 <button
                                   type="submit"
-                                  form="repair-contact-form"
                                   disabled={submitting}
                                   className="w-full h-14 bg-black text-white rounded-[1.5rem] font-bold text-base flex items-center justify-center gap-2 hover:bg-zinc-800 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                                 >
@@ -806,7 +822,7 @@ export default function RepairPage() {
                                   No payment now — you approve the quote before any work begins.
                                 </p>
                               </div>
-                            </div>
+                            </form>
                           )}
 
                           {/* STEP 5 – Confirmation */}
@@ -868,6 +884,42 @@ export default function RepairPage() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Missing profile details modal */}
+      {missingDetailsOpen && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setMissingDetailsOpen(false)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full space-y-4">
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="text-base font-black text-zinc-950">Complete your profile first</h3>
+                <p className="text-xs text-zinc-500 font-medium mt-1">We need a few more details before you can book.</p>
+              </div>
+              <button onClick={() => setMissingDetailsOpen(false)} className="text-zinc-400 hover:text-zinc-700 transition-colors ml-4 mt-0.5">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <ul className="space-y-2">
+              {missingFields.map(f => (
+                <li key={f} className="flex items-center gap-2 text-sm font-semibold text-zinc-700">
+                  <span className="h-1.5 w-1.5 rounded-full bg-red-500 shrink-0" />
+                  {f} is missing
+                </li>
+              ))}
+            </ul>
+            <button
+              onClick={() => {
+                setMissingDetailsOpen(false);
+                sessionStorage.setItem("ts_wizard_repair", JSON.stringify({ state, step }));
+                router.push("/account/settings");
+              }}
+              className="w-full h-11 bg-black text-white rounded-xl text-sm font-black hover:bg-zinc-800 transition-colors"
+            >
+              Go to Account Settings →
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

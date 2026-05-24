@@ -1,17 +1,20 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "../../../context/auth-context";
 import { authApi } from "../../../lib/api";
 
 export default function SettingsPage() {
   const { user, refreshUser } = useAuth();
+  const router = useRouter();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
+  const [pendingReturn, setPendingReturn] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -20,6 +23,10 @@ export default function SettingsPage() {
       setAddress(user.address ?? "");
       setCity(user.city ?? "");
     }
+    setPendingReturn(
+      !!sessionStorage.getItem("ts_wizard_tradein") ||
+      !!sessionStorage.getItem("ts_wizard_repair")
+    );
   }, [user]);
 
   async function handleSave(e: React.FormEvent) {
@@ -29,6 +36,14 @@ export default function SettingsPage() {
     try {
       await authApi.updateProfile({ name, phone, address, city });
       await refreshUser();
+      if (sessionStorage.getItem("ts_wizard_tradein")) {
+        router.push("/trade-in");
+        return;
+      }
+      if (sessionStorage.getItem("ts_wizard_repair")) {
+        router.push("/repair");
+        return;
+      }
       setMsg("Changes saved!");
     } catch {
       setMsg("Failed to save — please try again.");
@@ -42,6 +57,13 @@ export default function SettingsPage() {
   return (
     <div className="flex-1 bg-white rounded-[1.5rem] border border-zinc-100 p-6 sm:p-8 shadow-sm">
       <h2 className="text-2xl font-bold mb-8">Account settings</h2>
+
+      {pendingReturn && (
+        <div className="mb-6 flex items-start gap-3 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-xs font-semibold text-sky-800">
+          <span className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-sky-500" />
+          Save your details below and you&apos;ll be taken straight back to your trade-in.
+        </div>
+      )}
 
       <form onSubmit={handleSave} className="space-y-8 max-w-lg">
         <div>

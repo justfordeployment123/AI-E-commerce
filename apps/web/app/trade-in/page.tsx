@@ -336,9 +336,10 @@ export default function TradeInPage() {
     const saved = sessionStorage.getItem("ts_wizard_tradein");
     if (saved) {
       try {
-        const { state: s, phase: savedPhase } = JSON.parse(saved);
+        const { state: s, phase: savedPhase, aiPrice: savedAiPrice } = JSON.parse(saved);
         setState(s);
         setPhase(savedPhase);
+        if (savedAiPrice != null) setAiPrice(savedAiPrice);
         setIsWizardActive(true);
       } catch {}
       sessionStorage.removeItem("ts_wizard_tradein");
@@ -1599,15 +1600,18 @@ export default function TradeInPage() {
                           className="space-y-6 flex-1 flex flex-col justify-between"
                           onSubmit={async (e) => {
                             e.preventDefault();
-                            // Guard: profile must have phone, address, city
-                            const missing: string[] = [];
-                            if (!user?.phone)   missing.push("Phone number");
-                            if (!user?.address) missing.push("Street address");
-                            if (!user?.city)    missing.push("City");
-                            if (missing.length > 0) {
-                              setMissingFields(missing);
-                              setMissingDetailsOpen(true);
-                              return;
+                            if (user) {
+                              const missing: string[] = [];
+                              if (!user.phone) missing.push("Phone number");
+                              if (state.fulfillment === "ship") {
+                                if (!user.address) missing.push("Street address");
+                                if (!user.city)    missing.push("City");
+                              }
+                              if (missing.length > 0) {
+                                setMissingFields(missing);
+                                setMissingDetailsOpen(true);
+                                return;
+                              }
                             }
                             setSubmitting(true);
                             setSubmitError("");
@@ -1767,8 +1771,11 @@ export default function TradeInPage() {
                                         { key: "postcode", label: "Postcode",                    type: "text",  placeholder: "e.g. LE1 1AA",          span: false, profileValue: undefined },
                                       ] : []),
                                     ];
-                                    // When logged in, hide fields already covered by the profile
-                                    const visibleFields = allFields.filter(f => !user || !f.profileValue);
+                                    // Logged-in users: only show postcode (profile fields handled by popup guard)
+                                    // Non-logged-in users: show all fields
+                                    const visibleFields = user
+                                      ? allFields.filter(f => f.key === "postcode")
+                                      : allFields;
                                     if (visibleFields.length === 0) return null;
                                     return (
                                       <div className="grid gap-4 sm:grid-cols-2">
@@ -1930,7 +1937,7 @@ export default function TradeInPage() {
                                 <button
                                   onClick={() => {
                                     setMissingDetailsOpen(false);
-                                    sessionStorage.setItem("ts_wizard_tradein", JSON.stringify({ state, phase }));
+                                    sessionStorage.setItem("ts_wizard_tradein", JSON.stringify({ state, phase, aiPrice }));
                                     router.push("/account/settings");
                                   }}
                                   className="w-full h-11 bg-black text-white rounded-xl text-sm font-black hover:bg-zinc-800 transition-colors"
