@@ -36,7 +36,9 @@
       "Bash(Select-Object FullName)",
       "Bash(find src/modules/admin src/modules/pricing-config -name \"*.ts\")",
       "Bash(dir /s /b src\\\\modules\\\\admin src\\\\modules\\\\pricing-config)",
-      "Bash(python -c ' *)"
+      "Bash(python -c ' *)",
+      "PowerShell($tmpDir = \"$env:TEMP\\\\api-lock-gen\"; New-Item -ItemType Directory -Force $tmpDir | Out-Null; Copy-Item \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\api\\\\package.json\" \"$tmpDir\\\\package.json\"; Set-Location $tmpDir; npm install --no-audit --no-fund --ignore-scripts 2>&1 | Select-Object -Last 5; Write-Host \"Lock file exists: $\\(Test-Path \"$tmpDir\\\\package-lock.json\"\\)\")",
+      "PowerShell(Copy-Item \"$env:TEMP\\\\api-lock-gen\\\\package-lock.json\" \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\api\\\\package-lock.json\"; Write-Host \"Copied. Size: $\\(\\(Get-Item 'd:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\api\\\\package-lock.json'\\).Length / 1KB\\) KB\")"
     ]
   },
   "enabledMcpjsonServers": [
