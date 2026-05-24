@@ -1,4 +1,4 @@
-import { IsIn, IsNotEmpty, IsObject, IsOptional, IsString } from 'class-validator';
+import { ArrayMinSize, IsArray, IsIn, IsNotEmpty, IsObject, IsOptional, IsString } from 'class-validator';
 
 export class RepairContactDto {
     @IsString() @IsNotEmpty() name!: string;
@@ -32,6 +32,11 @@ export class CreateRepairDto {
     @IsString()
     @IsIn(['ship', 'dropoff'])
     fulfillment!: string;
+
+    @IsArray()
+    @IsString({ each: true })
+    @ArrayMinSize(1)
+    images!: string[];
 
     @IsObject()
     contact!: RepairContactDto;

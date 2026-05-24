@@ -107,6 +107,23 @@ export const ordersApi = {
   myOrders: () => apiFetch<Order[]>('/orders/my', { auth: true }),
 };
 
+// ── Uploads ───────────────────────────────────────────────────────────────────
+export const uploadsApi = {
+  image: async (file: File): Promise<{ filePath: string; presignedUrl: string }> => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('ts_token') : null;
+    const formData = new FormData();
+    formData.append('file', file);
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const res = await fetch(`${API_BASE}/uploads/image`, { method: 'POST', headers, body: formData });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({ message: res.statusText }));
+      throw new Error(body?.message ?? res.statusText);
+    }
+    return res.json();
+  },
+};
+
 // ── Stores ────────────────────────────────────────────────────────────────────
 export interface Store {
   id: string;
@@ -250,6 +267,7 @@ export interface TradeInPayload {
   answers: Record<string, string>;
   fulfillment: string;
   offerPrice: number;
+  images: string[];
   storeId?: string;
   contact: { name: string; email: string; phone: string; address?: string; postcode?: string };
 }
@@ -261,5 +279,6 @@ export interface RepairPayload {
   issue: string;
   issueNotes?: string;
   fulfillment: string;
+  images: string[];
   contact: { name: string; email: string; phone: string; address?: string; postcode?: string };
 }

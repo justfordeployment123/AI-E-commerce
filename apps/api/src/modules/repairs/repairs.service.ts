@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { StorageService } from '../../common/services/storage.service';
 import { CreateRepairDto } from './dto/create-repair.dto';
 import { UpdateRepairDto } from './dto/update-repair.dto';
 import { SetQuoteDto } from './dto/set-quote.dto';
@@ -7,9 +8,25 @@ import { CompleteRepairDto } from './dto/complete-repair.dto';
 
 @Injectable()
 export class RepairsService {
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly storage: StorageService,
+    ) {}
 
     async submit(dto: CreateRepairDto, userId?: string) {
+        let contact: object = dto.contact as object;
+        if (userId) {
+            const user = await this.prisma.user.findUnique({ where: { id: userId } });
+            if (user) {
+                contact = {
+                    name:     user.name                          || (dto.contact as any).name     || '',
+                    email:    user.email                         || (dto.contact as any).email    || '',
+                    phone:    user.phone  || (dto.contact as any).phone    || '',
+                    address:  user.address || (dto.contact as any).address || '',
+                    postcode: (dto.contact as any).postcode      || '',
+                };
+            }
+        }
         return this.prisma.repair.create({
             data: {
                 userId,
@@ -19,7 +36,8 @@ export class RepairsService {
                 issue: dto.issue,
                 issueNotes: dto.issueNotes,
                 fulfillment: dto.fulfillment,
-                contact: dto.contact as object,
+                images: dto.images,
+                contact,
             },
         });
     }
@@ -49,7 +67,10 @@ export class RepairsService {
             include: { user: { select: { id: true, name: true, email: true } } },
         });
         if (!repair) throw new NotFoundException('Repair not found');
-        return repair;
+        const imageUrls = await Promise.all(
+            repair.images.map(key => this.storage.generatePresignedUrl(key).catch(() => null)),
+        );
+        return { ...repair, images: imageUrls.filter(Boolean) as string[] };
     }
 
     async findByReference(reference: string) {

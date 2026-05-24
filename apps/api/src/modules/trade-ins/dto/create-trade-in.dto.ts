@@ -1,4 +1,4 @@
-import { IsIn, IsNotEmpty, IsNumber, IsObject, IsOptional, IsPositive, IsString } from 'class-validator';
+import { ArrayMinSize, IsArray, IsIn, IsNotEmpty, IsNumber, IsObject, IsOptional, IsPositive, IsString } from 'class-validator';
 
 export class ContactDto {
     @IsString() @IsNotEmpty() name!: string;
@@ -42,6 +42,11 @@ export class CreateTradeInDto {
     @IsString()
     @IsOptional()
     storeId?: string;
+
+    @IsArray()
+    @IsString({ each: true })
+    @ArrayMinSize(1)
+    images!: string[];
 
     @IsObject()
     contact!: ContactDto;

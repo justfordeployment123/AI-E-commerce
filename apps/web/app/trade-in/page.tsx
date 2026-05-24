@@ -3,7 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { tradeInsApi, storesApi, type Store } from "../../lib/api";
+import { tradeInsApi, storesApi, uploadsApi, type Store } from "../../lib/api";
 import {
   Smartphone, Tablet, Gamepad2, Laptop, ArrowLeft, ArrowRight,
   Check, ChevronRight, MapPin, Zap, Shield, Clock,
@@ -323,7 +323,8 @@ export default function TradeInPage() {
   const [missingFields, setMissingFields] = useState<string[]>([]);
 
   // AI pricing states
-  const [images, setImages] = useState<string[]>([]);
+  const [images, setImages] = useState<{ filePath: string; previewUrl: string }[]>([]);
+  const [imageUploading, setImageUploading] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiPrice, setAiPrice] = useState<number | null>(null);
   const [aiError, setAiError] = useState(false);
@@ -431,7 +432,7 @@ export default function TradeInPage() {
   const currentSpecs = SPECS[state.category] ?? [];
   const currentQuestions = CONDITION_QUESTIONS[state.category] ?? [];
 
-  async function compressImage(file: File): Promise<string> {
+  async function compressToBlob(file: File): Promise<{ blob: Blob; previewUrl: string }> {
     return new Promise((resolve) => {
       const img = new Image();
       const url = URL.createObjectURL(file);
@@ -446,7 +447,8 @@ export default function TradeInPage() {
         canvas.width = width; canvas.height = height;
         canvas.getContext("2d")!.drawImage(img, 0, 0, width, height);
         URL.revokeObjectURL(url);
-        resolve(canvas.toDataURL("image/jpeg", 0.75));
+        const previewUrl = canvas.toDataURL("image/jpeg", 0.75);
+        canvas.toBlob(blob => resolve({ blob: blob!, previewUrl }), "image/jpeg", 0.75);
       };
       img.src = url;
     });
@@ -461,7 +463,7 @@ export default function TradeInPage() {
       const result = await tradeInsApi.aiPrice({
         model: state.model, brand: state.brand, category: state.category,
         condition: state.condition, specs: state.specs, answers: state.answers,
-        images: images.length > 0 ? images : undefined,
+        images: images.length > 0 ? images.map(i => i.previewUrl) : undefined,
       });
       setAiPrice(result.price);
       setAiError(false);
@@ -1039,9 +1041,24 @@ export default function TradeInPage() {
                 className="hidden"
                 onChange={async (e) => {
                   const files = Array.from(e.target.files ?? []);
-                  const compressed = await Promise.all(files.map(compressImage));
-                  setImages(prev => [...prev, ...compressed].slice(0, 6));
                   e.target.value = "";
+                  if (files.length === 0) return;
+                  setImageUploading(true);
+                  try {
+                    const results = await Promise.all(
+                      files.slice(0, 6 - images.length).map(async (file) => {
+                        const { blob, previewUrl } = await compressToBlob(file);
+                        const uploadFile = new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), { type: "image/jpeg" });
+                        const { filePath } = await uploadsApi.image(uploadFile);
+                        return { filePath, previewUrl };
+                      })
+                    );
+                    setImages(prev => [...prev, ...results].slice(0, 6));
+                  } catch {
+                    // silently ignore upload errors for individual images
+                  } finally {
+                    setImageUploading(false);
+                  }
                 }}
               />
 
@@ -1445,20 +1462,25 @@ export default function TradeInPage() {
                         {!aiLoading && !aiError && aiPrice === null && (
                           <div className="space-y-6 flex-1 flex flex-col justify-between">
                             <div className="space-y-6">
-                              <StepHeader label="Device Photos (Optional)" sub="Adding images can help our AI verify hardware details and increase accuracy." />
+                              <StepHeader label="Device Photos (Required)" sub="Upload at least 1 photo so our AI can verify the hardware condition accurately." />
 
                               <motion.button
                                 whileHover={{ scale: 1.01 }}
                                 whileTap={{ scale: 0.99 }}
                                 onClick={() => fileInputRef.current?.click()}
-                                className="w-full border-2 border-dashed border-zinc-300 hover:border-zinc-950 rounded-2xl p-8 flex flex-col items-center gap-3 transition-all bg-zinc-50 hover:bg-white group"
+                                disabled={imageUploading}
+                                className="w-full border-2 border-dashed border-zinc-300 hover:border-zinc-950 rounded-2xl p-8 flex flex-col items-center gap-3 transition-all bg-zinc-50 hover:bg-white group disabled:opacity-60 disabled:pointer-events-none"
                               >
                                 <div className="h-12 w-12 rounded-xl bg-white border border-zinc-200 shadow-sm flex items-center justify-center group-hover:bg-zinc-950 group-hover:border-zinc-950 transition-all">
-                                  <Upload className="h-5 w-5 text-zinc-400 group-hover:text-white transition-colors" />
+                                  {imageUploading ? (
+                                    <div className="h-5 w-5 border-2 border-zinc-300 border-t-zinc-700 rounded-full animate-spin" />
+                                  ) : (
+                                    <Upload className="h-5 w-5 text-zinc-400 group-hover:text-white transition-colors" />
+                                  )}
                                 </div>
                                 <div className="text-center">
-                                  <p className="text-xs font-black text-zinc-800">Tap to upload photos</p>
-                                  <p className="text-[10px] text-zinc-400 font-bold mt-1">JPEG or PNG · max 6 photos</p>
+                                  <p className="text-xs font-black text-zinc-800">{imageUploading ? "Uploading…" : "Tap to upload photos"}</p>
+                                  <p className="text-[10px] text-zinc-400 font-bold mt-1">JPEG or PNG · max 6 photos · min 1 required</p>
                                 </div>
                               </motion.button>
 
@@ -1466,7 +1488,7 @@ export default function TradeInPage() {
                                 <div className="grid grid-cols-3 gap-2">
                                   {images.map((img, i) => (
                                     <div key={i} className="relative aspect-square rounded-xl overflow-hidden border border-zinc-200 group">
-                                      <img src={img} alt={`Preview ${i + 1}`} className="w-full h-full object-cover" />
+                                      <img src={img.previewUrl} alt={`Preview ${i + 1}`} className="w-full h-full object-cover" />
                                       <button
                                         onClick={() => setImages(prev => prev.filter((_, idx) => idx !== i))}
                                         className="absolute top-1.5 right-1.5 h-6 w-6 bg-zinc-950/80 hover:bg-red-500 rounded-full flex items-center justify-center transition-colors"
@@ -1478,7 +1500,8 @@ export default function TradeInPage() {
                                   {images.length < 6 && (
                                     <button
                                       onClick={() => fileInputRef.current?.click()}
-                                      className="aspect-square rounded-xl border-2 border-dashed border-zinc-200 hover:border-zinc-950 bg-zinc-50 flex items-center justify-center transition-colors text-zinc-400 hover:text-zinc-900"
+                                      disabled={imageUploading}
+                                      className="aspect-square rounded-xl border-2 border-dashed border-zinc-200 hover:border-zinc-950 bg-zinc-50 flex items-center justify-center transition-colors text-zinc-400 hover:text-zinc-900 disabled:opacity-50"
                                     >
                                       <Plus className="h-5 w-5" />
                                     </button>
@@ -1488,17 +1511,10 @@ export default function TradeInPage() {
                             </div>
 
                             <div className="pt-6 border-t border-zinc-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
-                              {images.length === 0 && (
-                                <button
-                                  onClick={fetchAiPrice}
-                                  className="w-full sm:w-auto h-12 px-6 border border-zinc-200 rounded-xl font-bold text-xs text-zinc-600 hover:border-zinc-950 hover:text-zinc-950 transition-colors flex items-center justify-center shrink-0"
-                                >
-                                  <span className="whitespace-nowrap">Skip Photos</span>
-                                </button>
-                              )}
                               <button
                                 onClick={fetchAiPrice}
-                                className="w-full sm:w-auto h-12 px-8 bg-zinc-950 text-white hover:bg-zinc-800 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 shadow-lg shrink-0"
+                                disabled={images.length === 0 || imageUploading}
+                                className="w-full sm:w-auto h-12 px-8 bg-zinc-950 text-white hover:bg-zinc-800 disabled:opacity-50 disabled:pointer-events-none rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 shadow-lg shrink-0"
                               >
                                 <Sparkles className="h-4 w-4 fill-white shrink-0" />
                                 <span className="whitespace-nowrap">Calculate Cash Offer</span>
@@ -1571,11 +1587,7 @@ export default function TradeInPage() {
 
                             <div className="pt-6 border-t border-zinc-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
                               <button
-                                onClick={() => {
-                                  setAiPrice(null);
-                                  setAiError(false);
-                                  setImages([]);
-                                }}
+                                onClick={() => { setAiPrice(null); setAiError(false); setImages([]); }}
                                 className="w-full sm:w-auto h-12 px-6 border border-zinc-200 rounded-xl font-bold text-xs text-zinc-600 hover:border-zinc-950 hover:text-zinc-950 transition-colors flex items-center justify-center shrink-0"
                               >
                                 <span className="whitespace-nowrap">Recalculate</span>
@@ -1620,6 +1632,7 @@ export default function TradeInPage() {
                                 category: state.category, brand: state.brand, model: state.model,
                                 specs: state.specs, condition: state.condition, answers: state.answers,
                                 fulfillment: state.fulfillment, offerPrice: aiPrice!,
+                                images: images.map(i => i.filePath),
                                 storeId: state.storeId || undefined,
                                 contact: state.contact,
                               });
@@ -2007,12 +2020,7 @@ export default function TradeInPage() {
                         {/* Back to Home Button */}
                         <div className="pt-6 border-t border-zinc-100 flex items-center justify-center">
                           <button
-                            onClick={() => {
-                              setIsWizardActive(false);
-                              setPhase(1);
-                              setImages([]);
-                              setAiPrice(null);
-                            }}
+                            onClick={() => { setIsWizardActive(false); setPhase(1); setImages([]); setAiPrice(null); }}
                             className="h-12 w-full max-w-xs bg-zinc-950 text-white hover:bg-zinc-800 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 shadow-lg"
                           >
                             Return to Homepage <ArrowRight className="h-4 w-4" />

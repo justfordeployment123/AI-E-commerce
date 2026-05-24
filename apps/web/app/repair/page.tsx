@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { repairsApi } from "../../lib/api";
+import { repairsApi, uploadsApi } from "../../lib/api";
 import {
   Smartphone, Tablet, Gamepad2, Laptop, ArrowLeft, ArrowRight,
   Check, MapPin, Truck, Wrench, Clock, Shield, X,
   Monitor, Zap, Battery, Wifi, HardDrive, CircleAlert,
-  Star, HelpCircle, ChevronDown, Sparkles, ChevronRight
+  Star, HelpCircle, ChevronDown, Sparkles, ChevronRight, Upload, Plus
 } from "lucide-react";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
@@ -122,6 +122,10 @@ export default function RepairPage() {
   const [calcIssue, setCalcIssue] = useState("screen");
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
+  const [images, setImages] = useState<{ filePath: string; previewUrl: string }[]>([]);
+  const [imageUploading, setImageUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const { user } = useAuth();
   const router = useRouter();
   const [missingDetailsOpen, setMissingDetailsOpen] = useState(false);
@@ -182,8 +186,51 @@ export default function RepairPage() {
     go(-1);
   };
 
+  async function compressToBlob(file: File): Promise<{ blob: Blob; previewUrl: string }> {
+    return new Promise((resolve) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        const MAX = 800;
+        let { width, height } = img;
+        if (width > MAX || height > MAX) {
+          if (width > height) { height = Math.round(height * MAX / width); width = MAX; }
+          else { width = Math.round(width * MAX / height); height = MAX; }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width; canvas.height = height;
+        canvas.getContext("2d")!.drawImage(img, 0, 0, width, height);
+        URL.revokeObjectURL(url);
+        const previewUrl = canvas.toDataURL("image/jpeg", 0.75);
+        canvas.toBlob(blob => resolve({ blob: blob!, previewUrl }), "image/jpeg", 0.75);
+      };
+      img.src = url;
+    });
+  }
+
+  async function handleImageFiles(files: File[]) {
+    if (files.length === 0) return;
+    setImageUploading(true);
+    try {
+      const results = await Promise.all(
+        files.slice(0, 6 - images.length).map(async (file) => {
+          const { blob, previewUrl } = await compressToBlob(file);
+          const uploadFile = new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), { type: "image/jpeg" });
+          const { filePath } = await uploadsApi.image(uploadFile);
+          return { filePath, previewUrl };
+        })
+      );
+      setImages(prev => [...prev, ...results].slice(0, 6));
+    } catch {
+      // silently ignore upload errors
+    } finally {
+      setImageUploading(false);
+    }
+  }
+
   const openWizardWithDevice = (deviceId: string) => {
     setState({ deviceType: deviceId, brand: "", model: "", issue: [], issueNotes: "", fulfillment: "", contact: { name: "", email: "", phone: "", address: "", postcode: "" } });
+    setImages([]);
     setStep(1);
     setIsWizardActive(true);
   };
@@ -511,6 +558,19 @@ export default function RepairPage() {
                 <X className="h-5 w-5" />
               </button>
 
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={async (e) => {
+                  const files = Array.from(e.target.files ?? []);
+                  e.target.value = "";
+                  await handleImageFiles(files);
+                }}
+              />
+
               {/* Scrollable content */}
               <div ref={modalScrollRef} className="p-6 md:p-10 flex-1 flex flex-col overflow-y-auto custom-scrollbar pt-14">
                 <div className="w-full max-w-3xl mx-auto space-y-6">
@@ -655,14 +715,67 @@ export default function RepairPage() {
                                   </motion.div>
                                 )}
                               </div>
+                              {/* Image Upload (required) */}
+                              {state.issue.length > 0 && (
+                                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
+                                  <label className="text-xs font-bold uppercase tracking-widest text-zinc-400 block">
+                                    Device Photos <span className="text-red-500">*</span> <span className="text-zinc-300 font-normal normal-case tracking-normal">(min 1 required)</span>
+                                  </label>
+                                  <button
+                                    type="button"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    disabled={imageUploading || images.length >= 6}
+                                    className="w-full border-2 border-dashed border-zinc-200 hover:border-black rounded-[1.5rem] p-6 flex flex-col items-center gap-2 transition-all bg-zinc-50 hover:bg-white disabled:opacity-60 disabled:pointer-events-none group"
+                                  >
+                                    <div className="h-10 w-10 rounded-xl bg-white border border-zinc-200 flex items-center justify-center group-hover:bg-black group-hover:border-black transition-all">
+                                      {imageUploading ? (
+                                        <div className="h-4 w-4 border-2 border-zinc-300 border-t-zinc-700 rounded-full animate-spin" />
+                                      ) : (
+                                        <Upload className="h-4 w-4 text-zinc-400 group-hover:text-white transition-colors" />
+                                      )}
+                                    </div>
+                                    <p className="text-xs font-bold text-zinc-700">{imageUploading ? "Uploading…" : "Upload photos of the damage"}</p>
+                                    <p className="text-[10px] text-zinc-400">JPEG or PNG · max 6</p>
+                                  </button>
+                                  {images.length > 0 && (
+                                    <div className="grid grid-cols-3 gap-2">
+                                      {images.map((img, i) => (
+                                        <div key={i} className="relative aspect-square rounded-xl overflow-hidden border border-zinc-200">
+                                          <img src={img.previewUrl} alt={`Preview ${i + 1}`} className="w-full h-full object-cover" />
+                                          <button
+                                            type="button"
+                                            onClick={() => setImages(prev => prev.filter((_, idx) => idx !== i))}
+                                            className="absolute top-1 right-1 h-6 w-6 bg-zinc-950/80 hover:bg-red-500 rounded-full flex items-center justify-center transition-colors"
+                                          >
+                                            <X className="h-3 w-3 text-white" />
+                                          </button>
+                                        </div>
+                                      ))}
+                                      {images.length < 6 && (
+                                        <button
+                                          type="button"
+                                          onClick={() => fileInputRef.current?.click()}
+                                          disabled={imageUploading}
+                                          className="aspect-square rounded-xl border-2 border-dashed border-zinc-200 hover:border-black bg-zinc-50 flex items-center justify-center transition-colors text-zinc-400 hover:text-black disabled:opacity-50"
+                                        >
+                                          <Plus className="h-5 w-5" />
+                                        </button>
+                                      )}
+                                    </div>
+                                  )}
+                                </motion.div>
+                              )}
                               <div className="pt-6 border-t border-zinc-100">
                                 <button
-                                  onClick={() => { if (state.issue.length > 0) go(1); }}
-                                  disabled={state.issue.length === 0}
+                                  onClick={() => { if (state.issue.length > 0 && images.length > 0) go(1); }}
+                                  disabled={state.issue.length === 0 || images.length === 0 || imageUploading}
                                   className="w-full h-14 bg-black text-white rounded-[1.5rem] font-bold text-base flex items-center justify-center gap-2 disabled:opacity-40 hover:bg-zinc-800 transition-colors"
                                 >
                                   Continue <ArrowRight className="h-5 w-5" />
                                 </button>
+                                {state.issue.length > 0 && images.length === 0 && !imageUploading && (
+                                  <p className="text-center text-[10px] text-red-500 font-bold mt-2">Please upload at least 1 photo to continue</p>
+                                )}
                               </div>
                             </div>
                           )}
@@ -731,6 +844,7 @@ export default function RepairPage() {
                                     issue: state.issue.join(", "),
                                     issueNotes: state.issueNotes,
                                     fulfillment: state.fulfillment === "mail" ? "ship" : state.fulfillment,
+                                    images: images.map(i => i.filePath),
                                     contact: state.contact,
                                   });
                                   setSubmitRef(result.reference);

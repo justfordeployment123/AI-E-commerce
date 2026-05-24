@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import OpenAI from 'openai';
 import { PrismaService } from '../database/prisma.service';
+import { StorageService } from '../../common/services/storage.service';
 import { CreateTradeInDto } from './dto/create-trade-in.dto';
 import { UpdateTradeInDto } from './dto/update-trade-in.dto';
 import { ApproveTradeInDto } from './dto/approve-trade-in.dto';
@@ -16,9 +17,25 @@ function applyMargin(marketPrice: number, marginPct: number): number {
 export class TradeInsService {
     private readonly logger = new Logger(TradeInsService.name);
 
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly storage: StorageService,
+    ) {}
 
     async submit(dto: CreateTradeInDto, userId?: string) {
+        let contact: object = dto.contact as object;
+        if (userId) {
+            const user = await this.prisma.user.findUnique({ where: { id: userId } });
+            if (user) {
+                contact = {
+                    name:     user.name                          || (dto.contact as any).name     || '',
+                    email:    user.email                         || (dto.contact as any).email    || '',
+                    phone:    user.phone  || (dto.contact as any).phone    || '',
+                    address:  user.address || (dto.contact as any).address || '',
+                    postcode: (dto.contact as any).postcode      || '',
+                };
+            }
+        }
         return this.prisma.tradeIn.create({
             data: {
                 userId,
@@ -30,8 +47,9 @@ export class TradeInsService {
                 answers: dto.answers,
                 fulfillment: dto.fulfillment,
                 offerPrice: dto.offerPrice,
+                images: dto.images,
                 storeId: dto.storeId ?? null,
-                contact: dto.contact as object,
+                contact,
             },
         });
     }
@@ -61,7 +79,10 @@ export class TradeInsService {
             include: { user: { select: { id: true, name: true, email: true } } },
         });
         if (!tradeIn) throw new NotFoundException('Trade-in not found');
-        return tradeIn;
+        const imageUrls = await Promise.all(
+            tradeIn.images.map(key => this.storage.generatePresignedUrl(key).catch(() => null)),
+        );
+        return { ...tradeIn, images: imageUrls.filter(Boolean) as string[] };
     }
 
     async findByReference(reference: string) {

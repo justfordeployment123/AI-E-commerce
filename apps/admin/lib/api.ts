@@ -151,6 +151,8 @@ export const tradeInsApi = {
     return apiFetch<{ items: TradeIn[]; total: number }>(`/trade-ins?${q}`);
   },
 
+  getById: (id: string) => apiFetch<TradeIn>(`/trade-ins/${id}`),
+
   approve: (id: string, finalPrice: number) =>
     apiFetch<TradeIn>(`/trade-ins/${id}/approve`, { method: 'POST', body: JSON.stringify({ finalPrice }) }),
 
@@ -174,8 +176,13 @@ export const repairsApi = {
     return apiFetch<{ items: Repair[]; total: number }>(`/repairs?${q}`);
   },
 
+  getById: (id: string) => apiFetch<Repair>(`/repairs/${id}`),
+
   setQuote: (id: string, amount: number) =>
     apiFetch<Repair>(`/repairs/${id}/quote`, { method: 'POST', body: JSON.stringify({ amount }) }),
+
+  approveQuote: (id: string) =>
+    apiFetch<Repair>(`/repairs/${id}/approve-quote`, { method: 'POST' }),
 
   start: (id: string) =>
     apiFetch<Repair>(`/repairs/${id}/start`, { method: 'POST' }),
@@ -252,14 +259,21 @@ export interface TradeIn {
   category: string;
   brand: string;
   model: string;
+  specs?: Record<string, string>;
   condition: string;
   offerPrice: number;
   finalPrice?: number;
+  counterOffer?: number;
+  images: string[];
   status: string;
   fulfillment: string;
-  contact: { name: string; email: string; phone: string };
+  storeId?: string;
+  contact: { name: string; email: string; phone: string; address?: string; postcode?: string };
   answers: Record<string, string>;
+  adminNotes?: string;
   createdAt: string;
+  updatedAt: string;
+  user?: { id: string; name: string; email: string };
 }
 
 export interface Repair {
@@ -270,11 +284,15 @@ export interface Repair {
   model: string;
   issue: string;
   issueNotes?: string;
+  images: string[];
   status: string;
   quote?: number;
   fulfillment: string;
-  contact: { name: string; email: string; phone: string };
+  contact: { name: string; email: string; phone: string; address?: string; postcode?: string };
+  adminNotes?: string;
   createdAt: string;
+  updatedAt: string;
+  user?: { id: string; name: string; email: string };
 }
 
 export interface AnalyticsData {

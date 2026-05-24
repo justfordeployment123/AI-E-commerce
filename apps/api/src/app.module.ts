@@ -19,6 +19,7 @@ import { AdminModule } from './modules/admin/admin.module';
 import { PricingConfigModule } from './modules/pricing-config/pricing-config.module';
 import { DeviceCatalogModule } from './modules/device-catalog/device-catalog.module';
 import { StoresModule } from './modules/stores/stores.module';
+import { UploadsModule } from './modules/uploads/uploads.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { StoresModule } from './modules/stores/stores.module';
     PricingConfigModule,
     DeviceCatalogModule,
     StoresModule,
+    UploadsModule,
   ],
   controllers: [AppController],
   providers: [
