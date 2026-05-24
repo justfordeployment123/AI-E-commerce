@@ -234,7 +234,7 @@ export default function TradeInDetailPage() {
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
                     <button
-                      onClick={() => act(() => tradeInsApi.approve(item.id, item.offerPrice))}
+                      onClick={() => act(() => tradeInsApi.approve(item.id))}
                       disabled={saving}
                       className="h-12 rounded-2xl bg-approve text-approve-fg font-bold text-sm flex items-center justify-center gap-2 hover:bg-approve-hover active:scale-95 transition-all disabled:opacity-50"
                     >
