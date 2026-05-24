@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { tradeInsApi, type TradeIn } from "../../../lib/api";
 import {
-  ArrowLeft, Check, X, Minus, Truck, MapPin, Mail, Phone,
-  Clock, RefreshCw, ExternalLink, Image as ImageIcon,
+  ArrowLeft, Check, X, Minus, MapPin, Mail, Phone,
+  Clock, Image as ImageIcon,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -232,18 +232,18 @@ export default function TradeInDetailPage() {
 
               {item.status === "SUBMITTED" && (
                 <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-3">
                     <button
                       onClick={() => act(() => tradeInsApi.approve(item.id, item.offerPrice))}
                       disabled={saving}
-                      className="h-11 rounded-2xl bg-emerald-500 text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-emerald-600 transition-colors disabled:opacity-60"
+                      className="h-12 rounded-2xl bg-approve text-approve-fg font-bold text-sm flex items-center justify-center gap-2 hover:bg-approve-hover active:scale-95 transition-all disabled:opacity-50"
                     >
                       <Check className="h-4 w-4" /> Approve
                     </button>
                     <button
                       onClick={() => act(() => tradeInsApi.reject(item.id))}
                       disabled={saving}
-                      className="h-11 rounded-2xl bg-red-100 text-red-600 font-bold text-sm flex items-center justify-center gap-2 hover:bg-red-200 transition-colors disabled:opacity-60"
+                      className="h-12 rounded-2xl bg-reject text-reject-fg font-bold text-sm flex items-center justify-center gap-2 hover:bg-reject-hover active:scale-95 transition-all disabled:opacity-50"
                     >
                       <X className="h-4 w-4" /> Reject
                     </button>
@@ -251,7 +251,7 @@ export default function TradeInDetailPage() {
                   {!showCounter ? (
                     <button
                       onClick={() => setShowCounter(true)}
-                      className="w-full h-11 rounded-2xl border-2 border-zinc-200 font-bold text-sm hover:border-zinc-400 transition-colors flex items-center justify-center gap-2"
+                      className="w-full h-12 rounded-2xl border-2 border-zinc-200 font-bold text-sm hover:border-zinc-900 hover:bg-zinc-900 hover:text-white active:scale-95 transition-all flex items-center justify-center gap-2"
                     >
                       <Minus className="h-4 w-4" /> Counter offer
                     </button>
@@ -262,12 +262,12 @@ export default function TradeInDetailPage() {
                         placeholder="Counter amount (£)"
                         value={counterInput}
                         onChange={e => setCounterInput(e.target.value)}
-                        className="flex-1 h-11 rounded-2xl border-2 border-zinc-200 px-4 text-sm font-mono outline-none focus:border-black transition-colors"
+                        className="flex-1 h-12 rounded-2xl border-2 border-zinc-200 px-4 text-sm font-mono outline-none focus:border-black transition-colors"
                       />
                       <button
                         onClick={() => act(() => tradeInsApi.counterOffer(item.id, Number(counterInput)))}
                         disabled={saving || !counterInput}
-                        className="h-11 px-4 rounded-2xl bg-black text-white font-bold text-sm hover:bg-zinc-800 transition-colors disabled:opacity-60"
+                        className="h-12 px-5 rounded-2xl bg-black text-white font-bold text-sm hover:bg-zinc-800 active:scale-95 transition-all disabled:opacity-50"
                       >
                         Send
                       </button>

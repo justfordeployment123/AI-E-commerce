@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, X, Check, Minus, RefreshCw, Truck, MapPin, Eye, Mail, Phone, ExternalLink, Image } from "lucide-react";
+import { Search, X, Check, Minus, RefreshCw, Truck, MapPin, Eye, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { tradeInsApi, type TradeIn } from "../../lib/api";
 
@@ -203,8 +203,9 @@ export default function TradeInsPage() {
           {selected && (
             <motion.div
               initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}
-              className="bg-white rounded-3xl border border-zinc-100 shadow-sm p-6 overflow-y-auto scrollbar-hide"
+              className="bg-white rounded-3xl border border-zinc-100 shadow-sm p-6"
             >
+              {/* Header */}
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-lg truncate">{selected.brand} {selected.model}</p>
@@ -214,149 +215,126 @@ export default function TradeInsPage() {
                   <X className="h-4 w-4" />
                 </button>
               </div>
-              <Link
-                href={`/trade-ins/${selected.id}`}
-                className="flex items-center justify-center gap-2 w-full h-10 rounded-2xl border-2 border-zinc-200 hover:border-black hover:bg-black hover:text-white text-sm font-bold transition-all mb-5"
-              >
-                <ExternalLink className="h-4 w-4" /> View full details
-              </Link>
-              {detailLoading && (
-                <div className="flex items-center justify-center py-6">
-                  <div className="h-5 w-5 border-2 border-zinc-200 border-t-black rounded-full animate-spin" />
+
+              {/* Offer + Status */}
+              <div className="bg-zinc-950 text-white rounded-2xl px-5 py-4 mb-4">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-1">AI Offer Price</p>
+                    <p className="text-4xl font-black font-mono tracking-tight">£{selected.offerPrice}</p>
+                    {selected.finalPrice && selected.finalPrice !== selected.offerPrice && (
+                      <p className="text-xs text-white/40 mt-1">Final: £{selected.finalPrice}</p>
+                    )}
+                  </div>
+                  <div className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 mt-1 ${cfg(selected.status).className}`}>
+                    <span className={`h-1.5 w-1.5 rounded-full ${cfg(selected.status).dotColor}`} />
+                    <span className="text-[10px] font-bold uppercase tracking-wide">{cfg(selected.status).label}</span>
+                  </div>
                 </div>
-              )}
-
-              <div className="rounded-3xl bg-zinc-950 text-white p-5 mb-5 text-center">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-1">Offer amount</p>
-                <p className="text-4xl font-bold tracking-tighter">£{selected.offerPrice}</p>
-                {selected.finalPrice && selected.finalPrice !== selected.offerPrice && (
-                  <p className="text-sm text-white/50 mt-1">Final: £{selected.finalPrice}</p>
-                )}
               </div>
 
-              <div className="flex items-center gap-2 mb-5 pb-5 border-b border-zinc-100">
-                <div className={`h-2.5 w-2.5 rounded-full ${cfg(selected.status).dotColor}`} />
-                <span className={`text-xs font-bold uppercase tracking-widest ${cfg(selected.status).className} rounded-full px-2.5 py-1`}>
-                  {cfg(selected.status).label}
-                </span>
-              </div>
-
-              <div className="space-y-3 mb-5">
+              {/* Key info grid */}
+              <div className="grid grid-cols-2 gap-3 mb-4">
                 {[
-                  ["Category", selected.category],
-                  ["Condition", selected.condition],
-                  ["Fulfillment", selected.fulfillment === "ship" ? "Ship to us" : "Drop-off in store"],
-                  ["Date submitted", fmtDate(selected.createdAt)],
+                  ["Fulfillment", selected.fulfillment === "ship" ? "Ship to us" : "Drop-off"],
+                  ["Submitted",   fmtDate(selected.createdAt)],
                 ].map(([k, v]) => (
-                  <div key={k} className="flex justify-between text-sm">
-                    <span className="text-zinc-400 font-medium">{k}</span>
-                    <span className="font-bold text-right">{v}</span>
+                  <div key={k} className="bg-zinc-50 rounded-xl px-3 py-2.5">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-0.5">{k}</p>
+                    <p className="text-xs font-bold text-zinc-800 truncate">{v}</p>
                   </div>
                 ))}
               </div>
 
+              {/* Customer */}
               {(selected.contact || selected.user) && (() => {
                 const name  = selected.contact?.name  || selected.user?.name  || "—";
                 const email = selected.contact?.email || selected.user?.email || "";
                 const phone = selected.contact?.phone || "";
                 return (
-                  <div className="rounded-2xl bg-zinc-50 p-4 mb-5">
-                    <p className="text-xs font-bold uppercase tracking-widest text-zinc-400 mb-3">Customer</p>
-                    <p className="font-bold mb-2">{name}</p>
-                    <div className="space-y-1.5 text-xs text-zinc-500">
-                      {email && <div className="flex items-center gap-2"><Mail className="h-3.5 w-3.5 shrink-0" />{email}</div>}
-                      {phone && <div className="flex items-center gap-2"><Phone className="h-3.5 w-3.5 shrink-0" />{phone}</div>}
-                      {!email && !phone && <p className="text-zinc-400 italic">No contact details on file</p>}
+                  <div className="border border-zinc-100 rounded-2xl p-3 mb-4">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-2">Customer</p>
+                    <div className="flex items-center gap-3">
+                      <div className="h-9 w-9 rounded-full bg-zinc-900 text-white flex items-center justify-center font-bold text-sm shrink-0 uppercase">
+                        {name[0] || "?"}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-bold text-sm truncate">{name}</p>
+                        <p className="text-xs text-zinc-400 truncate">{email || "No email on file"}</p>
+                        {phone && <p className="text-xs text-zinc-400">{phone}</p>}
+                      </div>
                     </div>
                   </div>
                 );
               })()}
 
-              {selected.images && selected.images.length > 0 && (
-                <div className="mb-6">
-                  <p className="text-xs font-bold uppercase tracking-widest text-zinc-400 mb-3">Device Photos ({selected.images.length})</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {selected.images.map((url, i) => (
-                      <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="block aspect-square rounded-xl overflow-hidden border border-zinc-100 hover:opacity-90 transition-opacity">
-                        <img src={url} alt={`Device photo ${i + 1}`} className="w-full h-full object-cover" />
+              {/* Images strip */}
+              {!detailLoading && selected.images && selected.images.length > 0 && (
+                <div className="mb-4">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-2">Photos ({selected.images.length})</p>
+                  <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+                    {selected.images.slice(0, 4).map((url, i) => (
+                      <a key={i} href={url} target="_blank" rel="noopener noreferrer"
+                        className="shrink-0 h-16 w-16 rounded-xl overflow-hidden border border-zinc-100 hover:opacity-80 transition-opacity">
+                        <img src={url} alt="" className="w-full h-full object-cover" />
                       </a>
                     ))}
                   </div>
                 </div>
               )}
-
-              {selected.answers && Object.keys(selected.answers).length > 0 && (
-                <div className="mb-6">
-                  <p className="text-xs font-bold uppercase tracking-widest text-zinc-400 mb-3">Device condition answers</p>
-                  <div className="space-y-2">
-                    {Object.entries(selected.answers).map(([k, v]) => (
-                      <div key={k} className="flex justify-between text-xs">
-                        <span className="text-zinc-400 capitalize">{k}</span>
-                        <span className="font-medium text-right max-w-45">{v}</span>
-                      </div>
-                    ))}
-                  </div>
+              {detailLoading && (
+                <div className="flex items-center justify-center py-3">
+                  <div className="h-4 w-4 border-2 border-zinc-200 border-t-black rounded-full animate-spin" />
                 </div>
               )}
 
+              {/* Actions */}
               {selected.status === "SUBMITTED" && (
-                <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      onClick={() => approve(selected.id, selected.offerPrice)}
-                      disabled={saving}
-                      className="h-11 rounded-2xl bg-emerald-500 text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-emerald-600 transition-colors disabled:opacity-60"
-                    >
+                <div className="space-y-2.5 pt-1">
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <button onClick={() => approve(selected.id, selected.offerPrice)} disabled={saving}
+                      className="h-11 rounded-2xl bg-approve text-approve-fg font-bold text-sm flex items-center justify-center gap-2 hover:bg-approve-hover active:scale-95 transition-all disabled:opacity-50">
                       <Check className="h-4 w-4" /> Approve
                     </button>
-                    <button
-                      onClick={() => reject(selected.id)}
-                      disabled={saving}
-                      className="h-11 rounded-2xl bg-red-100 text-red-600 font-bold text-sm flex items-center justify-center gap-2 hover:bg-red-200 transition-colors disabled:opacity-60"
-                    >
+                    <button onClick={() => reject(selected.id)} disabled={saving}
+                      className="h-11 rounded-2xl bg-reject text-reject-fg font-bold text-sm flex items-center justify-center gap-2 hover:bg-reject-hover active:scale-95 transition-all disabled:opacity-50">
                       <X className="h-4 w-4" /> Reject
                     </button>
                   </div>
                   {!showCounter ? (
-                    <button
-                      onClick={() => setShowCounter(true)}
-                      className="w-full h-11 rounded-2xl border-2 border-zinc-200 font-bold text-sm hover:border-zinc-400 transition-colors flex items-center justify-center gap-2"
-                    >
+                    <button onClick={() => setShowCounter(true)}
+                      className="w-full h-11 rounded-2xl border-2 border-zinc-200 font-bold text-sm hover:border-zinc-900 hover:bg-zinc-900 hover:text-white active:scale-95 transition-all flex items-center justify-center gap-2">
                       <Minus className="h-4 w-4" /> Counter offer
                     </button>
                   ) : (
                     <div className="flex gap-2">
-                      <input
-                        type="number"
-                        placeholder="Counter amount (£)"
-                        value={counterOffer}
+                      <input type="number" placeholder="Counter amount (£)" value={counterOffer}
                         onChange={e => setCounterOffer(e.target.value)}
-                        className="flex-1 h-11 rounded-2xl border-2 border-zinc-200 px-4 text-sm font-mono outline-none focus:border-black transition-colors"
-                      />
-                      <button
-                        onClick={() => sendCounter(selected.id)}
-                        disabled={saving}
-                        className="h-11 px-4 rounded-2xl bg-black text-white font-bold text-sm hover:bg-zinc-800 transition-colors disabled:opacity-60"
-                      >
+                        className="flex-1 h-11 rounded-2xl border-2 border-zinc-200 px-3 text-sm font-mono outline-none focus:border-black transition-colors" />
+                      <button onClick={() => sendCounter(selected.id)} disabled={saving || !counterOffer}
+                        className="h-11 px-5 rounded-2xl bg-black text-white font-bold text-sm hover:bg-zinc-800 active:scale-95 transition-all disabled:opacity-50">
                         Send
                       </button>
                     </div>
                   )}
                 </div>
               )}
-
               {selected.status === "APPROVED" && (
-                <div className="rounded-2xl bg-emerald-50 border border-emerald-100 p-4 text-sm text-emerald-700 font-medium">
-                  <Check className="h-4 w-4 inline mr-2" />
-                  Offer approved. Waiting for device to be {selected.fulfillment === "ship" ? "posted" : "dropped off"}.
+                <div className="rounded-2xl bg-emerald-50 border border-emerald-100 px-4 py-3 text-sm text-emerald-700 font-medium flex items-center gap-2">
+                  <Check className="h-4 w-4 shrink-0" /> Approved — waiting for device.
                 </div>
               )}
               {selected.status === "REJECTED" && (
-                <div className="rounded-2xl bg-red-50 border border-red-100 p-4 text-sm text-red-600 font-medium">
-                  <X className="h-4 w-4 inline mr-2" />
-                  Trade-in was rejected.
+                <div className="rounded-2xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-600 font-medium flex items-center gap-2">
+                  <X className="h-4 w-4 shrink-0" /> Trade-in rejected.
                 </div>
               )}
+
+              {/* Full details link */}
+              <Link href={`/trade-ins/${selected.id}`}
+                className="flex items-center justify-center gap-2 w-full h-9 rounded-xl border border-zinc-200 hover:border-black hover:bg-black hover:text-white text-xs font-bold transition-all mt-3">
+                <ExternalLink className="h-3.5 w-3.5" /> View full details
+              </Link>
             </motion.div>
           )}
         </AnimatePresence>
