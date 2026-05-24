@@ -36,7 +36,8 @@ export class ProductsService {
         limit?: number;
     }) {
         const { category, brand, condition, minPrice, maxPrice, search, page = 1, limit = 20 } = query;
-        const skip = (page - 1) * limit;
+        const safeLimit = Math.min(limit, 100);
+        const skip = (page - 1) * safeLimit;
 
         const where: Record<string, unknown> = { isActive: true };
         if (category) where.category = category;
@@ -54,11 +55,11 @@ export class ProductsService {
         }
 
         const [items, total] = await Promise.all([
-            this.prisma.product.findMany({ where, skip, take: limit, orderBy: { createdAt: 'desc' } }),
+            this.prisma.product.findMany({ where, skip, take: safeLimit, orderBy: { createdAt: 'desc' } }),
             this.prisma.product.count({ where }),
         ]);
 
-        return { items, total, page, limit, pages: Math.ceil(total / limit) };
+        return { items, total, page, limit: safeLimit, pages: Math.ceil(total / safeLimit) };
     }
 
     async findBySlug(slug: string) {

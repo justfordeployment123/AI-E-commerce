@@ -134,21 +134,20 @@ export class AdminService {
                     revenue: r._sum.price ?? 0,
                 }));
             }),
-            // Category split by units sold
-            this.prisma.orderItem.findMany({
-                include: { product: { select: { category: true } } },
-            }).then((items) => {
-                const totals: Record<string, number> = {};
-                let grand = 0;
-                for (const item of items) {
-                    const cat = item.product.category;
-                    totals[cat] = (totals[cat] ?? 0) + item.quantity;
-                    grand += item.quantity;
-                }
+            // Category split using a single aggregated query
+            this.prisma.$queryRaw<{ category: string; total: bigint }[]>`
+                SELECT p.category, SUM(oi.quantity)::bigint AS total
+                FROM order_items oi
+                JOIN products p ON oi."productId" = p.id
+                GROUP BY p.category
+                ORDER BY total DESC
+            `.then((rows) => {
+                const grand = rows.reduce((s, r) => s + Number(r.total), 0);
                 if (grand === 0) return [];
-                return Object.entries(totals)
-                    .map(([cat, count]) => ({ category: cat, pct: Math.round((count / grand) * 100) }))
-                    .sort((a, b) => b.pct - a.pct);
+                return rows.map((r) => ({
+                    category: r.category,
+                    pct: Math.round((Number(r.total) / grand) * 100),
+                }));
             }),
             // Most traded devices (top 5 by count)
             this.prisma.tradeIn.groupBy({
@@ -182,7 +181,8 @@ export class AdminService {
 
     async getUsers(query: { page?: number; limit?: number; search?: string }) {
         const { page = 1, limit = 20, search } = query;
-        const skip = (page - 1) * limit;
+        const safeLimit = Math.min(limit, 100);
+        const skip = (page - 1) * safeLimit;
 
         const where = search
             ? {
@@ -197,7 +197,7 @@ export class AdminService {
             this.prisma.user.findMany({
                 where,
                 skip,
-                take: limit,
+                take: safeLimit,
                 orderBy: { createdAt: 'desc' },
                 select: {
                     id: true,
@@ -212,6 +212,6 @@ export class AdminService {
             this.prisma.user.count({ where }),
         ]);
 
-        return { items, total, page, limit, pages: Math.ceil(total / limit) };
+        return { items, total, page, limit: safeLimit, pages: Math.ceil(total / safeLimit) };
     }
 }

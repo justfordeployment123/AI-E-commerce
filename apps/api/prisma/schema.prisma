@@ -59,6 +59,7 @@ model User {
   tradeIns TradeIn[]
   repairs  Repair[]
 
+  @@index([createdAt])
   @@map("users")
 }
 
@@ -84,6 +85,10 @@ model Product {
 
   orderItems OrderItem[]
 
+  @@index([category])
+  @@index([brand])
+  @@index([condition])
+  @@index([isActive, createdAt])
   @@map("products")
 }
 
@@ -104,6 +109,9 @@ model Order {
 
   items OrderItem[]
 
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
   @@map("orders")
 }
 
@@ -139,6 +147,9 @@ model TradeIn {
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
+  @@index([status])
+  @@index([userId])
+  @@index([createdAt])
   @@map("trade_ins")
 }
 
@@ -160,6 +171,9 @@ model Repair {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
+  @@index([status])
+  @@index([userId])
+  @@index([createdAt])
   @@map("repairs")
 }
 

@@ -8,8 +8,9 @@ import {
   Star, Search, Play, Recycle, TrendingUp, Package, BadgeCheck,
   Zap, Check, Smartphone, Laptop, Headphones, Gamepad2, Tablet
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
+const Footer = dynamic(() => import("../components/Footer"));
 
 // ─── Promo Carousel Banner ───────────────────────────────────────────────────
 function PromoCarouselBanner() {

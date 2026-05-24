@@ -4,6 +4,7 @@ import { config as loadEnv } from 'dotenv';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import cookieParser from 'cookie-parser';
+import compression from 'compression';
 
 const appEnvPath = resolve(__dirname, '..', '.env');
 if (existsSync(appEnvPath)) {
@@ -28,6 +29,7 @@ async function bootstrap() {
   const { AppModule } = require('./app.module') as typeof import('./app.module');
   const app = await NestFactory.create(AppModule);
 
+  app.use(compression());
   app.use(cookieParser());
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.enableCors({

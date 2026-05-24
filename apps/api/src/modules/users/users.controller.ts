@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -24,8 +24,11 @@ export class UsersController {
     @Get()
     @UseGuards(RolesGuard)
     @Roles('ADMIN')
-    findAll() {
-        return this.usersService.findAll();
+    findAll(@Query('page') page?: string, @Query('limit') limit?: string) {
+        return this.usersService.findAll({
+            page: page ? Number(page) : undefined,
+            limit: limit ? Number(limit) : undefined,
+        });
     }
 
     @Get(':id')
