@@ -120,7 +120,7 @@ export default function StoresPage() {
               <div key={f.key} className={f.span ? "md:col-span-2" : ""}>
                 <label className="text-xs font-bold text-zinc-700 block mb-1.5">{f.label}</label>
                 <input
-                  value={(form as Record<string, string>)[f.key] ?? ""}
+                  value={(form as unknown as Record<string, string>)[f.key] ?? ""}
                   onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))}
                   placeholder={f.placeholder}
                   className="w-full h-11 px-4 rounded-2xl border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-zinc-400"
