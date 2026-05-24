@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import OpenAI from 'openai';
 import { PrismaService } from '../database/prisma.service';
 import { CreateTradeInDto } from './dto/create-trade-in.dto';
@@ -7,7 +7,10 @@ import { ApproveTradeInDto } from './dto/approve-trade-in.dto';
 import { RejectTradeInDto } from './dto/reject-trade-in.dto';
 import { CounterOfferTradeInDto } from './dto/counter-offer-trade-in.dto';
 import { AiPriceDto } from './dto/ai-price.dto';
-import { computeOffer, applyMargin, DEFAULT_PRICING_CONFIG, type ServerPricingConfig } from './pricing';
+
+function applyMargin(marketPrice: number, marginPct: number): number {
+    return Math.max(Math.round(marketPrice * (1 - marginPct / 100) / 5) * 5, 10);
+}
 
 @Injectable()
 export class TradeInsService {
@@ -15,32 +18,7 @@ export class TradeInsService {
 
     constructor(private readonly prisma: PrismaService) {}
 
-    private async loadPricingConfig(): Promise<ServerPricingConfig> {
-        try {
-            const rows = await this.prisma.pricingConfig.findMany();
-            const byKey: Record<string, number | undefined> = Object.fromEntries(rows.map((r) => [r.key, r.value]));
-            return {
-                conditionMultipliers: {
-                    Mint:    (byKey['multiplier_mint']    ?? DEFAULT_PRICING_CONFIG.conditionMultipliers.Mint)!,
-                    Good:    (byKey['multiplier_good']    ?? DEFAULT_PRICING_CONFIG.conditionMultipliers.Good)!,
-                    Used:    (byKey['multiplier_used']    ?? DEFAULT_PRICING_CONFIG.conditionMultipliers.Used)!,
-                    Damaged: (byKey['multiplier_damaged'] ?? DEFAULT_PRICING_CONFIG.conditionMultipliers.Damaged)!,
-                },
-                marginPct:            (byKey['margin_pct']             ?? DEFAULT_PRICING_CONFIG.marginPct)!,
-                penaltyCrackedScreen: (byKey['penalty_cracked_screen'] ?? DEFAULT_PRICING_CONFIG.penaltyCrackedScreen)!,
-                penaltyBattery:       (byKey['penalty_battery']        ?? DEFAULT_PRICING_CONFIG.penaltyBattery)!,
-                penaltyCharging:      (byKey['penalty_charging']       ?? DEFAULT_PRICING_CONFIG.penaltyCharging)!,
-            };
-        } catch {
-            return DEFAULT_PRICING_CONFIG;
-        }
-    }
-
     async submit(dto: CreateTradeInDto, userId?: string) {
-        const pricingConfig = await this.loadPricingConfig();
-        const marketPrice = computeOffer(dto.model, dto.condition, dto.answers, pricingConfig);
-        const serverOffer = applyMargin(marketPrice, pricingConfig.marginPct);
-
         return this.prisma.tradeIn.create({
             data: {
                 userId,
@@ -51,7 +29,7 @@ export class TradeInsService {
                 condition: dto.condition,
                 answers: dto.answers,
                 fulfillment: dto.fulfillment,
-                offerPrice: serverOffer,
+                offerPrice: dto.offerPrice,
                 contact: dto.contact as object,
             },
         });
@@ -148,14 +126,14 @@ export class TradeInsService {
         });
     }
 
-    async aiPrice(dto: AiPriceDto): Promise<{ price: number; aiUsed: boolean }> {
-        const pricingConfig = await this.loadPricingConfig();
-        const apiKey = process.env.OPENAI_API_KEY;
+    private async getMarginPct(): Promise<number> {
+        const row = await this.prisma.pricingConfig.findUnique({ where: { key: 'margin_pct' } });
+        return row?.value ?? 30;
+    }
 
-        if (!apiKey) {
-            this.logger.warn('OPENAI_API_KEY not set — using fallback rule-based pricing');
-            return { price: applyMargin(computeOffer(dto.model, dto.condition, dto.answers, pricingConfig), pricingConfig.marginPct), aiUsed: false };
-        }
+    async aiPrice(dto: AiPriceDto): Promise<{ price: number; aiUsed: boolean }> {
+        const apiKey = process.env.OPENAI_API_KEY;
+        if (!apiKey) throw new InternalServerErrorException('AI pricing is not configured');
 
         const openai = new OpenAI({ apiKey });
 
@@ -186,46 +164,38 @@ Respond with ONLY: {"price": <number rounded to nearest 5, minimum 10>}`;
             for (const img of dto.images.slice(0, 4)) {
                 content.push({ type: 'image_url', image_url: { url: img, detail: 'high' } });
             }
-        }
-
-        if (dto.images?.length) {
             const imgSample = dto.images[0]?.substring(0, 80) ?? '';
             this.logger.log(`Images attached: ${dto.images.length}, first URL prefix: ${imgSample}`);
         }
 
-        try {
-            const response = await openai.chat.completions.create({
-                model: 'gpt-4o',
-                messages: [
-                    { role: 'system', content: systemMessage },
-                    { role: 'user', content },
-                ],
-                temperature: 0,
-                max_tokens: 100,
-                response_format: { type: 'json_object' },
-            });
+        const response = await openai.chat.completions.create({
+            model: 'gpt-4o',
+            messages: [
+                { role: 'system', content: systemMessage },
+                { role: 'user', content },
+            ],
+            temperature: 0,
+            max_tokens: 100,
+            response_format: { type: 'json_object' },
+        });
 
-            const choice = response.choices[0];
-            const finishReason = choice?.finish_reason;
-            const raw = choice?.message?.content ?? '{}';
-            this.logger.log(`OpenAI finish_reason: ${finishReason} | raw: ${raw}`);
+        const choice = response.choices[0];
+        const finishReason = choice?.finish_reason;
+        const raw = choice?.message?.content ?? '{}';
+        this.logger.log(`OpenAI finish_reason: ${finishReason} | raw: ${raw}`);
 
-            if (finishReason === 'content_filter') {
-                this.logger.warn('OpenAI refused the request (content_filter) — falling back to rule-based pricing');
-                return { price: applyMargin(computeOffer(dto.model, dto.condition, dto.answers, pricingConfig), pricingConfig.marginPct), aiUsed: false };
-            }
-
-            const parsed = JSON.parse(raw) as { price?: number };
-            const marketPrice = parsed.price && parsed.price > 0 ? parsed.price : null;
-            if (!marketPrice) {
-                this.logger.warn(`OpenAI returned invalid price (${parsed.price}) — falling back to rule-based pricing`);
-                return { price: applyMargin(computeOffer(dto.model, dto.condition, dto.answers, pricingConfig), pricingConfig.marginPct), aiUsed: false };
-            }
-            return { price: applyMargin(marketPrice, pricingConfig.marginPct), aiUsed: true };
-        } catch (err) {
-            this.logger.warn(`OpenAI pricing failed — using fallback rule-based pricing. Reason: ${err instanceof Error ? err.message : String(err)}`);
-            return { price: applyMargin(computeOffer(dto.model, dto.condition, dto.answers, pricingConfig), pricingConfig.marginPct), aiUsed: false };
+        if (finishReason === 'content_filter') {
+            throw new InternalServerErrorException('AI pricing unavailable — please try again');
         }
+
+        const parsed = JSON.parse(raw) as { price?: number };
+        const marketPrice = parsed.price && parsed.price > 0 ? parsed.price : null;
+        if (!marketPrice) {
+            throw new InternalServerErrorException('AI pricing returned an invalid response — please try again');
+        }
+
+        const marginPct = await this.getMarginPct();
+        return { price: applyMargin(marketPrice, marginPct), aiUsed: true };
     }
 
     async complete(id: string) {
