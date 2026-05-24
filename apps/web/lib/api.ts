@@ -107,6 +107,21 @@ export const ordersApi = {
   myOrders: () => apiFetch<Order[]>('/orders/my', { auth: true }),
 };
 
+// ── Stores ────────────────────────────────────────────────────────────────────
+export interface Store {
+  id: string;
+  name: string;
+  address: string;
+  city: string;
+  postcode: string;
+  phone?: string;
+  openingHours?: string;
+}
+
+export const storesApi = {
+  list: () => apiFetch<Store[]>('/stores'),
+};
+
 // ── Trade-ins ─────────────────────────────────────────────────────────────────
 export const tradeInsApi = {
   submit: (data: TradeInPayload) =>
@@ -233,6 +248,7 @@ export interface TradeInPayload {
   answers: Record<string, string>;
   fulfillment: string;
   offerPrice: number;
+  storeId?: string;
   contact: { name: string; email: string; phone: string; address?: string; postcode?: string };
 }
 

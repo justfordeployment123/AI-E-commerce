@@ -142,6 +142,7 @@ model TradeIn {
   offerPrice   Float
   status       TradeInStatus @default(SUBMITTED)
   contact      Json
+  storeId      String?
   adminNotes   String?
   counterOffer Float?
   createdAt    DateTime      @default(now())
@@ -185,6 +186,21 @@ model PricingConfig {
   updatedAt DateTime @updatedAt
 
   @@map("pricing_configs")
+}
+
+model Store {
+  id           String   @id @default(cuid())
+  name         String
+  address      String
+  city         String
+  postcode     String
+  phone        String?
+  openingHours String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("stores")
 }
 
 model DeviceCatalog {

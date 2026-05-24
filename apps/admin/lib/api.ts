@@ -56,6 +56,28 @@ export const deviceCatalogApi = {
     apiFetch<void>(`/device-catalog/${id}`, { method: 'DELETE' }),
 };
 
+// ── Stores ────────────────────────────────────────────────────────────────────
+export interface Store {
+  id: string;
+  name: string;
+  address: string;
+  city: string;
+  postcode: string;
+  phone?: string;
+  openingHours?: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export const storesApi = {
+  list: () => apiFetch<Store[]>('/stores/all'),
+  create: (data: Omit<Store, 'id' | 'createdAt'>) =>
+    apiFetch<Store>('/stores', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: Partial<Omit<Store, 'id' | 'createdAt'>>) =>
+    apiFetch<Store>(`/stores/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  remove: (id: string) => apiFetch<void>(`/stores/${id}`, { method: 'DELETE' }),
+};
+
 // ── Pricing Config ────────────────────────────────────────────────────────────
 export const pricingConfigApi = {
   list: () => apiFetch<{ key: string; value: number; label: string }[]>('/pricing-config'),

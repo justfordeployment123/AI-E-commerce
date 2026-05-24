@@ -3,7 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { tradeInsApi } from "../../lib/api";
+import { tradeInsApi, storesApi, type Store } from "../../lib/api";
 import {
   Smartphone, Tablet, Gamepad2, Laptop, ArrowLeft, ArrowRight,
   Check, ChevronRight, MapPin, Zap, Shield, Clock,
@@ -181,6 +181,7 @@ interface TradeInState {
   condition: string;
   answers: Record<string, string>;
   fulfillment: string;
+  storeId: string;
   contact: { name: string; email: string; phone: string; address: string; postcode: string };
 }
 
@@ -279,9 +280,22 @@ export default function TradeInPage() {
   const [dir, setDir] = useState(1);
   const [state, setState] = useState<TradeInState>({
     category: "", brand: "", model: "", specs: {}, condition: "",
-    answers: {}, fulfillment: "",
+    answers: {}, fulfillment: "", storeId: "",
     contact: { name: "", email: "", phone: "", address: "", postcode: "" },
   });
+  const [stores, setStores] = useState<Store[]>([]);
+  const [storesLoading, setStoresLoading] = useState(false);
+
+  // Fetch stores when dropoff is chosen
+  useEffect(() => {
+    if (state.fulfillment === "dropoff" && stores.length === 0) {
+      setStoresLoading(true);
+      storesApi.list()
+        .then(setStores)
+        .catch(() => {})
+        .finally(() => setStoresLoading(false));
+    }
+  }, [state.fulfillment]);
 
   const [submitting, setSubmitting] = useState(false);
   const [submitRef, setSubmitRef] = useState("");
@@ -474,7 +488,7 @@ export default function TradeInPage() {
         specs: {},
         condition: "",
         answers: {},
-        fulfillment: "",
+        fulfillment: "", storeId: "",
         contact: { name: "", email: "", phone: "", address: "", postcode: "" },
       });
       setWizardModelSearch("");
@@ -493,7 +507,7 @@ export default function TradeInPage() {
         specs: {},
         condition: "",
         answers: {},
-        fulfillment: "",
+        fulfillment: "", storeId: "",
         contact: { name: "", email: "", phone: "", address: "", postcode: "" },
       });
       setPhase(2);
@@ -1589,6 +1603,7 @@ export default function TradeInPage() {
                                 category: state.category, brand: state.brand, model: state.model,
                                 specs: state.specs, condition: state.condition, answers: state.answers,
                                 fulfillment: state.fulfillment, offerPrice: aiPrice!,
+                                storeId: state.storeId || undefined,
                                 contact: state.contact,
                               });
                               setSubmitRef(result.reference);
@@ -1652,6 +1667,50 @@ export default function TradeInPage() {
                                   })}
                                 </div>
                               </div>
+
+                              {/* Store picker — shown when dropoff is selected */}
+                              {state.fulfillment === "dropoff" && (
+                                <div className="space-y-3 pt-4 border-t border-zinc-100 animate-fade-in">
+                                  <span className="text-xs font-black uppercase tracking-widest text-zinc-400 block">Select Your Nearest Store</span>
+                                  {storesLoading ? (
+                                    <div className="flex items-center gap-2 text-xs text-zinc-400 py-3">
+                                      <div className="h-4 w-4 border-2 border-zinc-200 border-t-zinc-500 rounded-full animate-spin" />
+                                      Loading store locations…
+                                    </div>
+                                  ) : stores.length === 0 ? (
+                                    <p className="text-xs text-zinc-400 py-2">No store locations available. Please contact us directly.</p>
+                                  ) : (
+                                    <div className="grid gap-3">
+                                      {stores.map(store => {
+                                        const isSelected = state.storeId === store.id;
+                                        return (
+                                          <button
+                                            key={store.id}
+                                            type="button"
+                                            onClick={() => setState(s => ({ ...s, storeId: store.id }))}
+                                            className={`p-4 rounded-2xl border text-left transition-all flex items-start gap-3 ${
+                                              isSelected
+                                                ? "border-zinc-950 bg-zinc-950 text-white shadow-md"
+                                                : "border-zinc-200 bg-white hover:border-zinc-400 text-zinc-800"
+                                            }`}
+                                          >
+                                            <div className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 border ${isSelected ? "bg-white/10 border-white/20 text-white" : "bg-zinc-50 border-zinc-200 text-zinc-500"}`}>
+                                              <MapPin className="h-4 w-4" strokeWidth={1.8} />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                              <p className="text-xs font-black leading-tight">{store.name}</p>
+                                              <p className={`text-[11px] mt-0.5 ${isSelected ? "text-white/70" : "text-zinc-500"}`}>{store.address}, {store.city}, {store.postcode}</p>
+                                              {store.phone && <p className={`text-[11px] mt-0.5 ${isSelected ? "text-white/60" : "text-zinc-400"}`}>{store.phone}</p>}
+                                              {store.openingHours && <p className={`text-[11px] mt-0.5 ${isSelected ? "text-white/60" : "text-zinc-400"}`}>{store.openingHours}</p>}
+                                            </div>
+                                            {isSelected && <Check className="h-4 w-4 text-white shrink-0 mt-0.5" />}
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
 
                               {/* Contact Form Details */}
                               {state.fulfillment && (
@@ -1811,7 +1870,7 @@ export default function TradeInPage() {
                               whileHover={{ y: -2 }}
                               whileTap={{ scale: 0.98 }}
                               type="submit"
-                              disabled={submitting || !state.fulfillment}
+                              disabled={submitting || !state.fulfillment || (state.fulfillment === "dropoff" && !state.storeId)}
                               className="w-full sm:w-auto h-12 px-8 bg-zinc-950 text-white hover:bg-zinc-800 disabled:opacity-50 disabled:pointer-events-none rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 shadow-lg shrink-0"
                             >
                               {submitting ? (

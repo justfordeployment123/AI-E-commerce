@@ -18,6 +18,7 @@ import { CartModule } from './modules/cart/cart.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { PricingConfigModule } from './modules/pricing-config/pricing-config.module';
 import { DeviceCatalogModule } from './modules/device-catalog/device-catalog.module';
+import { StoresModule } from './modules/stores/stores.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { DeviceCatalogModule } from './modules/device-catalog/device-catalog.mod
     AdminModule,
     PricingConfigModule,
     DeviceCatalogModule,
+    StoresModule,
   ],
   controllers: [AppController],
   providers: [

@@ -4,7 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   LayoutDashboard, Package, RefreshCw, Wrench, ShoppingBag,
-  SlidersHorizontal, BarChart3, LogOut, ChevronRight, ListPlus
+  SlidersHorizontal, BarChart3, LogOut, ChevronRight, ListPlus, MapPin
 } from "lucide-react";
 import { useAdminAuth } from "../context/auth-context";
 
@@ -16,6 +16,7 @@ const NAV = [
   { href: "/repairs", label: "Repairs", icon: Wrench },
   { href: "/orders", label: "Orders", icon: ShoppingBag },
   { href: "/pricing", label: "Pricing Rules", icon: SlidersHorizontal, section: "Settings" },
+  { href: "/stores", label: "Store Locations", icon: MapPin },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
 ];
 

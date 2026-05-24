@@ -39,6 +39,10 @@ export class CreateTradeInDto {
     @IsPositive()
     offerPrice!: number;
 
+    @IsString()
+    @IsOptional()
+    storeId?: string;
+
     @IsObject()
     contact!: ContactDto;
 }

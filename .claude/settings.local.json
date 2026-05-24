@@ -35,7 +35,8 @@
       "Bash(Get-ChildItem -Recurse -Filter \"page.tsx\" \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\\\\app\")",
       "Bash(Select-Object FullName)",
       "Bash(find src/modules/admin src/modules/pricing-config -name \"*.ts\")",
-      "Bash(dir /s /b src\\\\modules\\\\admin src\\\\modules\\\\pricing-config)"
+      "Bash(dir /s /b src\\\\modules\\\\admin src\\\\modules\\\\pricing-config)",
+      "Bash(python -c ' *)"
     ]
   },
   "enabledMcpjsonServers": [

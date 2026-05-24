@@ -30,6 +30,7 @@ export class TradeInsService {
                 answers: dto.answers,
                 fulfillment: dto.fulfillment,
                 offerPrice: dto.offerPrice,
+                storeId: dto.storeId ?? null,
                 contact: dto.contact as object,
             },
         });
