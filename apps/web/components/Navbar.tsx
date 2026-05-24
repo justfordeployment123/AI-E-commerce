@@ -212,7 +212,7 @@ export default function Navbar({ itemsCount = 0 }: { itemsCount?: number }) {
                           {/* Menu items */}
                           <div className="p-1.5 space-y-0.5">
                             <Link
-                              href="/account"
+                              href="/account/settings"
                               onClick={() => setProfileOpen(false)}
                               className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold text-zinc-700 hover:bg-zinc-50 hover:text-zinc-950 transition-colors"
                             >
@@ -415,7 +415,7 @@ export default function Navbar({ itemsCount = 0 }: { itemsCount?: number }) {
                           <p className="text-[10px] text-zinc-400 font-semibold truncate">{user.email}</p>
                         </div>
                       </div>
-                      <Link href="/account" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold hover:bg-zinc-50 text-zinc-700 transition-all">
+                      <Link href="/account/settings" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold hover:bg-zinc-50 text-zinc-700 transition-all">
                         <Settings className="h-4 w-4 text-zinc-400" strokeWidth={1.8} />
                         <span>My Account</span>
                         <ChevronRight className="h-4 w-4 ml-auto text-zinc-300" />

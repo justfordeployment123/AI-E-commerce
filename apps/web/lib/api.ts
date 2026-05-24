@@ -56,7 +56,7 @@ export const authApi = {
 
   me: () => apiFetch<User>('/users/me', { auth: true }),
 
-  updateProfile: (data: { name?: string; phone?: string }) =>
+  updateProfile: (data: { name?: string; phone?: string; address?: string; city?: string }) =>
     apiFetch<User>('/users/me', { method: 'PATCH', auth: true, body: JSON.stringify(data) }),
 };
 
@@ -153,6 +153,8 @@ export interface User {
   email: string;
   name: string;
   phone?: string;
+  address?: string;
+  city?: string;
   role: string;
   createdAt: string;
 }

@@ -7,6 +7,8 @@ const SAFE_SELECT = {
     email: true,
     name: true,
     phone: true,
+    address: true,
+    city: true,
     role: true,
     createdAt: true,
     updatedAt: true,

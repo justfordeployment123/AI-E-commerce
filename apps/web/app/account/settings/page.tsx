@@ -5,9 +5,11 @@ import { useAuth } from "../../../context/auth-context";
 import { authApi } from "../../../lib/api";
 
 export default function SettingsPage() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
 
@@ -15,6 +17,8 @@ export default function SettingsPage() {
     if (user) {
       setName(user.name);
       setPhone(user.phone ?? "");
+      setAddress(user.address ?? "");
+      setCity(user.city ?? "");
     }
   }, [user]);
 
@@ -23,7 +27,8 @@ export default function SettingsPage() {
     setSaving(true);
     setMsg("");
     try {
-      await authApi.updateProfile({ name, phone });
+      await authApi.updateProfile({ name, phone, address, city });
+      await refreshUser();
       setMsg("Changes saved!");
     } catch {
       setMsg("Failed to save — please try again.");
@@ -70,6 +75,33 @@ export default function SettingsPage() {
                 value={phone}
                 onChange={e => setPhone(e.target.value)}
                 placeholder="+44 7700 000000"
+                className="h-14 rounded-[1rem] border-2 border-zinc-200 px-5 text-sm font-medium outline-none focus:border-black transition-colors"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-5">Address</h3>
+          <div className="space-y-4">
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-bold uppercase tracking-widest text-zinc-400">Street address</label>
+              <input
+                type="text"
+                value={address}
+                onChange={e => setAddress(e.target.value)}
+                placeholder="123 High Street"
+                className="h-14 rounded-[1rem] border-2 border-zinc-200 px-5 text-sm font-medium outline-none focus:border-black transition-colors"
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-bold uppercase tracking-widest text-zinc-400">City</label>
+              <input
+                type="text"
+                value={city}
+                onChange={e => setCity(e.target.value)}
+                placeholder="Leicester"
                 className="h-14 rounded-[1rem] border-2 border-zinc-200 px-5 text-sm font-medium outline-none focus:border-black transition-colors"
               />
             </div>

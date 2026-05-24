@@ -145,9 +145,10 @@ export default function RepairPage() {
         ...s,
         contact: {
           ...s.contact,
-          name: s.contact.name || user.name,
-          email: s.contact.email || user.email,
-          phone: s.contact.phone || user.phone || "",
+          name:    user.name    || s.contact.name,
+          email:   user.email   || s.contact.email,
+          phone:   user.phone   || s.contact.phone,
+          address: user.address || s.contact.address,
         },
       }));
     }
@@ -761,27 +762,32 @@ export default function RepairPage() {
                                     }
                                   }}
                                 >
-                                  {[
-                                    { key: "name", label: "Full Name", type: "text", placeholder: "E.g. Alex Turner" },
-                                    { key: "email", label: "Email Address", type: "email", placeholder: "you@example.com" },
-                                    { key: "phone", label: "Phone Number", type: "tel", placeholder: "+44 7700 000000" },
-                                    ...(state.fulfillment === "mail" ? [
-                                      { key: "address", label: "Collection Address", type: "text", placeholder: "Street address" },
-                                      { key: "postcode", label: "Postcode", type: "text", placeholder: "LE1 1AA" },
-                                    ] : []),
-                                  ].map(({ key, label, type, placeholder }) => (
-                                    <div key={key} className="flex flex-col gap-2">
-                                      <label className="text-xs font-bold uppercase tracking-widest text-zinc-400">{label}</label>
-                                      <input
-                                        type={type}
-                                        required
-                                        placeholder={placeholder}
-                                        value={state.contact[key as keyof typeof state.contact]}
-                                        onChange={e => setState(s => ({ ...s, contact: { ...s.contact, [key]: e.target.value } }))}
-                                        className="h-14 rounded-[1rem] border-2 border-zinc-200 px-5 text-sm font-medium outline-none focus:border-black transition-colors"
-                                      />
-                                    </div>
-                                  ))}
+                                  {(() => {
+                                    const allFields = [
+                                      { key: "name",     label: "Full Name",          type: "text",  placeholder: "E.g. Alex Turner",    profileValue: user?.name },
+                                      { key: "email",    label: "Email Address",       type: "email", placeholder: "you@example.com",      profileValue: user?.email },
+                                      { key: "phone",    label: "Phone Number",        type: "tel",   placeholder: "+44 7700 000000",      profileValue: user?.phone },
+                                      ...(state.fulfillment === "mail" ? [
+                                        { key: "address",  label: "Collection Address", type: "text",  placeholder: "Street address",       profileValue: user?.address },
+                                        { key: "postcode", label: "Postcode",           type: "text",  placeholder: "LE1 1AA",              profileValue: undefined },
+                                      ] : []),
+                                    ];
+                                    return allFields
+                                      .filter(f => !user || !f.profileValue)
+                                      .map(({ key, label, type, placeholder }) => (
+                                        <div key={key} className="flex flex-col gap-2">
+                                          <label className="text-xs font-bold uppercase tracking-widest text-zinc-400">{label}</label>
+                                          <input
+                                            type={type}
+                                            required
+                                            placeholder={placeholder}
+                                            value={state.contact[key as keyof typeof state.contact]}
+                                            onChange={e => setState(s => ({ ...s, contact: { ...s.contact, [key]: e.target.value } }))}
+                                            className="h-14 rounded-[1rem] border-2 border-zinc-200 px-5 text-sm font-medium outline-none focus:border-black transition-colors"
+                                          />
+                                        </div>
+                                      ));
+                                  })()}
                                   {submitError && (
                                     <p className="text-sm font-bold text-red-500 bg-red-50 border border-red-100 rounded-2xl px-4 py-3">{submitError}</p>
                                   )}

@@ -285,6 +285,24 @@ export default function TradeInPage() {
   });
   const [stores, setStores] = useState<Store[]>([]);
   const [storesLoading, setStoresLoading] = useState(false);
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
+
+  // Pre-fill contact from logged-in user profile
+  useEffect(() => {
+    if (user) {
+      setState(s => ({
+        ...s,
+        contact: {
+          ...s.contact,
+          name:    user.name    || s.contact.name,
+          email:   user.email   || s.contact.email,
+          phone:   user.phone   || s.contact.phone,
+          address: user.address || s.contact.address,
+        },
+      }));
+    }
+  }, [user]);
 
   // Fetch stores when dropoff is chosen
   useEffect(() => {
@@ -301,6 +319,8 @@ export default function TradeInPage() {
   const [submitRef, setSubmitRef] = useState("");
   const [submitError, setSubmitError] = useState("");
   const [serverOfferPrice, setServerOfferPrice] = useState<number | null>(null);
+  const [missingDetailsOpen, setMissingDetailsOpen] = useState(false);
+  const [missingFields, setMissingFields] = useState<string[]>([]);
 
   // AI pricing states
   const [images, setImages] = useState<string[]>([]);
@@ -310,8 +330,6 @@ export default function TradeInPage() {
   const [aiLoadingText, setAiLoadingText] = useState("Analyzing your device...");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const modalScrollRef = useRef<HTMLDivElement>(null);
-  const { user, loading: authLoading } = useAuth();
-  const router = useRouter();
 
   // Restore wizard state after Google OAuth redirect
   useEffect(() => {
@@ -326,21 +344,6 @@ export default function TradeInPage() {
       sessionStorage.removeItem("ts_wizard_tradein");
     }
   }, []);
-
-  // Auto-fill contact from logged-in user
-  useEffect(() => {
-    if (user) {
-      setState(s => ({
-        ...s,
-        contact: {
-          ...s.contact,
-          name: s.contact.name || user.name,
-          email: s.contact.email || user.email,
-          phone: s.contact.phone || user.phone || "",
-        },
-      }));
-    }
-  }, [user]);
 
   // Lock body scroll when wizard modal is active
   useEffect(() => {
@@ -1596,6 +1599,16 @@ export default function TradeInPage() {
                           className="space-y-6 flex-1 flex flex-col justify-between"
                           onSubmit={async (e) => {
                             e.preventDefault();
+                            // Guard: profile must have phone, address, city
+                            const missing: string[] = [];
+                            if (!user?.phone)   missing.push("Phone number");
+                            if (!user?.address) missing.push("Street address");
+                            if (!user?.city)    missing.push("City");
+                            if (missing.length > 0) {
+                              setMissingFields(missing);
+                              setMissingDetailsOpen(true);
+                              return;
+                            }
                             setSubmitting(true);
                             setSubmitError("");
                             try {
@@ -1744,32 +1757,40 @@ export default function TradeInPage() {
                                       </div>
                                     </div>
                                   )}
-                                  <div className="grid gap-4 sm:grid-cols-2">
-                                    {[
-                                      { key: "name", label: "Full Name", type: "text", placeholder: "e.g. Jordan Mitchell" },
-                                      { key: "email", label: "Email Address", type: "email", placeholder: "e.g. you@domain.com" },
-                                      { key: "phone", label: "Phone Number", type: "tel", placeholder: "e.g. +44 7700 900077" },
+                                  {(() => {
+                                    const allFields = [
+                                      { key: "name",     label: "Full Name",                   type: "text",  placeholder: "e.g. Jordan Mitchell",  span: false, profileValue: user?.name },
+                                      { key: "email",    label: "Email Address",                type: "email", placeholder: "e.g. you@domain.com",   span: false, profileValue: user?.email },
+                                      { key: "phone",    label: "Phone Number",                 type: "tel",   placeholder: "e.g. +44 7700 900077",  span: false, profileValue: user?.phone },
                                       ...(state.fulfillment === "ship" ? [
-                                        { key: "address", label: "Collection / Return Address", type: "text", placeholder: "e.g. 10 High Street" },
-                                        { key: "postcode", label: "Postcode", type: "text", placeholder: "e.g. LE1 1AA" },
-                                      ] : [])
-                                    ].map((inp) => (
-                                      <div key={inp.key} className={inp.key === "address" ? "sm:col-span-2" : ""}>
-                                        <label className="text-xs font-bold text-zinc-700 block mb-1.5">{inp.label}</label>
-                                        <input
-                                          type={inp.type}
-                                          required
-                                          placeholder={inp.placeholder}
-                                          value={state.contact[inp.key as keyof typeof state.contact] || ""}
-                                          onChange={(e) => setState(s => ({
-                                            ...s,
-                                            contact: { ...s.contact, [inp.key]: e.target.value }
-                                          }))}
-                                          className="h-12 w-full rounded-xl border border-zinc-300 px-4 text-xs font-semibold outline-none focus:border-zinc-950 transition-colors"
-                                        />
+                                        { key: "address",  label: "Collection / Return Address", type: "text",  placeholder: "e.g. 10 High Street",   span: true,  profileValue: user?.address },
+                                        { key: "postcode", label: "Postcode",                    type: "text",  placeholder: "e.g. LE1 1AA",          span: false, profileValue: undefined },
+                                      ] : []),
+                                    ];
+                                    // When logged in, hide fields already covered by the profile
+                                    const visibleFields = allFields.filter(f => !user || !f.profileValue);
+                                    if (visibleFields.length === 0) return null;
+                                    return (
+                                      <div className="grid gap-4 sm:grid-cols-2">
+                                        {visibleFields.map((inp) => (
+                                          <div key={inp.key} className={inp.span ? "sm:col-span-2" : ""}>
+                                            <label className="text-xs font-bold text-zinc-700 block mb-1.5">{inp.label}</label>
+                                            <input
+                                              type={inp.type}
+                                              required
+                                              placeholder={inp.placeholder}
+                                              value={state.contact[inp.key as keyof typeof state.contact] || ""}
+                                              onChange={(e) => setState(s => ({
+                                                ...s,
+                                                contact: { ...s.contact, [inp.key]: e.target.value }
+                                              }))}
+                                              className="h-12 w-full rounded-xl border border-zinc-300 px-4 text-xs font-semibold outline-none focus:border-zinc-950 transition-colors"
+                                            />
+                                          </div>
+                                        ))}
                                       </div>
-                                    ))}
-                                  </div>
+                                    );
+                                  })()}
                                 </div>
                               )}
 
@@ -1883,6 +1904,42 @@ export default function TradeInPage() {
                               )}
                             </motion.button>
                           </div>
+
+                          {/* Missing profile details modal */}
+                          {missingDetailsOpen && (
+                            <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                              <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setMissingDetailsOpen(false)} />
+                              <div className="relative bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full space-y-4">
+                                <div className="flex items-start justify-between">
+                                  <div>
+                                    <h3 className="text-base font-black text-zinc-950">Complete your profile first</h3>
+                                    <p className="text-xs text-zinc-500 font-medium mt-1">We need a few more details before you can submit.</p>
+                                  </div>
+                                  <button onClick={() => setMissingDetailsOpen(false)} className="text-zinc-400 hover:text-zinc-700 transition-colors ml-4 mt-0.5">
+                                    <X className="h-4 w-4" />
+                                  </button>
+                                </div>
+                                <ul className="space-y-2">
+                                  {missingFields.map(f => (
+                                    <li key={f} className="flex items-center gap-2 text-sm font-semibold text-zinc-700">
+                                      <span className="h-1.5 w-1.5 rounded-full bg-red-500 shrink-0" />
+                                      {f} is missing
+                                    </li>
+                                  ))}
+                                </ul>
+                                <button
+                                  onClick={() => {
+                                    setMissingDetailsOpen(false);
+                                    sessionStorage.setItem("ts_wizard_tradein", JSON.stringify({ state, phase }));
+                                    router.push("/account/settings");
+                                  }}
+                                  className="w-full h-11 bg-black text-white rounded-xl text-sm font-black hover:bg-zinc-800 transition-colors"
+                                >
+                                  Go to Account Settings →
+                                </button>
+                              </div>
+                            </div>
+                          )}
                         </form>
                       </div>
                     )}

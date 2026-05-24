@@ -10,10 +10,10 @@ import { useAuth } from "../../context/auth-context";
 import { fmtDate } from "./_utils";
 
 const NAV_ITEMS = [
+  { href: "/account/settings",  label: "Account settings", icon: Settings },
   { href: "/account/orders",    label: "Orders",           icon: Package },
   { href: "/account/trade-ins", label: "Trade-Ins",        icon: RefreshCw },
   { href: "/account/repairs",   label: "Repairs",          icon: Wrench },
-  { href: "/account/settings",  label: "Account settings", icon: Settings },
 ];
 
 export default function AccountLayout({ children }: { children: React.ReactNode }) {
@@ -67,12 +67,12 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
         </div>
       </div>
 
-      <main className="flex-1 flex flex-col">
-        <div className="flex-1 flex flex-col mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
-          <div className="flex-1 flex flex-col lg:flex-row gap-8 lg:gap-10">
+      <main className="py-8 lg:py-10">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col lg:flex-row items-start gap-8 lg:gap-10">
 
-            {/* Sidebar */}
-            <aside className="w-full lg:w-[240px] shrink-0 lg:sticky lg:top-8">
+            {/* Sidebar — sticky below the full navbar (tier1 64px + tier2 ~44px = ~108px) */}
+            <aside className="w-full lg:w-[240px] shrink-0 lg:sticky lg:top-36">
               <nav className="bg-white rounded-[1.5rem] border border-zinc-100 p-3 shadow-sm">
                 <ul className="space-y-0.5">
                   {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
@@ -107,7 +107,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
             </aside>
 
             {/* Page content with animation */}
-            <div className="flex-1 min-w-0 flex flex-col">
+            <div className="flex-1 min-w-0">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={pathname}
@@ -115,7 +115,6 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
-                  className="flex-1 flex flex-col"
                 >
                   {children}
                 </motion.div>
