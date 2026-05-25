@@ -135,7 +135,7 @@ export class OrdersService {
 
     async ship(id: string, dto: ShipOrderDto) {
         const order = await this.findById(id);
-        if (!['CONFIRMED', 'PROCESSING'].includes(order.status)) {
+        if (!['PENDING', 'CONFIRMED', 'PROCESSING'].includes(order.status)) {
             throw new BadRequestException(`Cannot ship an order with status ${order.status}`);
         }
         return this.prisma.order.update({
@@ -155,6 +155,15 @@ export class OrdersService {
             throw new BadRequestException(`Cannot mark delivered an order with status ${order.status}`);
         }
         return this.prisma.order.update({ where: { id }, data: { status: 'DELIVERED' } });
+    }
+
+    async markReceived(id: string, userId: string) {
+        const order = await this.findById(id);
+        if (order.userId !== userId) throw new BadRequestException('Order not found');
+        if (order.status !== 'SHIPPED') {
+            throw new BadRequestException(`Order has not been shipped yet`);
+        }
+        return this.prisma.order.update({ where: { id }, data: { status: 'DELIVERED' }, include: ORDER_INCLUDE });
     }
 
     async cancel(id: string) {

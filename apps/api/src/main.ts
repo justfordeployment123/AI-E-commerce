@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import { config as loadEnv } from 'dotenv';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { IoAdapter } from '@nestjs/platform-socket.io';
 import cookieParser from 'cookie-parser';
 import compression from 'compression';
 import { json, urlencoded } from 'express';
@@ -30,6 +31,7 @@ async function bootstrap() {
   const { AppModule } = require('./app.module') as typeof import('./app.module');
   const app = await NestFactory.create(AppModule, { rawBody: true });
 
+  app.useWebSocketAdapter(new IoAdapter(app));
   app.use(compression());
   app.use(cookieParser());
   app.use(json({ limit: '10mb' }));

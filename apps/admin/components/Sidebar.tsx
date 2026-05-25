@@ -4,7 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   LayoutDashboard, Package, RefreshCw, Wrench, ShoppingBag,
-  SlidersHorizontal, BarChart3, LogOut, ChevronRight, ListPlus, MapPin, TrendingUp
+  SlidersHorizontal, BarChart3, LogOut, ChevronRight, ListPlus, MapPin, TrendingUp, HeadphonesIcon, Star, Phone, DatabaseZap
 } from "lucide-react";
 import { useAdminAuth } from "../context/auth-context";
 
@@ -14,12 +14,16 @@ const NAV = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/products", label: "Products", icon: Package, section: "Catalog" },
   { href: "/catalog", label: "Device Catalog", icon: ListPlus },
+  { href: "/seed", label: "Seed Database", icon: DatabaseZap },
   { href: "/trade-ins", label: "Trade-Ins", icon: RefreshCw, section: "Operations" },
   { href: "/repairs", label: "Repairs", icon: Wrench },
   { href: "/orders", label: "Orders", icon: ShoppingBag },
   { href: "/pricing", label: "Pricing Rules", icon: SlidersHorizontal, section: "Settings" },
   ...(SCRAPER_ENABLED ? [{ href: "/scraper", label: "Competitor Prices", icon: TrendingUp }] : []),
   { href: "/stores", label: "Store Locations", icon: MapPin },
+  { href: "/helplines", label: "Helplines", icon: Phone },
+  { href: "/support", label: "Support & Chat", icon: HeadphonesIcon },
+  { href: "/reviews", label: "Reviews", icon: Star },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
 ];
 

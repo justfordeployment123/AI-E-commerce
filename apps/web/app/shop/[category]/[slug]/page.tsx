@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, type FormEvent } from "react";
 import { useCart } from "../../../../context/cart-context";
 import { useParams } from "next/navigation";
-import { productsApi, type Product } from "../../../../lib/api";
+import { productsApi, reviewsApi, uploadsApi, type Product, type Review } from "../../../../lib/api";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Star, ShoppingCart, Heart, Shield, RefreshCw, Truck,
   Check, ChevronDown, ChevronUp, ArrowLeft,
-  Award, Info
+  Award, Info, Camera, X, Send, Loader2, MessageSquare
 } from "lucide-react";
 import Navbar from "../../../../components/Navbar";
 import Footer from "../../../../components/Footer";
@@ -42,6 +42,21 @@ export default function ProductDetailPage() {
   const [wishlisted, setWishlisted] = useState(false);
   const { addItem } = useCart();
 
+  // Reviews state
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [loadingReviews, setLoadingReviews] = useState(false);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewBody, setReviewBody] = useState("");
+  const [reviewName, setReviewName] = useState("");
+  const [reviewImages, setReviewImages] = useState<File[]>([]);
+  const [reviewPreviews, setReviewPreviews] = useState<string[]>([]);
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [reviewSubmitted, setReviewSubmitted] = useState(false);
+  const [reviewError, setReviewError] = useState("");
+  const [hoverRating, setHoverRating] = useState(0);
+  const reviewFileRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     window.scrollTo(0, 0);
     setLoadingProduct(true);
@@ -50,6 +65,66 @@ export default function ProductDetailPage() {
       .catch(() => {})
       .finally(() => setLoadingProduct(false));
   }, [slug]);
+
+  useEffect(() => {
+    if (!product) return;
+    setLoadingReviews(true);
+    reviewsApi.list(product.id)
+      .then(setReviews)
+      .catch(() => {})
+      .finally(() => setLoadingReviews(false));
+  }, [product?.id]);
+
+  function buildPreviews(files: File[], oldPreviews: string[]): string[] {
+    // Revoke all existing object URLs to prevent memory leaks
+    oldPreviews.forEach(url => URL.revokeObjectURL(url));
+    return files.map(f => URL.createObjectURL(f));
+  }
+
+  function handleReviewImages(files: FileList | null) {
+    if (!files) return;
+    const picked = Array.from(files).slice(0, 5 - reviewImages.length);
+    const newFiles = [...reviewImages, ...picked].slice(0, 5);
+    // Reset input so the same file can be re-selected after removal
+    if (reviewFileRef.current) reviewFileRef.current.value = "";
+    setReviewImages(newFiles);
+    setReviewPreviews(prev => buildPreviews(newFiles, prev));
+  }
+
+  function removeReviewImage(idx: number) {
+    const next = reviewImages.filter((_, i) => i !== idx);
+    setReviewImages(next);
+    setReviewPreviews(prev => buildPreviews(next, prev));
+  }
+
+  async function handleSubmitReview(e: FormEvent) {
+    e.preventDefault();
+    if (!product || !reviewBody.trim() || reviewRating < 1) return;
+    setSubmittingReview(true);
+    setReviewError("");
+    try {
+      const uploaded: string[] = [];
+      for (const file of reviewImages) {
+        const { filePath } = await uploadsApi.reviewImage(file);
+        uploaded.push(filePath);
+      }
+      await reviewsApi.create(product.id, {
+        guestName: reviewName.trim() || undefined,
+        rating: reviewRating,
+        body: reviewBody.trim(),
+        images: uploaded,
+      });
+      setReviewSubmitted(true);
+      setReviewBody("");
+      setReviewName("");
+      setReviewRating(5);
+      setReviewPreviews(prev => { prev.forEach(url => URL.revokeObjectURL(url)); return []; });
+      setReviewImages([]);
+    } catch (err: any) {
+      setReviewError(err?.message ?? "Something went wrong. Please try again.");
+    }
+    setSubmittingReview(false);
+  }
 
   async function handleAddToCart() {
     if (!product) return;
@@ -368,6 +443,250 @@ export default function ProductDetailPage() {
           </div>
         </div>
       </main>
+
+      {/* ── Reviews Section ─────────────────────────────────────────────── */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <MessageSquare className="h-6 w-6 text-black" strokeWidth={1.5} />
+            <h2 className="text-2xl font-bold">Customer Reviews</h2>
+            {reviews.length > 0 && (
+              <span className="text-sm font-bold text-zinc-400">({reviews.length})</span>
+            )}
+          </div>
+          {!showReviewForm && (
+            <button
+              onClick={() => { setShowReviewForm(true); setReviewSubmitted(false); }}
+              className="h-10 px-5 rounded-2xl bg-black text-white text-sm font-bold hover:bg-zinc-800 transition-colors"
+            >
+              Write a Review
+            </button>
+          )}
+        </div>
+
+        {/* Rating summary */}
+        {reviews.length > 0 && (
+          <div className="bg-white rounded-[24px] border border-zinc-200 p-6 mb-6 flex flex-col sm:flex-row items-center gap-8">
+            <div className="text-center shrink-0">
+              <p className="text-6xl font-bold">{product.rating.toFixed(1)}</p>
+              <div className="flex justify-center mt-2">
+                {[1,2,3,4,5].map(i => (
+                  <Star key={i} className={`h-4 w-4 ${i <= Math.round(product.rating) ? "fill-black text-black" : "text-zinc-200"}`} />
+                ))}
+              </div>
+              <p className="text-xs text-zinc-500 font-medium mt-1">{reviews.length} review{reviews.length !== 1 ? "s" : ""}</p>
+            </div>
+            <div className="flex-1 w-full space-y-2">
+              {[5,4,3,2,1].map(star => {
+                const count = reviews.filter(r => r.rating === star).length;
+                const pct = reviews.length ? Math.round((count / reviews.length) * 100) : 0;
+                return (
+                  <div key={star} className="flex items-center gap-3">
+                    <span className="text-xs font-bold w-4 text-right">{star}</span>
+                    <Star className="h-3.5 w-3.5 fill-black text-black shrink-0" />
+                    <div className="flex-1 h-2 bg-zinc-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-black rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
+                    </div>
+                    <span className="text-xs text-zinc-400 font-medium w-8">{pct}%</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Review form */}
+        <AnimatePresence>
+          {showReviewForm && (
+            <motion.div
+              initial={{ opacity: 0, y: -16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -16 }}
+              transition={{ duration: 0.25 }}
+              className="bg-white rounded-[24px] border border-zinc-200 p-6 mb-6"
+            >
+              {reviewSubmitted ? (
+                <div className="flex flex-col items-center py-8 gap-4 text-center">
+                  <div className="h-16 w-16 rounded-full bg-emerald-100 flex items-center justify-center">
+                    <Check className="h-8 w-8 text-emerald-600" strokeWidth={2.5} />
+                  </div>
+                  <p className="text-xl font-bold">Thank you for your review!</p>
+                  <p className="text-sm text-zinc-500 max-w-sm">Your review is pending approval and will appear here once our team verifies it.</p>
+                  <button onClick={() => setShowReviewForm(false)} className="mt-2 text-sm font-bold text-black underline underline-offset-2">
+                    Close
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmitReview} className="space-y-5">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-bold">Leave a Review</h3>
+                    <button type="button" onClick={() => setShowReviewForm(false)} className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-zinc-100 transition-colors">
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+
+                  {/* Star picker */}
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-widest text-zinc-400 mb-2">Your Rating</p>
+                    <div className="flex gap-1">
+                      {[1,2,3,4,5].map(i => (
+                        <button
+                          key={i}
+                          type="button"
+                          onMouseEnter={() => setHoverRating(i)}
+                          onMouseLeave={() => setHoverRating(0)}
+                          onClick={() => setReviewRating(i)}
+                          className="p-1"
+                        >
+                          <Star className={`h-7 w-7 transition-colors ${i <= (hoverRating || reviewRating) ? "fill-amber-400 text-amber-400" : "text-zinc-300"}`} />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Name (guest) */}
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-widest text-zinc-400 block mb-1.5">Your Name</label>
+                    <input
+                      value={reviewName}
+                      onChange={e => setReviewName(e.target.value)}
+                      placeholder="e.g. John D."
+                      className="w-full h-12 px-4 rounded-2xl border border-zinc-200 bg-zinc-50 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-black/10"
+                    />
+                  </div>
+
+                  {/* Body */}
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-widest text-zinc-400 block mb-1.5">Review</label>
+                    <textarea
+                      value={reviewBody}
+                      onChange={e => setReviewBody(e.target.value)}
+                      placeholder="What did you think of this product?"
+                      rows={4}
+                      required
+                      className="w-full px-4 py-3 rounded-2xl border border-zinc-200 bg-zinc-50 text-sm font-medium resize-none focus:outline-none focus:ring-2 focus:ring-black/10"
+                    />
+                  </div>
+
+                  {/* Image upload */}
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-widest text-zinc-400 mb-2">Photos (optional, up to 5)</p>
+                    <div className="flex flex-wrap gap-3">
+                      {reviewPreviews.map((src, idx) => (
+                        <div key={idx} className="relative h-20 w-20 rounded-2xl overflow-hidden border border-zinc-200">
+                          <img src={src} alt="" className="h-full w-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => removeReviewImage(idx)}
+                            className="absolute top-1 right-1 h-5 w-5 rounded-full bg-black/60 flex items-center justify-center"
+                          >
+                            <X className="h-3 w-3 text-white" />
+                          </button>
+                        </div>
+                      ))}
+                      {reviewImages.length < 5 && (
+                        <button
+                          type="button"
+                          onClick={() => reviewFileRef.current?.click()}
+                          className="h-20 w-20 rounded-2xl border-2 border-dashed border-zinc-300 flex flex-col items-center justify-center gap-1 text-zinc-400 hover:border-zinc-400 hover:text-zinc-500 transition-colors"
+                        >
+                          <Camera className="h-5 w-5" />
+                          <span className="text-[10px] font-bold">Add</span>
+                        </button>
+                      )}
+                      <input
+                        ref={reviewFileRef}
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={e => handleReviewImages(e.target.files)}
+                      />
+                    </div>
+                  </div>
+
+                  {reviewError && (
+                    <p className="text-sm font-medium text-red-600 bg-red-50 px-4 py-3 rounded-2xl">{reviewError}</p>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={submittingReview || !reviewBody.trim()}
+                    className="w-full h-12 rounded-2xl bg-black text-white font-bold flex items-center justify-center gap-2 disabled:opacity-50 hover:bg-zinc-800 transition-colors"
+                  >
+                    {submittingReview ? <><Loader2 className="h-4 w-4 animate-spin" /> Submitting…</> : <><Send className="h-4 w-4" /> Submit Review</>}
+                  </button>
+                </form>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Review list */}
+        {loadingReviews ? (
+          <div className="space-y-4">
+            {[...Array(2)].map((_, i) => (
+              <div key={i} className="bg-white rounded-[24px] border border-zinc-200 p-6 animate-pulse">
+                <div className="flex gap-4">
+                  <div className="h-10 w-10 rounded-full bg-zinc-100 shrink-0" />
+                  <div className="flex-1 space-y-3">
+                    <div className="h-4 bg-zinc-100 rounded-full w-1/4" />
+                    <div className="h-3 bg-zinc-100 rounded-full w-1/5" />
+                    <div className="h-3 bg-zinc-100 rounded-full w-3/4" />
+                    <div className="h-3 bg-zinc-100 rounded-full w-1/2" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : reviews.length === 0 ? (
+          <div className="bg-white rounded-[24px] border border-zinc-200 p-10 flex flex-col items-center gap-3 text-center">
+            <Star className="h-10 w-10 text-zinc-200" />
+            <p className="font-bold text-lg">No reviews yet</p>
+            <p className="text-sm text-zinc-500">Be the first to share your thoughts on this product.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {reviews.map(review => {
+              const displayName = review.user?.name ?? review.guestName ?? "Customer";
+              const initials = displayName.charAt(0).toUpperCase();
+              return (
+                <div key={review.id} className="bg-white rounded-[24px] border border-zinc-200 p-6">
+                  <div className="flex items-start gap-4">
+                    <div className="h-10 w-10 rounded-full bg-zinc-100 flex items-center justify-center shrink-0 font-bold text-sm">
+                      {initials}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <p className="font-bold text-sm">{displayName}</p>
+                        <p className="text-xs text-zinc-400">{new Date(review.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</p>
+                      </div>
+                      <div className="flex mt-1 mb-3">
+                        {[1,2,3,4,5].map(i => (
+                          <Star key={i} className={`h-3.5 w-3.5 ${i <= review.rating ? "fill-amber-400 text-amber-400" : "text-zinc-200"}`} />
+                        ))}
+                      </div>
+                      <p className="text-sm text-zinc-600 leading-relaxed">{review.body}</p>
+                      {review.images.length > 0 && (
+                        <div className="flex gap-2 mt-4 flex-wrap">
+                          {review.images.map((img, i) => (
+                            <img
+                              key={i}
+                              src={img}
+                              alt=""
+                              className="h-20 w-20 rounded-2xl object-cover border border-zinc-200"
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
 
       <Footer />
     </div>

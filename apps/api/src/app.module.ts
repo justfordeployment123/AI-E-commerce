@@ -24,6 +24,9 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { ShippingModule } from './modules/shipping/shipping.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { ScraperModule } from './modules/scraper/scraper.module';
+import { SupportModule } from './modules/support/support.module';
+import { ReviewsModule } from './modules/reviews/reviews.module';
+import { SeedModule } from './modules/seed/seed.module';
 
 @Module({
   imports: [
@@ -48,6 +51,9 @@ import { ScraperModule } from './modules/scraper/scraper.module';
     ShippingModule,
     PaymentsModule,
     ScraperModule,
+    SupportModule,
+    ReviewsModule,
+    SeedModule,
   ],
   controllers: [AppController],
   providers: [

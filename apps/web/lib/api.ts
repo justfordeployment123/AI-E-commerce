@@ -65,6 +65,7 @@ export const productsApi = {
   list: (params?: {
     category?: string; brand?: string; condition?: string;
     search?: string; page?: number; limit?: number;
+    minPrice?: number; maxPrice?: number;
   }) => {
     const q = new URLSearchParams();
     if (params?.category) q.set('category', params.category);
@@ -73,6 +74,8 @@ export const productsApi = {
     if (params?.search) q.set('search', params.search);
     if (params?.page) q.set('page', String(params.page));
     if (params?.limit) q.set('limit', String(params.limit));
+    if (params?.minPrice !== undefined) q.set('minPrice', String(params.minPrice));
+    if (params?.maxPrice !== undefined) q.set('maxPrice', String(params.maxPrice));
     return apiFetch<{ items: Product[]; total: number; page: number; pages: number }>(
       `/products?${q}`,
     );
@@ -117,6 +120,9 @@ export const ordersApi = {
     apiFetch<Order>('/orders', { method: 'POST', auth: true, body: JSON.stringify(data) }),
 
   myOrders: () => apiFetch<Order[]>('/orders/my', { auth: true }),
+
+  markReceived: (id: string) =>
+    apiFetch<Order>(`/orders/${id}/received`, { method: 'POST', auth: true }),
 };
 
 // ── Uploads ───────────────────────────────────────────────────────────────────
@@ -144,6 +150,27 @@ export const uploadsApi = {
 
   // Customer: repair device photos → repair-images/{groupId}/
   repairImage: (file: File, groupId: string) => uploadFile('/uploads/repair-image', file, groupId),
+
+  // Public: review photos → review-images/
+  reviewImage: (file: File) => uploadFile('/uploads/review-image', file),
+};
+
+// ── Reviews ───────────────────────────────────────────────────────────────────
+export const reviewsApi = {
+  list: (productId: string) =>
+    apiFetch<Review[]>(`/products/${productId}/reviews`),
+
+  recent: (limit = 8) =>
+    apiFetch<(Review & { product: { name: string; slug: string; category: string; condition: string } })[]>(
+      `/reviews/recent?limit=${limit}`,
+    ),
+
+  create: (productId: string, data: { guestName?: string; rating: number; body: string; images?: string[] }) =>
+    apiFetch<Review>(`/products/${productId}/reviews`, {
+      method: 'POST',
+      auth: true,
+      body: JSON.stringify(data),
+    }),
 };
 
 // ── Stores ────────────────────────────────────────────────────────────────────
@@ -333,6 +360,19 @@ export interface TradeInPayload {
   images: string[];
   storeId?: string;
   contact: { name: string; email: string; phone: string; address?: string; postcode?: string };
+}
+
+export interface Review {
+  id: string;
+  productId: string;
+  userId?: string;
+  user?: { name: string };
+  guestName?: string;
+  rating: number;
+  body: string;
+  images: string[];
+  isApproved: boolean;
+  createdAt: string;
 }
 
 export interface RepairPayload {

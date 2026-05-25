@@ -10,8 +10,9 @@ import {
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import Navbar from "../components/Navbar";
-import { productsApi } from "../lib/api";
+import { productsApi, reviewsApi } from "../lib/api";
 import { useCart } from "../context/cart-context";
+import { imageRegistry, pick } from "../lib/localImages";
 const Footer = dynamic(() => import("../components/Footer"));
 
 // ─── Promo Carousel Banner ───────────────────────────────────────────────────
@@ -232,6 +233,11 @@ function Hero() {
   const [heroSearchQuery, setHeroSearchQuery] = useState("");
   const [isHeroSearchFocused, setIsHeroSearchFocused] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [showcase, setShowcase] = useState<any[]>([]);
+
+  useEffect(() => {
+    productsApi.list({ limit: 3 }).then(r => setShowcase(r.items)).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!heroSearchQuery.trim()) { setSearchResults([]); return; }
@@ -462,44 +468,57 @@ function Hero() {
             <div className="absolute inset-0 bg-zinc-50/50 backdrop-blur-3xl rounded-[4rem] -rotate-1 z-0 ring-1 ring-zinc-200" />
 
             <div className="relative z-10 p-8 w-full max-w-[540px]">
-              {/* Featured product card */}
-              <div className="bg-white rounded-[2.5rem] p-6 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.08)] mb-4 ring-1 ring-zinc-100 group cursor-pointer hover:shadow-[0_48px_80px_-16px_rgba(0,0,0,0.12)] transition-all duration-500">
-                <div className="flex items-center gap-6">
-                  <div className="h-32 w-32 rounded-3xl overflow-hidden bg-zinc-50 flex-shrink-0">
-                    <img src="/showcase_iphone.png" alt="iPhone 15 Pro" className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-sky-700 bg-sky-50 px-3 py-1.5 rounded-full">Excellent Grade</span>
-                      <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2.5 py-1.5 rounded-full">Save £460</span>
+              {showcase[0] && (() => {
+                const p = showcase[0];
+                const comparePrice = p.comparePrice ?? Math.round(p.price * 1.4);
+                const saving = comparePrice - p.price;
+                const gradeClr = p.condition === "Pristine" ? "text-emerald-700 bg-emerald-50" : p.condition === "Good" ? "text-amber-700 bg-amber-50" : "text-sky-700 bg-sky-50";
+                return (
+                  <Link href={`/shop/${p.category.toLowerCase()}/${p.slug}`} className="block">
+                    <div className="bg-white rounded-[2.5rem] p-6 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.08)] mb-4 ring-1 ring-zinc-100 group cursor-pointer hover:shadow-[0_48px_80px_-16px_rgba(0,0,0,0.12)] transition-all duration-500">
+                      <div className="flex items-center gap-6">
+                        <div className="h-32 w-32 rounded-3xl overflow-hidden bg-zinc-50 flex-shrink-0">
+                          <img src={p.images?.[0]} alt={p.name} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-3">
+                            <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full ${gradeClr}`}>{p.condition} Grade</span>
+                            {saving > 0 && <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2.5 py-1.5 rounded-full">Save £{saving}</span>}
+                          </div>
+                          <h3 className="font-bold text-xl text-zinc-950 mb-1 truncate">{p.name}</h3>
+                          <p className="text-[13px] text-zinc-400 font-medium truncate">{String((p.specs as any)?.storage ?? p.model ?? p.condition)}</p>
+                          <div className="flex items-baseline gap-2.5 mt-3">
+                            <span className="text-2xl font-black text-zinc-950">£{p.price}</span>
+                            <span className="text-sm text-zinc-300 line-through font-medium">£{comparePrice}</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <h3 className="font-bold text-xl text-zinc-950 mb-1">iPhone 15 Pro</h3>
-                    <p className="text-[13px] text-zinc-400 font-medium">256GB · Natural Titanium</p>
-                    <div className="flex items-baseline gap-2.5 mt-3">
-                      <span className="text-2xl font-black text-zinc-950">£739</span>
-                      <span className="text-sm text-zinc-300 line-through font-medium">£1,199</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                  </Link>
+                );
+              })()}
 
               {/* Two smaller cards */}
               <div className="grid grid-cols-2 gap-4">
-                {[
-                  { name: "MacBook Air M2", price: "£849", pct: "35", img: "/showcase_macbook.png", grade: "Pristine", gradeClr: "text-emerald-700 bg-emerald-50" },
-                  { name: "AirPods Pro 2",  price: "£149", pct: "47", img: "/showcase_airpods_pro.png", grade: "Excellent", gradeClr: "text-sky-700 bg-sky-50" },
-                ].map((p, i) => (
-                  <div key={i} className="bg-white rounded-[2rem] p-5 shadow-[0_20px_40px_-12px_rgba(0,0,0,0.06)] ring-1 ring-zinc-100 group cursor-pointer hover:shadow-[0_32px_50px_-12px_rgba(0,0,0,0.1)] transition-all duration-500">
-                    <div className="h-28 w-full rounded-2xl overflow-hidden bg-zinc-50 mb-4">
-                      <img src={p.img} alt={p.name} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                    </div>
-                    <p className="font-bold text-sm text-zinc-950 truncate mb-1.5">{p.name}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-lg font-black text-zinc-950">{p.price}</span>
-                      <span className={`text-[10px] font-black px-2 py-1 rounded-full ${p.gradeClr}`}>-{p.pct}%</span>
-                    </div>
-                  </div>
-                ))}
+                {showcase.slice(1, 3).map((p, i) => {
+                  const comparePrice = p.comparePrice ?? Math.round(p.price * 1.4);
+                  const pct = Math.round((1 - p.price / comparePrice) * 100);
+                  const gradeClr = p.condition === "Pristine" ? "text-emerald-700 bg-emerald-50" : p.condition === "Good" ? "text-amber-700 bg-amber-50" : "text-sky-700 bg-sky-50";
+                  return (
+                    <Link key={i} href={`/shop/${p.category.toLowerCase()}/${p.slug}`} className="block">
+                      <div className="bg-white rounded-[2rem] p-5 shadow-[0_20px_40px_-12px_rgba(0,0,0,0.06)] ring-1 ring-zinc-100 group cursor-pointer hover:shadow-[0_32px_50px_-12px_rgba(0,0,0,0.1)] transition-all duration-500">
+                        <div className="h-28 w-full rounded-2xl overflow-hidden bg-zinc-50 mb-4">
+                          <img src={p.images?.[0]} alt={p.name} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                        </div>
+                        <p className="font-bold text-sm text-zinc-950 truncate mb-1.5">{p.name}</p>
+                        <div className="flex items-center justify-between">
+                          <span className="text-lg font-black text-zinc-950">£{p.price}</span>
+                          <span className={`text-[10px] font-black px-2 py-1 rounded-full ${gradeClr}`}>-{pct}%</span>
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
             </div>
 
@@ -524,7 +543,9 @@ function Hero() {
               className="absolute bottom-32 -right-8 z-20 bg-zinc-950 rounded-2xl px-5 py-4 shadow-2xl"
             >
               <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Saved vs new</p>
-              <p className="text-xl font-black text-white tracking-tight">- £340</p>
+              <p className="text-xl font-black text-white tracking-tight">
+                - £{showcase[0] ? (showcase[0].comparePrice ?? Math.round(showcase[0].price * 1.4)) - showcase[0].price : 340}
+              </p>
             </motion.div>
 
             <motion.div
@@ -550,35 +571,43 @@ function Hero() {
 
 // ─── Category Bento ───────────────────────────────────────────────────────────
 function CategoryBento() {
+  const [catImgs] = useState(() => [
+    pick(imageRegistry.bento.phones),
+    pick(imageRegistry.bento.laptops),
+    pick(imageRegistry.bento.audio),
+    pick(imageRegistry.bento.consoles),
+    pick(imageRegistry.bento.tablets),
+  ]);
+
   const cats = [
     {
       name: "Smartphones", sub: "From £149", count: "12,400+ devices",
       Icon: Smartphone, iconBg: "bg-blue-600",
-      img: "/bento_smartphones.png",
+      img: catImgs[0],
       slug: "phones",
     },
     {
       name: "Laptops", sub: "From £249", count: "4,200+ devices",
       Icon: Laptop, iconBg: "bg-violet-600",
-      img: "/bento_laptops.png",
+      img: catImgs[1],
       slug: "laptops",
     },
     {
       name: "Audio", sub: "From £39", count: "3,600+ devices",
       Icon: Headphones, iconBg: "bg-pink-600",
-      img: "/bento_audio.png",
+      img: catImgs[2],
       slug: "audio",
     },
     {
       name: "Gaming", sub: "From £89", count: "6,100+ devices",
       Icon: Gamepad2, iconBg: "bg-emerald-600",
-      img: "/bento_gaming.png",
+      img: catImgs[3],
       slug: "consoles",
     },
     {
       name: "Tablets", sub: "From £129", count: "2,800+ devices",
       Icon: Tablet, iconBg: "bg-amber-600",
-      img: "/bento_tablets.png",
+      img: catImgs[4],
       slug: "tablets",
     },
   ];
@@ -612,6 +641,7 @@ function CategoryBento() {
               <img
                 src={cat.img}
                 alt={cat.name}
+                suppressHydrationWarning
                 className="absolute inset-0 h-full w-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-out"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/80 via-zinc-950/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
@@ -854,14 +884,25 @@ function HowItWorks() {
 
 // ─── Reviews ──────────────────────────────────────────────────────────────────
 function Reviews() {
-  const reviews = [
-    { name: "Priya Mehta",    loc: "London",      rating: 5, text: "Absolutely flawless iPhone 13. Arrived next day, pristine condition. Saved £380 vs new. Will never buy new again.",                       product: "iPhone 13 Pro · Pristine",      img: "https://picsum.photos/seed/rev11/64/64" },
-    { name: "Marcus Osei",    loc: "Birmingham",  rating: 5, text: "MacBook Air M1 indistinguishable from new. Battery at 97% health. This is the only way I'll buy tech from now on.",                        product: "MacBook Air M1 · Excellent",    img: "https://picsum.photos/seed/rev22/64/64" },
-    { name: "Sophie Keller",  loc: "Manchester",  rating: 5, text: "Returned my first order no hassle — replacement arrived in two days. Customer service actually picks up the phone.",                        product: "Samsung S23 · Good",            img: "https://picsum.photos/seed/rev33/64/64" },
-    { name: "Rahul Sharma",   loc: "Leicester",   rating: 5, text: "iPad Pro arrived perfectly packaged with a full inspection report. The grade description was 100% accurate. Brilliantly run.",             product: "iPad Pro M2 · Pristine",        img: "https://picsum.photos/seed/rev44/64/64" },
-    { name: "Emily Walsh",    loc: "Edinburgh",   rating: 5, text: "Saved £420 on my PS5 and it genuinely looks new. The 12-month warranty gave me total confidence. Already recommended to everyone.",        product: "PlayStation 5 · Excellent",     img: "https://picsum.photos/seed/rev55/64/64" },
-    { name: "Daniel Adeyemi", loc: "Bristol",     rating: 5, text: "Pixel 8 Pro came with 94% battery health — better than some brand new phones I've had. Delivery was next day. Phenomenal service.",      product: "Pixel 8 Pro · Excellent",       img: "https://picsum.photos/seed/rev66/64/64" },
-  ];
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [avgRating, setAvgRating] = useState(0);
+
+  useEffect(() => {
+    reviewsApi.recent(8)
+      .then(data => {
+        setReviews(data);
+        if (data.length > 0) {
+          const avg = data.reduce((sum: number, r: any) => sum + r.rating, 0) / data.length;
+          setAvgRating(Math.round(avg * 10) / 10);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  if (reviews.length === 0) return null;
+
+  const displayRating = avgRating || 4.8;
+  const displayCount = reviews.length;
 
   return (
     <section className="py-24 bg-zinc-50 border-y border-zinc-100 overflow-hidden">
@@ -873,18 +914,17 @@ function Reviews() {
               Real buyers,<br />real reviews.
             </h2>
           </div>
-          {/* Trustpilot-style score */}
           <div className="flex items-center gap-6 bg-white rounded-3xl px-7 py-5 border border-zinc-100 shadow-sm self-start md:self-auto">
             <div>
               <div className="flex gap-0.5 mb-1.5">
                 {[...Array(5)].map((_, i) => <Star key={i} className="h-5 w-5 fill-accent text-accent" />)}
               </div>
-              <p className="text-3xl font-bold text-zinc-950 leading-none">4.8</p>
+              <p className="text-3xl font-bold text-zinc-950 leading-none">{displayRating}</p>
               <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mt-1">out of 5</p>
             </div>
             <div className="h-12 w-px bg-zinc-100" />
             <div>
-              <p className="text-2xl font-bold text-zinc-950 leading-none">12,400</p>
+              <p className="text-2xl font-bold text-zinc-950 leading-none">{displayCount.toLocaleString()}</p>
               <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mt-1">Verified reviews</p>
             </div>
           </div>
@@ -893,28 +933,40 @@ function Reviews() {
 
       {/* Horizontal scroll */}
       <div className="flex gap-5 overflow-x-auto scrollbar-hide pl-4 sm:pl-6 lg:pl-8 pr-8 pb-2">
-        {reviews.map((r, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, x: 20 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: i * 0.07 }}
-            className="flex-shrink-0 w-[320px] md:w-[360px] bg-white rounded-3xl p-7 border border-zinc-100 flex flex-col gap-5 shadow-sm hover:shadow-md transition-shadow"
-          >
-            <div className="flex gap-0.5">
-              {[...Array(r.rating)].map((_, j) => <Star key={j} className="h-4 w-4 fill-accent text-accent" />)}
-            </div>
-            <p className="text-zinc-700 leading-relaxed text-[15px] flex-1">"{r.text}"</p>
-            <div className="pt-4 border-t border-zinc-100 flex items-center gap-3">
-              <img src={r.img} alt={r.name} className="h-10 w-10 rounded-full object-cover" />
-              <div>
-                <p className="text-sm font-bold text-zinc-950">{r.name} · {r.loc}</p>
-                <p className="text-[11px] text-zinc-400 font-medium mt-0.5">{r.product}</p>
+        {reviews.map((r: any, i: number) => {
+          const displayName = r.user?.name ?? r.guestName ?? "Verified Buyer";
+          const initials = displayName.charAt(0).toUpperCase();
+          const productLabel = r.product ? `${r.product.name} · ${r.product.condition}` : "";
+          return (
+            <motion.div
+              key={r.id}
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.07 }}
+              className="flex-shrink-0 w-[320px] md:w-[360px] bg-white rounded-3xl p-7 border border-zinc-100 flex flex-col gap-5 shadow-sm hover:shadow-md transition-shadow"
+            >
+              <div className="flex gap-0.5">
+                {[...Array(r.rating)].map((_: unknown, j: number) => <Star key={j} className="h-4 w-4 fill-accent text-accent" />)}
               </div>
-            </div>
-          </motion.div>
-        ))}
+              <p className="text-zinc-700 leading-relaxed text-[15px] flex-1">"{r.body}"</p>
+              {r.images?.length > 0 && (
+                <div className="w-full h-44 rounded-2xl overflow-hidden">
+                  <img src={r.images[0]} alt="" className="w-full h-full object-cover" />
+                </div>
+              )}
+              <div className="pt-4 border-t border-zinc-100 flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-zinc-100 flex items-center justify-center shrink-0 font-bold text-sm text-zinc-600">
+                  {initials}
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-zinc-950">{displayName}</p>
+                  <p className="text-[11px] text-zinc-400 font-medium mt-0.5">{productLabel}</p>
+                </div>
+              </div>
+            </motion.div>
+          );
+        })}
       </div>
     </section>
   );
@@ -1157,40 +1209,64 @@ function AppPreview() {
 
 // ─── Shop By Budget ───────────────────────────────────────────────────────────
 function ShopByBudget() {
+  const [budgetImgs] = useState(() => [
+    pick([...imageRegistry.audio.headphones, ...imageRegistry.audio.bento]),
+    pick(imageRegistry.banners.gaming),
+    pick([...imageRegistry.phones.iphone, ...imageRegistry.phones.samsung, ...imageRegistry.phones.google]),
+    pick([...imageRegistry.laptops.macbook, ...imageRegistry.laptops.generic]),
+  ]);
+  const [counts, setCounts] = useState([0, 0, 0, 0]);
+
+  useEffect(() => {
+    const bands: [number | undefined, number | undefined][] = [
+      [undefined, 100],
+      [100, 300],
+      [300, 600],
+      [600, undefined],
+    ];
+    Promise.all(
+      bands.map(([min, max]) =>
+        productsApi.list({ limit: 1, minPrice: min, maxPrice: max }).then(r => r.total).catch(() => 0)
+      )
+    ).then(setCounts);
+  }, []);
+
+  const fmt = (n: number) => n > 0 ? `${n.toLocaleString()}+` : "—";
+
   const ranges = [
     {
       label: "Under £100",
       sub: "Audio, accessories & basics",
-      count: "3,240+",
+      count: fmt(counts[0]),
       tags: ["Earbuds", "Cables", "Smart Speakers", "Mice"],
-      img: "/banners/headphones.jpg",
+      img: budgetImgs[0],
       accent: "bg-emerald-400",
       link: "/shop/audio",
     },
     {
       label: "£100 – £300",
       sub: "Tablets, gaming & wearables",
-      count: "7,810+",
+      count: fmt(counts[1]),
       tags: ["Nintendo Switch", "Tablets", "Smartwatches", "Cameras"],
-      img: "/banners/gaming.jpg",
+      img: budgetImgs[1],
       accent: "bg-sky-400",
       link: "/shop/tablets",
     },
     {
       label: "£300 – £600",
       sub: "Flagship phones & cameras",
-      count: "9,120+",
+      count: fmt(counts[2]),
       tags: ["iPhone 14", "Pixel 8 Pro", "Galaxy S23", "iPad Pro"],
-      img: "/banners/phone.jpg",
+      img: budgetImgs[2],
       accent: "bg-violet-400",
       link: "/shop/phones",
     },
     {
       label: "£600 and over",
       sub: "Pro laptops, no compromise",
-      count: "4,580+",
+      count: fmt(counts[3]),
       tags: ["MacBook Pro M3", "iPhone 15 Pro", "Surface Pro", "Dell XPS"],
-      img: "/banners/macbook.jpg",
+      img: budgetImgs[3],
       accent: "bg-amber-400",
       link: "/shop/laptops",
     },
@@ -1225,6 +1301,7 @@ function ShopByBudget() {
             <img
               src={r.img}
               alt={r.label}
+              suppressHydrationWarning
               className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/95 via-zinc-950/50 to-zinc-950/10" />
@@ -1294,7 +1371,7 @@ function BestDealsSplit() {
     ? allProducts.slice(0, 3)
     : allProducts.filter(p => p.category === selectedCategory).slice(0, 3);
 
-  const WARZONE_IMG = "/banners/gaming-room.jpg";
+  const [WARZONE_IMG] = useState(() => pick(imageRegistry.banners.gaming));
   const isAllSelected = selectedCategory === "all";
   const leftImage = isAllSelected
     ? WARZONE_IMG
@@ -1320,6 +1397,7 @@ function BestDealsSplit() {
               <img
                 src={leftImage}
                 alt="Featured product"
+                suppressHydrationWarning
                 className={`absolute inset-0 w-full h-full ${isAllSelected ? "object-cover" : "object-contain p-8"}`}
               />
             )}
@@ -1550,6 +1628,12 @@ function PhoneSketch({ level }: { level: 0 | 1 | 2 }) {
 }
 
 function GradeGuide() {
+  const [gradeImgs] = useState(() => [
+    pick([...imageRegistry.phones.iphone, ...imageRegistry.phones.samsung]),
+    pick([...imageRegistry.laptops.macbook, ...imageRegistry.laptops.generic]),
+    pick(imageRegistry.banners.gaming),
+  ]);
+
   const grades: {
     num: string; name: string; tagline: string;
     battery: number; saving: number; fromPrice: string;
@@ -1565,7 +1649,7 @@ function GradeGuide() {
       battery: 95, saving: 30, fromPrice: "From £199",
       rating: 4.9, reviewCount: "4,200", conditionLabel: "Zero marks",
       sketchLevel: 0, featured: false,
-      img: "/banners/phone-pristine.jpg",
+      img: gradeImgs[0],
       features: ["Flawless screen — zero scratches", "Original or equivalent accessories", "25/25 inspection points passed", "Near-sealed condition packaging"],
       products: [{ name: "iPhone 15 Pro", price: "£739" }, { name: "MacBook Pro M3", price: "£1,699" }, { name: "Galaxy S24 Ultra", price: "£899" }],
       barClass: "bg-emerald-500", textClass: "text-emerald-400",
@@ -1576,7 +1660,7 @@ function GradeGuide() {
       battery: 85, saving: 45, fromPrice: "From £129",
       rating: 4.8, reviewCount: "12,400", conditionLabel: "Micro-scratches",
       sketchLevel: 1, featured: true,
-      img: "/banners/macbook.jpg",
+      img: gradeImgs[1],
       features: ["Micro-scratches not visible in use", "Battery 85%+ certified by engineers", "All ports, cameras & buttons tested", "Thoroughly cleaned and sanitised"],
       products: [{ name: "iPhone 14 Pro", price: "£549" }, { name: "MacBook Air M2", price: "£849" }, { name: "Samsung S23", price: "£429" }],
       barClass: "bg-sky-400", textClass: "text-sky-400",
@@ -1587,7 +1671,7 @@ function GradeGuide() {
       battery: 80, saving: 60, fromPrice: "From £69",
       rating: 4.7, reviewCount: "8,900", conditionLabel: "Visible wear",
       sketchLevel: 2, featured: false,
-      img: "/banners/gaming.jpg",
+      img: gradeImgs[2],
       features: ["Visible scratches or scuffs on body", "Battery 80%+ certified by engineers", "All features 100% working", "Best price-to-performance on TechStop"],
       products: [{ name: "iPhone 13", price: "£299" }, { name: "MacBook Air M1", price: "£649" }, { name: "Pixel 7 Pro", price: "£349" }],
       barClass: "bg-amber-500", textClass: "text-amber-400",
@@ -1625,7 +1709,7 @@ function GradeGuide() {
               {/* ── Photo panel ── */}
               <div className="relative h-[380px] overflow-hidden flex-shrink-0">
                 {/* Product photo */}
-                <img src={g.img} alt={g.name} className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                <img src={g.img} alt={g.name} suppressHydrationWarning className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-700" />
                 {/* Dark gradient from top + bottom */}
                 <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/70 via-transparent to-zinc-950/95" />
 
@@ -1826,12 +1910,21 @@ function LiveFeed() {
 
 // ─── Savings Comparison ───────────────────────────────────────────────────────
 function SavingsComparison() {
-  const items = [
-    { device: "iPhone 15 Pro 256GB",      newPrice: 1199, ourPrice: 739,  grade: "Excellent", img: "/showcase_iphone.png" },
-    { device: "MacBook Air M2 8GB/256GB", newPrice: 1299, ourPrice: 849,  grade: "Pristine",  img: "/showcase_macbook.png" },
-    { device: "Samsung Galaxy S23 Ultra", newPrice: 1249, ourPrice: 599,  grade: "Excellent", img: "/showcase_galaxy_s24.png" },
-    { device: "Sony WH-1000XM5",          newPrice:  379, ourPrice: 199,  grade: "Good",      img: "/showcase_sony_wh1000xm5.png" },
-  ];
+  const [rawProducts, setRawProducts] = useState<any[]>([]);
+
+  useEffect(() => {
+    productsApi.list({ limit: 4 }).then(r => setRawProducts(r.items)).catch(() => {});
+  }, []);
+
+  const items = rawProducts.map(p => ({
+    device: p.name,
+    newPrice: p.comparePrice ?? Math.round(p.price * 1.4),
+    ourPrice: p.price,
+    grade: p.condition,
+    img: p.images?.[0] ?? "",
+    slug: p.slug,
+    category: p.category,
+  }));
 
   const gradeClr: Record<string, string> = {
     Pristine: "text-emerald-700",
@@ -1856,38 +1949,48 @@ function SavingsComparison() {
         </div>
 
         <div className="space-y-3">
-          {items.map((item, i) => {
-            const saving = item.newPrice - item.ourPrice;
-            const pct = Math.round((saving / item.newPrice) * 100);
-            return (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, x: -16 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.07 }}
-                className="group flex items-center gap-4 md:gap-6 p-4 md:p-5 rounded-2xl border border-zinc-100 hover:shadow-md hover:border-zinc-200 transition-all cursor-pointer"
-              >
-                <img src={item.img} alt={item.device} className="h-14 w-14 md:h-16 md:w-16 rounded-2xl object-cover flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold text-zinc-950 text-sm truncate">{item.device}</p>
-                  <p className={`text-[10px] font-bold uppercase tracking-widest mt-0.5 ${gradeClr[item.grade]}`}>{item.grade} · Certified</p>
-                </div>
-                <div className="hidden sm:block text-right flex-shrink-0 min-w-[80px]">
-                  <p className="text-zinc-300 line-through text-sm font-bold">£{item.newPrice.toLocaleString()}</p>
-                  <p className="text-[10px] font-bold uppercase text-zinc-400 mt-0.5">Retail</p>
-                </div>
-                <div className="text-right flex-shrink-0 min-w-[80px]">
-                  <p className="text-xl md:text-2xl font-bold text-zinc-950">£{item.ourPrice.toLocaleString()}</p>
-                  <p className="text-[10px] font-bold uppercase text-zinc-400 mt-0.5">TechStop</p>
-                </div>
-                <div className="flex-shrink-0 h-14 w-[90px] bg-accent rounded-2xl flex flex-col items-center justify-center">
-                  <p className="text-base font-bold text-zinc-950 leading-none">-{pct}%</p>
-                  <p className="text-[9px] font-bold text-zinc-700 mt-0.5">Save £{saving}</p>
-                </div>
-              </motion.div>
-            );
-          })}
+          {items.length === 0
+            ? [...Array(4)].map((_, i) => (
+                <div key={i} className="h-[76px] rounded-2xl bg-zinc-100 animate-pulse" />
+              ))
+            : items.map((item, i) => {
+                const saving = item.newPrice - item.ourPrice;
+                const pct = Math.round((saving / item.newPrice) * 100);
+                return (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, x: -16 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.07 }}
+                  >
+                    <Link
+                      href={`/shop/${item.category?.toLowerCase() ?? "phones"}/${item.slug}`}
+                      className="group flex items-center gap-4 md:gap-6 p-4 md:p-5 rounded-2xl border border-zinc-100 hover:shadow-md hover:border-zinc-200 transition-all cursor-pointer"
+                    >
+                      <div className="h-14 w-14 md:h-16 md:w-16 rounded-2xl bg-zinc-50 flex-shrink-0 overflow-hidden">
+                        <img src={item.img} alt={item.device} className="h-full w-full object-contain mix-blend-multiply" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-zinc-950 text-sm truncate">{item.device}</p>
+                        <p className={`text-[10px] font-bold uppercase tracking-widest mt-0.5 ${gradeClr[item.grade] ?? "text-zinc-500"}`}>{item.grade} · Certified</p>
+                      </div>
+                      <div className="hidden sm:block text-right flex-shrink-0 min-w-[80px]">
+                        <p className="text-zinc-300 line-through text-sm font-bold">£{item.newPrice.toLocaleString()}</p>
+                        <p className="text-[10px] font-bold uppercase text-zinc-400 mt-0.5">Retail</p>
+                      </div>
+                      <div className="text-right flex-shrink-0 min-w-[80px]">
+                        <p className="text-xl md:text-2xl font-bold text-zinc-950">£{item.ourPrice.toLocaleString()}</p>
+                        <p className="text-[10px] font-bold uppercase text-zinc-400 mt-0.5">TechStop</p>
+                      </div>
+                      <div className="flex-shrink-0 h-14 w-[90px] bg-accent rounded-2xl flex flex-col items-center justify-center">
+                        <p className="text-base font-bold text-zinc-950 leading-none">-{pct}%</p>
+                        <p className="text-[9px] font-bold text-zinc-700 mt-0.5">Save £{saving}</p>
+                      </div>
+                    </Link>
+                  </motion.div>
+                );
+              })}
         </div>
 
         <div className="mt-10 text-center">
@@ -2066,23 +2169,58 @@ function FeaturedShop() {
 }
 
 // ─── Top Brands Split ─────────────────────────────────────────────────────────
-function TopBrandsSplit() {
-  const brands = [
-    { name: "Sage", logo: "Sage", style: "font-serif text-2xl", link: "/shop/audio" },
-    { name: "Apple", logo: "Apple", style: "font-sans font-black text-xl", link: "/shop/phones" },
-    { name: "Dyson", logo: "dyson", style: "font-sans font-normal text-xl", link: "/shop/audio" },
-    { name: "Ooni", logo: "ooni", style: "font-sans font-bold text-lg bg-zinc-950 text-white px-2 py-0.5 rounded-md", link: "/shop/audio" },
-    { name: "GoPro", logo: "GoPro", style: "font-sans font-black text-blue-600", link: "/shop/consoles" },
-    { name: "Nintendo", logo: "Nintendo", style: "font-sans font-black text-red-600 border border-red-600 px-2 rounded-full text-xs", link: "/shop/consoles" },
-    { name: "Garmin", logo: "GARMIN", style: "font-sans font-bold text-xl tracking-widest", link: "/shop/phones" },
-    { name: "Bose", logo: "BOSE", style: "font-sans font-black text-xl italic", link: "/shop/audio" },
-  ];
+const BRAND_STYLE: Record<string, string> = {
+  Apple:   "font-sans font-black text-xl",
+  Samsung: "font-sans font-bold text-base tracking-tight",
+  Sony:    "font-sans font-black text-xl tracking-widest",
+  Google:  "font-sans font-bold text-xl text-blue-600",
+  Microsoft: "font-sans font-bold text-base",
+  OnePlus: "font-sans font-black text-base text-red-600",
+  Nintendo:"font-sans font-black text-red-600 border border-red-600 px-2 rounded-full text-xs",
+  Dyson:   "font-sans font-normal text-xl",
+  Bose:    "font-sans font-black text-xl italic",
+  Garmin:  "font-sans font-bold text-xl tracking-widest",
+  LG:      "font-sans font-black text-xl text-red-600",
+  Huawei:  "font-sans font-bold text-base",
+  Lenovo:  "font-sans font-bold text-base",
+  Dell:    "font-sans font-bold text-xl text-blue-700",
+  HP:      "font-sans font-black text-xl text-blue-600",
+  Asus:    "font-sans font-bold text-base",
+  Acer:    "font-sans font-bold text-base",
+};
+const CAT_SLUG: Record<string, string> = {
+  Phones: "phones", Laptops: "laptops", Tablets: "tablets",
+  Accessories: "audio", Consoles: "consoles",
+};
 
-  const products = [
-    { name: "Coffee maker with grinder", spec: "Without capsule Sage The...", price: "361.99", was: "£599.00 new", rating: "4.5/5 (130)", img: "https://picsum.photos/seed/cm1/400/400", link: "/shop/audio" },
-    { name: "Espresso machine Without", spec: "capsule Sage The Bambino...", price: "232.99", was: "£399.99 new", rating: "4.4/5 (16)", img: "https://picsum.photos/seed/em2/400/400", link: "/shop/audio" },
-    { name: "Espresso machine Sage", spec: "Bambino SES450BS...", price: "208.99", was: "£329.95 new", rating: "4.9/5 (13)", img: "https://picsum.photos/seed/em3/400/400", link: "/shop/audio" },
-  ];
+function TopBrandsSplit() {
+  const [deskImg] = useState(() => pick([...imageRegistry.banners.desk, ...imageRegistry.banners.gaming]));
+  const [allProducts, setAllProducts] = useState<any[]>([]);
+
+  useEffect(() => {
+    productsApi.list({ limit: 30 }).then(r => setAllProducts(r.items)).catch(() => {});
+  }, []);
+
+  const products = allProducts.slice(0, 3);
+
+  const brands = (() => {
+    const seen = new Set<string>();
+    const result: { name: string; logo: string; style: string; link: string }[] = [];
+    for (const p of allProducts) {
+      if (!seen.has(p.brand)) {
+        seen.add(p.brand);
+        const slug = CAT_SLUG[p.category] ?? "phones";
+        result.push({
+          name: p.brand,
+          logo: p.brand,
+          style: BRAND_STYLE[p.brand] ?? "font-sans font-bold text-base",
+          link: `/shop/${slug}`,
+        });
+      }
+      if (result.length >= 8) break;
+    }
+    return result;
+  })();
 
   return (
     <section className="bg-zinc-50 py-16 md:py-24 border-t border-zinc-100 overflow-hidden">
@@ -2092,7 +2230,7 @@ function TopBrandsSplit() {
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
           {/* Left Image */}
           <div className="w-full lg:w-[40%] xl:w-[450px] flex-shrink-0 relative rounded-2xl overflow-hidden aspect-[4/5] lg:aspect-auto lg:h-[500px]">
-            <img src="/banners/desk-tech.jpg" alt="Desk with tech" className="absolute inset-0 w-full h-full object-cover" />
+            <img src={deskImg} alt="Desk with tech" suppressHydrationWarning className="absolute inset-0 w-full h-full object-cover" />
           </div>
 
           {/* Right Content */}
@@ -2111,30 +2249,31 @@ function TopBrandsSplit() {
 
             {/* Products */}
             <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-4">
-              {products.map((p, i) => (
-                <Link key={i} href={p.link} className="w-[260px] flex-shrink-0 bg-white rounded-xl p-4 border border-zinc-200/60 shadow-sm hover:shadow-md transition-shadow flex flex-col relative group cursor-pointer">
-                  {i === 0 && (
-                    <div className="absolute top-4 left-4 z-10 text-[10px] font-bold text-violet-700 tracking-wide">
-                      Don't miss out
+              {products.map((p, i) => {
+                const comparePrice = p.comparePrice ?? Math.round(p.price * 1.4);
+                const ratingFilled = Math.round(p.rating ?? 4);
+                return (
+                  <Link key={i} href={`/shop/${p.category.toLowerCase()}/${p.slug}`} className="w-[260px] flex-shrink-0 bg-white rounded-xl p-4 border border-zinc-200/60 shadow-sm hover:shadow-md transition-shadow flex flex-col relative group cursor-pointer">
+                    {i === 0 && (
+                      <div className="absolute top-4 left-4 z-10 text-[10px] font-bold text-violet-700 tracking-wide">
+                        Don't miss out
+                      </div>
+                    )}
+                    <div className="h-40 w-full rounded-xl mb-3 overflow-hidden flex items-center justify-center bg-zinc-50 p-2">
+                      <img src={p.images?.[0]} alt={p.name} className="h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-500" />
                     </div>
-                  )}
-                  <div className="h-40 w-full rounded-xl mb-3 overflow-hidden flex items-center justify-center p-2">
-                    <img src={p.img} alt={p.name} className="h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-500" />
-                  </div>
-                  <p className="font-normal text-zinc-950 text-[13px] leading-snug mb-2 line-clamp-2">{p.name} {p.spec}</p>
-                  <div className="flex items-center gap-1 mb-5">
-                    {[...Array(5)].map((_, k) => <Star key={k} className={`h-3 w-3 ${k < 4 ? 'fill-zinc-950 text-zinc-950' : k===4&&p.rating.startsWith('4.9') ? 'fill-zinc-950 text-zinc-950' : 'fill-zinc-300 text-zinc-300'}`} />)}
-                    <span className="text-[10px] font-bold text-zinc-500 ml-1">{p.rating}</span>
-                  </div>
-                  <div className="mt-auto pt-2">
-                    <p className="text-2xl font-bold text-zinc-950 mb-0.5">
-                      £{p.price.split('.')[0]}
-                      <span className="text-sm font-bold relative -top-1.5">.{p.price.split('.')[1]}</span>
-                    </p>
-                    <p className="text-[11px] text-zinc-400 line-through mb-2">{p.was}</p>
-                  </div>
-                </Link>
-              ))}
+                    <p className="font-normal text-zinc-950 text-[13px] leading-snug mb-2 line-clamp-2">{p.name}</p>
+                    <div className="flex items-center gap-1 mb-5">
+                      {[...Array(5)].map((_, k) => <Star key={k} className={`h-3 w-3 ${k < ratingFilled ? 'fill-zinc-950 text-zinc-950' : 'fill-zinc-300 text-zinc-300'}`} />)}
+                      <span className="text-[10px] font-bold text-zinc-500 ml-1">{(p.rating ?? 0).toFixed(1)}/5 ({p.reviewCount ?? 0})</span>
+                    </div>
+                    <div className="mt-auto pt-2">
+                      <p className="text-2xl font-bold text-zinc-950 mb-0.5">£{p.price}</p>
+                      <p className="text-[11px] text-zinc-400 line-through mb-2">£{comparePrice} new</p>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
             
             <div className="flex justify-end gap-3 mt-4">
@@ -2154,36 +2293,28 @@ function TopBrandsSplit() {
 
 // ─── Budget Picks ──────────────────────────────────────────────────────────────
 function BudgetPicks() {
-  const under200: PCard[] = [
-    { name: "AirPods 3rd Gen",    type: "Audio",     spec: "MagSafe · White",            price: "£109", was: "£179", grade: "Good",      img: "https://picsum.photos/seed/airp3b/400/400" },
-    { name: "Samsung Galaxy A54", type: "Phone",     spec: "128GB · Awesome Black",      price: "£149", was: "£349", grade: "Good",      img: "https://picsum.photos/seed/a54b/400/400" },
-    { name: "Google Pixel 7a",    type: "Phone",     spec: "128GB · Charcoal",           price: "£199", was: "£449", grade: "Good",      img: "https://picsum.photos/seed/px7ab/400/400" },
-    { name: "JBL Charge 5",       type: "Audio",     spec: "Portable · Waterproof",      price: "£79",  was: "£179", grade: "Excellent", img: "https://picsum.photos/seed/jblb/400/400" },
-    { name: "Apple Watch SE 2",   type: "Wearable",  spec: "GPS · 44mm · Midnight",      price: "£169", was: "£279", grade: "Excellent", img: "https://picsum.photos/seed/awse2b/400/400" },
-    { name: "Kindle Paperwhite",  type: "Tablet",    spec: "8GB · WiFi · Black",         price: "£69",  was: "£149", grade: "Excellent", img: "https://picsum.photos/seed/kpwb/400/400" },
-    { name: "Nintendo Switch",    type: "Gaming",    spec: "HAC-001 · Neon Blue/Red",    price: "£149", was: "£279", grade: "Good",      img: "https://picsum.photos/seed/nsb/400/400" },
-  ];
+  const [under200, setUnder200] = useState<PCard[]>([]);
+  const [under500, setUnder500] = useState<PCard[]>([]);
 
-  const under500: PCard[] = [
-    { name: "iPhone 13",          type: "Phone",     spec: "128GB · Starlight",          price: "£379", was: "£699", grade: "Excellent", img: "https://picsum.photos/seed/ip13b/400/400" },
-    { name: "MacBook Air M1",     type: "Laptop",    spec: "8GB RAM · 256GB SSD",        price: "£499", was: "£899", grade: "Good",      img: "https://picsum.photos/seed/mba1b/400/400" },
-    { name: "iPad 10th Gen",      type: "Tablet",    spec: "64GB · WiFi · Yellow",       price: "£349", was: "£499", grade: "Good",      img: "https://picsum.photos/seed/ip10b/400/400" },
-    { name: "Samsung Tab A9+",    type: "Tablet",    spec: "64GB · WiFi · Silver",       price: "£249", was: "£399", grade: "Pristine",  img: "https://picsum.photos/seed/ta9pb/400/400" },
-    { name: "Sony WH-1000XM4",   type: "Audio",     spec: "Wireless ANC · Black",       price: "£149", was: "£349", grade: "Good",      img: "https://picsum.photos/seed/xm4b/400/400" },
-    { name: "PS5 Digital",        type: "Gaming",    spec: "825GB SSD · White",          price: "£299", was: "£449", grade: "Excellent", img: "https://picsum.photos/seed/ps5db/400/400" },
-    { name: "Garmin Venu 3",      type: "Wearable",  spec: "GPS · AMOLED · Slate",       price: "£299", was: "£449", grade: "Excellent", img: "https://picsum.photos/seed/gv3b/400/400" },
-  ];
+  useEffect(() => {
+    productsApi.list({ limit: 60 }).then(r => {
+      const toCard = (p: any): PCard => ({
+        name: p.name,
+        type: p.category,
+        spec: String((p.specs as any)?.storage ?? p.model ?? p.condition),
+        price: `£${p.price}`,
+        was: `£${p.comparePrice ?? Math.round(p.price * 1.4)}`,
+        grade: p.condition,
+        img: p.images?.[0] ?? "",
+        link: `/shop/${p.category.toLowerCase()}/${p.slug}`,
+      });
+      setUnder200(r.items.filter((p: any) => p.price < 200).slice(0, 10).map(toCard));
+      setUnder500(r.items.filter((p: any) => p.price >= 200 && p.price < 500).slice(0, 10).map(toCard));
+    }).catch(() => {});
+  }, []);
 
   function PriceRow({ title, badge, items }: { title: string; badge: string; items: PCard[] }) {
-    const typeSlugMap: Record<string, string> = {
-      "Phone": "phones",
-      "Laptop": "laptops",
-      "Tablet": "tablets",
-      "Audio": "audio",
-      "Gaming": "consoles",
-      "Wearable": "phones",
-    };
-
+    if (items.length === 0) return null;
     return (
       <div className="mb-16 last:mb-0">
         <div className="flex items-center justify-between mb-8 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -2197,7 +2328,7 @@ function BudgetPicks() {
         </div>
         <div className="flex gap-4 overflow-x-auto scrollbar-hide pl-4 sm:pl-6 lg:pl-8 pr-8 pb-2">
           {items.map((p, i) => (
-            <Link href={`/shop/${typeSlugMap[p.type] ?? "phones"}`} key={i} className="block flex-shrink-0 w-[190px] md:w-[210px] group cursor-pointer">
+            <Link href={p.link ?? "/shop/phones"} key={i} className="block flex-shrink-0 w-[190px] md:w-[210px] group cursor-pointer">
               <motion.div
                 initial={{ opacity: 0, x: 16 }}
                 whileInView={{ opacity: 1, x: 0 }}
@@ -2225,6 +2356,8 @@ function BudgetPicks() {
       </div>
     );
   }
+
+  if (under200.length === 0 && under500.length === 0) return null;
 
   return (
     <section className="py-20 bg-zinc-50 border-y border-zinc-100 overflow-hidden">

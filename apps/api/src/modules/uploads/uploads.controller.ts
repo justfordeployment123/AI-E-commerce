@@ -36,4 +36,12 @@ export class UploadsController {
         if (!file) throw new BadRequestException('No file provided');
         return this.storage.uploadFile(file, 'repair-images', groupId);
     }
+
+    // Public — review photos (customers and guests)
+    @Post('review-image')
+    @UseInterceptors(FileInterceptor('file'))
+    async uploadReviewImage(@UploadedFile() file: any) {
+        if (!file) throw new BadRequestException('No file provided');
+        return this.storage.uploadFile(file, 'review-images');
+    }
 }

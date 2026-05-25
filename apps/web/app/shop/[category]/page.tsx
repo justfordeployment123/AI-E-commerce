@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { notFound, useParams } from "next/navigation";
 import { useCart } from "../../../context/cart-context";
 import { productsApi } from "../../../lib/api";
@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import Navbar from "../../../components/Navbar";
 import Footer from "../../../components/Footer";
+import { imageRegistry, pick } from "../../../lib/localImages";
 
 // ─── Category meta ──────────────────────────────────────────────────────────
 
@@ -254,6 +255,36 @@ const SEO_TEXT: Record<string, { title: string; content: string[] }> = {
   }
 };
 
+function getBrandFallback(brand: string, catSlug: string): string {
+  const b = brand.toLowerCase();
+  if (catSlug === "phones") {
+    if (b === "apple")   return pick(imageRegistry.showcase.iphone);
+    if (b === "samsung") return pick(imageRegistry.showcase.galaxy);
+    if (b === "google")  return pick(imageRegistry.phones.google);
+    if (b === "oneplus") return pick(imageRegistry.phones.oneplus);
+    return pick(imageRegistry.phones.generic);
+  }
+  if (catSlug === "laptops") {
+    if (b === "apple") return pick(imageRegistry.showcase.macbook);
+    return pick(imageRegistry.laptops.generic);
+  }
+  if (catSlug === "tablets") {
+    if (b === "apple") return pick(imageRegistry.showcase.ipad);
+    return pick(imageRegistry.tablets.generic);
+  }
+  if (catSlug === "consoles") {
+    if (b === "sony")      return pick(imageRegistry.showcase.ps5);
+    if (b === "microsoft") return pick(imageRegistry.consoles.xbox);
+    return pick(imageRegistry.consoles.generic);
+  }
+  if (catSlug === "audio") {
+    if (b === "apple") return pick(imageRegistry.showcase.airpods);
+    if (b === "sony")  return pick(imageRegistry.showcase.sony);
+    return pick(imageRegistry.audio.headphones);
+  }
+  return pick(imageRegistry.phones.generic);
+}
+
 export default function CategoryPage() {
   const params = useParams();
   const categorySlug = (params?.category as string)?.toLowerCase();
@@ -273,6 +304,12 @@ export default function CategoryPage() {
   const [subBrands, setSubBrands] = useState<{ brand: string; image: string | null }[]>([]);
 
   const { addItem } = useCart();
+
+  const brandFallbacks = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const b of subBrands) map.set(b.brand, getBrandFallback(b.brand, categorySlug));
+    return map;
+  }, [subBrands, categorySlug]);
 
   const CATEGORY_API_MAP: Record<string, string> = {
     phones: "Phones", tablets: "Tablets", consoles: "Consoles", laptops: "Laptops", audio: "Accessories",
@@ -295,6 +332,7 @@ export default function CategoryPage() {
           rating: p.rating,
           reviews: p.reviewCount,
           image: p.images[0] ?? "",
+          stock: p.stock,
         })));
       })
       .catch(() => {})
@@ -391,14 +429,16 @@ export default function CategoryPage() {
                     }}
                     className="flex flex-col gap-2.5 group text-left"
                   >
-                    <div className="w-full aspect-[16/10] rounded-[24px] bg-[#e2ff70] hover:bg-[#d6f24d] transition-all duration-300 relative overflow-hidden flex items-center justify-center p-3">
-                      {item.image && (
-                        <img
-                          src={item.image}
-                          alt={item.brand}
-                          className="w-4/5 h-4/5 object-contain group-hover:scale-[1.06] transition-transform duration-300 mix-blend-multiply"
-                        />
-                      )}
+                    <div className="w-full aspect-[3/4] rounded-[24px] overflow-hidden bg-zinc-100">
+                      <img
+                        src={brandFallbacks.get(item.brand) ?? item.image ?? ""}
+                        alt={item.brand}
+                        onError={(e) => {
+                          const api = item.image;
+                          if (api) { e.currentTarget.src = api; e.currentTarget.onerror = null; }
+                        }}
+                        className="w-full h-full object-cover group-hover:scale-[1.06] transition-transform duration-500"
+                      />
                     </div>
                     <span className="font-extrabold text-sm text-zinc-900 group-hover:text-black pl-1">
                       {item.brand}
@@ -767,31 +807,43 @@ export default function CategoryPage() {
                         </div>
                       )}
                       <Link href={`/shop/${categorySlug}/${product.id}`} className="group block">
-                      <div className="bg-white rounded-[32px] p-3 border border-zinc-200 hover:border-black hover:shadow-xl transition-all duration-300 h-full flex flex-col">
-                        
+                      <div className={`bg-white rounded-[32px] p-3 border transition-all duration-300 h-full flex flex-col ${product.stock === 0 ? "border-zinc-200 opacity-75" : "border-zinc-200 hover:border-black hover:shadow-xl"}`}>
+
                         <div className="relative aspect-square rounded-[24px] bg-[#f5f5f7] mb-5 overflow-hidden flex items-center justify-center p-5">
                           <div className="absolute top-4 left-4 z-10 flex flex-col gap-1.5">
                             <span className="inline-flex px-2.5 py-1 rounded-full bg-white text-[10px] font-bold text-black border border-zinc-200 shadow-sm uppercase tracking-wider">
                               {product.grade}
                             </span>
+                            {product.stock === 0 && (
+                              <span className="inline-flex px-2.5 py-1 rounded-full bg-zinc-900 text-[10px] font-bold text-white uppercase tracking-wider">
+                                Out of Stock
+                              </span>
+                            )}
+                            {product.stock > 0 && product.stock <= 2 && (
+                              <span className="inline-flex px-2.5 py-1 rounded-full bg-amber-500 text-[10px] font-bold text-white uppercase tracking-wider">
+                                Only {product.stock} left
+                              </span>
+                            )}
                           </div>
 
                           {product.image && (
                             <img
                               src={product.image}
                               alt={product.title}
-                              className="max-h-full max-w-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-500"
+                              className={`max-h-full max-w-full object-contain mix-blend-multiply transition-transform duration-500 ${product.stock > 0 ? "group-hover:scale-105" : "grayscale"}`}
                             />
                           )}
 
-                          <button
-                            onClick={e => { e.preventDefault(); handleAdd(product.id); }}
-                            className={`absolute bottom-4 right-4 h-11 w-11 rounded-full flex items-center justify-center shadow-md transition-all duration-300 ${
-                              added ? "bg-emerald-500 text-white scale-110" : "bg-white text-black hover:bg-black hover:text-white translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100"
-                            }`}
-                          >
-                            {added ? <Check className="h-5 w-5" strokeWidth={3} /> : <ShoppingCart className="h-5 w-5" />}
-                          </button>
+                          {product.stock > 0 && (
+                            <button
+                              onClick={e => { e.preventDefault(); handleAdd(product.id); }}
+                              className={`absolute bottom-4 right-4 h-11 w-11 rounded-full flex items-center justify-center shadow-md transition-all duration-300 ${
+                                added ? "bg-emerald-500 text-white scale-110" : "bg-white text-black hover:bg-black hover:text-white translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100"
+                              }`}
+                            >
+                              {added ? <Check className="h-5 w-5" strokeWidth={3} /> : <ShoppingCart className="h-5 w-5" />}
+                            </button>
+                          )}
                         </div>
 
                         <div className="px-2 flex flex-col flex-1 pb-2">
@@ -805,7 +857,7 @@ export default function CategoryPage() {
                               <span className="text-xs text-zinc-400 font-medium">({product.reviews})</span>
                             </div>
                           </div>
-                          
+
                           <div className="mt-auto pt-4 flex items-end justify-between">
                             <div>
                               <div className="flex items-baseline gap-2">
@@ -815,6 +867,9 @@ export default function CategoryPage() {
                                   £{product.originalPrice} new
                               </div>
                             </div>
+                            {product.stock === 0 && (
+                              <span className="text-xs font-bold text-zinc-400">Unavailable</span>
+                            )}
                           </div>
                         </div>
                       </div>

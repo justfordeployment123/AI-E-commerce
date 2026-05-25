@@ -1,0 +1,60 @@
+{
+  "banners": {
+    "gaming":   ["/banners/gaming.jpg", "/banners/gaming-2.jpg", "/banners/gaming-room.jpg", "/banners/gaming-room-2.jpg"],
+    "desk":     ["/banners/desk-tech.jpg", "/banners/desk-tech-2.jpg"]
+  },
+  "phones": {
+    "iphone":   ["/phones/iphone/iphone_15.png", "/phones/iphone/showcase_iphone.png"],
+    "samsung":  ["/phones/samsung/samsung_galaxy.png", "/phones/samsung/showcase_galaxy_s24.png"],
+    "google":   ["/phones/Google/pixel_1.png", "/phones/Google/pixel_2.png", "/phones/Google/pixel_3.png"],
+    "oneplus":  ["/phones/OnePlus/oneplus_1.png", "/phones/OnePlus/oneplus_2.png", "/phones/OnePlus/oneplus_3.png"],
+    "generic":  ["/phones/phone_1.png", "/phones/phone_2.png"]
+  },
+  "audio": {
+    "airpods":    ["/audio/showcase_airpods_pro.png", "/audio/showcase_airpods_max.png"],
+    "headphones": ["/audio/showcase_sony_wh1000xm5.png", "/audio/audio_1.png", "/audio/audio_2.png"],
+    "bento":      ["/audio/bento_audio.png"]
+  },
+  "laptops": {
+    "macbook":  ["/laptops/MacBook/macbook_pro.png", "/laptops/MacBook/showcase_macbook.png", "/laptops/MacBook/laptop_1.png"],
+    "generic":  ["/laptops/laptop_2.png"]
+  },
+  "consoles": {
+    "playstation": ["/consoles/showcase_ps5.png"],
+    "xbox":        ["/consoles/microsoft-xbox-360-slim.jpg"],
+    "generic":     ["/consoles/console_1.png", "/consoles/console_2.png"]
+  },
+  "tablets": {
+    "ipad":    ["/tablets/ipad/showcase_ipad_pro.png", "/tablets/ipad/ipad_pro_1.png", "/tablets/ipad/ipad_pro_2.png", "/tablets/ipad/ipad_pro_3.png"],
+    "generic": ["/tablets/tablet_1.png", "/tablets/tablet_2.png"]
+  },
+  "watches": {
+    "samsung": ["/Other/watch/galaxy_watch_promo_1778927696615.png", "/Other/watch/watch_1.png", "/Other/watch/watch_2.png", "/Other/watch/watch_3.png"]
+  },
+  "accessories": {
+    "generic": ["/Other/screen-protector.png", "/phones/iphone/silicone-case.png"]
+  },
+  "bento": {
+    "phones":   ["/phones/samsung/bento_smartphones.png", "/phones/iphone/iphone_15.png"],
+    "laptops":  ["/laptops/MacBook/laptop_1.png", "/laptops/MacBook/macbook_pro.png", "/laptops/laptop_2.png"],
+    "audio":    ["/audio/bento_audio.png", "/audio/audio_1.png"],
+    "consoles": ["/consoles/console_1.png", "/consoles/console_2.png", "/consoles/showcase_ps5.png"],
+    "tablets":  ["/laptops/MacBook/bento_tablets.png", "/tablets/ipad/ipad_pro_1.png", "/tablets/tablet_1.png"]
+  },
+  "showcase": {
+    "iphone":  ["/phones/iphone/showcase_iphone.png", "/phones/iphone/iphone_15.png"],
+    "macbook": ["/laptops/MacBook/showcase_macbook.png", "/laptops/MacBook/macbook_pro.png"],
+    "airpods": ["/audio/showcase_airpods_pro.png", "/audio/showcase_airpods_max.png"],
+    "galaxy":  ["/phones/samsung/showcase_galaxy_s24.png", "/phones/samsung/samsung_galaxy.png"],
+    "sony":    ["/audio/showcase_sony_wh1000xm5.png"],
+    "ps5":     ["/consoles/showcase_ps5.png"],
+    "ipad":    ["/tablets/ipad/showcase_ipad_pro.png"]
+  },
+  "promotions": {
+    "homepage": [
+      "/homepage_top/galaxy_watch_promo_1778927696615.png",
+      "/homepage_top/iphone_tradein_promo_1778927727005.png",
+      "/homepage_top/laptop_student_promo_1778927711734.png"
+    ]
+  }
+}

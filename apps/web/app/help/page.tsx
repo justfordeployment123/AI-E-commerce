@@ -1,47 +1,29 @@
 "use client";
 
-import { 
-  Search, 
-  Package, 
-  CreditCard, 
-  RefreshCw, 
-  ShieldCheck, 
-  Truck, 
-  Smartphone,
-  ChevronRight,
-  MessageCircle,
-  Mail,
-  ArrowRight,
-  Zap,
-  Info,
-  X,
-  Send,
-  HelpCircle,
-  User,
-  CheckCircle2,
-  Clock,
-  ChevronDown,
-  ExternalLink,
-  Laptop
+import {
+  Search, Package, RefreshCw, ShieldCheck, Truck,
+  Smartphone, ChevronRight, MessageCircle, ArrowRight,
+  X, Send, HelpCircle, User,
+  ChevronDown, Phone, Circle, CreditCard
 } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { io, Socket } from "socket.io-client";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
+import { authApi, ordersApi, type Order } from "../../lib/api";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002";
+const WS_URL  = API_URL.replace(/^http/, "ws");
+
+interface Helpline { id: string; label: string; number: string; }
+interface ChatMsg   { id?: string; sender: "customer" | "admin" | "bot"; body?: string; text?: string; createdAt?: string; }
 
 interface Article {
   id: string;
   title: string;
   category: string;
   content: string;
-}
-
-interface MockOrder {
-  id: string;
-  item: string;
-  status: string;
-  date: string;
-  type: "phone" | "console" | "audio";
 }
 
 const ARTICLES: Article[] = [
@@ -125,44 +107,116 @@ const ARTICLES: Article[] = [
   }
 ];
 
-const MOCK_ORDERS: MockOrder[] = [
-  { id: "TS-9428", item: "iPhone 15 Pro (128GB, Space Black)", status: "In Transit (Leicester Hub)", date: "18 May 2026", type: "phone" },
-  { id: "TS-8511", item: "PlayStation 5 Console (Slim Digital Edition)", status: "Delivered 12 days ago", date: "08 May 2026", type: "console" },
-  { id: "TS-7204", item: "AirPods Pro 2nd Gen (USB-C)", status: "Delivered 24 days ago", date: "26 April 2026", type: "audio" }
-];
+const STATUS_LABELS: Record<string, string> = {
+  PENDING:   "Processing",
+  CONFIRMED: "Confirmed",
+  SHIPPED:   "Dispatched",
+  DELIVERED: "Delivered",
+  CANCELLED: "Cancelled",
+};
 
 export default function HelpPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
-  const [drawerType, setDrawerType] = useState<"article" | "chat" | "ticket" | null>(null);
-  
+  const [drawerType, setDrawerType] = useState<"article" | "chat" | null>(null);
+
   // Modals / Dropdown States
   const [isOrdersModalOpen, setIsOrdersModalOpen] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
-  // Chat Simulation State
-  const [chatMessages, setChatMessages] = useState<{ sender: "bot" | "user"; text: string }[]>([
-    { sender: "bot", text: "Hi there! I'm TechStop's virtual assistant. How can I help you today?" }
-  ]);
-  const [chatInput, setChatInput] = useState("");
-  const [isBotTyping, setIsBotTyping] = useState(false);
-  const chatEndRef = useRef<HTMLDivElement>(null);
+  // Real orders
+  const [userOrders, setUserOrders] = useState<Order[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
 
-  // Ticket Form State
-  const [ticketName, setTicketName] = useState("");
-  const [ticketEmail, setTicketEmail] = useState("");
-  const [ticketOrder, setTicketOrder] = useState("");
-  const [ticketMsg, setTicketMsg] = useState("");
-  const [ticketSubmitted, setTicketSubmitted] = useState(false);
+  // Helplines
+  const [helplines, setHelplines] = useState<Helpline[]>([]);
+
+  // Real chat state
+  const [chatStep, setChatStep] = useState<"form" | "chat">("form");
+  const [chatName, setChatName] = useState("");
+  const [chatEmail, setChatEmail] = useState("");
+  const [chatOrderRef, setChatOrderRef] = useState<string | undefined>(undefined);
+  const [chatId, setChatId] = useState<string | null>(null);
+  const [chatMessages, setChatMessages] = useState<ChatMsg[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [chatConnected, setChatConnected] = useState(false);
+  const [chatStarting, setChatStarting] = useState(false);
+  const socketRef = useRef<Socket | null>(null);
+  const chatEndRef = useRef<HTMLDivElement>(null);
 
   const categoriesRef = useRef<HTMLDivElement>(null);
 
+  // Load helplines + resolve logged-in user on mount
   useEffect(() => {
-    if (chatEndRef.current) {
-      chatEndRef.current.scrollIntoView({ behavior: "smooth" });
+    fetch(`${API_URL}/support/helplines`)
+      .then(r => r.json()).then(setHelplines).catch(() => {});
+
+    if (typeof window !== "undefined" && localStorage.getItem("ts_token")) {
+      authApi.me()
+        .then(user => {
+          setChatName(user.name ?? "");
+          setChatEmail(user.email ?? "");
+        })
+        .catch(() => {});
     }
-  }, [chatMessages, isBotTyping]);
+  }, []);
+
+  // Auto-scroll chat
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatMessages]);
+
+  // Cleanup socket on unmount
+  useEffect(() => () => { socketRef.current?.disconnect(); }, []);
+
+  const connectSocket = useCallback((id: string) => {
+    const socket = io(`${WS_URL}/support`, { transports: ["websocket"] });
+    socketRef.current = socket;
+    socket.on("connect", () => { setChatConnected(true); socket.emit("joinChat", id); });
+    socket.on("disconnect", () => setChatConnected(false));
+    socket.on("chatHistory", (chat: { messages: ChatMsg[] }) => {
+      setChatMessages(chat.messages ?? []);
+    });
+    socket.on("newMessage", (msg: ChatMsg) => {
+      setChatMessages(prev => [...prev, msg]);
+    });
+    socket.on("chatClosed", () => {
+      setChatMessages(prev => [...prev, { sender: "bot", body: "This chat has been closed by our team. Thank you for contacting TechStop!" } as ChatMsg]);
+    });
+  }, []);
+
+  async function startChatSession(name: string, email: string, orderRef?: string) {
+    setChatStarting(true);
+    try {
+      const res = await fetch(`${API_URL}/support/chats`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ guestName: name.trim(), guestEmail: email.trim() || undefined, orderRef: orderRef || undefined }),
+      });
+      const chat = await res.json();
+      setChatId(chat.id);
+      setChatStep("chat");
+      setChatMessages([{ sender: "bot", body: `Hi ${name}! You're now connected to our support team. Please describe your issue and an agent will be with you shortly.` } as ChatMsg]);
+      connectSocket(chat.id);
+    } catch {
+      alert("Could not start chat. Please try again.");
+    } finally {
+      setChatStarting(false);
+    }
+  }
+
+  async function handleStartChat(e: React.FormEvent) {
+    e.preventDefault();
+    if (!chatName.trim()) return;
+    await startChatSession(chatName, chatEmail, chatOrderRef);
+  }
+
+  function handleSendChat() {
+    if (!chatInput.trim() || !chatId) return;
+    socketRef.current?.emit("sendMessage", { chatId, sender: "customer", body: chatInput.trim() });
+    setChatInput("");
+  }
 
   // Search matches
   const matchedArticles = searchQuery.trim() 
@@ -173,6 +227,17 @@ export default function HelpPage() {
       )
     : [];
 
+  function openOrdersModal() {
+    setIsOrdersModalOpen(true);
+    if (typeof window !== "undefined" && localStorage.getItem("ts_token")) {
+      setLoadingOrders(true);
+      ordersApi.myOrders()
+        .then(setUserOrders)
+        .catch(() => setUserOrders([]))
+        .finally(() => setLoadingOrders(false));
+    }
+  }
+
   const handleOpenArticle = (article: Article) => {
     setSelectedArticle(article);
     setDrawerType("article");
@@ -180,63 +245,36 @@ export default function HelpPage() {
   };
 
   const handleOpenChat = () => {
-    setDrawerType("chat");
-    setChatMessages([
-      { sender: "bot", text: "Hi there! I'm TechStop's virtual assistant. How can I help you today?" }
-    ]);
-  };
-
-  const handleOpenTicket = () => {
-    setDrawerType("ticket");
-    setTicketSubmitted(false);
-    setTicketName("");
-    setTicketEmail("");
-    setTicketOrder("");
-    setTicketMsg("");
+    setChatMessages([]);
+    setChatId(null);
+    setChatOrderRef(undefined);
+    socketRef.current?.disconnect();
+    if (chatName.trim()) {
+      setChatStep("chat");
+      setDrawerType("chat");
+      startChatSession(chatName, chatEmail, undefined);
+    } else {
+      setChatStep("form");
+      setDrawerType("chat");
+    }
   };
 
   // Trigger Chat with prefilled Order ID context
-  const handleSelectOrderForHelp = (order: MockOrder) => {
+  const handleSelectOrderForHelp = (order: Order) => {
+    const ref = `#${order.id.slice(0, 8).toUpperCase()}`;
     setIsOrdersModalOpen(false);
-    setDrawerType("chat");
-    setChatMessages([
-      { sender: "bot", text: `I see you need help with Order ${order.id} (${order.item}).` },
-      { sender: "bot", text: `Current Status: ${order.status}. How can I assist you with this shipment?` }
-    ]);
-  };
-
-  // Bot responses simulator
-  const handleSendChatMessage = (text: string) => {
-    if (!text.trim()) return;
-    const userMsg = text.trim();
-    setChatMessages(prev => [...prev, { sender: "user", text: userMsg }]);
-    setChatInput("");
-    setIsBotTyping(true);
-
-    setTimeout(() => {
-      setIsBotTyping(false);
-      let botText = "I didn't quite catch that. Would you like to log a ticket with our support desk?";
-      
-      const lower = userMsg.toLowerCase();
-      if (lower.includes("track") || lower.includes("where") || lower.includes("order")) {
-        botText = "To track your order, please reply with your Order ID (starts with 'TS-'). Our active courier partners are Royal Mail and DPD.";
-      } else if (lower.startsWith("ts-")) {
-        botText = `Order ${userMsg.toUpperCase()} is currently in transit. It has been processed through our Leicester Hub and is scheduled for delivery tomorrow before 2 PM.`;
-      } else if (lower.includes("return") || lower.includes("refund")) {
-        botText = "We offer a 30-day hassle-free return window. I can load your prepaid return shipping label request. Would you like me to guide you to the returns page?";
-      } else if (lower.includes("warranty")) {
-        botText = "All TechStop purchases come with our standard 12-Month Hardware Warranty covering screen defects, battery issues, and electronics components failures.";
-      } else if (lower.includes("human") || lower.includes("agent") || lower.includes("live") || lower.includes("chat")) {
-        botText = "Connecting you to our Leicester support desk... Our average response is under 3 minutes. Please describe your query, and our agent will jump right in.";
-      }
-      
-      setChatMessages(prev => [...prev, { sender: "bot", text: botText }]);
-    }, 1200);
-  };
-
-  const handleTicketSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setTicketSubmitted(true);
+    setChatMessages([]);
+    setChatId(null);
+    setChatOrderRef(ref);
+    socketRef.current?.disconnect();
+    if (chatName.trim()) {
+      setChatStep("chat");
+      setDrawerType("chat");
+      startChatSession(chatName, chatEmail, ref);
+    } else {
+      setChatStep("form");
+      setDrawerType("chat");
+    }
   };
 
   const scrollToCategories = () => {
@@ -400,8 +438,8 @@ export default function HelpPage() {
                   Track delivery, request return labels, cancel items, or contact the seller regarding an active purchase.
                 </p>
               </div>
-              <button 
-                onClick={() => setIsOrdersModalOpen(true)}
+              <button
+                onClick={openOrdersModal}
                 className="w-full h-14 bg-black hover:bg-zinc-800 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2"
               >
                 Get help with an order <ArrowRight className="h-4 w-4" />
@@ -531,24 +569,41 @@ export default function HelpPage() {
           <div className="mx-auto max-w-4xl px-4 text-center">
             <h2 className="font-serif text-3xl md:text-4xl font-bold text-zinc-950 mb-4">Still need help?</h2>
             <p className="text-zinc-500 text-xs font-semibold leading-relaxed mb-10 max-w-md mx-auto">
-              If you couldn't find your answer, reach out to our team in Leicester for fast live help.
+              Reach out to our team in Leicester for fast live help.
             </p>
-            <div className="flex flex-wrap items-center justify-center gap-4">
-              <button 
+            <div className="flex flex-wrap items-center justify-center gap-4 mb-12">
+              <button
                 onClick={handleOpenChat}
                 className="h-16 px-8 bg-black hover:bg-zinc-800 text-white font-bold rounded-2xl flex items-center gap-3 transition-colors text-xs uppercase tracking-wider"
               >
-                <MessageCircle className="h-4.5 w-4.5" />
+                <MessageCircle className="h-4 w-4" />
                 Start a Live Chat
               </button>
-              <button 
-                onClick={handleOpenTicket}
-                className="h-16 px-8 border-2 border-zinc-200 hover:border-zinc-950 text-zinc-950 hover:bg-zinc-50 rounded-2xl font-bold transition-all text-xs uppercase tracking-wider"
-              >
-                <Mail className="h-4.5 w-4.5 mr-1" />
-                Submit a Support Ticket
-              </button>
             </div>
+
+            {/* Helpline Numbers */}
+            {helplines.length > 0 && (
+              <div className="mt-2">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-5">Or call us directly</p>
+                <div className="flex flex-wrap justify-center gap-4">
+                  {helplines.map(h => (
+                    <a
+                      key={h.id}
+                      href={`tel:${h.number.replace(/\s/g, "")}`}
+                      className="flex items-center gap-3 h-14 px-6 rounded-2xl border-2 border-zinc-200 hover:border-zinc-950 bg-white transition-all group"
+                    >
+                      <div className="h-8 w-8 rounded-xl bg-emerald-50 flex items-center justify-center group-hover:bg-emerald-100 transition-colors">
+                        <Phone className="h-4 w-4 text-emerald-600" />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">{h.label}</p>
+                        <p className="text-sm font-bold text-zinc-950 font-mono">{h.number}</p>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </section>
 
@@ -584,33 +639,65 @@ export default function HelpPage() {
                 </button>
               </div>
 
-              <div className="space-y-4">
-                {MOCK_ORDERS.map((order) => (
-                  <button
-                    key={order.id}
-                    onClick={() => handleSelectOrderForHelp(order)}
-                    className="w-full flex items-center justify-between p-4 border border-zinc-200 hover:border-zinc-950 rounded-2xl transition-all text-left bg-white group"
-                  >
-                    <div className="flex gap-4 items-center">
-                      <div className="h-12 w-12 bg-zinc-50 border border-zinc-150 rounded-xl flex items-center justify-center text-zinc-900 shrink-0">
-                        {order.type === "phone" && <Smartphone className="h-5 w-5" />}
-                        {order.type === "console" && <Laptop className="h-5 w-5" />}
-                        {order.type === "audio" && <CreditCard className="h-5 w-5" />}
-                      </div>
-                      <div>
-                        <p className="text-xs font-black text-zinc-900">{order.item}</p>
-                        <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider mt-0.5">Order ID: {order.id} · Purchased {order.date}</p>
-                        <span className="inline-block mt-2 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-600 border border-emerald-100">
-                          {order.status}
-                        </span>
-                      </div>
-                    </div>
-                    <ChevronRight className="h-5 w-5 text-zinc-400 group-hover:translate-x-0.5 transition-transform" />
-                  </button>
-                ))}
+              <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+                {loadingOrders ? (
+                  <div className="space-y-3">
+                    {[1, 2, 3].map(i => (
+                      <div key={i} className="h-20 rounded-2xl bg-zinc-100 animate-pulse" />
+                    ))}
+                  </div>
+                ) : !localStorage.getItem("ts_token") ? (
+                  <div className="py-10 text-center">
+                    <Package className="h-10 w-10 text-zinc-200 mx-auto mb-3" />
+                    <p className="font-bold text-sm text-zinc-700">Sign in to see your orders</p>
+                    <p className="text-xs text-zinc-400 mt-1">Log in to your account to get order-specific support.</p>
+                  </div>
+                ) : userOrders.length === 0 ? (
+                  <div className="py-10 text-center">
+                    <Package className="h-10 w-10 text-zinc-200 mx-auto mb-3" />
+                    <p className="font-bold text-sm text-zinc-700">No orders found</p>
+                    <p className="text-xs text-zinc-400 mt-1">You haven't placed any orders yet.</p>
+                  </div>
+                ) : (
+                  userOrders.map((order) => {
+                    const firstName = order.items[0]?.product.name ?? "Order";
+                    const displayName = order.items.length > 1
+                      ? `${firstName} + ${order.items.length - 1} more`
+                      : firstName;
+                    const shortId = `#${order.id.slice(0, 8).toUpperCase()}`;
+                    const statusLabel = STATUS_LABELS[order.status] ?? order.status;
+                    const purchaseDate = new Date(order.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+                    const isActive = ["PENDING", "CONFIRMED", "SHIPPED"].includes(order.status);
+                    return (
+                      <button
+                        key={order.id}
+                        onClick={() => handleSelectOrderForHelp(order)}
+                        className="w-full flex items-center justify-between p-4 border border-zinc-200 hover:border-zinc-950 rounded-2xl transition-all text-left bg-white group"
+                      >
+                        <div className="flex gap-4 items-center min-w-0">
+                          <div className="h-12 w-12 bg-zinc-50 border border-zinc-200 rounded-xl flex items-center justify-center text-zinc-900 shrink-0">
+                            <Package className="h-5 w-5 text-zinc-500" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs font-black text-zinc-900 truncate">{displayName}</p>
+                            <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider mt-0.5">
+                              Order {shortId} · {purchaseDate}
+                            </p>
+                            <span className={`inline-block mt-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                              isActive ? "bg-blue-50 text-blue-600 border border-blue-100" : "bg-zinc-100 text-zinc-500 border border-zinc-200"
+                            }`}>
+                              {statusLabel}
+                            </span>
+                          </div>
+                        </div>
+                        <ChevronRight className="h-5 w-5 text-zinc-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
+                      </button>
+                    );
+                  })
+                )}
               </div>
 
-              <div className="mt-8 border-t border-zinc-100 pt-6 text-center">
+              <div className="mt-6 border-t border-zinc-100 pt-5 text-center">
                 <p className="text-[10px] font-semibold text-zinc-400">
                   Don't see your order here? Make sure you are logged into the correct account.
                 </p>
@@ -647,18 +734,15 @@ export default function HelpPage() {
                   <div className="h-9 w-9 bg-black text-white rounded-xl flex items-center justify-center">
                     {drawerType === "article" && <HelpCircle className="h-4.5 w-4.5 text-accent" />}
                     {drawerType === "chat" && <MessageCircle className="h-4.5 w-4.5 text-accent" />}
-                    {drawerType === "ticket" && <Mail className="h-4.5 w-4.5 text-accent" />}
                   </div>
                   <div className="text-left">
                     <h3 className="font-extrabold text-sm text-zinc-900 leading-tight">
                       {drawerType === "article" && "Help Guide"}
                       {drawerType === "chat" && "Support Chat"}
-                      {drawerType === "ticket" && "Send a Ticket"}
                     </h3>
                     <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider mt-0.5">
                       {drawerType === "article" && selectedArticle?.category}
-                      {drawerType === "chat" && "Simulated Assistant"}
-                      {drawerType === "ticket" && "Leicester Desk Support"}
+                      {drawerType === "chat" && "Live Support"}
                     </p>
                   </div>
                 </div>
@@ -707,181 +791,107 @@ export default function HelpPage() {
                   </div>
                 )}
 
-                {/* 2. Interactive Chat Simulator */}
+                {/* 2. Real Live Chat */}
                 {drawerType === "chat" && (
                   <div className="flex flex-col h-full">
-                    <div className="flex-1 overflow-y-auto space-y-4 pr-1">
-                      {chatMessages.map((msg, i) => (
-                        <div 
-                          key={i} 
-                          className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
-                        >
-                          <div className={`flex gap-3 max-w-[85%] ${msg.sender === "user" ? "flex-row-reverse" : "flex-row"}`}>
-                            <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 text-xs font-black ${msg.sender === "user" ? "bg-zinc-800 text-white" : "bg-mood-emerald text-zinc-950"}`}>
-                              {msg.sender === "user" ? <User className="h-4 w-4" /> : "TS"}
-                            </div>
-                            <div className={`p-4 rounded-2xl text-xs md:text-sm font-semibold leading-relaxed ${msg.sender === "user" ? "bg-black text-white rounded-tr-none" : "bg-zinc-100 text-zinc-900 rounded-tl-none"}`}>
-                              {msg.text}
+
+                    {/* Step 1: Name/Email form */}
+                    {chatStep === "form" && (
+                      <form onSubmit={handleStartChat} className="space-y-4 max-w-sm mx-auto pt-4">
+                        <div className="text-center mb-6">
+                          <div className="h-14 w-14 rounded-2xl bg-zinc-950 flex items-center justify-center mx-auto mb-3">
+                            <MessageCircle className="h-6 w-6 text-accent" />
+                          </div>
+                          <h3 className="font-bold text-zinc-950 text-lg">Start a live chat</h3>
+                          <p className="text-zinc-500 text-xs mt-1">Our team typically responds within 3 minutes.</p>
+                        </div>
+                        {chatOrderRef && (
+                          <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-zinc-100 border border-zinc-200">
+                            <Package className="h-4 w-4 text-zinc-500 shrink-0" />
+                            <div>
+                              <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Order Reference</p>
+                              <p className="text-sm font-bold text-zinc-900">{chatOrderRef}</p>
                             </div>
                           </div>
-                        </div>
-                      ))}
-                      {isBotTyping && (
-                        <div className="flex justify-start">
-                          <div className="flex gap-3">
-                            <div className="h-8 w-8 rounded-full bg-mood-emerald text-zinc-950 flex items-center justify-center text-xs font-black">
-                              TS
-                            </div>
-                            <div className="p-4 bg-zinc-100 text-zinc-400 rounded-2xl rounded-tl-none text-xs font-bold flex gap-1 items-center">
-                              <span className="h-1.5 w-1.5 bg-zinc-400 rounded-full animate-bounce" />
-                              <span className="h-1.5 w-1.5 bg-zinc-400 rounded-full animate-bounce [animation-delay:0.2s]" />
-                              <span className="h-1.5 w-1.5 bg-zinc-400 rounded-full animate-bounce [animation-delay:0.4s]" />
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                      <div ref={chatEndRef} />
-                    </div>
-
-                    {/* Chat quick pills */}
-                    <div className="py-3 flex flex-wrap gap-1.5 border-t border-zinc-100">
-                      {[
-                        "Track TS-9428",
-                        "Warranty cover details",
-                        "Connect with live agent"
-                      ].map((pill) => (
-                        <button
-                          key={pill}
-                          onClick={() => handleSendChatMessage(pill)}
-                          className="px-3 py-1.5 bg-zinc-100 hover:bg-zinc-200 text-[10px] font-bold text-zinc-700 rounded-lg transition-colors"
-                        >
-                          {pill}
-                        </button>
-                      ))}
-                    </div>
-
-                    {/* Chat Input form */}
-                    <div className="pt-3 border-t border-zinc-100 flex gap-2">
-                      <input 
-                        type="text" 
-                        value={chatInput}
-                        onChange={(e) => setChatInput(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && handleSendChatMessage(chatInput)}
-                        placeholder="Type a message or order number..."
-                        className="flex-1 h-12 bg-zinc-50 border border-zinc-200 px-4 text-xs font-bold text-zinc-800 rounded-xl outline-none focus:bg-white focus:border-black transition-all"
-                      />
-                      <button 
-                        onClick={() => handleSendChatMessage(chatInput)}
-                        className="h-12 w-12 bg-black hover:bg-zinc-800 text-white rounded-xl flex items-center justify-center transition-colors shrink-0"
-                      >
-                        <Send className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* 3. Slide-out Email Ticket Form */}
-                {drawerType === "ticket" && (
-                  <div className="h-full">
-                    {!ticketSubmitted ? (
-                      <form onSubmit={handleTicketSubmit} className="space-y-4">
-                        <h2 className="font-serif text-2xl font-bold tracking-tight text-zinc-950 mb-2">
-                          Submit Support Request
-                        </h2>
-                        <p className="text-zinc-500 text-xs font-semibold leading-relaxed mb-6">
-                          Send us your inquiry and our support representatives in Leicester will respond within 3 minutes.
-                        </p>
-
-                        <div className="flex flex-col gap-1.5">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Your Name</label>
-                          <input 
-                            type="text"
+                        )}
+                        <div>
+                          <label className="text-xs font-bold text-zinc-700 block mb-1.5">Your name *</label>
+                          <input
+                            value={chatName}
+                            onChange={e => setChatName(e.target.value)}
+                            placeholder="e.g. Sarah"
                             required
-                            value={ticketName}
-                            onChange={(e) => setTicketName(e.target.value)}
-                            placeholder="E.g. Alex Turner"
-                            className="h-12 bg-zinc-50 border border-zinc-200 px-4 text-xs font-bold text-zinc-800 rounded-xl outline-none focus:bg-white focus:border-black transition-all"
+                            className="w-full h-11 px-4 rounded-xl border-2 border-zinc-200 focus:border-black outline-none text-sm transition-colors"
                           />
                         </div>
-
-                        <div className="flex flex-col gap-1.5">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Email Address</label>
-                          <input 
-                            type="email"
-                            required
-                            value={ticketEmail}
-                            onChange={(e) => setTicketEmail(e.target.value)}
+                        <div>
+                          <label className="text-xs font-bold text-zinc-700 block mb-1.5">Email <span className="text-zinc-400 font-normal">(optional)</span></label>
+                          <input
+                            value={chatEmail}
+                            onChange={e => setChatEmail(e.target.value)}
                             placeholder="you@example.com"
-                            className="h-12 bg-zinc-50 border border-zinc-200 px-4 text-xs font-bold text-zinc-800 rounded-xl outline-none focus:bg-white focus:border-black transition-all"
+                            type="email"
+                            className="w-full h-11 px-4 rounded-xl border-2 border-zinc-200 focus:border-black outline-none text-sm transition-colors"
                           />
                         </div>
+                        <button
+                          type="submit"
+                          disabled={chatStarting || !chatName.trim()}
+                          className="w-full h-12 bg-black text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-zinc-800 transition-colors disabled:opacity-50"
+                        >
+                          {chatStarting ? <><RefreshCw className="h-4 w-4 animate-spin" /> Connecting…</> : <>Start Chat <ArrowRight className="h-4 w-4" /></>}
+                        </button>
+                      </form>
+                    )}
 
-                        <div className="flex flex-col gap-1.5">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Order ID (optional)</label>
-                          <input 
+                    {/* Step 2: Live chat messages */}
+                    {chatStep === "chat" && (
+                      <>
+                        <div className="flex items-center gap-2 mb-4 pb-3 border-b border-zinc-100">
+                          <Circle className={`h-2 w-2 ${chatConnected ? "fill-emerald-500 text-emerald-500" : "fill-zinc-300 text-zinc-300"}`} />
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                            {chatConnected ? "Connected · Agent will respond shortly" : "Connecting…"}
+                          </span>
+                        </div>
+                        <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+                          {chatMessages.map((msg, i) => {
+                            const isCustomer = msg.sender === "customer";
+                            const body = msg.body ?? msg.text ?? "";
+                            return (
+                              <div key={msg.id ?? i} className={`flex ${isCustomer ? "justify-end" : "justify-start"}`}>
+                                <div className={`flex gap-3 max-w-[85%] ${isCustomer ? "flex-row-reverse" : "flex-row"}`}>
+                                  <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 text-xs font-black ${isCustomer ? "bg-zinc-800 text-white" : "bg-accent text-zinc-950"}`}>
+                                    {isCustomer ? <User className="h-4 w-4" /> : "TS"}
+                                  </div>
+                                  <div className={`p-4 rounded-2xl text-xs md:text-sm font-semibold leading-relaxed ${isCustomer ? "bg-black text-white rounded-tr-none" : "bg-zinc-100 text-zinc-900 rounded-tl-none"}`}>
+                                    {body}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                          <div ref={chatEndRef} />
+                        </div>
+
+                        {/* Chat Input */}
+                        <div className="pt-3 border-t border-zinc-100 flex gap-2">
+                          <input
                             type="text"
-                            value={ticketOrder}
-                            onChange={(e) => setTicketOrder(e.target.value)}
-                            placeholder="E.g. TS-92841"
-                            className="h-12 bg-zinc-50 border border-zinc-200 px-4 text-xs font-bold text-zinc-800 rounded-xl outline-none focus:bg-white focus:border-black transition-all"
+                            value={chatInput}
+                            onChange={e => setChatInput(e.target.value)}
+                            onKeyDown={e => e.key === "Enter" && handleSendChat()}
+                            placeholder="Type a message…"
+                            className="flex-1 h-12 bg-zinc-50 border border-zinc-200 px-4 text-xs font-bold text-zinc-800 rounded-xl outline-none focus:bg-white focus:border-black transition-all"
                           />
-                        </div>
-
-                        <div className="flex flex-col gap-1.5">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Describe your inquiry</label>
-                          <textarea 
-                            required
-                            value={ticketMsg}
-                            onChange={(e) => setTicketMsg(e.target.value)}
-                            placeholder="Please provide details about your order, returns request, or warranty fault..."
-                            rows={5}
-                            className="w-full bg-zinc-50 border border-zinc-200 p-4 text-xs font-bold text-zinc-800 rounded-xl outline-none focus:bg-white focus:border-black transition-all resize-none"
-                          />
-                        </div>
-
-                        <div className="pt-4">
-                          <button 
-                            type="submit"
-                            className="w-full h-14 bg-black hover:bg-zinc-800 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-colors flex items-center justify-center gap-2 shadow-md"
+                          <button
+                            onClick={handleSendChat}
+                            disabled={!chatInput.trim()}
+                            className="h-12 w-12 bg-black hover:bg-zinc-800 text-white rounded-xl flex items-center justify-center transition-colors shrink-0 disabled:opacity-40"
                           >
-                            Submit Ticket <ArrowRight className="h-4 w-4" />
+                            <Send className="h-4 w-4" />
                           </button>
                         </div>
-                      </form>
-                    ) : (
-                      <motion.div 
-                        initial={{ scale: 0.95, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        className="text-center py-12 flex flex-col items-center justify-center h-full"
-                      >
-                        <div className="h-20 w-20 bg-emerald-50 border border-emerald-100 rounded-3xl flex items-center justify-center text-emerald-500 mb-6">
-                          <CheckCircle2 className="h-10 w-10" />
-                        </div>
-                        <h2 className="font-serif text-3xl font-bold tracking-tight text-zinc-950 mb-3">
-                          Ticket Logged!
-                        </h2>
-                        <p className="text-zinc-500 text-xs font-semibold max-w-sm mx-auto leading-relaxed mb-8">
-                          Thank you, <strong className="text-zinc-950">{ticketName}</strong>. Your support ticket has been registered under ticket number <strong className="text-zinc-950">#TS-94812</strong>.
-                        </p>
-                        
-                        <div className="w-full rounded-2xl bg-zinc-50 border border-zinc-150/40 p-5 mb-8 text-left text-xs font-semibold text-zinc-650 space-y-3">
-                          <div className="flex justify-between">
-                            <span className="text-zinc-400 font-bold uppercase tracking-widest text-[9px]">Receipt Speed</span>
-                            <span className="text-zinc-950 font-bold">~3 minutes queue</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-zinc-400 font-bold uppercase tracking-widest text-[9px]">Notification</span>
-                            <span className="text-zinc-950 font-bold">SMS & email dispatch alert</span>
-                          </div>
-                        </div>
-
-                        <button
-                          onClick={() => setDrawerType(null)}
-                          className="h-14 px-8 bg-black hover:bg-zinc-800 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-colors"
-                        >
-                          Close Panel
-                        </button>
-                      </motion.div>
+                      </>
                     )}
                   </div>
                 )}

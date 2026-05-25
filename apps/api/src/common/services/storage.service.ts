@@ -16,6 +16,7 @@ const FOLDERS = [
   'device-images',
   'trade-in-images',
   'repair-images',
+  'review-images',
 ] as const;
 
 @Injectable()

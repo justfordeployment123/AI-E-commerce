@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { Search, ShoppingBag, Eye, X, Truck, Check, Clock, MapPin, Package, Mail, Phone } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ordersApi, type Order } from "../../lib/api";
@@ -16,13 +17,17 @@ const STATUS_CFG: Record<string, { label: string; cls: string; icon: React.Eleme
 };
 
 export default function OrdersPage() {
+  const searchParams = useSearchParams();
+  const deepLinkId = searchParams.get("q")?.replace("#", "").toLowerCase() ?? "";
+
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(deepLinkId);
   const [filterStatus, setFilterStatus] = useState("all");
   const [selected, setSelected] = useState<Order | null>(null);
   const [trackingInput, setTrackingInput] = useState("");
   const [saving, setSaving] = useState(false);
+  const autoSelected = useRef(false);
 
   async function load() {
     setLoading(true);
@@ -34,6 +39,16 @@ export default function OrdersPage() {
   }
 
   useEffect(() => { load(); }, []);
+
+  // Auto-open the order when arriving from a deep link (?q=DA8DE705)
+  useEffect(() => {
+    if (!deepLinkId || autoSelected.current || orders.length === 0) return;
+    const match = orders.find(o => o.id.toLowerCase().startsWith(deepLinkId));
+    if (match) {
+      setSelected(match);
+      autoSelected.current = true;
+    }
+  }, [orders, deepLinkId]);
 
   const filtered = orders.filter(o => {
     const customerName = o.user?.name ?? o.shippingAddress?.name ?? "";

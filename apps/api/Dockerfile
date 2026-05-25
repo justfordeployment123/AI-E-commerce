@@ -23,6 +23,8 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run prisma:generate
 RUN npm run build
+# Compile seed script so it can be run with plain `node` in the runner stage
+RUN node_modules/.bin/tsc prisma/seed.ts --outDir dist/prisma --esModuleInterop --resolveJsonModule --module commonjs --target es2020 --skipLibCheck 2>/dev/null || true
 
 FROM node:24-bookworm-slim AS prod-deps
 WORKDIR /app
@@ -48,6 +50,8 @@ RUN groupadd -r nodejs && useradd -r -g nodejs nestjs
 
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
+# Copy compiled seed (if it built successfully)
+COPY --from=builder /app/dist/prisma ./dist/prisma
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 COPY --from=prod-deps /app/node_modules ./node_modules

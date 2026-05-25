@@ -58,7 +58,10 @@
       "Bash(node -e \"const { chromium } = require\\('playwright'\\); chromium.launch\\({ headless: true }\\).then\\(b => { console.log\\('Browser OK'\\); b.close\\(\\); }\\).catch\\(e => console.error\\('FAIL:', e.message\\)\\);\")",
       "Bash(node -e ' *)",
       "Bash('input[type=\\\\\"search\\\\\"], input[name=\\\\\"q\\\\\"], input[placeholder*=\\\\\"search\\\\\" i], input[placeholder*=\\\\\"Search\\\\\" i]')",
-      "Bash(Get-ChildItem -Path \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\admin\\\\app\" -Recurse -Filter \"*.tsx\")"
+      "Bash(Get-ChildItem -Path \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\admin\\\\app\" -Recurse -Filter \"*.tsx\")",
+      "Bash(Get-ChildItem -Path \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\\\\public\" -Recurse -Force)",
+      "Bash(Sort-Object FullName)",
+      "Bash(xargs grep -l \"showcase\\\\|bento\\\\|banners\\\\|audio\\\\|consoles\")"
     ],
     "additionalDirectories": [
       "d:\\CODE\\Projects\\Markhor Systems Projects\\Ai-Ecommerce\\apps\\web\\app\\account\\repairs",

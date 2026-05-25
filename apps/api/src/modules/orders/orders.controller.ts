@@ -70,6 +70,12 @@ export class OrdersController {
         return this.ordersService.deliver(id);
     }
 
+    @Post(':id/received')
+    @UseGuards(JwtAuthGuard)
+    markReceived(@Param('id') id: string, @CurrentUser() user: { id: string }) {
+        return this.ordersService.markReceived(id, user.id);
+    }
+
     @Post(':id/cancel')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles('ADMIN')
