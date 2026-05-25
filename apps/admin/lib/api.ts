@@ -179,16 +179,13 @@ export const repairsApi = {
   getById: (id: string) => apiFetch<Repair>(`/repairs/${id}`),
 
   setQuote: (id: string, amount: number) =>
-    apiFetch<Repair>(`/repairs/${id}/quote`, { method: 'POST', body: JSON.stringify({ amount }) }),
-
-  approveQuote: (id: string) =>
-    apiFetch<Repair>(`/repairs/${id}/approve-quote`, { method: 'POST' }),
+    apiFetch<Repair>(`/repairs/${id}/quote`, { method: 'POST', body: JSON.stringify({ quote: amount }) }),
 
   start: (id: string) =>
     apiFetch<Repair>(`/repairs/${id}/start`, { method: 'POST' }),
 
-  complete: (id: string, notes?: string) =>
-    apiFetch<Repair>(`/repairs/${id}/complete`, { method: 'POST', body: JSON.stringify({ notes }) }),
+  complete: (id: string, adminNotes?: string) =>
+    apiFetch<Repair>(`/repairs/${id}/complete`, { method: 'POST', body: JSON.stringify({ adminNotes }) }),
 
   cancel: (id: string) =>
     apiFetch<Repair>(`/repairs/${id}/cancel`, { method: 'POST' }),

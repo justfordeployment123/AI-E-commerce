@@ -111,14 +111,6 @@ export class RepairsService {
         return updated;
     }
 
-    async approveQuote(id: string) {
-        const repair = await this.findById(id);
-        if (repair.status !== 'QUOTE_SENT') {
-            throw new BadRequestException(`Cannot approve a repair with status ${repair.status}`);
-        }
-        return this.prisma.repair.update({ where: { id }, data: { status: 'APPROVED' } });
-    }
-
     async startRepair(id: string) {
         const repair = await this.findById(id);
         if (repair.status !== 'APPROVED') {
@@ -158,11 +150,56 @@ export class RepairsService {
         return updated;
     }
 
+    async findByIdForUser(id: string, userId: string) {
+        const repair = await this.prisma.repair.findFirst({ where: { id, userId } });
+        if (!repair) throw new NotFoundException('Repair not found');
+        const imageUrls = await Promise.all(
+            repair.images.map(key => this.storage.generatePresignedUrl(key).catch(() => null)),
+        );
+        return { ...repair, images: imageUrls.filter(Boolean) as string[] };
+    }
+
+    async acceptQuote(id: string, userId: string) {
+        const repair = await this.prisma.repair.findFirst({ where: { id, userId } });
+        if (!repair) throw new NotFoundException('Repair not found');
+        if (repair.status !== 'QUOTE_SENT') {
+            throw new BadRequestException('No quote to accept');
+        }
+        return this.prisma.repair.update({ where: { id }, data: { status: 'APPROVED' } });
+    }
+
+    async declineQuote(id: string, userId: string) {
+        const repair = await this.prisma.repair.findFirst({ where: { id, userId } });
+        if (!repair) throw new NotFoundException('Repair not found');
+        if (repair.status !== 'QUOTE_SENT') {
+            throw new BadRequestException('No quote to decline');
+        }
+        const updated = await this.prisma.repair.update({ where: { id }, data: { status: 'CANCELLED' } });
+        await this.notifications.create(
+            userId,
+            'repair_cancelled',
+            'Repair Cancelled',
+            `You declined the quote for your ${repair.brand} ${repair.model} repair. Contact us if you'd like to discuss further.`,
+            { repairId: id, reference: repair.reference },
+        );
+        return updated;
+    }
+
     async cancelRepair(id: string) {
         const repair = await this.findById(id);
         if (['COMPLETED', 'CANCELLED'].includes(repair.status)) {
             throw new BadRequestException(`Cannot cancel a repair with status ${repair.status}`);
         }
-        return this.prisma.repair.update({ where: { id }, data: { status: 'CANCELLED' } });
+        const updated = await this.prisma.repair.update({ where: { id }, data: { status: 'CANCELLED' } });
+        if (repair.userId) {
+            await this.notifications.create(
+                repair.userId,
+                'repair_cancelled',
+                'Repair Cancelled',
+                `Your ${repair.brand} ${repair.model} repair request has been cancelled. Contact us if you have any questions.`,
+                { repairId: id, reference: repair.reference },
+            );
+        }
+        return updated;
     }
 }

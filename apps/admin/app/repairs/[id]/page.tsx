@@ -38,9 +38,13 @@ export default function RepairDetailPage() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  async function act(fn: () => Promise<Repair>) {
+  async function act(fn: () => Promise<unknown>) {
     setSaving(true);
-    try { setItem(await fn()); } catch { /* ignore */ }
+    try {
+      await fn();
+      const refreshed = await repairsApi.getById(id);
+      setItem(refreshed);
+    } catch { /* ignore */ }
     finally { setSaving(false); }
   }
 
@@ -258,13 +262,6 @@ export default function RepairDetailPage() {
                   <div className="rounded-2xl bg-blue-50 border border-blue-100 p-4 text-sm text-blue-700 font-medium">
                     Quote of £{item.quote} sent — awaiting customer approval.
                   </div>
-                  <button
-                    onClick={() => act(() => repairsApi.approveQuote(item.id))}
-                    disabled={saving}
-                    className="w-full h-11 rounded-2xl bg-black text-white font-bold text-sm hover:bg-zinc-800 transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
-                  >
-                    <Check className="h-4 w-4" /> Approve quote
-                  </button>
                   <button
                     onClick={() => act(() => repairsApi.cancel(item.id))}
                     disabled={saving}

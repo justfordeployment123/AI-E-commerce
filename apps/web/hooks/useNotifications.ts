@@ -15,7 +15,7 @@ export interface AppNotification {
 }
 
 const TRADE_IN_TYPES = new Set(["trade_in_approved", "trade_in_rejected", "trade_in_counter_offer"]);
-const REPAIR_TYPES   = new Set(["repair_quote_sent", "repair_in_progress", "repair_completed"]);
+const REPAIR_TYPES   = new Set(["repair_quote_sent", "repair_in_progress", "repair_completed", "repair_cancelled"]);
 
 function notifLink(notif: AppNotification): string {
   if (TRADE_IN_TYPES.has(notif.type) && notif.data?.tradeInId)

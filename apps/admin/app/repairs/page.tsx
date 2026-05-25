@@ -68,15 +68,6 @@ export default function RepairsPage() {
     finally { setSaving(false); }
   }
 
-  async function approveQuote(id: string) {
-    setSaving(true);
-    try {
-      await repairsApi.approveQuote(id);
-      await refreshSelected(id);
-    } catch { }
-    finally { setSaving(false); }
-  }
-
   async function startRepair(id: string) {
     setSaving(true);
     try {
@@ -337,13 +328,9 @@ export default function RepairsPage() {
                 )}
                 {selected.status === "QUOTE_SENT" && (
                   <>
-                    <button
-                      onClick={() => approveQuote(selected.id)}
-                      disabled={saving}
-                      className="w-full h-11 rounded-2xl bg-approve text-approve-fg font-bold text-sm hover:bg-approve-hover transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
-                    >
-                      <Check className="h-4 w-4" /> Approve quote
-                    </button>
+                    <div className="rounded-2xl bg-blue-50 border border-blue-100 px-4 py-3 text-sm text-blue-700 font-medium flex items-center gap-2">
+                      <Check className="h-4 w-4 shrink-0" /> Quote sent — awaiting customer approval.
+                    </div>
                     <button
                       onClick={() => cancelRepair(selected.id)}
                       disabled={saving}

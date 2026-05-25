@@ -26,6 +26,24 @@ export class RepairsController {
         return this.repairsService.findByUser(user.id);
     }
 
+    @Get('my/:id')
+    @UseGuards(JwtAuthGuard)
+    findMineById(@Param('id') id: string, @CurrentUser() user: { id: string }) {
+        return this.repairsService.findByIdForUser(id, user.id);
+    }
+
+    @Post(':id/accept-quote')
+    @UseGuards(JwtAuthGuard)
+    acceptQuote(@Param('id') id: string, @CurrentUser() user: { id: string }) {
+        return this.repairsService.acceptQuote(id, user.id);
+    }
+
+    @Post(':id/decline-quote')
+    @UseGuards(JwtAuthGuard)
+    declineQuote(@Param('id') id: string, @CurrentUser() user: { id: string }) {
+        return this.repairsService.declineQuote(id, user.id);
+    }
+
     @Get('ref/:reference')
     findByRef(@Param('reference') reference: string) {
         return this.repairsService.findByReference(reference);
@@ -61,13 +79,6 @@ export class RepairsController {
     @Roles('ADMIN')
     setQuote(@Param('id') id: string, @Body() dto: SetQuoteDto) {
         return this.repairsService.setQuote(id, dto);
-    }
-
-    @Post(':id/approve-quote')
-    @UseGuards(JwtAuthGuard, RolesGuard)
-    @Roles('ADMIN')
-    approveQuote(@Param('id') id: string) {
-        return this.repairsService.approveQuote(id);
     }
 
     @Post(':id/start')

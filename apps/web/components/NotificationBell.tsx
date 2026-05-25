@@ -64,6 +64,13 @@ const TYPE_CONFIG: Record<string, {
     baseLink: "/account/repairs",
     idKey: "repairId",
   },
+  repair_cancelled: {
+    icon: <Wrench className="h-4 w-4" />,
+    accent: "text-red-500",
+    bg: "bg-red-50",
+    baseLink: "/account/repairs",
+    idKey: "repairId",
+  },
 };
 
 function NotifItem({ notif, onClose, markRead }: {

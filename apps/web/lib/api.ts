@@ -170,6 +170,14 @@ export const repairsApi = {
     apiFetch<Repair>('/repairs', { method: 'POST', auth: true, body: JSON.stringify(data) }),
 
   my: () => apiFetch<Repair[]>('/repairs/my', { auth: true }),
+
+  myById: (id: string) => apiFetch<RepairDetail>(`/repairs/my/${id}`, { auth: true }),
+
+  acceptQuote: (id: string) =>
+    apiFetch<Repair>(`/repairs/${id}/accept-quote`, { method: 'POST', auth: true }),
+
+  declineQuote: (id: string) =>
+    apiFetch<Repair>(`/repairs/${id}/decline-quote`, { method: 'POST', auth: true }),
 };
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -274,7 +282,16 @@ export interface Repair {
   issue: string;
   status: string;
   quote?: number;
+  fulfillment: string;
   createdAt: string;
+}
+
+export interface RepairDetail extends Repair {
+  issueNotes?: string;
+  adminNotes?: string;
+  images: string[];
+  contact: { name: string; email: string; phone?: string; address?: string; postcode?: string };
+  updatedAt: string;
 }
 
 export interface TradeInPayload {

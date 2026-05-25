@@ -45,7 +45,11 @@
       "PowerShell(New-Item -ItemType Directory -Force \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\")",
       "Bash(copy \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\\\\app\\\\icon.png\" \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\\\\public\\\\icon.png\")",
       "PowerShell(Copy-Item \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\\\\app\\\\icon.png\" \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\\\\public\\\\icon.png\")",
-      "PowerShell($file = Get-Item \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\\\\public\\\\icon.png\"; Write-Host \"Size: $\\($file.Length\\) bytes\"; Add-Type -AssemblyName System.Drawing; $img = [System.Drawing.Image]::FromFile\\($file.FullName\\); Write-Host \"Dimensions: $\\($img.Width\\) x $\\($img.Height\\)\"; $img.Dispose\\(\\))"
+      "PowerShell($file = Get-Item \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\\\\public\\\\icon.png\"; Write-Host \"Size: $\\($file.Length\\) bytes\"; Add-Type -AssemblyName System.Drawing; $img = [System.Drawing.Image]::FromFile\\($file.FullName\\); Write-Host \"Dimensions: $\\($img.Width\\) x $\\($img.Height\\)\"; $img.Dispose\\(\\))",
+      "Bash(mkdir \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\\\\app\\\\account\\\\repairs\\\\[id]\")"
+    ],
+    "additionalDirectories": [
+      "d:\\CODE\\Projects\\Markhor Systems Projects\\Ai-Ecommerce\\apps\\web\\app\\account\\repairs"
     ]
   },
   "enabledMcpjsonServers": [
