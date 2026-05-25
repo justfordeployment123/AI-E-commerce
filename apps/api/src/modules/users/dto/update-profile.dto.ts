@@ -16,4 +16,8 @@ export class UpdateProfileDto {
     @IsString()
     @IsOptional()
     city?: string;
+
+    @IsString()
+    @IsOptional()
+    postcode?: string;
 }

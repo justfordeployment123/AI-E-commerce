@@ -23,6 +23,7 @@ import { UploadsModule } from './modules/uploads/uploads.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { ShippingModule } from './modules/shipping/shipping.module';
 import { PaymentsModule } from './modules/payments/payments.module';
+import { ScraperModule } from './modules/scraper/scraper.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { PaymentsModule } from './modules/payments/payments.module';
     NotificationsModule,
     ShippingModule,
     PaymentsModule,
+    ScraperModule,
   ],
   controllers: [AppController],
   providers: [
@@ -57,3 +59,4 @@ import { PaymentsModule } from './modules/payments/payments.module';
   ],
 })
 export class AppModule {}
+

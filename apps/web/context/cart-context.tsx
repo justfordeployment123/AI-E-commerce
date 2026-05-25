@@ -16,7 +16,7 @@ interface CartContextValue {
 }
 
 const CartContext = createContext<CartContextValue>({
-  items: [], count: 0, subtotal: 0, loading: false,
+  items: [], count: 0, subtotal: 0, loading: true,
   addItem: async () => {}, updateItem: async () => {},
   removeItem: async () => {}, clearCart: async () => {},
 });

@@ -56,7 +56,7 @@ export const authApi = {
 
   me: () => apiFetch<User>('/users/me', { auth: true }),
 
-  updateProfile: (data: { name?: string; phone?: string; address?: string; city?: string }) =>
+  updateProfile: (data: { name?: string; phone?: string; address?: string; city?: string; postcode?: string }) =>
     apiFetch<User>('/users/me', { method: 'PATCH', auth: true, body: JSON.stringify(data) }),
 };
 
@@ -79,6 +79,9 @@ export const productsApi = {
   },
 
   bySlug: (slug: string) => apiFetch<Product>(`/products/${slug}`),
+
+  brands: (category: string) =>
+    apiFetch<{ brand: string; image: string | null }[]>(`/products/brands?category=${encodeURIComponent(category)}`),
 };
 
 // ── Cart ─────────────────────────────────────────────────────────────────────
@@ -101,10 +104,10 @@ export const cartApi = {
 
 // ── Payments ─────────────────────────────────────────────────────────────────
 export const paymentsApi = {
-  createIntent: (items: { productId: string; quantity: number }[]) =>
-    apiFetch<{ clientSecret: string | null; amount: number; devMode: boolean }>(
+  createIntent: (items: { productId: string; quantity: number }[], promoCode?: string) =>
+    apiFetch<{ clientSecret: string | null; paymentIntentId: string | null; amount: number; discount: number; devMode: boolean }>(
       '/payments/intent',
-      { method: 'POST', body: JSON.stringify({ items }) },
+      { method: 'POST', body: JSON.stringify({ items, promoCode }) },
     ),
 };
 
@@ -117,20 +120,30 @@ export const ordersApi = {
 };
 
 // ── Uploads ───────────────────────────────────────────────────────────────────
+async function uploadFile(endpoint: string, file: File, groupId?: string): Promise<{ filePath: string; presignedUrl: string }> {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('ts_token') : null;
+  const formData = new FormData();
+  formData.append('file', file);
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const url = groupId ? `${API_BASE}${endpoint}?groupId=${encodeURIComponent(groupId)}` : `${API_BASE}${endpoint}`;
+  const res = await fetch(url, { method: 'POST', headers, body: formData });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ message: res.statusText }));
+    throw new Error(body?.message ?? res.statusText);
+  }
+  return res.json();
+}
+
 export const uploadsApi = {
-  image: async (file: File): Promise<{ filePath: string; presignedUrl: string }> => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('ts_token') : null;
-    const formData = new FormData();
-    formData.append('file', file);
-    const headers: Record<string, string> = {};
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-    const res = await fetch(`${API_BASE}/uploads/image`, { method: 'POST', headers, body: formData });
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({ message: res.statusText }));
-      throw new Error(body?.message ?? res.statusText);
-    }
-    return res.json();
-  },
+  // Admin-only: product images → device-images/
+  image: (file: File) => uploadFile('/uploads/image', file),
+
+  // Customer: trade-in device photos → trade-in-images/{groupId}/
+  tradeInImage: (file: File, groupId: string) => uploadFile('/uploads/trade-in-image', file, groupId),
+
+  // Customer: repair device photos → repair-images/{groupId}/
+  repairImage: (file: File, groupId: string) => uploadFile('/uploads/repair-image', file, groupId),
 };
 
 // ── Stores ────────────────────────────────────────────────────────────────────
@@ -197,6 +210,7 @@ export interface User {
   phone?: string;
   address?: string;
   city?: string;
+  postcode?: string;
   role: string;
   createdAt: string;
 }
@@ -238,6 +252,8 @@ export interface CreateOrderPayload {
     country: string;
   };
   paymentMethod?: string;
+  paymentIntentId?: string;
+  discount?: number;
   notes?: string;
 }
 

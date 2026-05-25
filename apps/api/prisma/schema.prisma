@@ -53,6 +53,7 @@ model User {
   phone        String?
   address      String?
   city         String?
+  postcode     String?
   role         Role     @default(CUSTOMER)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -105,6 +106,8 @@ model Order {
   total           Float
   shippingAddress Json
   paymentMethod   String?
+  paymentIntentId String?
+  discount        Float   @default(0)
   trackingNumber  String?
   notes           String?
   createdAt       DateTime    @default(now())

@@ -3,9 +3,10 @@ import { PrismaService } from '../database/prisma.service';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const StripeLib = require('stripe');
-// Stripe v22 uses `export = StripeConstructor` — import the callable constructor
-const StripeSDK: (key: string, opts: { apiVersion: string }) => any =
-    typeof StripeLib === 'function' ? StripeLib : StripeLib.default ?? StripeLib;
+
+const VALID_PROMO_CODES: Record<string, number> = {
+    TECHSTOP10: 0.10,
+};
 
 @Injectable()
 export class PaymentsService {
@@ -18,7 +19,7 @@ export class PaymentsService {
         }
     }
 
-    async createIntent(items: { productId: string; quantity: number }[]) {
+    async createIntent(items: { productId: string; quantity: number }[], promoCode?: string) {
         const productIds = items.map(i => i.productId);
         const products = await this.prisma.product.findMany({
             where: { id: { in: productIds }, isActive: true },
@@ -38,20 +39,33 @@ export class PaymentsService {
         }
 
         const shipping = subtotal >= 100 ? 0 : 5.99;
-        const total = subtotal + shipping;
+
+        // Validate and apply promo discount server-side
+        const discountRate = promoCode ? (VALID_PROMO_CODES[promoCode.toUpperCase()] ?? 0) : 0;
+        const discount = Math.round(subtotal * discountRate * 100) / 100;
+        const total = subtotal - discount + shipping;
         const amountPence = Math.round(total * 100);
 
         if (!this.stripe) {
-            return { clientSecret: null, amount: total, devMode: true };
+            return { clientSecret: null, paymentIntentId: null, amount: total, discount, devMode: true };
         }
 
         const paymentIntent = await this.stripe.paymentIntents.create({
             amount: amountPence,
             currency: 'gbp',
-            automatic_payment_methods: { enabled: true },
+            // Use card-only — avoids redirect-based payment methods that conflict
+            // with confirmCardPayment when no return_url is set
+            payment_method_types: ['card'],
+            metadata: { promoCode: promoCode ?? '', discount: String(discount) },
         });
 
-        return { clientSecret: paymentIntent.client_secret as string, amount: total, devMode: false };
+        return {
+            clientSecret: paymentIntent.client_secret as string,
+            paymentIntentId: paymentIntent.id as string,
+            amount: total,
+            discount,
+            devMode: false,
+        };
     }
 
     async handleWebhook(payload: Buffer, signature: string) {

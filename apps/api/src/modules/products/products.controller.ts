@@ -45,6 +45,11 @@ export class ProductsController {
         });
     }
 
+    @Get('brands')
+    getBrands(@Query('category') category?: string) {
+        return this.productsService.getBrands(category);
+    }
+
     // Admin-only: fetch single product by ID with presigned images
     @Get('by-id/:id')
     @UseGuards(JwtAuthGuard, RolesGuard)

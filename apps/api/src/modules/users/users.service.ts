@@ -9,6 +9,7 @@ const SAFE_SELECT = {
     phone: true,
     address: true,
     city: true,
+    postcode: true,
     role: true,
     createdAt: true,
     updatedAt: true,
@@ -26,7 +27,13 @@ export class UsersService {
 
     async update(id: string, dto: UpdateProfileDto) {
         await this.findById(id);
-        return this.prisma.user.update({ where: { id }, data: dto, select: SAFE_SELECT });
+        const data: Record<string, unknown> = {};
+        if (dto.name     !== undefined) data.name     = dto.name;
+        if (dto.phone    !== undefined) data.phone    = dto.phone;
+        if (dto.address  !== undefined) data.address  = dto.address;
+        if (dto.city     !== undefined) data.city     = dto.city;
+        if (dto.postcode !== undefined) data.postcode = dto.postcode;
+        return this.prisma.user.update({ where: { id }, data, select: SAFE_SELECT });
     }
 
     async findAll(query: { page?: number; limit?: number } = {}) {

@@ -12,8 +12,11 @@ export default function SettingsPage() {
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
+  const [postcode, setPostcode] = useState("");
+  const [postcodeError, setPostcodeError] = useState("");
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
+  const UK_POSTCODE = /^[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}$/i;
   const [pendingReturn, setPendingReturn] = useState(false);
 
   useEffect(() => {
@@ -22,6 +25,7 @@ export default function SettingsPage() {
       setPhone(user.phone ?? "");
       setAddress(user.address ?? "");
       setCity(user.city ?? "");
+      setPostcode(user.postcode ?? "");
     }
     setPendingReturn(
       !!sessionStorage.getItem("ts_wizard_tradein") ||
@@ -31,10 +35,16 @@ export default function SettingsPage() {
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
+    const trimmed = postcode.trim().toUpperCase();
+    if (trimmed && !UK_POSTCODE.test(trimmed)) {
+      setPostcodeError("Enter a valid UK postcode (e.g. LE1 1AA)");
+      return;
+    }
+    setPostcodeError("");
     setSaving(true);
     setMsg("");
     try {
-      await authApi.updateProfile({ name, phone, address, city });
+      await authApi.updateProfile({ name, phone, address, city, postcode: trimmed || undefined });
       await refreshUser();
       if (sessionStorage.getItem("ts_wizard_tradein")) {
         router.push("/trade-in");
@@ -124,8 +134,22 @@ export default function SettingsPage() {
                 value={city}
                 onChange={e => setCity(e.target.value)}
                 placeholder="Leicester"
-                className="h-14 rounded-[1rem] border-2 border-zinc-200 px-5 text-sm font-medium outline-none focus:border-black transition-colors"
+                className="h-14 rounded-2xl border-2 border-zinc-200 px-5 text-sm font-medium outline-none focus:border-black transition-colors"
               />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-bold uppercase tracking-widest text-zinc-400">Postcode</label>
+              <input
+                type="text"
+                value={postcode}
+                onChange={e => { setPostcode(e.target.value); setPostcodeError(""); }}
+                placeholder="LE1 1AA"
+                className={`h-14 rounded-2xl border-2 px-5 text-sm font-medium outline-none transition-colors ${postcodeError ? "border-red-400 focus:border-red-500" : "border-zinc-200 focus:border-black"}`}
+              />
+              {postcodeError && (
+                <p className="text-[11px] text-red-500 font-medium ml-1">{postcodeError}</p>
+              )}
             </div>
           </div>
         </div>

@@ -123,6 +123,7 @@ export default function RepairPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   const [images, setImages] = useState<{ filePath: string; previewUrl: string }[]>([]);
+  const [batchId, setBatchId] = useState(() => crypto.randomUUID());
   const [imageUploading, setImageUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -132,19 +133,27 @@ export default function RepairPage() {
   const [missingFields, setMissingFields] = useState<string[]>([]);
   const modalScrollRef = useRef<HTMLDivElement>(null);
 
-  // Restore wizard state after Google OAuth redirect
+  // Restore wizard state on mount (after settings redirect or Google OAuth)
   useEffect(() => {
     const saved = sessionStorage.getItem("ts_wizard_repair");
     if (saved) {
       try {
-        const { state: s, step: savedStep } = JSON.parse(saved);
+        const { state: s, step: savedStep, images: savedImages, batchId: savedBatchId } = JSON.parse(saved);
         setState(s);
         setStep(savedStep);
+        if (savedImages?.length) setImages(savedImages);
+        if (savedBatchId) setBatchId(savedBatchId);
         setIsWizardActive(true);
       } catch {}
-      sessionStorage.removeItem("ts_wizard_repair");
     }
   }, []);
+
+  // Auto-save wizard state to sessionStorage whenever anything changes
+  useEffect(() => {
+    if (isWizardActive) {
+      sessionStorage.setItem("ts_wizard_repair", JSON.stringify({ state, step, images, batchId }));
+    }
+  }, [state, step, images, batchId, isWizardActive]);
 
   // Auto-fill contact from logged-in user
   useEffect(() => {
@@ -181,8 +190,13 @@ export default function RepairPage() {
     scrollToTop();
   };
 
+  const closeWizard = () => {
+    sessionStorage.removeItem("ts_wizard_repair");
+    setIsWizardActive(false);
+  };
+
   const back = () => {
-    if (step === 1) { setIsWizardActive(false); return; }
+    if (step === 1) { closeWizard(); return; }
     go(-1);
   };
 
@@ -216,7 +230,7 @@ export default function RepairPage() {
         files.slice(0, 6 - images.length).map(async (file) => {
           const { blob, previewUrl } = await compressToBlob(file);
           const uploadFile = new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), { type: "image/jpeg" });
-          const { filePath } = await uploadsApi.image(uploadFile);
+          const { filePath } = await uploadsApi.repairImage(uploadFile, batchId);
           return { filePath, previewUrl };
         })
       );
@@ -231,6 +245,7 @@ export default function RepairPage() {
   const openWizardWithDevice = (deviceId: string) => {
     setState({ deviceType: deviceId, brand: "", model: "", issue: [], issueNotes: "", fulfillment: "", contact: { name: "", email: "", phone: "", address: "", postcode: "" } });
     setImages([]);
+    setBatchId(crypto.randomUUID());
     setStep(1);
     setIsWizardActive(true);
   };
@@ -537,7 +552,7 @@ export default function RepairPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setIsWizardActive(false)}
+              onClick={closeWizard}
               className="fixed inset-0 bg-zinc-950/60 backdrop-blur-md"
             />
 
@@ -552,7 +567,7 @@ export default function RepairPage() {
               {/* Close button */}
               <button
                 type="button"
-                onClick={() => setIsWizardActive(false)}
+                onClick={closeWizard}
                 className="absolute top-6 right-6 h-10 w-10 rounded-full border border-zinc-200 bg-white hover:border-zinc-950 flex items-center justify-center text-zinc-500 hover:text-zinc-950 transition-colors z-20 cursor-pointer shadow-sm"
               >
                 <X className="h-5 w-5" />
@@ -825,9 +840,10 @@ export default function RepairPage() {
                                 e.preventDefault();
                                 if (user) {
                                   const missing: string[] = [];
-                                  if (!user.phone)   missing.push("Phone number");
-                                  if (!user.address) missing.push("Street address");
-                                  if (!user.city)    missing.push("City");
+                                  if (!user.phone)    missing.push("Phone number");
+                                  if (!user.address)  missing.push("Street address");
+                                  if (!user.city)     missing.push("City");
+                                  if (!user.postcode) missing.push("Postcode");
                                   if (missing.length > 0) {
                                     setMissingFields(missing);
                                     setMissingDetailsOpen(true);
@@ -876,7 +892,7 @@ export default function RepairPage() {
                                   <div className="space-y-3">
                                     <a
                                       href={`${API_URL}/auth/google`}
-                                      onClick={() => sessionStorage.setItem("ts_wizard_repair", JSON.stringify({ state, step }))}
+                                      onClick={() => { /* auto-save handles sessionStorage */ }}
                                       className="w-full h-12 bg-white border-2 border-zinc-200 rounded-2xl font-bold transition-all hover:scale-[1.02] hover:border-zinc-400 active:scale-[0.98] flex items-center justify-center gap-3 text-sm text-zinc-700 shadow-sm"
                                     >
                                       <GoogleIcon />
@@ -900,9 +916,7 @@ export default function RepairPage() {
                                       { key: "postcode", label: "Postcode",           type: "text",  placeholder: "LE1 1AA" },
                                     ] : []),
                                   ];
-                                  const visibleFields = user
-                                    ? allFields.filter(f => f.key === "postcode")
-                                    : allFields;
+                                  const visibleFields = user ? [] : allFields;
                                   if (visibleFields.length === 0) return null;
                                   return visibleFields.map(({ key, label, type, placeholder }) => (
                                     <div key={key} className="flex flex-col gap-2">
@@ -980,7 +994,7 @@ export default function RepairPage() {
                                 </p>
                               </div>
                               <button
-                                onClick={() => setIsWizardActive(false)}
+                                onClick={closeWizard}
                                 className="inline-flex items-center gap-2 h-12 px-8 bg-black text-white rounded-[1.5rem] font-bold text-sm hover:bg-zinc-800 transition-colors"
                               >
                                 Back to repair center
@@ -1024,7 +1038,6 @@ export default function RepairPage() {
             <button
               onClick={() => {
                 setMissingDetailsOpen(false);
-                sessionStorage.setItem("ts_wizard_repair", JSON.stringify({ state, step }));
                 router.push("/account/settings");
               }}
               className="w-full h-11 bg-black text-white rounded-xl text-sm font-black hover:bg-zinc-800 transition-colors"

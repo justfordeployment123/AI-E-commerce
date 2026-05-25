@@ -73,82 +73,6 @@ const CATEGORY_META: Record<string, {
   },
 };
 
-// ─── Mock product data per category ─────────────────────────────────────────
-
-const PRODUCTS: Record<string, {
-  id: string; title: string; brand: string; grade: string;
-  storage: string; price: number; originalPrice: number; rating: number; reviews: number;
-  image: string;
-}[]> = {
-  phones: [
-    { id: "ip15pm", title: "iPhone 15 Pro Max", brand: "Apple", grade: "Excellent", storage: "256 GB", price: 879, originalPrice: 1199, rating: 4.9, reviews: 312, image: "/showcase_iphone.png" },
-    { id: "ip15pro", title: "iPhone 15 Pro", brand: "Apple", grade: "Pristine", storage: "256 GB", price: 729, originalPrice: 999, rating: 4.8, reviews: 492, image: "/showcase_iphone.png" },
-    { id: "ip14pm", title: "iPhone 14 Pro Max", brand: "Apple", grade: "Excellent", storage: "256 GB", price: 689, originalPrice: 1199, rating: 4.8, reviews: 782, image: "/showcase_iphone.png" },
-    { id: "ip14p", title: "iPhone 14 Pro", brand: "Apple", grade: "Excellent", storage: "256 GB", price: 579, originalPrice: 999, rating: 4.8, reviews: 1847, image: "/showcase_iphone.png" },
-    { id: "ip13", title: "iPhone 13", brand: "Apple", grade: "Very Good", storage: "128 GB", price: 299, originalPrice: 599, rating: 4.7, reviews: 924, image: "/showcase_iphone.png" },
-    { id: "ip15", title: "iPhone 15", brand: "Apple", grade: "Pristine", storage: "128 GB", price: 549, originalPrice: 799, rating: 4.7, reviews: 204, image: "/showcase_iphone.png" },
-    { id: "ip12", title: "iPhone 12", brand: "Apple", grade: "Good", storage: "128 GB", price: 239, originalPrice: 599, rating: 4.5, reviews: 1102, image: "/showcase_iphone.png" },
-    { id: "sgs24u", title: "Galaxy S24 Ultra", brand: "Samsung", grade: "Excellent", storage: "512 GB", price: 829, originalPrice: 1299, rating: 4.8, reviews: 541, image: "https://images.unsplash.com/photo-1610792516307-ea5acd9c3b00?w=400&auto=format&fit=crop&q=80" },
-    { id: "sgs24", title: "Galaxy S24", brand: "Samsung", grade: "Pristine", storage: "256 GB", price: 519, originalPrice: 799, rating: 4.7, reviews: 183, image: "https://images.unsplash.com/photo-1610792516307-ea5acd9c3b00?w=400&auto=format&fit=crop&q=80" },
-    { id: "sgs23u", title: "Galaxy S23 Ultra", brand: "Samsung", grade: "Excellent", storage: "256 GB", price: 629, originalPrice: 1199, rating: 4.8, reviews: 934, image: "https://images.unsplash.com/photo-1610792516307-ea5acd9c3b00?w=400&auto=format&fit=crop&q=80" },
-    { id: "sgs23", title: "Galaxy S23", brand: "Samsung", grade: "Very Good", storage: "128 GB", price: 349, originalPrice: 799, rating: 4.6, reviews: 428, image: "https://images.unsplash.com/photo-1610792516307-ea5acd9c3b00?w=400&auto=format&fit=crop&q=80" },
-    { id: "pixel8p", title: "Pixel 8 Pro", brand: "Google", grade: "Excellent", storage: "256 GB", price: 549, originalPrice: 999, rating: 4.7, reviews: 218, image: "https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=400&auto=format&fit=crop&q=80" },
-    { id: "pixel7p", title: "Pixel 7 Pro", brand: "Google", grade: "Very Good", storage: "128 GB", price: 329, originalPrice: 899, rating: 4.6, reviews: 412, image: "https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=400&auto=format&fit=crop&q=80" },
-    { id: "op11", title: "OnePlus 11", brand: "OnePlus", grade: "Excellent", storage: "256 GB", price: 389, originalPrice: 699, rating: 4.7, reviews: 104, image: "https://images.unsplash.com/photo-1616348436168-de43ad0db179?w=400&auto=format&fit=crop&q=80" },
-  ],
-  tablets: [
-    { id: "ipadpro13", title: "iPad Pro 13\" M4", brand: "Apple", grade: "Excellent", storage: "256 GB", price: 899, originalPrice: 1299, rating: 4.9, reviews: 184, image: "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=400&auto=format&fit=crop&q=80" },
-    { id: "ipadpro11", title: "iPad Pro 11\" M2", brand: "Apple", grade: "Pristine", storage: "256 GB", price: 629, originalPrice: 899, rating: 4.8, reviews: 289, image: "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=400&auto=format&fit=crop&q=80" },
-    { id: "ipada5", title: "iPad Air 5th Gen", brand: "Apple", grade: "Excellent", storage: "64 GB", price: 389, originalPrice: 599, rating: 4.8, reviews: 422, image: "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=400&auto=format&fit=crop&q=80" },
-    { id: "ipadair4", title: "iPad Air 4th Gen", brand: "Apple", grade: "Very Good", storage: "64 GB", price: 299, originalPrice: 599, rating: 4.6, reviews: 504, image: "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=400&auto=format&fit=crop&q=80" },
-    { id: "ipad10", title: "iPad 10th Gen", brand: "Apple", grade: "Very Good", storage: "64 GB", price: 299, originalPrice: 449, rating: 4.6, reviews: 311, image: "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=400&auto=format&fit=crop&q=80" },
-    { id: "ipadmini6", title: "iPad Mini 6th Gen", brand: "Apple", grade: "Excellent", storage: "64 GB", price: 349, originalPrice: 499, rating: 4.7, reviews: 198, image: "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=400&auto=format&fit=crop&q=80" },
-    { id: "tabs10p", title: "Galaxy Tab S10+", brand: "Samsung", grade: "Excellent", storage: "256 GB", price: 649, originalPrice: 999, rating: 4.7, reviews: 129, image: "https://images.unsplash.com/photo-1589739900243-4b52cd9b104e?w=400&auto=format&fit=crop&q=80" },
-    { id: "tabs9u", title: "Galaxy Tab S9 Ultra", brand: "Samsung", grade: "Pristine", storage: "256 GB", price: 589, originalPrice: 1099, rating: 4.8, reviews: 83, image: "https://images.unsplash.com/photo-1589739900243-4b52cd9b104e?w=400&auto=format&fit=crop&q=80" },
-    { id: "tabs9fe", title: "Galaxy Tab S9 FE", brand: "Samsung", grade: "Very Good", storage: "128 GB", price: 289, originalPrice: 449, rating: 4.5, reviews: 104, image: "https://images.unsplash.com/photo-1589739900243-4b52cd9b104e?w=400&auto=format&fit=crop&q=80" },
-    { id: "surfpro9", title: "Surface Pro 9", brand: "Microsoft", grade: "Very Good", storage: "256 GB", price: 699, originalPrice: 999, rating: 4.5, reviews: 87, image: "https://images.unsplash.com/photo-1585776245991-cf89dd7fc73a?w=400&auto=format&fit=crop&q=80" },
-    { id: "surfpro8", title: "Surface Pro 8", brand: "Microsoft", grade: "Good", storage: "256 GB", price: 449, originalPrice: 899, rating: 4.4, reviews: 139, image: "https://images.unsplash.com/photo-1585776245991-cf89dd7fc73a?w=400&auto=format&fit=crop&q=80" },
-  ],
-  consoles: [
-    { id: "ps5disc", title: "PS5 Disc Edition", brand: "Sony", grade: "Excellent", storage: "825 GB", price: 399, originalPrice: 499, rating: 4.9, reviews: 2104, image: "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=400&auto=format&fit=crop&q=80" },
-    { id: "ps5slim", title: "PS5 Slim Digital", brand: "Sony", grade: "Excellent", storage: "1 TB", price: 319, originalPrice: 389, rating: 4.8, reviews: 492, image: "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=400&auto=format&fit=crop&q=80" },
-    { id: "ps5dig", title: "PS5 Digital Edition", brand: "Sony", grade: "Excellent", storage: "825 GB", price: 329, originalPrice: 399, rating: 4.8, reviews: 1622, image: "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=400&auto=format&fit=crop&q=80" },
-    { id: "ps4pro", title: "PS4 Pro", brand: "Sony", grade: "Very Good", storage: "1 TB", price: 189, originalPrice: 399, rating: 4.6, reviews: 873, image: "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=400&auto=format&fit=crop&q=80" },
-    { id: "ps4slim", title: "PS4 Slim", brand: "Sony", grade: "Very Good", storage: "500 GB", price: 119, originalPrice: 299, rating: 4.5, reviews: 624, image: "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=400&auto=format&fit=crop&q=80" },
-    { id: "xbxsx", title: "Xbox Series X", brand: "Microsoft", grade: "Excellent", storage: "1 TB", price: 369, originalPrice: 499, rating: 4.8, reviews: 1241, image: "https://images.unsplash.com/photo-1605901309584-818e25960a8f?w=400&auto=format&fit=crop&q=80" },
-    { id: "xbss", title: "Xbox Series S", brand: "Microsoft", grade: "Excellent", storage: "512 GB", price: 219, originalPrice: 299, rating: 4.7, reviews: 982, image: "https://images.unsplash.com/photo-1605901309584-818e25960a8f?w=400&auto=format&fit=crop&q=80" },
-    { id: "xbone", title: "Xbox One S", brand: "Microsoft", grade: "Good", storage: "500 GB", price: 99, originalPrice: 249, rating: 4.4, reviews: 402, image: "https://images.unsplash.com/photo-1605901309584-818e25960a8f?w=400&auto=format&fit=crop&q=80" },
-    { id: "xbonex", title: "Xbox One X", brand: "Microsoft", grade: "Very Good", storage: "1 TB", price: 139, originalPrice: 399, rating: 4.6, reviews: 294, image: "https://images.unsplash.com/photo-1605901309584-818e25960a8f?w=400&auto=format&fit=crop&q=80" },
-    { id: "nswoled", title: "Switch OLED", brand: "Nintendo", grade: "Excellent", storage: "64 GB", price: 239, originalPrice: 349, rating: 4.8, reviews: 1580, image: "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=400&auto=format&fit=crop&q=80" },
-    { id: "nslite", title: "Switch Lite", brand: "Nintendo", grade: "Excellent", storage: "32 GB", price: 129, originalPrice: 199, rating: 4.6, reviews: 312, image: "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=400&auto=format&fit=crop&q=80" },
-    { id: "nsorig", title: "Switch V2", brand: "Nintendo", grade: "Very Good", storage: "32 GB", price: 169, originalPrice: 279, rating: 4.7, reviews: 894, image: "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=400&auto=format&fit=crop&q=80" },
-  ],
-  laptops: [
-    { id: "mbpm3max16", title: "MacBook Pro 16\" M3 Max", brand: "Apple", grade: "Excellent", storage: "512 GB SSD", price: 2199, originalPrice: 3499, rating: 4.9, reviews: 241, image: "/showcase_macbook.png" },
-    { id: "mbpm2pro", title: "MacBook Pro 14\" M2 Pro", brand: "Apple", grade: "Pristine", storage: "512 GB SSD", price: 1249, originalPrice: 1999, rating: 4.8, reviews: 104, image: "/showcase_macbook.png" },
-    { id: "mbam2", title: "MacBook Air 13\" M2", brand: "Apple", grade: "Excellent", storage: "256 GB SSD", price: 799, originalPrice: 1099, rating: 4.9, reviews: 1124, image: "/showcase_macbook.png" },
-    { id: "mbpm1", title: "MacBook Pro 13\" M1", brand: "Apple", grade: "Excellent", storage: "256 GB SSD", price: 549, originalPrice: 1299, rating: 4.7, reviews: 832, image: "/showcase_macbook.png" },
-    { id: "mbam1", title: "MacBook Air 13\" M1", brand: "Apple", grade: "Very Good", storage: "256 GB SSD", price: 479, originalPrice: 999, rating: 4.7, reviews: 1541, image: "/showcase_macbook.png" },
-    { id: "xps15", title: "Dell XPS 15", brand: "Dell", grade: "Very Good", storage: "512 GB SSD", price: 899, originalPrice: 1499, rating: 4.7, reviews: 318, image: "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=400&auto=format&fit=crop&q=80" },
-    { id: "xps13", title: "Dell XPS 13", brand: "Dell", grade: "Pristine", storage: "512 GB SSD", price: 689, originalPrice: 1199, rating: 4.8, reviews: 92, image: "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=400&auto=format&fit=crop&q=80" },
-    { id: "x1c12", title: "ThinkPad X1 Carbon G12", brand: "Lenovo", grade: "Excellent", storage: "512 GB SSD", price: 849, originalPrice: 1699, rating: 4.7, reviews: 194, image: "https://images.unsplash.com/photo-1593642632823-8f785ba67e45?w=400&auto=format&fit=crop&q=80" },
-    { id: "tpadt14", title: "ThinkPad T14 Gen 3", brand: "Lenovo", grade: "Very Good", storage: "512 GB SSD", price: 499, originalPrice: 999, rating: 4.6, reviews: 204, image: "https://images.unsplash.com/photo-1593642632823-8f785ba67e45?w=400&auto=format&fit=crop&q=80" },
-    { id: "spectre", title: "HP Spectre x360 14", brand: "HP", grade: "Very Good", storage: "512 GB SSD", price: 749, originalPrice: 1299, rating: 4.6, reviews: 112, image: "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=400&auto=format&fit=crop&q=80" },
-    { id: "hpenvy", title: "HP Envy x360", brand: "HP", grade: "Good", storage: "512 GB SSD", price: 449, originalPrice: 899, rating: 4.4, reviews: 83, image: "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=400&auto=format&fit=crop&q=80" },
-  ],
-  audio: [
-    { id: "wh1000", title: "Sony WH-1000XM5", brand: "Sony", grade: "Pristine", storage: "—", price: 219, originalPrice: 399, rating: 4.9, reviews: 2841, image: "https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?w=400&auto=format&fit=crop&q=80" },
-    { id: "wh1000xm4", title: "Sony WH-1000XM4", brand: "Sony", grade: "Excellent", storage: "—", price: 159, originalPrice: 299, rating: 4.8, reviews: 1982, image: "https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?w=400&auto=format&fit=crop&q=80" },
-    { id: "wf1000xm5", title: "Sony WF-1000XM5", brand: "Sony", grade: "Excellent", storage: "—", price: 139, originalPrice: 219, rating: 4.7, reviews: 124, image: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400&auto=format&fit=crop&q=80" },
-    { id: "airpodspro2", title: "AirPods Pro 2nd Gen", brand: "Apple", grade: "Excellent", storage: "—", price: 159, originalPrice: 249, rating: 4.8, reviews: 1490, image: "/showcase_airpods_pro.png" },
-    { id: "airpods3", title: "AirPods 3rd Gen", brand: "Apple", grade: "Pristine", storage: "—", price: 99, originalPrice: 169, rating: 4.7, reviews: 582, image: "/showcase_airpods_pro.png" },
-    { id: "airpodsmax", title: "AirPods Max", brand: "Apple", grade: "Excellent", storage: "—", price: 349, originalPrice: 549, rating: 4.8, reviews: 814, image: "https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?w=400&auto=format&fit=crop&q=80" },
-    { id: "boseqc45", title: "Bose QuietComfort 45", brand: "Bose", grade: "Very Good", storage: "—", price: 149, originalPrice: 329, rating: 4.7, reviews: 621, image: "https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=400&auto=format&fit=crop&q=80" },
-    { id: "boseultra", title: "Bose QuietComfort Ultra", brand: "Bose", grade: "Pristine", storage: "—", price: 239, originalPrice: 429, rating: 4.9, reviews: 304, image: "https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=400&auto=format&fit=crop&q=80" },
-    { id: "beatsstudio", title: "Beats Studio Pro", brand: "Apple", grade: "Excellent", storage: "—", price: 179, originalPrice: 349, rating: 4.6, reviews: 193, image: "https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?w=400&auto=format&fit=crop&q=80" },
-    { id: "galaxybuds2", title: "Galaxy Buds2 Pro", brand: "Samsung", grade: "Excellent", storage: "—", price: 89, originalPrice: 229, rating: 4.6, reviews: 384, image: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400&auto=format&fit=crop&q=80" },
-  ],
-};
 
 const GRADES = ["Pristine", "Excellent", "Very Good", "Good"];
 
@@ -159,34 +83,6 @@ const SORT_OPTIONS = [
   { id: "rating",     label: "Top Rated" },
 ];
 
-const SUB_BRANDS: Record<string, { label: string; image: string; brand: string; bg: string }[]> = {
-  phones: [
-    { label: "iPhone", brand: "Apple", bg: "bg-blue-50 text-blue-900 border-blue-100 hover:bg-blue-100/50", image: "/showcase_iphone.png" },
-    { label: "Galaxy", brand: "Samsung", bg: "bg-purple-50 text-purple-900 border-purple-100 hover:bg-purple-100/50", image: "https://images.unsplash.com/photo-1610792516307-ea5acd9c3b00?w=300&auto=format&fit=crop&q=80" },
-    { label: "Pixel", brand: "Google", bg: "bg-amber-50 text-amber-900 border-amber-100 hover:bg-amber-100/50", image: "https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=300&auto=format&fit=crop&q=80" },
-    { label: "OnePlus", brand: "OnePlus", bg: "bg-rose-50 text-rose-900 border-rose-100 hover:bg-rose-100/50", image: "https://images.unsplash.com/photo-1616348436168-de43ad0db179?w=300&auto=format&fit=crop&q=80" },
-  ],
-  tablets: [
-    { label: "iPads", brand: "Apple", bg: "bg-blue-50 text-blue-900 border-blue-100 hover:bg-blue-100/50", image: "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=300&auto=format&fit=crop&q=80" },
-    { label: "Galaxy Tabs", brand: "Samsung", bg: "bg-purple-50 text-purple-900 border-purple-100 hover:bg-purple-100/50", image: "https://images.unsplash.com/photo-1589739900243-4b52cd9b104e?w=300&auto=format&fit=crop&q=80" },
-    { label: "Surface Pro", brand: "Microsoft", bg: "bg-slate-50 text-slate-900 border-slate-100 hover:bg-slate-100/50", image: "https://images.unsplash.com/photo-1585776245991-cf89dd7fc73a?w=300&auto=format&fit=crop&q=80" },
-  ],
-  consoles: [
-    { label: "PlayStation", brand: "Sony", bg: "bg-blue-50 text-blue-900 border-blue-100 hover:bg-blue-100/50", image: "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=300&auto=format&fit=crop&q=80" },
-    { label: "Xbox", brand: "Microsoft", bg: "bg-green-50 text-green-900 border-green-100 hover:bg-green-100/50", image: "https://images.unsplash.com/photo-1605901309584-818e25960a8f?w=300&auto=format&fit=crop&q=80" },
-    { label: "Nintendo", brand: "Nintendo", bg: "bg-red-50 text-red-900 border-red-100 hover:bg-red-100/50", image: "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=300&auto=format&fit=crop&q=80" },
-  ],
-  laptops: [
-    { label: "MacBooks", brand: "Apple", bg: "bg-blue-50 text-blue-900 border-blue-100 hover:bg-blue-100/50", image: "/showcase_macbook.png" },
-    { label: "Dell XPS", brand: "Dell", bg: "bg-slate-50 text-slate-900 border-slate-100 hover:bg-slate-100/50", image: "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=300&auto=format&fit=crop&q=80" },
-    { label: "ThinkPads", brand: "Lenovo", bg: "bg-red-50 text-red-900 border-red-100 hover:bg-red-100/50", image: "https://images.unsplash.com/photo-1593642632823-8f785ba67e45?w=300&auto=format&fit=crop&q=80" },
-  ],
-  audio: [
-    { label: "Sony WH", brand: "Sony", bg: "bg-zinc-50 text-zinc-900 border-zinc-200 hover:bg-zinc-100/50", image: "https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?w=300&auto=format&fit=crop&q=80" },
-    { label: "AirPods", brand: "Apple", bg: "bg-blue-50 text-blue-900 border-blue-100 hover:bg-blue-100/50", image: "/showcase_airpods_pro.png" },
-    { label: "Bose QC", brand: "Bose", bg: "bg-emerald-50 text-emerald-900 border-emerald-100 hover:bg-emerald-100/50", image: "https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=300&auto=format&fit=crop&q=80" },
-  ],
-};
 
 const BRAND_LOGOS: Record<string, React.ReactNode> = {
   Apple: (
@@ -372,7 +268,9 @@ export default function CategoryPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [activeTabBrand, setActiveTabBrand] = useState<string>("all");
   const [selectedDiagnostic, setSelectedDiagnostic] = useState<string>("battery");
-  const [displayProducts, setDisplayProducts] = useState(PRODUCTS[categorySlug] ?? []);
+  const [displayProducts, setDisplayProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [subBrands, setSubBrands] = useState<{ brand: string; image: string | null }[]>([]);
 
   const { addItem } = useCart();
 
@@ -382,24 +280,28 @@ export default function CategoryPage() {
 
   useEffect(() => {
     const apiCategory = CATEGORY_API_MAP[categorySlug];
-    if (!apiCategory) return;
-    productsApi.list({ category: apiCategory, limit: 50 })
+    setLoading(true);
+    if (!apiCategory) { setLoading(false); return; }
+    productsApi.list({ category: apiCategory, limit: 100 })
       .then(res => {
-        if (res.items.length > 0) {
-          setDisplayProducts(res.items.map(p => ({
-            id: p.id,
-            title: p.name,
-            brand: p.brand,
-            grade: p.condition,
-            storage: String((p.specs as Record<string, unknown>)?.storage ?? "—"),
-            price: p.price,
-            originalPrice: p.comparePrice ?? p.price,
-            rating: p.rating,
-            reviews: p.reviewCount,
-            image: p.images[0] ?? "",
-          })));
-        }
+        setDisplayProducts(res.items.map(p => ({
+          id: p.slug,
+          title: p.name,
+          brand: p.brand,
+          grade: p.condition,
+          storage: String((p.specs as Record<string, unknown>)?.storage ?? "—"),
+          price: p.price,
+          originalPrice: p.comparePrice ?? p.price,
+          rating: p.rating,
+          reviews: p.reviewCount,
+          image: p.images[0] ?? "",
+        })));
       })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+
+    productsApi.brands(apiCategory)
+      .then(setSubBrands)
       .catch(() => {});
   }, [categorySlug]);
 
@@ -432,6 +334,10 @@ export default function CategoryPage() {
 
   const CategoryIcon = meta.icon;
   const allProducts = displayProducts;
+  const dynamicBrands = subBrands.map(b => b.brand);
+  const bannerImage = activeTabBrand === "all"
+    ? displayProducts[0]?.image ?? ""
+    : (displayProducts.find(p => p.brand === activeTabBrand)?.image ?? displayProducts[0]?.image ?? "");
 
   let filtered = allProducts.filter(p => {
     const matchBrand = activeBrands.length === 0 || activeBrands.includes(p.brand);
@@ -470,13 +376,13 @@ export default function CategoryPage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           
           {/* Sub-brand Grid */}
-          {SUB_BRANDS[categorySlug] && (
+          {subBrands.length > 0 && (
             <div className="mb-8">
               <h2 className="text-lg font-extrabold mb-4 tracking-tight">Shop our most wanted</h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {SUB_BRANDS[categorySlug].map((item) => (
+                {subBrands.map((item) => (
                   <button
-                    key={item.label}
+                    key={item.brand}
                     onClick={() => {
                       setActiveBrands([item.brand]);
                       setActiveGrades([]);
@@ -486,14 +392,16 @@ export default function CategoryPage() {
                     className="flex flex-col gap-2.5 group text-left"
                   >
                     <div className="w-full aspect-[16/10] rounded-[24px] bg-[#e2ff70] hover:bg-[#d6f24d] transition-all duration-300 relative overflow-hidden flex items-center justify-center p-3">
-                      <img
-                        src={item.image}
-                        alt={item.label}
-                        className="w-4/5 h-4/5 object-contain group-hover:scale-[1.06] transition-transform duration-300 mix-blend-multiply"
-                      />
+                      {item.image && (
+                        <img
+                          src={item.image}
+                          alt={item.brand}
+                          className="w-4/5 h-4/5 object-contain group-hover:scale-[1.06] transition-transform duration-300 mix-blend-multiply"
+                        />
+                      )}
                     </div>
                     <span className="font-extrabold text-sm text-zinc-900 group-hover:text-black pl-1">
-                      {item.label}
+                      {item.brand}
                     </span>
                   </button>
                 ))}
@@ -554,11 +462,11 @@ export default function CategoryPage() {
               {allProducts.slice(0, 8).map(product => (
                 <Link href={`/shop/${categorySlug}/${product.id}`} key={`top-${product.id}`} className="shrink-0 w-[240px] md:w-[280px] group block">
                   <div className="bg-white rounded-[32px] p-3 border border-zinc-200 hover:border-black hover:shadow-xl transition-all duration-300 h-full flex flex-col">
-                    <div className="relative aspect-square rounded-[24px] bg-[#f5f5f7] mb-5 p-6 flex items-center justify-center">
-                      <span className="absolute top-4 left-4 inline-flex px-2.5 py-1 rounded-full bg-accent text-[10px] font-bold text-black border border-accent shadow-sm uppercase tracking-wider">
+                    <div className="relative aspect-square rounded-[24px] bg-[#f5f5f7] mb-5 overflow-hidden flex items-center justify-center p-5">
+                      <span className="absolute top-4 left-4 inline-flex px-2.5 py-1 rounded-full bg-accent text-[10px] font-bold text-black border border-accent shadow-sm uppercase tracking-wider z-10">
                         Best Seller
                       </span>
-                      <img src={product.image} alt={product.title} className="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform" />
+                      {product.image && <img src={product.image} alt={product.title} className="max-h-full max-w-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform" />}
                     </div>
                     <div className="px-2 flex flex-col flex-1 pb-2">
                       <h3 className="font-bold text-lg leading-tight mb-1">{product.title}</h3>
@@ -579,12 +487,14 @@ export default function CategoryPage() {
             <div className="bg-[#f0f2f5]/40 border border-zinc-200 rounded-[32px] p-5 md:p-7 flex flex-col lg:flex-row gap-6 md:gap-8">
               
               {/* Left Column: Lifestyle Flatlay Banner */}
-              <div className="w-full lg:w-[260px] h-[340px] md:h-[400px] rounded-[24px] overflow-hidden shrink-0 relative shadow-sm">
-                <img
-                  src="https://picsum.photos/seed/flatlay_tech/500/700"
-                  alt="Tech Stop lifestyle flatlay"
-                  className="w-full h-full object-cover"
-                />
+              <div className="w-full lg:w-[260px] h-[340px] md:h-[400px] rounded-[24px] overflow-hidden shrink-0 relative shadow-sm bg-[#f5f5f7]">
+                {bannerImage && (
+                  <img
+                    src={bannerImage}
+                    alt="Tech Stop lifestyle flatlay"
+                    className="w-full h-full object-contain p-6"
+                  />
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent flex flex-col justify-end p-5">
                   <span className="text-[10px] font-bold text-accent uppercase tracking-widest mb-1">TechStop Certified</span>
                   <h3 className="text-white font-extrabold text-lg leading-tight">Refurbished & Tested by Experts</h3>
@@ -604,7 +514,7 @@ export default function CategoryPage() {
                   >
                     All Brands
                   </button>
-                  {meta.brands.map(b => (
+                  {dynamicBrands.map((b) => (
                     <button
                       key={b}
                       onClick={() => setActiveTabBrand(b)}
@@ -633,8 +543,8 @@ export default function CategoryPage() {
                           <div className="bg-white rounded-[24px] p-3 border border-zinc-200 hover:border-black hover:shadow-lg transition-all duration-300 h-full flex flex-col justify-between">
                             
                             {/* Centered Image */}
-                            <div className="relative aspect-[4/3] rounded-[18px] bg-[#f5f5f7] mb-3 p-4 flex items-center justify-center">
-                              <img src={product.image} alt={product.title} className="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform" />
+                            <div className="relative aspect-square rounded-[18px] bg-[#f5f5f7] mb-3 overflow-hidden flex items-center justify-center p-4">
+                              {product.image && <img src={product.image} alt={product.title} className="max-h-full max-w-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform" />}
                             </div>
 
                             {/* Product Info */}
@@ -746,7 +656,7 @@ export default function CategoryPage() {
                 <div className="flex items-center gap-3">
                   <span className="font-bold text-xs text-zinc-400 uppercase tracking-widest">Brand</span>
                   <div className="flex gap-2">
-                    {meta.brands.map(brand => {
+                    {dynamicBrands.map(brand => {
                       const isActive = activeBrands.includes(brand);
                       return (
                         <button
@@ -814,7 +724,20 @@ export default function CategoryPage() {
             )}
 
             {/* Product Grid */}
-            {filtered.length === 0 ? (
+            {loading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="bg-white rounded-[32px] p-3 border border-zinc-200 h-[400px] animate-pulse">
+                    <div className="aspect-square rounded-[24px] bg-zinc-100 mb-5" />
+                    <div className="px-2 space-y-3">
+                      <div className="h-5 bg-zinc-100 rounded-full w-3/4" />
+                      <div className="h-4 bg-zinc-100 rounded-full w-1/2" />
+                      <div className="h-6 bg-zinc-100 rounded-full w-1/3 mt-4" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : filtered.length === 0 ? (
               <div className="py-20 text-center bg-white rounded-[32px] border border-zinc-200">
                 <p className="font-bold text-xl mb-3">No products match your filters</p>
                 <button
@@ -826,6 +749,7 @@ export default function CategoryPage() {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+
                 {filtered.map((product, index) => {
                   const added = addedIds.has(product.id);
                   const isPromoSpot = index === 2; // Inject promo after 3rd item
@@ -845,18 +769,20 @@ export default function CategoryPage() {
                       <Link href={`/shop/${categorySlug}/${product.id}`} className="group block">
                       <div className="bg-white rounded-[32px] p-3 border border-zinc-200 hover:border-black hover:shadow-xl transition-all duration-300 h-full flex flex-col">
                         
-                        <div className="relative aspect-square rounded-[24px] bg-[#f5f5f7] mb-5 overflow-hidden flex items-center justify-center p-6">
+                        <div className="relative aspect-square rounded-[24px] bg-[#f5f5f7] mb-5 overflow-hidden flex items-center justify-center p-5">
                           <div className="absolute top-4 left-4 z-10 flex flex-col gap-1.5">
                             <span className="inline-flex px-2.5 py-1 rounded-full bg-white text-[10px] font-bold text-black border border-zinc-200 shadow-sm uppercase tracking-wider">
                               {product.grade}
                             </span>
                           </div>
-                          
-                          <img
-                            src={product.image}
-                            alt={product.title}
-                            className="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-500"
-                          />
+
+                          {product.image && (
+                            <img
+                              src={product.image}
+                              alt={product.title}
+                              className="max-h-full max-w-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-500"
+                            />
+                          )}
 
                           <button
                             onClick={e => { e.preventDefault(); handleAdd(product.id); }}
@@ -1219,7 +1145,7 @@ export default function CategoryPage() {
                 <div>
                   <h4 className="font-bold text-lg mb-4">Brand</h4>
                   <div className="space-y-4">
-                    {meta.brands.map(brand => (
+                    {dynamicBrands.map(brand => (
                       <label key={brand} className="flex items-center gap-3 cursor-pointer">
                         <div onClick={() => toggleFilter(brand, activeBrands, setActiveBrands)} className={`h-6 w-6 rounded border-2 flex items-center justify-center ${activeBrands.includes(brand) ? "border-black bg-black" : "border-zinc-300"}`}>
                           {activeBrands.includes(brand) && <Check className="h-4 w-4 text-white" strokeWidth={3} />}

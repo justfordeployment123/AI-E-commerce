@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Shield, Lock, ChevronRight, Check, CreditCard, Truck,
@@ -16,6 +16,7 @@ import {
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import { useCart } from "../../context/cart-context";
+import { useAuth } from "../../context/auth-context";
 import { ordersApi, paymentsApi } from "../../lib/api";
 
 const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
@@ -32,12 +33,16 @@ export default function CheckoutPage() {
   );
 }
 
+const UK_POSTCODE = /^[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}$/i;
+
 function CheckoutInner() {
-  const { items, subtotal, clearCart } = useCart();
+  const { items, subtotal, clearCart, loading: cartLoading } = useCart();
+  const { user } = useAuth();
   const stripe = useStripe();
   const elements = useElements();
 
   const [step, setStep] = useState(0);
+  const [deliveryError, setDeliveryError] = useState("");
   const [promoCode, setPromoCode] = useState("");
   const [promoApplied, setPromoApplied] = useState(false);
   const [promoError, setPromoError] = useState("");
@@ -46,14 +51,39 @@ function CheckoutInner() {
   const [placing, setPlacing] = useState(false);
   const [placeError, setPlaceError] = useState("");
   const [cardComplete, setCardComplete] = useState(false);
+  const [savedPaymentMethodId, setSavedPaymentMethodId] = useState<string | null>(null);
+  const [savedPaymentIntentId, setSavedPaymentIntentId] = useState<string | null>(null);
+  const [savedClientSecret, setSavedClientSecret] = useState<string | null>(null);
+  const [savedDiscount, setSavedDiscount] = useState(0);
+  const [cardError, setCardError] = useState("");
 
   const [delivery, setDelivery] = useState({
     firstName: "", lastName: "", email: "", phone: "",
     address: "", city: "", postcode: "", country: "United Kingdom",
   });
 
+  // Pre-fill from user profile when user loads
+  const [profilePrefilled, setProfilePrefilled] = useState(false);
+  useEffect(() => {
+    if (user && !profilePrefilled) {
+      const nameParts = (user.name ?? "").split(" ");
+      setDelivery(d => ({
+        ...d,
+        firstName: d.firstName || nameParts[0] || "",
+        lastName:  d.lastName  || nameParts.slice(1).join(" ") || "",
+        email:     d.email     || user.email || "",
+        phone:     d.phone     || user.phone || "",
+        address:   d.address   || user.address || "",
+        city:      d.city      || user.city || "",
+        postcode:  d.postcode  || user.postcode || "",
+      }));
+      setProfilePrefilled(true);
+    }
+  }, [user]);
+
   const shipping = 0;
-  const discount = promoApplied ? subtotal * 0.1 : 0;
+  // Use server-confirmed discount once intent is created; fall back to optimistic calculation before
+  const discount = savedDiscount || (promoApplied ? Math.round(subtotal * 0.1 * 100) / 100 : 0);
   const total = subtotal - discount + shipping;
 
   function applyPromo() {
@@ -65,34 +95,91 @@ function CheckoutInner() {
     }
   }
 
+  function validateDelivery(): string {
+    if (!delivery.firstName.trim()) return "First name is required.";
+    if (!delivery.lastName.trim()) return "Last name is required.";
+    if (!delivery.email.trim()) return "Email address is required.";
+    if (!delivery.address.trim()) return "Street address is required.";
+    if (!delivery.city.trim()) return "City is required.";
+    if (!delivery.postcode.trim()) return "Postcode is required.";
+    if (!UK_POSTCODE.test(delivery.postcode.trim())) return "Enter a valid UK postcode (e.g. LE1 1AA).";
+    return "";
+  }
+
+  function handleAdvanceToPayment() {
+    const err = validateDelivery();
+    if (err) { setDeliveryError(err); return; }
+    setDeliveryError("");
+    setStep(1);
+  }
+
+  async function handleAdvanceToReview() {
+    if (stripePromise && stripe && elements) {
+      setCardError("");
+      const cardElement = elements.getElement(CardElement);
+      if (!cardElement) { setCardError("Card details missing."); return; }
+      const { paymentMethod: pm, error } = await stripe.createPaymentMethod({
+        type: "card",
+        card: cardElement,
+        billing_details: {
+          name: `${delivery.firstName} ${delivery.lastName}`.trim() || "Customer",
+          email: delivery.email || undefined,
+        },
+      });
+      if (error) { setCardError(error.message ?? "Card error"); return; }
+      setSavedPaymentMethodId(pm!.id);
+    }
+    setStep(2);
+  }
+
   async function placeOrder() {
     setPlacing(true);
     setPlaceError("");
+
+    // Track whether payment was confirmed so we can show the right error if order creation fails
+    let paymentConfirmed = false;
+    let intentId = savedPaymentIntentId;
+
     try {
-      const { clientSecret, devMode } = await paymentsApi.createIntent(
-        items.map(i => ({ productId: i.productId, quantity: i.quantity })),
-      );
+      // Reuse the existing payment intent if we already created one (idempotency on retry)
+      let clientSecret = savedClientSecret;
+      let devMode = !stripePromise;
+
+      if (!clientSecret) {
+        const intent = await paymentsApi.createIntent(
+          items.map(i => ({ productId: i.productId, quantity: i.quantity })),
+          promoApplied ? promoCode : undefined,
+        );
+        clientSecret = intent.clientSecret;
+        intentId = intent.paymentIntentId;
+        devMode = intent.devMode;
+        setSavedClientSecret(clientSecret);
+        setSavedPaymentIntentId(intentId);
+        setSavedDiscount(intent.discount);
+      }
 
       if (!devMode) {
-        if (!stripe || !elements) {
-          throw new Error("Stripe not loaded. Please refresh and try again.");
-        }
-        const cardElement = elements.getElement(CardElement);
-        if (!cardElement) {
-          throw new Error("Card details not found. Please go back to the payment step.");
-        }
+        if (!stripe) throw new Error("Stripe not loaded. Please refresh and try again.");
+        if (!savedPaymentMethodId) throw new Error("Payment details missing. Please go back to the payment step.");
+
         const result = await stripe.confirmCardPayment(clientSecret!, {
-          payment_method: {
-            card: cardElement,
-            billing_details: {
-              name: `${delivery.firstName} ${delivery.lastName}`.trim() || "Customer",
-              email: delivery.email || undefined,
-            },
-          },
+          payment_method: savedPaymentMethodId,
         });
+
         if (result.error) {
+          // Payment failed — clear the intent so a fresh one is created on retry
+          setSavedClientSecret(null);
+          setSavedPaymentIntentId(null);
           throw new Error(result.error.message ?? "Payment failed");
         }
+
+        if (result.paymentIntent?.status !== "succeeded") {
+          setSavedClientSecret(null);
+          setSavedPaymentIntentId(null);
+          throw new Error("Payment was not completed. Please try again.");
+        }
+
+        paymentConfirmed = true;
       }
 
       const order = await ordersApi.create({
@@ -105,16 +192,39 @@ function CheckoutInner() {
           country: delivery.country,
         },
         paymentMethod: devMode ? "dev" : "stripe",
+        paymentIntentId: intentId ?? undefined,
+        discount: savedDiscount || (promoApplied ? Math.round(subtotal * 0.1 * 100) / 100 : 0),
       });
 
       setOrderId(order.id);
       await clearCart();
       setOrderPlaced(true);
     } catch (err) {
-      setPlaceError(err instanceof Error ? err.message : "Failed to place order");
+      const msg = err instanceof Error ? err.message : "Failed to place order";
+      if (paymentConfirmed && intentId) {
+        // Payment was taken but order creation failed — show recovery info
+        setPlaceError(
+          `Your payment was processed (ref: ${intentId}) but we couldn't record your order. ` +
+          `Please contact us at support@techstopleicester.com with this reference and we will resolve it immediately.`
+        );
+      } else {
+        setPlaceError(msg);
+      }
     } finally {
       setPlacing(false);
     }
+  }
+
+  if (cartLoading) {
+    return (
+      <div className="flex min-h-screen flex-col bg-white font-sans">
+        <Navbar />
+        <main className="flex-1 flex items-center justify-center">
+          <div className="h-12 w-12 border-4 border-zinc-200 border-t-black rounded-full animate-spin" />
+        </main>
+        <Footer />
+      </div>
+    );
   }
 
   if (items.length === 0 && !orderPlaced) {
@@ -139,40 +249,49 @@ function CheckoutInner() {
     return (
       <div className="flex min-h-screen flex-col bg-white font-sans">
         <Navbar />
-        <main className="flex-1 flex items-center justify-center">
+        <main className="flex-1 flex items-center justify-center px-4 py-16">
           <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: "spring", stiffness: 200, damping: 20 }}
-            className="text-center px-4 max-w-lg"
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
+            className="w-full max-w-md text-center"
           >
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: "spring", stiffness: 260, damping: 18, delay: 0.1 }}
-              className="mx-auto h-28 w-28 bg-accent rounded-[2.5rem] flex items-center justify-center mb-8"
+              className="mx-auto h-24 w-24 bg-accent rounded-[2rem] flex items-center justify-center mb-8"
             >
-              <Check className="h-14 w-14 text-black" strokeWidth={2} />
+              <Check className="h-12 w-12 text-black" strokeWidth={2.5} />
             </motion.div>
-            <h1 className="font-serif text-5xl font-medium mb-4">Order confirmed!</h1>
-            <p className="text-zinc-500 text-lg font-medium mb-8 leading-relaxed">
-              Your order <strong className="text-black">#{orderId.slice(0, 8).toUpperCase()}</strong> is confirmed. A receipt has been sent to <strong className="text-black">{delivery.email || "your email"}</strong>.
+
+            <h1 className="text-4xl font-bold tracking-tight text-black mb-3">Order confirmed!</h1>
+            <p className="text-zinc-500 font-medium mb-2">
+              Your order <span className="font-bold text-black">#{orderId.slice(0, 8).toUpperCase()}</span> is confirmed.
             </p>
-            <div className="rounded-[2rem] bg-zinc-50 border border-zinc-100 p-6 mb-8 text-sm text-left space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="h-8 w-8 rounded-full bg-black flex items-center justify-center"><span className="text-white font-bold text-xs">1</span></div>
-                <p className="font-medium">Dispatched within <strong>24 hours</strong> via Royal Mail Tracked 24</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="h-8 w-8 rounded-full bg-zinc-200 flex items-center justify-center"><span className="font-bold text-xs">2</span></div>
-                <p className="font-medium">Tracking number emailed once dispatched</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="h-8 w-8 rounded-full bg-zinc-200 flex items-center justify-center"><span className="font-bold text-xs">3</span></div>
-                <p className="font-medium">Delivered in <strong>1–2 working days</strong></p>
-              </div>
+            <p className="text-zinc-500 font-medium mb-8">
+              A receipt has been sent to <span className="font-bold text-black">{delivery.email || "your email"}</span>.
+            </p>
+
+            <div className="rounded-2xl bg-zinc-50 border border-zinc-200 p-6 mb-8 text-left space-y-4">
+              {[
+                { n: 1, text: <>Dispatched within <strong className="text-black">24 hours</strong> via Royal Mail Tracked 24</> },
+                { n: 2, text: "Tracking number emailed once dispatched" },
+                { n: 3, text: <>Delivered in <strong className="text-black">1–2 working days</strong></> },
+              ].map(({ n, text }) => (
+                <div key={n} className="flex items-center gap-4">
+                  <div className="h-9 w-9 shrink-0 rounded-full bg-black flex items-center justify-center">
+                    <span className="text-white font-bold text-xs">{n}</span>
+                  </div>
+                  <p className="text-sm font-medium text-zinc-700">{text}</p>
+                </div>
+              ))}
             </div>
-            <a href="/" className="inline-flex items-center gap-2 h-14 px-10 bg-black text-white rounded-[1.5rem] font-bold hover:bg-zinc-800 transition-colors">
+
+            <a
+              href="/"
+              className="inline-flex items-center gap-2 h-14 px-10 bg-black text-white rounded-2xl font-bold hover:bg-zinc-800 transition-colors"
+            >
               Continue shopping
             </a>
           </motion.div>
@@ -285,8 +404,15 @@ function CheckoutInner() {
                       </div>
                     </div>
 
+                    {deliveryError && (
+                      <div className="flex items-start gap-3 rounded-[1.5rem] bg-red-50 border border-red-100 p-4 mb-4">
+                        <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+                        <p className="text-sm font-bold text-red-600">{deliveryError}</p>
+                      </div>
+                    )}
+
                     <button
-                      onClick={() => setStep(1)}
+                      onClick={handleAdvanceToPayment}
                       className="w-full h-16 bg-black text-white rounded-[1.5rem] font-bold text-base flex items-center justify-center gap-2 hover:bg-zinc-800 transition-colors active:scale-[0.99]"
                     >
                       Continue to payment <ChevronRight className="h-5 w-5" />
@@ -356,8 +482,14 @@ function CheckoutInner() {
                       </p>
                     </div>
 
+                    {cardError && (
+                      <div className="flex items-start gap-3 rounded-[1.5rem] bg-red-50 border border-red-100 p-4 mb-4">
+                        <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+                        <p className="text-sm font-bold text-red-600">{cardError}</p>
+                      </div>
+                    )}
                     <button
-                      onClick={() => setStep(2)}
+                      onClick={handleAdvanceToReview}
                       disabled={stripePromise ? !cardComplete : false}
                       className="w-full h-16 bg-black text-white rounded-[1.5rem] font-bold text-base flex items-center justify-center gap-2 hover:bg-zinc-800 transition-colors active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed"
                     >

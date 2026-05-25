@@ -5,6 +5,7 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import cookieParser from 'cookie-parser';
 import compression from 'compression';
+import { json, urlencoded } from 'express';
 
 const appEnvPath = resolve(__dirname, '..', '.env');
 if (existsSync(appEnvPath)) {
@@ -31,6 +32,8 @@ async function bootstrap() {
 
   app.use(compression());
   app.use(cookieParser());
+  app.use(json({ limit: '10mb' }));
+  app.use(urlencoded({ extended: true, limit: '10mb' }));
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.enableCors({
     origin: (process.env.ALLOWED_REDIRECT_URLS ?? 'http://localhost:3000')

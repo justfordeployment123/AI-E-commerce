@@ -10,6 +10,8 @@ import {
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import Navbar from "../components/Navbar";
+import { productsApi } from "../lib/api";
+import { useCart } from "../context/cart-context";
 const Footer = dynamic(() => import("../components/Footer"));
 
 // ─── Promo Carousel Banner ───────────────────────────────────────────────────
@@ -229,15 +231,17 @@ function Hero() {
   const [gradeIdx, setGradeIdx] = useState(0);
   const [heroSearchQuery, setHeroSearchQuery] = useState("");
   const [isHeroSearchFocused, setIsHeroSearchFocused] = useState(false);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
 
-  const MOCK_HERO_SEARCH_ITEMS = [
-    { id: "iphone-15-pro", title: "iPhone 15 Pro", category: "phones", brand: "Apple", price: "739", image: "https://picsum.photos/seed/iphone_wanted/100/100" },
-    { id: "iphone-13-pro-max", title: "iPhone 13 Pro Max", category: "phones", brand: "Apple", price: "529", image: "https://picsum.photos/seed/custphone1/100/100" },
-    { id: "galaxy-s24-ultra", title: "Galaxy S24 Ultra", category: "phones", brand: "Samsung", price: "819", image: "https://picsum.photos/seed/samsung_wanted/100/100" },
-    { id: "google-pixel-7", title: "Google Pixel 7", category: "phones", brand: "Google", price: "349", image: "https://picsum.photos/seed/google_wanted/100/100" },
-    { id: "macbook-air-m2", title: "MacBook Air M2", category: "laptops", brand: "Apple", price: "849", image: "https://picsum.photos/seed/macbook_wanted/100/100" },
-    { id: "playstation-5", title: "PlayStation 5 Disc Edition", category: "consoles", brand: "Sony", price: "389", image: "https://picsum.photos/seed/ps5_wanted/100/100" },
-  ];
+  useEffect(() => {
+    if (!heroSearchQuery.trim()) { setSearchResults([]); return; }
+    const t = setTimeout(() => {
+      productsApi.list({ search: heroSearchQuery, limit: 6 })
+        .then(r => setSearchResults(r.items))
+        .catch(() => {});
+    }, 300);
+    return () => clearTimeout(t);
+  }, [heroSearchQuery]);
 
   const POPULAR_HERO_SEARCHES = [
     "iPhone 15 Pro",
@@ -254,11 +258,8 @@ function Hero() {
 
   const getSearchLink = () => {
     if (!heroSearchQuery) return "/shop/phones";
-    const match = MOCK_HERO_SEARCH_ITEMS.find((item) =>
-      item.title.toLowerCase().includes(heroSearchQuery.toLowerCase()) ||
-      item.brand.toLowerCase().includes(heroSearchQuery.toLowerCase())
-    );
-    return match ? `/shop/${match.category}/${match.id}` : `/shop/phones`;
+    const match = searchResults[0];
+    return match ? `/shop/${match.category.toLowerCase()}/${match.slug}` : `/shop/phones`;
   };
 
   return (
@@ -364,29 +365,23 @@ function Hero() {
                       <div>
                         <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-3">Refurbished Matching Items</p>
                         <div className="space-y-2 max-h-[240px] overflow-y-auto pr-1">
-                          {MOCK_HERO_SEARCH_ITEMS.filter((item) =>
-                            item.title.toLowerCase().includes(heroSearchQuery.toLowerCase()) ||
-                            item.brand.toLowerCase().includes(heroSearchQuery.toLowerCase())
-                          ).map((item) => (
+                          {searchResults.map((item) => (
                             <a
                               key={item.id}
-                              href={`/shop/${item.category}/${item.id}`}
+                              href={`/shop/${item.category.toLowerCase()}/${item.slug}`}
                               className="flex items-center gap-4 p-2 rounded-xl hover:bg-zinc-50 transition-colors group"
                             >
                               <div className="h-10 w-10 bg-zinc-100 rounded-lg p-1.5 flex items-center justify-center shrink-0">
-                                <img src={item.image} alt={item.title} className="h-full w-full object-contain mix-blend-multiply" />
+                                <img src={item.images?.[0] || undefined} alt={item.name} className="h-full w-full object-contain mix-blend-multiply" />
                               </div>
                               <div className="min-w-0 flex-1">
-                                <p className="text-xs font-bold text-zinc-950 group-hover:text-black">{item.title}</p>
+                                <p className="text-xs font-bold text-zinc-950 group-hover:text-black">{item.name}</p>
                                 <p className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider mt-0.5">{item.brand} • {item.category}</p>
                               </div>
                               <span className="text-xs font-extrabold text-zinc-950">£{item.price}</span>
                             </a>
                           ))}
-                          {MOCK_HERO_SEARCH_ITEMS.filter((item) =>
-                            item.title.toLowerCase().includes(heroSearchQuery.toLowerCase()) ||
-                            item.brand.toLowerCase().includes(heroSearchQuery.toLowerCase())
-                          ).length === 0 && (
+                          {searchResults.length === 0 && (
                             <p className="text-xs font-bold text-zinc-400 py-4 text-center">No matching refurbished items found.</p>
                           )}
                         </div>
@@ -690,13 +685,13 @@ function TrustPillars() {
 
 // ─── Trending Deals ───────────────────────────────────────────────────────────
 function TrendingDeals() {
-  const featured = { name: "iPhone 15 Pro", spec: "256 GB · Natural Titanium", price: 739, was: 1199, grade: "Excellent", img: "/showcase_iphone.png" };
-  const secondary = [
-    { name: "MacBook Air M3", spec: "8 GB · 256 GB SSD", price: 999,  was: 1499, grade: "Pristine",  img: "/showcase_macbook.png", link: "/shop/laptops/mbam2" },
-    { name: "Sony WH-1000XM5", spec: "Noise Cancelling · Black", price: 199, was: 380, grade: "Good", img: "/showcase_sony_wh1000xm5.png", link: "/shop/audio/wh1000" },
-    { name: "iPad Pro 13\" M4", spec: "M4 · 128 GB · Wi-Fi", price: 899, was: 1299, grade: "Excellent", img: "/showcase_ipad_pro.png", link: "/shop/tablets/ipadpro13" },
-    { name: "Galaxy S24 Ultra", spec: "256 GB · Titanium Black", price: 819, was: 1249, grade: "Excellent", img: "/showcase_galaxy_s24.png", link: "/shop/phones/sgs24u" },
-  ];
+  const [apiProducts, setApiProducts] = useState<any[]>([]);
+  useEffect(() => {
+    productsApi.list({ limit: 8 }).then(r => setApiProducts(r.items)).catch(() => {});
+  }, []);
+
+  const featured = apiProducts[0] ?? null;
+  const secondary = apiProducts.slice(1, 5);
 
   const gradeDot: Record<string, string> = {
     Pristine:   "bg-emerald-500",
@@ -704,6 +699,8 @@ function TrendingDeals() {
     "Very Good":"bg-violet-500",
     Good:       "bg-amber-500",
   };
+
+  if (!featured) return null;
 
   return (
     <section className="py-24 overflow-hidden">
@@ -723,7 +720,7 @@ function TrendingDeals() {
 
           {/* Featured — large portrait card */}
           <motion.a
-            href="/shop/phones/ip15pro"
+            href={`/shop/${featured.category.toLowerCase()}/${featured.slug}`}
             initial={{ opacity: 0, x: -24 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
@@ -731,27 +728,31 @@ function TrendingDeals() {
             className="group relative overflow-hidden rounded-[2.5rem] bg-zinc-100 cursor-pointer block"
           >
             <div className="aspect-4/3 lg:aspect-auto lg:h-[520px] w-full relative">
-              <img src={featured.img} alt={featured.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-700" />
+              <img src={featured.images?.[0] || undefined} alt={featured.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-700" />
               <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/80 via-zinc-950/20 to-transparent" />
 
               {/* Grade badge */}
               <div className="absolute top-6 left-6 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/90 backdrop-blur-sm text-[10px] font-bold uppercase tracking-widest shadow-sm">
-                <span className={`h-2 w-2 rounded-full ${gradeDot[featured.grade]}`} />
-                {featured.grade}
+                <span className={`h-2 w-2 rounded-full ${gradeDot[featured.condition]}`} />
+                {featured.condition}
               </div>
 
               {/* Save pct badge */}
-              <div className="absolute top-6 right-6 px-3 py-1.5 rounded-full bg-accent text-[10px] font-bold shadow-sm">
-                -{Math.round((1 - featured.price / featured.was) * 100)}%
-              </div>
+              {featured.comparePrice && (
+                <div className="absolute top-6 right-6 px-3 py-1.5 rounded-full bg-accent text-[10px] font-bold shadow-sm">
+                  -{Math.round((1 - featured.price / featured.comparePrice) * 100)}%
+                </div>
+              )}
 
               <div className="absolute bottom-0 left-0 right-0 p-8">
-                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/50 mb-2">Apple</p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/50 mb-2">{featured.brand}</p>
                 <h3 className="font-serif text-3xl font-medium text-white mb-1 leading-tight">{featured.name}</h3>
-                <p className="text-sm text-white/60 font-medium mb-5">{featured.spec}</p>
+                <p className="text-sm text-white/60 font-medium mb-5">{String((featured.specs as any)?.storage ?? featured.model ?? "—")}</p>
                 <div className="flex items-baseline gap-3">
                   <span className="text-3xl font-bold text-white tracking-tighter">£{featured.price}</span>
-                  <span className="text-base text-white/40 line-through">£{featured.was}</span>
+                  {featured.comparePrice && (
+                    <span className="text-base text-white/40 line-through">£{featured.comparePrice}</span>
+                  )}
                 </div>
               </div>
             </div>
@@ -761,8 +762,8 @@ function TrendingDeals() {
           <div className="grid grid-cols-2 gap-5">
             {secondary.map((deal, i) => (
               <motion.a
-                key={deal.name}
-                href={deal.link}
+                key={deal.id}
+                href={`/shop/${deal.category.toLowerCase()}/${deal.slug}`}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -770,24 +771,28 @@ function TrendingDeals() {
                 className="group cursor-pointer block"
               >
                 <div className="relative aspect-square overflow-hidden rounded-3xl bg-zinc-100 mb-3">
-                  <img src={deal.img} alt={deal.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                  <img src={deal.images?.[0] || undefined} alt={deal.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-700" />
                   <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   <div className="absolute top-3 left-3 flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/90 backdrop-blur-sm text-[9px] font-bold uppercase tracking-widest shadow-sm">
-                    <span className={`h-1.5 w-1.5 rounded-full ${gradeDot[deal.grade]}`} />
-                    {deal.grade}
+                    <span className={`h-1.5 w-1.5 rounded-full ${gradeDot[deal.condition]}`} />
+                    {deal.condition}
                   </div>
-                  <span className="absolute top-3 right-3 px-2 py-1 rounded-full bg-accent text-[9px] font-bold shadow-sm">
-                    -{Math.round((1 - deal.price / deal.was) * 100)}%
-                  </span>
+                  {deal.comparePrice && (
+                    <span className="absolute top-3 right-3 px-2 py-1 rounded-full bg-accent text-[9px] font-bold shadow-sm">
+                      -{Math.round((1 - deal.price / deal.comparePrice) * 100)}%
+                    </span>
+                  )}
                   <div className="absolute bottom-3 right-3 h-10 w-10 rounded-full bg-zinc-950 text-white flex items-center justify-center opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 shadow-lg">
                     <ShoppingCart className="h-4 w-4" />
                   </div>
                 </div>
                 <p className="font-bold text-zinc-950 text-sm truncate mb-0.5">{deal.name}</p>
-                <p className="text-[11px] text-zinc-400 font-medium mb-2 truncate">{deal.spec}</p>
+                <p className="text-[11px] text-zinc-400 font-medium mb-2 truncate">{String((deal.specs as any)?.storage ?? deal.model ?? "—")}</p>
                 <div className="flex items-baseline gap-2">
                   <span className="text-lg font-bold text-zinc-950">£{deal.price}</span>
-                  <span className="text-xs text-zinc-300 line-through">£{deal.was}</span>
+                  {deal.comparePrice && (
+                    <span className="text-xs text-zinc-300 line-through">£{deal.comparePrice}</span>
+                  )}
                 </div>
               </motion.a>
             ))}
@@ -1158,7 +1163,7 @@ function ShopByBudget() {
       sub: "Audio, accessories & basics",
       count: "3,240+",
       tags: ["Earbuds", "Cables", "Smart Speakers", "Mice"],
-      img: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=1200&h=700&fit=crop&q=80",
+      img: "/banners/headphones.jpg",
       accent: "bg-emerald-400",
       link: "/shop/audio",
     },
@@ -1167,7 +1172,7 @@ function ShopByBudget() {
       sub: "Tablets, gaming & wearables",
       count: "7,810+",
       tags: ["Nintendo Switch", "Tablets", "Smartwatches", "Cameras"],
-      img: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=1200&h=700&fit=crop&q=80",
+      img: "/banners/gaming.jpg",
       accent: "bg-sky-400",
       link: "/shop/tablets",
     },
@@ -1176,7 +1181,7 @@ function ShopByBudget() {
       sub: "Flagship phones & cameras",
       count: "9,120+",
       tags: ["iPhone 14", "Pixel 8 Pro", "Galaxy S23", "iPad Pro"],
-      img: "https://images.unsplash.com/photo-1616348436168-de43ad0db179?w=1200&h=700&fit=crop&q=80",
+      img: "/banners/phone.jpg",
       accent: "bg-violet-400",
       link: "/shop/phones",
     },
@@ -1185,7 +1190,7 @@ function ShopByBudget() {
       sub: "Pro laptops, no compromise",
       count: "4,580+",
       tags: ["MacBook Pro M3", "iPhone 15 Pro", "Surface Pro", "Dell XPS"],
-      img: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=1200&h=700&fit=crop&q=80",
+      img: "/banners/macbook.jpg",
       accent: "bg-amber-400",
       link: "/shop/laptops",
     },
@@ -1263,85 +1268,135 @@ function ShopByBudget() {
 
 // ─── Best Deals Split ─────────────────────────────────────────────────────────
 function BestDealsSplit() {
-  const pills = [
-    { name: "Flash Deals", icon: Zap, bg: "bg-emerald-100", text: "text-emerald-700" },
-    { name: "Price drop", icon: TrendingUp, bg: "bg-emerald-100", text: "text-emerald-700" },
-    { name: "MacBook", img: "https://picsum.photos/seed/macp/60/60" },
-    { name: "iPad", img: "https://picsum.photos/seed/ipadp/60/60" },
-    { name: "Android", img: "https://picsum.photos/seed/andp/60/60" },
-    { name: "iPhone", img: "https://picsum.photos/seed/iphp/60/60" },
-    { name: "Retro tech", img: "https://picsum.photos/seed/retp/60/60" },
-    { name: "AirPods", img: "https://picsum.photos/seed/airp/60/60" },
-  ];
+  const [allProducts, setAllProducts] = useState<any[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
+  const { addItem } = useCart();
 
-  const products = [
-    { name: "Smart Watch Samsung HR", spec: "GPS Galaxy Watch 8 Classic", price: "209.00", was: "£459.24 new", grade: "Excellent", rating: "4.7/5 (27)", img: "https://picsum.photos/seed/sw1/400/400" },
-    { name: "Smart Watch Samsung HR", spec: "GPS Galaxy Watch 8 Classic", price: "232.00", was: "£459.24 new", grade: "Good", rating: "4.7/5 (27)", img: "https://picsum.photos/seed/sw2/400/400" },
-    { name: "Smart Watch Samsung HR", spec: "GPS Galaxy Watch 8 Classic", price: "197.00", was: "£550.00 new", grade: "Excellent", rating: "5/5 (3)", img: "https://picsum.photos/seed/sw3/400/400" },
-  ];
+  useEffect(() => {
+    productsApi.list({ limit: 24 }).then(r => setAllProducts(r.items)).catch(() => {});
+  }, []);
+
+  // Unique category pills from real DB products
+  const categoryPills = (() => {
+    const seen = new Set<string>();
+    const pills: { name: string; img: string; category: string }[] = [];
+    for (const p of allProducts) {
+      if (!seen.has(p.category)) {
+        seen.add(p.category);
+        pills.push({ name: p.category, img: p.images?.[0] ?? "", category: p.category });
+      }
+    }
+    return pills.slice(0, 6);
+  })();
+
+  const filtered = selectedCategory === "all"
+    ? allProducts.slice(0, 3)
+    : allProducts.filter(p => p.category === selectedCategory).slice(0, 3);
+
+  const WARZONE_IMG = "/banners/gaming-room.jpg";
+  const isAllSelected = selectedCategory === "all";
+  const leftImage = isAllSelected
+    ? WARZONE_IMG
+    : (filtered[0]?.images?.[0] ?? allProducts[0]?.images?.[0] ?? WARZONE_IMG);
+
+  async function handleAdd(p: any) {
+    try {
+      await addItem({ productId: p.id, quantity: 1, price: p.price, name: p.name, slug: p.slug, image: p.images?.[0] });
+    } catch {}
+    setAddedIds(prev => new Set(prev).add(p.id));
+    setTimeout(() => setAddedIds(prev => { const s = new Set(prev); s.delete(p.id); return s; }), 2000);
+  }
 
   return (
     <section className="bg-zinc-50 py-16 md:py-24 overflow-hidden border-t border-zinc-100">
       <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
         <h2 className="text-3xl md:text-4xl font-normal tracking-tight text-zinc-950 mb-6">Shop our best deals</h2>
-        
+
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
-          {/* Left Image */}
-          <div className="w-full lg:w-[40%] xl:w-[450px] flex-shrink-0 relative rounded-2xl overflow-hidden aspect-[4/5] lg:aspect-auto lg:h-[500px]">
-            <img src="https://images.unsplash.com/photo-1593305841991-05c297ba4575?w=800&h=1000&fit=crop" alt="Tennis court with tech" className="absolute inset-0 w-full h-full object-cover" />
+          {/* Left Image — static banner for All, product image for categories */}
+          <div className={`w-full lg:w-[40%] xl:w-[450px] flex-shrink-0 relative rounded-2xl overflow-hidden aspect-[4/5] lg:aspect-auto lg:h-[500px] ${isAllSelected ? "bg-zinc-900" : "bg-[#f5f5f7]"}`}>
+            {leftImage && (
+              <img
+                src={leftImage}
+                alt="Featured product"
+                className={`absolute inset-0 w-full h-full ${isAllSelected ? "object-cover" : "object-contain p-8"}`}
+              />
+            )}
           </div>
 
           {/* Right Content */}
           <div className="flex-1 min-w-0 flex flex-col">
-            {/* Pills */}
+            {/* Category Pills from DB */}
             <div className="flex gap-2.5 overflow-x-auto scrollbar-hide pb-4 mb-2">
-              {pills.map((pill, i) => (
-                <div key={i} className="flex flex-col items-center gap-1.5 flex-shrink-0 w-[64px] cursor-pointer group">
-                  <div className="h-12 w-[64px] rounded-xl bg-zinc-50 border border-transparent shadow-[0_1px_2px_rgba(0,0,0,0.02)] flex items-center justify-center overflow-hidden group-hover:bg-white group-hover:border-zinc-200 transition-colors">
-                    {pill.icon ? (
-                      <div className={`h-8 w-10 rounded-lg flex items-center justify-center ${pill.bg} ${pill.text}`}>
-                        <pill.icon className="h-4 w-4" />
-                      </div>
-                    ) : (
-                      <img src={pill.img} alt={pill.name} className="h-8 w-8 object-contain mix-blend-multiply" />
-                    )}
-                  </div>
-                  <span className="text-[10px] font-medium text-zinc-600 text-center leading-tight">{pill.name}</span>
+              {/* All pill */}
+              <button
+                onClick={() => setSelectedCategory("all")}
+                className="flex flex-col items-center gap-1.5 flex-shrink-0 w-[64px] group"
+              >
+                <div className={`h-12 w-[64px] rounded-xl border flex items-center justify-center transition-colors ${selectedCategory === "all" ? "bg-zinc-950 border-zinc-950" : "bg-zinc-50 border-transparent hover:bg-white hover:border-zinc-200"}`}>
+                  <Zap className={`h-4 w-4 ${selectedCategory === "all" ? "text-accent" : "text-emerald-600"}`} />
                 </div>
+                <span className="text-[10px] font-medium text-zinc-600 text-center leading-tight">All Deals</span>
+              </button>
+
+              {categoryPills.map((pill) => (
+                <button
+                  key={pill.category}
+                  onClick={() => setSelectedCategory(pill.category)}
+                  className="flex flex-col items-center gap-1.5 flex-shrink-0 w-[64px] group"
+                >
+                  <div className={`h-12 w-[64px] rounded-xl border overflow-hidden flex items-center justify-center transition-colors ${selectedCategory === pill.category ? "border-zinc-950 bg-white shadow-sm" : "bg-zinc-50 border-transparent hover:bg-white hover:border-zinc-200"}`}>
+                    {pill.img
+                      ? <img src={pill.img} alt={pill.name} className="h-9 w-9 object-contain mix-blend-multiply" />
+                      : <span className="text-[9px] font-bold text-zinc-500 uppercase">{pill.name.slice(0, 3)}</span>
+                    }
+                  </div>
+                  <span className="text-[10px] font-medium text-zinc-600 text-center leading-tight truncate w-full">{pill.name}</span>
+                </button>
               ))}
             </div>
 
             {/* Products */}
             <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-4">
-              {products.map((p, i) => (
-                <div key={i} className="w-[260px] flex-shrink-0 bg-white rounded-xl p-4 border border-zinc-200/60 shadow-sm hover:shadow-md transition-shadow flex flex-col">
-                  <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold tracking-widest w-fit mb-3">
-                    <Zap className="h-3 w-3" /> Flash deal
+              {filtered.map((p) => {
+                const priceStr = p.price.toFixed(2);
+                const was = "£" + (p.comparePrice ?? p.price * 1.3).toFixed(2) + " new";
+                const [pWhole, pDec] = priceStr.split(".");
+                const added = addedIds.has(p.id);
+                return (
+                  <div key={p.id} className="w-[260px] flex-shrink-0 bg-white rounded-xl p-4 border border-zinc-200/60 shadow-sm hover:shadow-md transition-shadow flex flex-col">
+                    <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold tracking-widest w-fit mb-3">
+                      <Zap className="h-3 w-3" /> Flash deal
+                    </div>
+                    <Link href={`/shop/${p.category.toLowerCase()}/${p.slug}`} className="block">
+                      <div className="h-40 w-full rounded-xl mb-3 overflow-hidden flex items-center justify-center bg-[#f5f5f7]">
+                        {p.images?.[0] && <img src={p.images[0]} alt={p.name} className="max-h-full max-w-full object-contain mix-blend-multiply" />}
+                      </div>
+                      <p className="font-normal text-zinc-950 text-[13px] leading-snug mb-1 line-clamp-2 hover:underline">{p.name}</p>
+                    </Link>
+                    <p className="text-[11px] text-zinc-500 mb-2">{p.condition}</p>
+                    <div className="flex items-center gap-1 mb-5">
+                      {[...Array(5)].map((_, k) => <Star key={k} className="h-3 w-3 fill-zinc-950 text-zinc-950" />)}
+                      <span className="text-[10px] font-bold text-zinc-500 ml-1">{p.rating?.toFixed(1)}/5 ({p.reviewCount})</span>
+                    </div>
+                    <div className="mt-auto pt-4 border-t border-zinc-100">
+                      <p className="text-2xl font-bold text-emerald-700 mb-0.5">
+                        £{pWhole}<span className="text-sm font-bold relative -top-1.5">.{pDec}</span>
+                      </p>
+                      <p className="text-[11px] text-zinc-400 line-through mb-4">{was}</p>
+                      <button
+                        onClick={() => handleAdd(p)}
+                        className={`w-full h-10 rounded-lg font-bold text-[13px] flex items-center justify-center gap-2 transition-colors ${added ? "bg-emerald-500 text-white border-emerald-500 border" : "border border-zinc-200 text-zinc-950 hover:border-zinc-950"}`}
+                      >
+                        {added ? <><Check className="h-4 w-4" /> Added!</> : <><span className="text-lg leading-none">+</span> Add to cart</>}
+                      </button>
+                    </div>
                   </div>
-                  <div className="h-40 w-full rounded-xl mb-3 overflow-hidden flex items-center justify-center relative">
-                    <img src={p.img} alt={p.name} className="h-full object-contain mix-blend-multiply" />
-                  </div>
-                  <p className="font-normal text-zinc-950 text-[13px] leading-snug mb-1 line-clamp-2">{p.name} {p.spec}</p>
-                  <p className="text-[11px] text-zinc-500 mb-2">{p.grade}</p>
-                  <div className="flex items-center gap-1 mb-5">
-                    {[...Array(5)].map((_, k) => <Star key={k} className="h-3 w-3 fill-zinc-950 text-zinc-950" />)}
-                    <span className="text-[10px] font-bold text-zinc-500 ml-1">{p.rating}</span>
-                  </div>
-                  <div className="mt-auto pt-4 border-t border-zinc-100">
-                    <p className="text-2xl font-bold text-emerald-700 mb-0.5">
-                      £{p.price.split('.')[0]}
-                      <span className="text-sm font-bold relative -top-1.5">.{p.price.split('.')[1]}</span>
-                    </p>
-                    <p className="text-[10px] text-emerald-700 font-bold mb-1 flex items-center gap-1">After £20 off at checkout <span className="h-3 w-3 rounded-full border border-emerald-700 text-[8px] flex items-center justify-center font-bold">i</span></p>
-                    <p className="text-[11px] text-zinc-400 line-through mb-4">{p.was}</p>
-                    <button className="w-full h-10 border border-zinc-200 rounded-lg font-bold text-[13px] text-zinc-950 hover:border-zinc-950 transition-colors flex items-center justify-center gap-2">
-                      <span className="text-lg leading-none">+</span> Add to cart
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
-            
+
             <div className="flex justify-end gap-3 mt-4">
               <button className="h-10 w-10 rounded-full bg-zinc-100 text-zinc-400 flex items-center justify-center">
                 <span className="text-xl leading-none -mt-1">‹</span>
@@ -1359,14 +1414,10 @@ function BestDealsSplit() {
 
 // ─── New Arrivals ─────────────────────────────────────────────────────────────
 function NewArrivals() {
-  const items = [
-    { name: "iPhone 15",          type: "Smartphone", price: "£699",   grade: "Pristine",  img: "https://picsum.photos/seed/ip15na/400/400", slug: "phones" },
-    { name: "MacBook Pro 14\"",   type: "Laptop",     price: "£1,199", grade: "Excellent", img: "https://picsum.photos/seed/mbp14na/400/400", slug: "laptops" },
-    { name: "Samsung Tab S9",     type: "Tablet",     price: "£499",   grade: "Pristine",  img: "https://picsum.photos/seed/tabs9na/400/400", slug: "tablets" },
-    { name: "Pixel 8 Pro",        type: "Smartphone", price: "£499",   grade: "Excellent", img: "https://picsum.photos/seed/px8pna/400/400", slug: "phones" },
-    { name: "DJI Mini 4 Pro",     type: "Camera",     price: "£549",   grade: "Good",      img: "https://picsum.photos/seed/djim4na/400/400", slug: "consoles" },
-    { name: "Apple Watch S9",     type: "Wearable",   price: "£299",   grade: "Excellent", img: "https://picsum.photos/seed/aws9na/400/400", slug: "phones" },
-  ];
+  const [items, setItems] = useState<any[]>([]);
+  useEffect(() => {
+    productsApi.list({ limit: 6 }).then(r => setItems(r.items)).catch(() => {});
+  }, []);
 
   const gradeColor: Record<string, string> = {
     Pristine:  "bg-emerald-50 text-emerald-700",
@@ -1393,15 +1444,15 @@ function NewArrivals() {
 
       <div className="flex gap-5 overflow-x-auto scrollbar-hide pl-4 sm:pl-6 lg:pl-8 pr-8 pb-2">
         {items.map((item, i) => (
-          <Link href={`/shop/${item.slug}`} key={i} className="block group flex-shrink-0 w-[220px] md:w-[240px] cursor-pointer">
+          <Link href={`/shop/${item.category.toLowerCase()}/${item.slug}`} key={i} className="block group flex-shrink-0 w-[220px] md:w-[240px] cursor-pointer">
             <div className="relative aspect-square rounded-3xl bg-zinc-50 overflow-hidden mb-4">
               <img
-                src={item.img}
+                src={item.images?.[0] || undefined}
                 alt={item.name}
                 className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
-              <div className={`absolute top-3 left-3 px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest ${gradeColor[item.grade]}`}>
-                {item.grade}
+              <div className={`absolute top-3 left-3 px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest ${gradeColor[item.condition]}`}>
+                {item.condition}
               </div>
               <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-zinc-950 text-white text-[9px] font-bold uppercase tracking-widest">
                 New
@@ -1410,9 +1461,9 @@ function NewArrivals() {
                 <ShoppingCart className="h-4 w-4" />
               </button>
             </div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1">{item.type}</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1">{item.category}</p>
             <p className="font-bold text-zinc-950 mb-1 truncate">{item.name}</p>
-            <p className="text-lg font-bold text-zinc-950">{item.price}</p>
+            <p className="text-lg font-bold text-zinc-950">£{item.price}</p>
           </Link>
         ))}
       </div>
@@ -1514,7 +1565,7 @@ function GradeGuide() {
       battery: 95, saving: 30, fromPrice: "From £199",
       rating: 4.9, reviewCount: "4,200", conditionLabel: "Zero marks",
       sketchLevel: 0, featured: false,
-      img: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800&h=900&fit=crop&q=75",
+      img: "/banners/phone-pristine.jpg",
       features: ["Flawless screen — zero scratches", "Original or equivalent accessories", "25/25 inspection points passed", "Near-sealed condition packaging"],
       products: [{ name: "iPhone 15 Pro", price: "£739" }, { name: "MacBook Pro M3", price: "£1,699" }, { name: "Galaxy S24 Ultra", price: "£899" }],
       barClass: "bg-emerald-500", textClass: "text-emerald-400",
@@ -1525,7 +1576,7 @@ function GradeGuide() {
       battery: 85, saving: 45, fromPrice: "From £129",
       rating: 4.8, reviewCount: "12,400", conditionLabel: "Micro-scratches",
       sketchLevel: 1, featured: true,
-      img: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800&h=900&fit=crop&q=75",
+      img: "/banners/macbook.jpg",
       features: ["Micro-scratches not visible in use", "Battery 85%+ certified by engineers", "All ports, cameras & buttons tested", "Thoroughly cleaned and sanitised"],
       products: [{ name: "iPhone 14 Pro", price: "£549" }, { name: "MacBook Air M2", price: "£849" }, { name: "Samsung S23", price: "£429" }],
       barClass: "bg-sky-400", textClass: "text-sky-400",
@@ -1536,7 +1587,7 @@ function GradeGuide() {
       battery: 80, saving: 60, fromPrice: "From £69",
       rating: 4.7, reviewCount: "8,900", conditionLabel: "Visible wear",
       sketchLevel: 2, featured: false,
-      img: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&h=900&fit=crop&q=75",
+      img: "/banners/gaming.jpg",
       features: ["Visible scratches or scuffs on body", "Battery 80%+ certified by engineers", "All features 100% working", "Best price-to-performance on TechStop"],
       products: [{ name: "iPhone 13", price: "£299" }, { name: "MacBook Air M1", price: "£649" }, { name: "Pixel 7 Pro", price: "£349" }],
       barClass: "bg-amber-500", textClass: "text-amber-400",
@@ -1893,8 +1944,18 @@ function ProductCard({ name, type, spec, price, was, grade, img, index = 0, link
 
 // ─── Featured Shop (sticky tabs + animated product grid) ──────────────────────
 function FeaturedShop() {
-  const cats = ["Smartphones", "Laptops", "Tablets", "Audio", "Gaming", "Wearables"];
+  const cats = ["Smartphones", "Laptops", "Tablets", "Audio", "Gaming"];
   const [active, setActive] = useState("Smartphones");
+  const [cache, setCache] = useState<Record<string, PCard[]>>({});
+  const [loading, setLoading] = useState(false);
+
+  const catApiMap: Record<string, string> = {
+    "Smartphones": "Phones",
+    "Laptops": "Laptops",
+    "Tablets": "Tablets",
+    "Audio": "Accessories",
+    "Gaming": "Consoles",
+  };
 
   const catSlugMap: Record<string, string> = {
     "Smartphones": "phones",
@@ -1902,52 +1963,30 @@ function FeaturedShop() {
     "Tablets": "tablets",
     "Audio": "audio",
     "Gaming": "consoles",
-    "Wearables": "phones",
   };
 
-  const products: Record<string, PCard[]> = {
-    "Smartphones": [
-      { name: "iPhone 15 Pro",       type: "Apple",     spec: "256GB · Natural Titanium",   price: "£799",   was: "£1,199", grade: "Excellent", img: "https://picsum.photos/seed/ip15px/400/400" },
-      { name: "Samsung Galaxy S24",  type: "Samsung",   spec: "256GB · Marble Grey",        price: "£599",   was: "£1,099", grade: "Excellent", img: "https://picsum.photos/seed/sgs24x/400/400" },
-      { name: "Google Pixel 8 Pro",  type: "Google",    spec: "128GB · Obsidian",           price: "£499",   was: "£899",   grade: "Pristine",  img: "https://picsum.photos/seed/px8x/400/400" },
-      { name: "iPhone 14 Pro",       type: "Apple",     spec: "128GB · Deep Purple",        price: "£549",   was: "£849",   grade: "Good",      img: "https://picsum.photos/seed/ip14x/400/400" },
-      { name: "OnePlus 12",          type: "OnePlus",   spec: "256GB · Flowy Emerald",      price: "£449",   was: "£799",   grade: "Excellent", img: "https://picsum.photos/seed/op12x/400/400" },
-      { name: "iPhone 13",           type: "Apple",     spec: "128GB · Midnight",           price: "£329",   was: "£599",   grade: "Good",      img: "https://picsum.photos/seed/ip13zx/400/400" },
-    ],
-    "Laptops": [
-      { name: "MacBook Air M3",      type: "Apple",   spec: "8GB · 256GB SSD",           price: "£949",   was: "£1,299", grade: "Pristine",  img: "https://picsum.photos/seed/mbm3x/400/400" },
-      { name: "Dell XPS 15",         type: "Dell",    spec: "16GB · 512GB SSD",          price: "£749",   was: "£1,199", grade: "Excellent", img: "https://picsum.photos/seed/dxpsx/400/400" },
-      { name: "Surface Laptop 5",    type: "Microsoft", spec: "16GB · 256GB · Platinum", price: "£649",   was: "£999",   grade: "Good",      img: "https://picsum.photos/seed/sl5x/400/400" },
-      { name: "MacBook Pro 14\"",    type: "Apple",   spec: "M2 Pro · 16GB",             price: "£1,299", was: "£1,899", grade: "Excellent", img: "https://picsum.photos/seed/mbp14cx/400/400" },
-      { name: "ThinkPad X1 Carbon",  type: "Lenovo",  spec: "16GB · 512GB",              price: "£699",   was: "£1,399", grade: "Good",      img: "https://picsum.photos/seed/tx1cx/400/400" },
-    ],
-    "Tablets": [
-      { name: "iPad Pro 12.9\"",     type: "Apple",   spec: "M2 · 128GB · WiFi",         price: "£699",   was: "£1,099", grade: "Excellent", img: "https://picsum.photos/seed/ipadpx/400/400" },
-      { name: "Samsung Tab S9+",     type: "Samsung", spec: "256GB · WiFi · Pink Gold",  price: "£599",   was: "£899",   grade: "Pristine",  img: "https://picsum.photos/seed/tabs9px/400/400" },
-      { name: "iPad 10th Gen",       type: "Apple",   spec: "64GB · WiFi · Blue",        price: "£299",   was: "£499",   grade: "Good",      img: "https://picsum.photos/seed/ip10x/400/400" },
-      { name: "iPad Mini 6",         type: "Apple",   spec: "64GB · Space Grey",         price: "£349",   was: "£499",   grade: "Excellent", img: "https://picsum.photos/seed/ipm6x/400/400" },
-    ],
-    "Audio": [
-      { name: "AirPods Pro 2",       type: "Apple",     spec: "USB-C · ANC · White",       price: "£149",   was: "£279",   grade: "Excellent", img: "https://picsum.photos/seed/app2x/400/400" },
-      { name: "Sony WH-1000XM5",     type: "Sony",      spec: "Wireless · Noise Cancelling", price: "£199",  was: "£380",   grade: "Good",      img: "https://picsum.photos/seed/xm5x/400/400" },
-      { name: "Bose QC45",           type: "Bose",      spec: "Wireless · White Smoke",    price: "£149",   was: "£329",   grade: "Excellent", img: "https://picsum.photos/seed/bqc45x/400/400" },
-      { name: "Samsung Buds2 Pro",   type: "Samsung",   spec: "Graphite",                  price: "£89",    was: "£229",   grade: "Good",      img: "https://picsum.photos/seed/sbb2x/400/400" },
-    ],
-    "Gaming": [
-      { name: "PS5 Disc Edition",    type: "Sony",      spec: "825GB SSD · White",         price: "£349",   was: "£479",   grade: "Excellent", img: "https://picsum.photos/seed/ps5cx/400/400" },
-      { name: "Xbox Series X",       type: "Microsoft", spec: "1TB · Carbon Black",        price: "£299",   was: "£449",   grade: "Good",      img: "https://picsum.photos/seed/xbxx/400/400" },
-      { name: "Nintendo Switch OLED",type: "Nintendo",  spec: "64GB · White",              price: "£219",   was: "£309",   grade: "Good",      img: "https://picsum.photos/seed/nswx/400/400" },
-      { name: "Steam Deck",          type: "Valve",     spec: "512GB NVMe",                price: "£379",   was: "£569",   grade: "Excellent", img: "https://picsum.photos/seed/stmdx/400/400" },
-    ],
-    "Wearables": [
-      { name: "Apple Watch S9",      type: "Apple",     spec: "45mm · GPS · Midnight",     price: "£299",   was: "£429",   grade: "Pristine",  img: "https://picsum.photos/seed/aws9x/400/400" },
-      { name: "Samsung Watch 6",     type: "Samsung",   spec: "44mm · LTE · Graphite",     price: "£199",   was: "£329",   grade: "Excellent", img: "https://picsum.photos/seed/sw6x/400/400" },
-      { name: "Garmin Fenix 7",      type: "Garmin",    spec: "GPS · Solar · Black DLC",   price: "£349",   was: "£679",   grade: "Good",      img: "https://picsum.photos/seed/gf7x/400/400" },
-      { name: "Apple Watch Ultra",   type: "Apple",     spec: "Cellular · Titanium",       price: "£499",   was: "£799",   grade: "Excellent", img: "https://picsum.photos/seed/awux/400/400" },
-    ],
-  };
+  useEffect(() => {
+    if (cache[active]) return;
+    setLoading(true);
+    productsApi.list({ category: catApiMap[active], limit: 6 })
+      .then(r => {
+        const mapped: PCard[] = r.items.map(p => ({
+          name: p.name,
+          type: p.brand,
+          spec: String((p.specs as Record<string, unknown>)?.storage ?? p.model ?? "—"),
+          price: `£${p.price}`,
+          was: `£${p.comparePrice ?? Math.round(p.price * 1.4)}`,
+          grade: p.condition,
+          img: p.images?.[0] ?? "",
+          link: `/shop/${catSlugMap[active]}/${p.slug}`,
+        }));
+        setCache(prev => ({ ...prev, [active]: mapped }));
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [active]);
 
-  const filtered = products[active] || [];
+  const filtered = cache[active] ?? [];
 
   return (
     <section id="shop" className="py-24 border-t border-zinc-100 bg-white overflow-hidden">
@@ -1990,21 +2029,35 @@ function FeaturedShop() {
             transition={{ duration: 0.3 }}
             className="flex gap-5 overflow-x-auto scrollbar-hide pr-8 pb-8"
           >
-            {filtered.map((p, i) => (
-              <div key={`${active}-${i}`} className="w-[260px] md:w-[280px] flex-shrink-0">
-                <ProductCard {...p} index={i} link={`/shop/${catSlugMap[active] ?? "phones"}`} />
-              </div>
-            ))}
-            
-            {/* View all card at the end */}
-            <div className="w-[260px] md:w-[280px] flex-shrink-0 flex items-center justify-center p-6 bg-zinc-50 rounded-2xl ring-1 ring-zinc-100">
-              <a href={`/shop/${catSlugMap[active] ?? "phones"}`} className="flex flex-col items-center justify-center gap-4 text-zinc-500 hover:text-zinc-950 transition-colors group">
-                <div className="h-16 w-16 rounded-full border-2 border-current flex items-center justify-center group-hover:bg-zinc-950 group-hover:text-white group-hover:border-zinc-950 transition-all shadow-sm group-hover:shadow-lg">
-                  <ArrowRight className="h-6 w-6" />
+            {loading ? (
+              [...Array(4)].map((_, i) => (
+                <div key={i} className="w-[260px] md:w-[280px] flex-shrink-0 animate-pulse">
+                  <div className="aspect-square rounded-2xl bg-zinc-100 mb-3" />
+                  <div className="h-3 bg-zinc-100 rounded-full w-1/3 mb-2" />
+                  <div className="h-4 bg-zinc-100 rounded-full w-3/4 mb-2" />
+                  <div className="h-3 bg-zinc-100 rounded-full w-1/2 mb-3" />
+                  <div className="h-5 bg-zinc-100 rounded-full w-1/3" />
                 </div>
-                <span className="font-bold text-sm uppercase tracking-widest text-center">See all<br/>{active}</span>
-              </a>
-            </div>
+              ))
+            ) : (
+              <>
+                {filtered.map((p, i) => (
+                  <div key={`${active}-${i}`} className="w-[260px] md:w-[280px] flex-shrink-0">
+                    <ProductCard {...p} index={i} />
+                  </div>
+                ))}
+
+                {/* View all card at the end */}
+                <div className="w-[260px] md:w-[280px] flex-shrink-0 flex items-center justify-center p-6 bg-zinc-50 rounded-2xl ring-1 ring-zinc-100">
+                  <a href={`/shop/${catSlugMap[active] ?? "phones"}`} className="flex flex-col items-center justify-center gap-4 text-zinc-500 hover:text-zinc-950 transition-colors group">
+                    <div className="h-16 w-16 rounded-full border-2 border-current flex items-center justify-center group-hover:bg-zinc-950 group-hover:text-white group-hover:border-zinc-950 transition-all shadow-sm group-hover:shadow-lg">
+                      <ArrowRight className="h-6 w-6" />
+                    </div>
+                    <span className="font-bold text-sm uppercase tracking-widest text-center">See all<br/>{active}</span>
+                  </a>
+                </div>
+              </>
+            )}
           </motion.div>
         </AnimatePresence>
       </div>
@@ -2039,7 +2092,7 @@ function TopBrandsSplit() {
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
           {/* Left Image */}
           <div className="w-full lg:w-[40%] xl:w-[450px] flex-shrink-0 relative rounded-2xl overflow-hidden aspect-[4/5] lg:aspect-auto lg:h-[500px]">
-            <img src="https://images.unsplash.com/photo-1616423640778-28d1b53229bd?w=800&h=1000&fit=crop" alt="Desk with tech" className="absolute inset-0 w-full h-full object-cover" />
+            <img src="/banners/desk-tech.jpg" alt="Desk with tech" className="absolute inset-0 w-full h-full object-cover" />
           </div>
 
           {/* Right Content */}

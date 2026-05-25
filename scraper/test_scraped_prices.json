@@ -1,0 +1,20 @@
+{
+  "Apple iPhone 15 Plus 128GB": {
+    "cex": {
+      "sellPrice": 470,
+      "buyCashPrice": null,
+      "buyExchangePrice": null
+    },
+    "backMarket": null,
+    "musicMagpie": null
+  },
+  "Apple iPhone 13 128GB": {
+    "cex": {
+      "sellPrice": 280,
+      "buyCashPrice": null,
+      "buyExchangePrice": null
+    },
+    "backMarket": null,
+    "musicMagpie": null
+  }
+}

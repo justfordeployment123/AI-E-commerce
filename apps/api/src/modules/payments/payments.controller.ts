@@ -7,8 +7,8 @@ export class PaymentsController {
     constructor(private readonly paymentsService: PaymentsService) {}
 
     @Post('intent')
-    createIntent(@Body() body: { items: { productId: string; quantity: number }[] }) {
-        return this.paymentsService.createIntent(body.items ?? []);
+    createIntent(@Body() body: { items: { productId: string; quantity: number }[]; promoCode?: string }) {
+        return this.paymentsService.createIntent(body.items ?? [], body.promoCode);
     }
 
     @Post('webhook')

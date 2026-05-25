@@ -67,7 +67,7 @@ function CartPageContent() {
 
   return (
     <div className="flex min-h-screen flex-col bg-[#f5f5f7] text-black font-sans selection:bg-accent selection:text-black">
-      <Navbar itemsCount={count} />
+      <Navbar />
 
       <main className="mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8 py-8 md:py-12">
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">

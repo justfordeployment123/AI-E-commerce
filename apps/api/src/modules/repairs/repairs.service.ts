@@ -29,7 +29,7 @@ export class RepairsService {
                     email:    user.email                         || (dto.contact as any).email    || '',
                     phone:    user.phone  || (dto.contact as any).phone    || '',
                     address:  user.address || (dto.contact as any).address || '',
-                    postcode: (dto.contact as any).postcode      || '',
+                    postcode: user.postcode || (dto.contact as any).postcode || '',
                 };
             }
         }

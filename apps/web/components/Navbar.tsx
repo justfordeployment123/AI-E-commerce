@@ -10,6 +10,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "../context/auth-context";
+import { useCart } from "../context/cart-context";
 import { NotificationBell } from "./NotificationBell";
 
 const SHOP_CATEGORIES = [
@@ -20,7 +21,8 @@ const SHOP_CATEGORIES = [
   { label: "Audio", href: "/shop/audio", icon: Headphones },
 ];
 
-export default function Navbar({ itemsCount = 0 }: { itemsCount?: number }) {
+export default function Navbar() {
+  const { count: itemsCount } = useCart();
   const [isOpen, setIsOpen] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -260,7 +262,7 @@ export default function Navbar({ itemsCount = 0 }: { itemsCount?: number }) {
 
               <Link href="/cart" className="relative flex items-center justify-center h-10 w-10 md:h-11 md:w-11 rounded-[14px] bg-accent text-black transition-transform hover:scale-105 active:scale-95 shadow-md shadow-accent/20">
                 <ShoppingCart className="h-4 w-4 md:h-5 md:w-5" />
-                {itemsCount >= 0 && (
+                {itemsCount > 0 && (
                   <span className="absolute -top-1 -right-1 flex h-4 w-4 md:h-5 md:w-5 items-center justify-center rounded-full bg-black text-[9px] font-bold text-white ring-2 ring-white">
                     {itemsCount}
                   </span>

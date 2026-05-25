@@ -3,6 +3,7 @@ import { PrismaService } from '../database/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { ShipOrderDto } from './dto/ship-order.dto';
+import { EmailService } from '../../common/services/email.service';
 
 const ORDER_INCLUDE = {
     items: {
@@ -17,7 +18,10 @@ const ORDER_INCLUDE = {
 
 @Injectable()
 export class OrdersService {
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly email: EmailService,
+    ) {}
 
     async create(dto: CreateOrderDto, userId?: string) {
         const productIds = dto.items.map((i) => i.productId);
@@ -40,7 +44,8 @@ export class OrdersService {
 
         const subtotal = lineItems.reduce((sum, li) => sum + li.price * li.quantity, 0);
         const shipping = subtotal >= 100 ? 0 : 5.99;
-        const total = subtotal + shipping;
+        const discount = dto.discount ?? 0;
+        const total = subtotal - discount + shipping;
 
         const order = await this.prisma.$transaction(async (tx) => {
             // Decrement stock
@@ -56,9 +61,11 @@ export class OrdersService {
                     userId,
                     subtotal,
                     shipping,
+                    discount,
                     total,
                     shippingAddress: dto.shippingAddress as object,
                     paymentMethod: dto.paymentMethod,
+                    paymentIntentId: dto.paymentIntentId,
                     notes: dto.notes,
                     items: {
                         create: lineItems,
@@ -67,6 +74,21 @@ export class OrdersService {
                 include: ORDER_INCLUDE,
             });
         });
+
+        // Send confirmation email (non-blocking)
+        if (order.user?.email) {
+            const addr = dto.shippingAddress as { name: string; address: string; city: string; postcode: string; country: string };
+            this.email.sendOrderConfirmation({
+                to:              order.user.email,
+                customerName:    order.user.name ?? 'Customer',
+                orderId:         order.id,
+                items:           order.items.map(i => ({ name: i.product.name, quantity: i.quantity, price: i.price })),
+                subtotal:        order.subtotal,
+                shipping:        order.shipping,
+                total:           order.total,
+                shippingAddress: addr,
+            });
+        }
 
         return order;
     }

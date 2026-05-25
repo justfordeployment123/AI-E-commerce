@@ -324,6 +324,7 @@ export default function TradeInPage() {
 
   // AI pricing states
   const [images, setImages] = useState<{ filePath: string; previewUrl: string }[]>([]);
+  const [batchId, setBatchId] = useState(() => crypto.randomUUID());
   const [imageUploading, setImageUploading] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiPrice, setAiPrice] = useState<number | null>(null);
@@ -332,20 +333,28 @@ export default function TradeInPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const modalScrollRef = useRef<HTMLDivElement>(null);
 
-  // Restore wizard state after Google OAuth redirect
+  // Restore wizard state on mount (after settings redirect or Google OAuth)
   useEffect(() => {
     const saved = sessionStorage.getItem("ts_wizard_tradein");
     if (saved) {
       try {
-        const { state: s, phase: savedPhase, aiPrice: savedAiPrice } = JSON.parse(saved);
+        const { state: s, phase: savedPhase, aiPrice: savedAiPrice, images: savedImages, batchId: savedBatchId } = JSON.parse(saved);
         setState(s);
         setPhase(savedPhase);
         if (savedAiPrice != null) setAiPrice(savedAiPrice);
+        if (savedImages?.length) setImages(savedImages);
+        if (savedBatchId) setBatchId(savedBatchId);
         setIsWizardActive(true);
       } catch {}
-      sessionStorage.removeItem("ts_wizard_tradein");
     }
   }, []);
+
+  // Auto-save wizard state to sessionStorage whenever anything changes
+  useEffect(() => {
+    if (isWizardActive) {
+      sessionStorage.setItem("ts_wizard_tradein", JSON.stringify({ state, phase, images, batchId, aiPrice }));
+    }
+  }, [state, phase, images, batchId, aiPrice, isWizardActive]);
 
   // Lock body scroll when wizard modal is active
   useEffect(() => {
@@ -407,6 +416,11 @@ export default function TradeInPage() {
     scrollToTop();
   };
 
+  const closeWizard = () => {
+    sessionStorage.removeItem("ts_wizard_tradein");
+    setIsWizardActive(false);
+  };
+
   const handleBack = () => {
     if (phase === 1) {
       if (state.model) {
@@ -417,7 +431,7 @@ export default function TradeInPage() {
       } else if (state.category) {
         setState(s => ({ ...s, category: "" }));
       } else {
-        setIsWizardActive(false);
+        closeWizard();
       }
     } else {
       if (phase === 4) {
@@ -1012,7 +1026,7 @@ export default function TradeInPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setIsWizardActive(false)}
+              onClick={closeWizard}
               className="fixed inset-0 bg-zinc-950/60 backdrop-blur-md"
             />
 
@@ -1027,7 +1041,7 @@ export default function TradeInPage() {
               {/* Close Button */}
               <button
                 type="button"
-                onClick={() => setIsWizardActive(false)}
+                onClick={closeWizard}
                 className="absolute top-6 right-6 h-10 w-10 rounded-full border border-zinc-200 bg-white hover:border-zinc-950 flex items-center justify-center text-zinc-500 hover:text-zinc-950 transition-colors z-20 cursor-pointer shadow-sm"
               >
                 <X className="h-5 w-5" />
@@ -1049,7 +1063,7 @@ export default function TradeInPage() {
                       files.slice(0, 6 - images.length).map(async (file) => {
                         const { blob, previewUrl } = await compressToBlob(file);
                         const uploadFile = new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), { type: "image/jpeg" });
-                        const { filePath } = await uploadsApi.image(uploadFile);
+                        const { filePath } = await uploadsApi.tradeInImage(uploadFile, batchId);
                         return { filePath, previewUrl };
                       })
                     );
@@ -1587,7 +1601,7 @@ export default function TradeInPage() {
 
                             <div className="pt-6 border-t border-zinc-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
                               <button
-                                onClick={() => { setAiPrice(null); setAiError(false); setImages([]); }}
+                                onClick={() => { setAiPrice(null); setAiError(false); setImages([]); setBatchId(crypto.randomUUID()); }}
                                 className="w-full sm:w-auto h-12 px-6 border border-zinc-200 rounded-xl font-bold text-xs text-zinc-600 hover:border-zinc-950 hover:text-zinc-950 transition-colors flex items-center justify-center shrink-0"
                               >
                                 <span className="whitespace-nowrap">Recalculate</span>
@@ -1616,8 +1630,9 @@ export default function TradeInPage() {
                               const missing: string[] = [];
                               if (!user.phone) missing.push("Phone number");
                               if (state.fulfillment === "ship") {
-                                if (!user.address) missing.push("Street address");
-                                if (!user.city)    missing.push("City");
+                                if (!user.address)  missing.push("Street address");
+                                if (!user.city)     missing.push("City");
+                                if (!user.postcode) missing.push("Postcode");
                               }
                               if (missing.length > 0) {
                                 setMissingFields(missing);
@@ -1761,7 +1776,7 @@ export default function TradeInPage() {
                                     <div className="space-y-3">
                                       <a
                                         href={`${API_URL}/auth/google`}
-                                        onClick={() => sessionStorage.setItem("ts_wizard_tradein", JSON.stringify({ state, phase }))}
+                                        onClick={() => { /* auto-save handles sessionStorage */ }}
                                         className="w-full h-12 bg-white border-2 border-zinc-200 rounded-2xl font-bold transition-all hover:scale-[1.02] hover:border-zinc-400 active:scale-[0.98] flex items-center justify-center gap-3 text-sm text-zinc-700 shadow-sm"
                                       >
                                         <GoogleIcon />
@@ -1784,11 +1799,8 @@ export default function TradeInPage() {
                                         { key: "postcode", label: "Postcode",                    type: "text",  placeholder: "e.g. LE1 1AA",          span: false, profileValue: undefined },
                                       ] : []),
                                     ];
-                                    // Logged-in users: only show postcode (profile fields handled by popup guard)
-                                    // Non-logged-in users: show all fields
-                                    const visibleFields = user
-                                      ? allFields.filter(f => f.key === "postcode")
-                                      : allFields;
+                                    // Logged-in users: modal guard handles missing postcode, no inline fields needed
+                                    const visibleFields = user ? [] : allFields;
                                     if (visibleFields.length === 0) return null;
                                     return (
                                       <div className="grid gap-4 sm:grid-cols-2">
@@ -1950,7 +1962,6 @@ export default function TradeInPage() {
                                 <button
                                   onClick={() => {
                                     setMissingDetailsOpen(false);
-                                    sessionStorage.setItem("ts_wizard_tradein", JSON.stringify({ state, phase, aiPrice }));
                                     router.push("/account/settings");
                                   }}
                                   className="w-full h-11 bg-black text-white rounded-xl text-sm font-black hover:bg-zinc-800 transition-colors"
@@ -2020,7 +2031,7 @@ export default function TradeInPage() {
                         {/* Back to Home Button */}
                         <div className="pt-6 border-t border-zinc-100 flex items-center justify-center">
                           <button
-                            onClick={() => { setIsWizardActive(false); setPhase(1); setImages([]); setAiPrice(null); }}
+                            onClick={() => { closeWizard(); setPhase(1); setImages([]); setAiPrice(null); setBatchId(crypto.randomUUID()); }}
                             className="h-12 w-full max-w-xs bg-zinc-950 text-white hover:bg-zinc-800 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 shadow-lg"
                           >
                             Return to Homepage <ArrowRight className="h-4 w-4" />

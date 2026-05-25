@@ -75,6 +75,26 @@ export class ProductsService {
         return { items, total, page, limit: safeLimit, pages: Math.ceil(total / safeLimit) };
     }
 
+    async getBrands(category?: string) {
+        const where: Record<string, unknown> = { isActive: true };
+        if (category) where.category = { equals: category, mode: 'insensitive' };
+
+        const rows = await this.prisma.product.findMany({
+            where,
+            select: { brand: true, images: true },
+            distinct: ['brand'],
+            orderBy: { brand: 'asc' },
+        });
+
+        const result: { brand: string; image: string | null }[] = [];
+        for (const row of rows) {
+            const images = row.images as string[];
+            const resolved = images[0] ? await this.storage.resolveImageUrl(images[0]) : null;
+            result.push({ brand: row.brand, image: resolved });
+        }
+        return result;
+    }
+
     async findBySlug(slug: string) {
         const product = await this.prisma.product.findUnique({ where: { slug } });
         if (!product) throw new NotFoundException('Product not found');
