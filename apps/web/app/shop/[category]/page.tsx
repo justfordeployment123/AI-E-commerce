@@ -377,7 +377,7 @@ export default function CategoryPage() {
   const { addItem } = useCart();
 
   const CATEGORY_API_MAP: Record<string, string> = {
-    phones: "Phone", tablets: "Tablet", consoles: "Console", laptops: "Laptop", audio: "Audio",
+    phones: "Phones", tablets: "Tablets", consoles: "Consoles", laptops: "Laptops", audio: "Accessories",
   };
 
   useEffect(() => {

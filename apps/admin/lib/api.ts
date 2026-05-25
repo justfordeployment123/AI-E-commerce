@@ -48,6 +48,8 @@ export const deviceCatalogApi = {
     if (params?.search) q.set('search', params.search);
     return apiFetch<DeviceCatalogItem[]>(`/device-catalog?${q}`, { auth: false });
   },
+  getById: (id: string) =>
+    apiFetch<DeviceCatalogItem>(`/device-catalog/${id}`, { auth: false }),
   create: (data: Omit<DeviceCatalogItem, 'id' | 'createdAt' | 'updatedAt'>) =>
     apiFetch<DeviceCatalogItem>('/device-catalog', { method: 'POST', body: JSON.stringify(data) }),
   update: (id: string, data: Partial<Omit<DeviceCatalogItem, 'id' | 'createdAt' | 'updatedAt'>>) =>
@@ -107,8 +109,25 @@ export const productsApi = {
     if (params?.category) q.set('category', params.category);
     if (params?.search) q.set('search', params.search);
     if (params?.page) q.set('page', String(params.page));
-    q.set('limit', String(params?.limit ?? 100));
-    return apiFetch<{ items: Product[]; total: number; page: number; pages: number }>(`/products?${q}`, { auth: false });
+    q.set('limit', String(params?.limit ?? 200));
+    q.set('includeAll', 'true');
+    return apiFetch<{ items: Product[]; total: number; page: number; pages: number }>(`/products?${q}`);
+  },
+
+  getById: (id: string) =>
+    apiFetch<Product>(`/products/by-id/${id}`),
+
+  uploadImage: async (file: File): Promise<{ filePath: string; presignedUrl: string }> => {
+    const token = getToken();
+    const body = new FormData();
+    body.append('file', file);
+    const res = await fetch(`${API_BASE}/uploads/image`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body,
+    });
+    if (!res.ok) throw new Error('Image upload failed');
+    return res.json();
   },
 
   create: (data: CreateProductPayload) =>
@@ -211,6 +230,7 @@ export interface Product {
   comparePrice?: number;
   stock: number;
   images: string[];
+  rawImages?: string[];
   specs: Record<string, unknown>;
   description?: string;
   isActive: boolean;
@@ -268,6 +288,8 @@ export interface TradeIn {
   contact: { name: string; email: string; phone: string; address?: string; postcode?: string };
   answers: Record<string, string>;
   adminNotes?: string;
+  trackingNumber?: string;
+  labelUrl?: string;
   createdAt: string;
   updatedAt: string;
   user?: { id: string; name: string; email: string };

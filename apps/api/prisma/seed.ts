@@ -2,11 +2,25 @@ import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
+import { S3Client, PutObjectCommand, CreateBucketCommand, HeadBucketCommand } from '@aws-sdk/client-s3';
+import * as fs from 'fs';
+import * as path from 'path';
 
 const connectionString = process.env.DATABASE_URL ?? 'postgresql://ai_ecommerce:ai_ecommerce@localhost:5432/ai_ecommerce?schema=public';
 const pool = new Pool({ connectionString });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
+
+const bucketName = process.env.GARAGE_BUCKET || 'ai-ecommerce';
+const s3Client = new S3Client({
+    region: 'us-east-1',
+    endpoint: process.env.GARAGE_ENDPOINT || 'http://localhost:9000',
+    credentials: {
+        accessKeyId: process.env.GARAGE_ACCESS_KEY || 'minioadmin',
+        secretAccessKey: process.env.GARAGE_SECRET_KEY || 'minioadmin',
+    },
+    forcePathStyle: true,
+});
 
 const defaultPricingConfigs = [
     { key: 'margin_pct', value: 30.0, label: 'Default Profit Margin (%)' },
@@ -86,213 +100,175 @@ const devices = [
     { brand: 'Apple', model: 'MacBook Pro 16-inch M3 Max (2023)', category: 'Laptop', storageOptions: ['1TB', '2TB', '4TB'] },
 ];
 
-const imagesMap = {
-    Phone: [
-        'https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?auto=format&fit=crop&w=800&q=80',
-        'https://images.unsplash.com/photo-1565849904461-04a58ad37a28?auto=format&fit=crop&w=800&q=80',
-        'https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?auto=format&fit=crop&w=800&q=80',
-    ],
-    Tablet: [
-        'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=800&q=80',
-        'https://images.unsplash.com/photo-1589739900243-4b52cd9b104e?auto=format&fit=crop&w=800&q=80',
-    ],
-    Laptop: [
-        'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=800&q=80',
-        'https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?auto=format&fit=crop&w=800&q=80',
-    ],
-    Console: [
-        'https://images.unsplash.com/photo-1606813907291-d86efa9b94db?auto=format&fit=crop&w=800&q=80',
-        'https://images.unsplash.com/photo-1621259182978-f09e5e2ae090?auto=format&fit=crop&w=800&q=80',
-        'https://images.unsplash.com/photo-1605901309584-818e25960a8f?auto=format&fit=crop&w=800&q=80',
-    ],
-    Accessories: [
-        'https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?auto=format&fit=crop&w=800&q=80',
-        'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80',
-        'https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=800&q=80',
-    ]
-};
+const accessories = [
+    { brand: 'Apple', model: '20W USB-C Power Adapter', name: 'Apple 20W USB-C Power Adapter', price: 19 },
+    { brand: 'Apple', model: 'MagSafe Charger', name: 'Apple MagSafe Charger', price: 39 },
+    { brand: 'Sony', model: 'DualSense Wireless Controller', name: 'Sony DualSense Wireless Controller (PS5)', price: 59 },
+    { brand: 'Microsoft', model: 'Xbox Wireless Controller', name: 'Microsoft Xbox Wireless Controller', price: 54 },
+    { brand: 'Apple', model: 'Pencil 2nd Gen', name: 'Apple Pencil (2nd Generation)', price: 99 },
+];
 
-// Base descriptions generator
-function getProductDescription(brand: string, model: string, condition: string): string {
-    return `This professional refurbished ${brand} ${model} is graded in ${condition} condition. Thoroughly tested by our in-house technicians, it is 100% functional and comes with a 12-month warranty, charging accessories, and free delivery in the UK. Superb value for money.`;
+// Ensure bucket exists in S3
+async function ensureBucketExists(s3: S3Client, bucket: string): Promise<void> {
+    try {
+        console.log(`Checking S3 bucket "${bucket}"...`);
+        await s3.send(new HeadBucketCommand({ Bucket: bucket }));
+    } catch (err) {
+        console.log(`Bucket "${bucket}" not found. Creating bucket...`);
+        await s3.send(new CreateBucketCommand({ Bucket: bucket }));
+    }
 }
 
-// Pricing generator for seeding products (E-Commerce Sell Side)
-function getBasePrice(category: string, model: string): number {
-    if (category === 'Phone') {
-        if (model.includes('15 Pro')) return 899;
-        if (model.includes('15')) return 649;
-        if (model.includes('14 Pro')) return 749;
-        if (model.includes('14')) return 549;
-        if (model.includes('13 Pro')) return 629;
-        if (model.includes('13')) return 459;
-        if (model.includes('12')) return 349;
-        if (model.includes('11')) return 249;
-        if (model.includes('S24 Ultra')) return 949;
-        if (model.includes('S24')) return 699;
-        if (model.includes('S23 Ultra')) return 799;
-        if (model.includes('S23')) return 549;
-        if (model.includes('S22')) return 399;
-        if (model.includes('S21')) return 279;
-        return 299;
-    }
-    if (category === 'Tablet') {
-        if (model.includes('Pro 12.9')) return 799;
-        if (model.includes('Pro 11')) return 649;
-        if (model.includes('Air')) return 449;
-        if (model.includes('Mini')) return 349;
-        return 229; // standard iPad 9th/10th gen
-    }
-    if (category === 'Laptop') {
-        if (model.includes('M3 Max')) return 2499;
-        if (model.includes('M2 Pro')) return 1699;
-        if (model.includes('Pro 13-inch M1')) return 899;
-        if (model.includes('Air M2')) return 999;
-        return 699; // Air M1
-    }
-    if (category === 'Console') {
-        if (model.includes('PlayStation 5') || model.includes('Xbox Series X')) return 389;
-        if (model.includes('Xbox Series S')) return 189;
-        if (model.includes('PlayStation 4 Pro') || model.includes('Xbox One X')) return 149;
-        if (model.includes('PlayStation 4') || model.includes('Xbox One')) return 99;
-        return 49; // PS3 / Xbox 360
-    }
-    return 39;
-}
-
-// Generate products array
-function generateProducts() {
-    const productsList: any[] = [];
-    const conditions = ['Mint', 'Good', 'Refurbished'] as const;
+// Upload a single product image to S3 in the format products/{productSlug}/{imageFilename}
+async function uploadProductImage(
+    s3: S3Client,
+    bucket: string,
+    productSlug: string,
+    imageFilename: string,
+    downloadsDir: string
+): Promise<string> {
+    const localPath = path.join(downloadsDir, imageFilename);
+    const destS3Key = `products/${productSlug}/${imageFilename}`;
     
-    // Seed e-commerce items derived from the devices
-    devices.forEach((dev, idx) => {
-        // Pick one or two conditions for each model to simulate variety in the store
-        const selectedConditions = idx % 2 === 0 
-            ? [conditions[0], conditions[2]] 
-            : [conditions[1]];
-        const imgs = imagesMap[dev.category as keyof typeof imagesMap] || [];
-        
-        selectedConditions.forEach(cond => {
-            const basePrice = getBasePrice(dev.category, dev.model);
-            
-            // Adjust price based on condition
-            let price = basePrice;
-            if (cond === 'Good') price = Math.round(basePrice * 0.85);
-            if (cond === 'Refurbished') price = Math.round(basePrice * 0.75);
-            
-            const storage = dev.storageOptions[idx % dev.storageOptions.length] ?? '128GB';
-            const name = `${dev.brand} ${dev.model} ${storage} (${cond})`;
-            const slug = `${dev.brand.toLowerCase()}-${dev.model.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${storage.toLowerCase()}-${cond.toLowerCase()}-${idx}`;
-            
-            productsList.push({
-                name,
-                slug,
-                category: dev.category === 'Laptop' ? 'Laptops / MacBooks' : (dev.category === 'Phone' ? 'Phones' : (dev.category === 'Tablet' ? 'Tablets' : 'Consoles')),
-                brand: dev.brand,
-                model: dev.model,
-                condition: cond,
-                price: price,
-                comparePrice: Math.round(price * 1.2),
-                stock: Math.floor(Math.random() * 8) + 2, // 2 to 9 items in stock
-                images: [imgs[idx % imgs.length], imgs[(idx + 1) % imgs.length]].filter(Boolean),
-                specs: {
-                    Storage: storage,
-                    Brand: dev.brand,
-                    Model: dev.model,
-                    Color: ['Space Grey', 'Silver', 'Phantom Black', 'Midnight', 'White'][idx % 5],
-                    Warranty: '12 Months'
-                },
-                description: getProductDescription(dev.brand, dev.model, cond),
-                rating: 4 + Math.random() * 1,
-                reviewCount: Math.floor(Math.random() * 50) + 5,
-                isActive: true
-            });
-        });
-    });
+    if (!fs.existsSync(localPath)) {
+        throw new Error(`Local file not found for upload: ${localPath}`);
+    }
 
-    // Also add a few accessories specifically for the Accessories category
-    const accessories = [
-        { brand: 'Apple', model: '20W USB-C Power Adapter', name: 'Apple 20W USB-C Power Adapter', price: 19 },
-        { brand: 'Apple', model: 'MagSafe Charger', name: 'Apple MagSafe Charger', price: 39 },
-        { brand: 'Sony', model: 'DualSense Wireless Controller', name: 'Sony DualSense Wireless Controller (PS5)', price: 59 },
-        { brand: 'Microsoft', model: 'Xbox Wireless Controller', name: 'Microsoft Xbox Wireless Controller', price: 54 },
-        { brand: 'Apple', model: 'Pencil 2nd Gen', name: 'Apple Pencil (2nd Generation)', price: 99 },
-    ];
+    const fileBuffer = fs.readFileSync(localPath);
+    await s3.send(new PutObjectCommand({
+        Bucket: bucket,
+        Key: destS3Key,
+        Body: fileBuffer,
+        ContentType: 'image/jpeg',
+    }));
 
-    accessories.forEach((acc, idx) => {
-        const imgs = imagesMap['Accessories'] || [];
-        const slug = `accessory-${acc.model.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${idx}`;
-        productsList.push({
-            name: acc.name,
-            slug,
-            category: 'Accessories',
-            brand: acc.brand,
-            model: acc.model,
-            condition: 'Mint',
-            price: acc.price,
-            comparePrice: Math.round(acc.price * 1.15),
-            stock: 15,
-            images: [imgs[idx % imgs.length]].filter(Boolean),
-            specs: {
-                Brand: acc.brand,
-                Model: acc.model,
-                Warranty: '12 Months'
-            },
-            description: `Brand new or like-new premium accessory: ${acc.name}. Fully tested and 100% compatible.`,
-            rating: 4.5 + Math.random() * 0.5,
-            reviewCount: Math.floor(Math.random() * 120) + 10,
-            isActive: true
-        });
-    });
-
-    return productsList;
+    return destS3Key;
 }
 
-async function main() {
-    console.log('Starting database seeding...');
-
-    // 1. Clear existing database tables
-    console.log('Clearing old data...');
-    await prisma.pricingConfig.deleteMany({});
-    await prisma.deviceCatalog.deleteMany({});
-    await prisma.product.deleteMany({});
-
-    // 2. Seed Pricing Configurations
+// Seed pricing configurations
+async function seedPricingConfigs(prismaClient: PrismaClient, configs: typeof defaultPricingConfigs): Promise<void> {
     console.log('Seeding pricing configurations...');
-    for (const config of defaultPricingConfigs) {
-        await prisma.pricingConfig.create({
+    await prismaClient.pricingConfig.deleteMany({});
+    for (const config of configs) {
+        await prismaClient.pricingConfig.create({
             data: config,
         });
     }
+    console.log(`Seeded ${configs.length} pricing configurations.`);
+}
 
-    // 3. Seed Device Catalog (Trade-In Database)
+// Seed device catalog
+async function seedDeviceCatalog(prismaClient: PrismaClient, devicesList: typeof devices): Promise<void> {
     console.log('Seeding device catalog...');
-    for (const dev of devices) {
-        await prisma.deviceCatalog.create({
+    await prismaClient.deviceCatalog.deleteMany({});
+    const catMap: Record<string, string> = {
+        'Phone': 'phones',
+        'Tablet': 'tablets',
+        'Console': 'consoles',
+        'Laptop': 'laptops',
+        'Accessories': 'accessories',
+    };
+    for (const dev of devicesList) {
+        const category = catMap[dev.category] || dev.category.toLowerCase();
+        await prismaClient.deviceCatalog.create({
             data: {
                 brand: dev.brand,
                 model: dev.model,
-                category: dev.category,
+                category,
                 storageOptions: dev.storageOptions,
                 isActive: true,
             },
         });
     }
+    console.log(`Seeded ${devicesList.length} devices in the trade-in catalog.`);
+}
 
-    // 4. Seed E-Commerce Products
-    console.log('Seeding e-commerce products...');
-    const products = generateProducts();
-    for (const prod of products) {
-        await prisma.product.create({
-            data: prod,
-        });
+// Seed products from products.json and upload already downloaded images to S3
+async function seedProducts(
+    prismaClient: PrismaClient,
+    s3: S3Client,
+    bucket: string,
+    productsData: any[],
+    downloadsDir: string
+): Promise<number> {
+    console.log('Seeding products and uploading images to S3...');
+    await prismaClient.product.deleteMany({});
+    
+    let successCount = 0;
+    for (let i = 0; i < productsData.length; i++) {
+        const prod = productsData[i];
+        const s3Keys: string[] = [];
+
+        if (prod.images && Array.isArray(prod.images)) {
+            for (const imgFilename of prod.images) {
+                try {
+                    const s3Key = await uploadProductImage(s3, bucket, prod.slug, imgFilename, downloadsDir);
+                    s3Keys.push(s3Key);
+                } catch (e: any) {
+                    console.error(`[ERROR] Image upload failed for product "${prod.name}" and image "${imgFilename}":`, e.message);
+                }
+            }
+        }
+
+        try {
+            await prismaClient.product.create({
+                data: {
+                    name: prod.name,
+                    slug: prod.slug,
+                    category: prod.category === 'Laptops / MacBooks' ? 'Laptops' : prod.category,
+                    brand: prod.brand,
+                    model: prod.model,
+                    condition: prod.condition,
+                    price: Number(prod.price),
+                    comparePrice: prod.comparePrice ? Number(prod.comparePrice) : null,
+                    stock: Number(prod.stock ?? 0),
+                    images: s3Keys,
+                    specs: prod.specs || {},
+                    description: prod.description || '',
+                    rating: prod.rating !== undefined ? Number(prod.rating) : 0.0,
+                    reviewCount: prod.reviewCount !== undefined ? Number(prod.reviewCount) : 0,
+                    isActive: prod.isActive !== undefined ? Boolean(prod.isActive) : true,
+                }
+            });
+            successCount++;
+            if (successCount % 10 === 0 || successCount === productsData.length) {
+                console.log(`Seeded ${successCount}/${productsData.length} products...`);
+            }
+        } catch (e: any) {
+            console.error(`[ERROR] Failed to insert product "${prod.name}" into database:`, e);
+        }
+    }
+    
+    return successCount;
+}
+
+async function main() {
+    console.log('Starting modular database and S3 seeding...');
+
+    // 1. Resolve downloads path and verify products.json exists
+    const downloadsDir = path.join(__dirname, 'downloads');
+    const productsJsonPath = path.join(downloadsDir, 'products.json');
+    if (!fs.existsSync(productsJsonPath)) {
+        throw new Error(`Required file 'products.json' not found in downloads folder: ${productsJsonPath}`);
     }
 
-    console.log(`Seeding complete!`);
+    const productsData = JSON.parse(fs.readFileSync(productsJsonPath, 'utf8'));
+    console.log(`Loaded ${productsData.length} products from products.json.`);
+
+    // 2. Ensure MinIO/Garage Bucket Exists
+    await ensureBucketExists(s3Client, bucketName);
+
+    // 3. Seed configurations and devices
+    await seedPricingConfigs(prisma, defaultPricingConfigs);
+    await seedDeviceCatalog(prisma, devices);
+
+    // 4. Seed products and upload images
+    const seededCount = await seedProducts(prisma, s3Client, bucketName, productsData, downloadsDir);
+
+    console.log(`\nSeeding completed successfully!`);
     console.log(`- Seeded ${defaultPricingConfigs.length} pricing configurations.`);
     console.log(`- Seeded ${devices.length} devices in the trade-in catalog.`);
-    console.log(`- Seeded ${products.length} products in the e-commerce store.`);
+    console.log(`- Seeded ${seededCount} out of ${productsData.length} products.`);
 }
 
 main()

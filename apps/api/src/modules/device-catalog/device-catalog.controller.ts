@@ -29,6 +29,11 @@ export class DeviceCatalogController {
         return this.service.create(dto);
     }
 
+    @Get(':id')
+    findOne(@Param('id') id: string) {
+        return this.service.findOne(id);
+    }
+
     @Patch(':id')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles('ADMIN')

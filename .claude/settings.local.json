@@ -46,10 +46,15 @@
       "Bash(copy \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\\\\app\\\\icon.png\" \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\\\\public\\\\icon.png\")",
       "PowerShell(Copy-Item \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\\\\app\\\\icon.png\" \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\\\\public\\\\icon.png\")",
       "PowerShell($file = Get-Item \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\\\\public\\\\icon.png\"; Write-Host \"Size: $\\($file.Length\\) bytes\"; Add-Type -AssemblyName System.Drawing; $img = [System.Drawing.Image]::FromFile\\($file.FullName\\); Write-Host \"Dimensions: $\\($img.Width\\) x $\\($img.Height\\)\"; $img.Dispose\\(\\))",
-      "Bash(mkdir \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\\\\app\\\\account\\\\repairs\\\\[id]\")"
+      "Bash(mkdir \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\\\\app\\\\account\\\\repairs\\\\[id]\")",
+      "Bash(Get-ChildItem -Path \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\admin\\\\app\\\\catalog\" -Recurse -Include \"*.tsx\" -File)",
+      "Bash(mkdir -p \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\admin\\\\app\\\\products\\\\[id]\")",
+      "PowerShell(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d['version']\\)\")",
+      "Read(//d/CODE/Projects/Markhor Systems Projects/Ai-Ecommerce/apps/api/**)"
     ],
     "additionalDirectories": [
-      "d:\\CODE\\Projects\\Markhor Systems Projects\\Ai-Ecommerce\\apps\\web\\app\\account\\repairs"
+      "d:\\CODE\\Projects\\Markhor Systems Projects\\Ai-Ecommerce\\apps\\web\\app\\account\\repairs",
+      "d:\\CODE\\Projects\\Markhor Systems Projects\\Ai-Ecommerce\\apps\\admin\\app\\products"
     ]
   },
   "enabledMcpjsonServers": [

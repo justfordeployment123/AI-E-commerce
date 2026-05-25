@@ -30,6 +30,7 @@ export class ProductsController {
         @Query('search') search?: string,
         @Query('page') page?: string,
         @Query('limit') limit?: string,
+        @Query('includeAll') includeAll?: string,
     ) {
         return this.productsService.findAll({
             category,
@@ -40,7 +41,16 @@ export class ProductsController {
             search,
             page: page ? Number(page) : undefined,
             limit: limit ? Number(limit) : undefined,
+            includeInactive: includeAll === 'true',
         });
+    }
+
+    // Admin-only: fetch single product by ID with presigned images
+    @Get('by-id/:id')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('ADMIN')
+    findById(@Param('id') id: string) {
+        return this.productsService.findById(id);
     }
 
     @Get(':slug')

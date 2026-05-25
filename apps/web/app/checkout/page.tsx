@@ -4,36 +4,52 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Shield, Lock, ChevronRight, Check, CreditCard, Truck,
-  Tag, ArrowLeft, Zap, ShoppingCart, ArrowRight
+  Tag, ArrowLeft, Zap, ShoppingCart, ArrowRight, AlertCircle,
 } from "lucide-react";
+import { loadStripe } from "@stripe/stripe-js";
+import {
+  Elements,
+  CardElement,
+  useStripe,
+  useElements,
+} from "@stripe/react-stripe-js";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import { useCart } from "../../context/cart-context";
-import { ordersApi } from "../../lib/api";
+import { ordersApi, paymentsApi } from "../../lib/api";
+
+const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+  ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
+  : null;
 
 const STEPS = ["Delivery", "Payment", "Review"];
 
 export default function CheckoutPage() {
+  return (
+    <Elements stripe={stripePromise}>
+      <CheckoutInner />
+    </Elements>
+  );
+}
+
+function CheckoutInner() {
   const { items, subtotal, clearCart } = useCart();
+  const stripe = useStripe();
+  const elements = useElements();
 
   const [step, setStep] = useState(0);
   const [promoCode, setPromoCode] = useState("");
   const [promoApplied, setPromoApplied] = useState(false);
   const [promoError, setPromoError] = useState("");
-  const [saveInfo, setSaveInfo] = useState(true);
-  const [payMethod, setPayMethod] = useState<"card" | "paypal">("card");
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderId, setOrderId] = useState("");
   const [placing, setPlacing] = useState(false);
   const [placeError, setPlaceError] = useState("");
+  const [cardComplete, setCardComplete] = useState(false);
 
   const [delivery, setDelivery] = useState({
     firstName: "", lastName: "", email: "", phone: "",
     address: "", city: "", postcode: "", country: "United Kingdom",
-  });
-
-  const [card, setCard] = useState({
-    number: "", name: "", expiry: "", cvv: "",
   });
 
   const shipping = 0;
@@ -53,6 +69,32 @@ export default function CheckoutPage() {
     setPlacing(true);
     setPlaceError("");
     try {
+      const { clientSecret, devMode } = await paymentsApi.createIntent(
+        items.map(i => ({ productId: i.productId, quantity: i.quantity })),
+      );
+
+      if (!devMode) {
+        if (!stripe || !elements) {
+          throw new Error("Stripe not loaded. Please refresh and try again.");
+        }
+        const cardElement = elements.getElement(CardElement);
+        if (!cardElement) {
+          throw new Error("Card details not found. Please go back to the payment step.");
+        }
+        const result = await stripe.confirmCardPayment(clientSecret!, {
+          payment_method: {
+            card: cardElement,
+            billing_details: {
+              name: `${delivery.firstName} ${delivery.lastName}`.trim() || "Customer",
+              email: delivery.email || undefined,
+            },
+          },
+        });
+        if (result.error) {
+          throw new Error(result.error.message ?? "Payment failed");
+        }
+      }
+
       const order = await ordersApi.create({
         items: items.map(i => ({ productId: i.productId, quantity: i.quantity })),
         shippingAddress: {
@@ -62,8 +104,9 @@ export default function CheckoutPage() {
           postcode: delivery.postcode,
           country: delivery.country,
         },
-        paymentMethod: payMethod,
+        paymentMethod: devMode ? "dev" : "stripe",
       });
+
       setOrderId(order.id);
       await clearCart();
       setOrderPlaced(true);
@@ -265,100 +308,58 @@ export default function CheckoutPage() {
                     </button>
                     <h2 className="text-3xl font-bold mb-8">Payment</h2>
 
-                    <div className="flex gap-3 mb-8">
-                      {[
-                        { id: "card", label: "Card" },
-                        { id: "paypal", label: "PayPal" },
-                      ].map(({ id, label }) => (
-                        <button
-                          key={id}
-                          onClick={() => setPayMethod(id as "card" | "paypal")}
-                          className={`flex-1 h-14 rounded-[1rem] border-2 font-bold text-sm transition-all ${payMethod === id ? "border-black bg-black text-white" : "border-zinc-200 hover:border-zinc-400"}`}
-                        >
-                          {label}
-                        </button>
-                      ))}
-                    </div>
-
-                    {payMethod === "card" && (
-                      <div className="space-y-4 mb-8">
-                        <div className="flex flex-col gap-2">
-                          <label className="text-xs font-bold uppercase tracking-widest text-zinc-400">Card number</label>
-                          <div className="relative">
-                            <input
-                              type="text"
-                              placeholder="1234 5678 9012 3456"
-                              value={card.number}
-                              maxLength={19}
-                              onChange={e => {
-                                const v = e.target.value.replace(/\D/g, "").slice(0, 16);
-                                setCard(c => ({ ...c, number: v.replace(/(.{4})/g, "$1 ").trim() }));
-                              }}
-                              className="h-14 w-full rounded-[1rem] border-2 border-zinc-200 pl-5 pr-14 text-sm font-medium outline-none focus:border-black transition-colors font-mono"
-                            />
-                            <CreditCard className="absolute right-5 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-300" />
-                          </div>
+                    {!stripePromise && (
+                      <div className="flex items-start gap-3 rounded-[1.5rem] bg-amber-50 border border-amber-200 p-5 mb-6">
+                        <AlertCircle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-bold text-sm text-amber-800">Stripe not configured</p>
+                          <p className="text-xs text-amber-700 mt-1">Add <code className="font-mono bg-amber-100 px-1 rounded">NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY</code> to your <code className="font-mono bg-amber-100 px-1 rounded">.env.local</code> file. In dev mode, payment will be skipped.</p>
                         </div>
-                        <div className="flex flex-col gap-2">
-                          <label className="text-xs font-bold uppercase tracking-widest text-zinc-400">Name on card</label>
-                          <input
-                            type="text"
-                            placeholder="As it appears on your card"
-                            value={card.name}
-                            onChange={e => setCard(c => ({ ...c, name: e.target.value }))}
-                            className="h-14 rounded-[1rem] border-2 border-zinc-200 px-5 text-sm font-medium outline-none focus:border-black transition-colors"
+                      </div>
+                    )}
+
+                    <div className="mb-8">
+                      <div className="flex items-center justify-between mb-3">
+                        <label className="text-xs font-bold uppercase tracking-widest text-zinc-400">Card details</label>
+                        <div className="flex items-center gap-1.5">
+                          {["visa", "mc", "amex"].map(brand => (
+                            <div key={brand} className="h-6 w-9 rounded bg-zinc-100 flex items-center justify-center">
+                              <CreditCard className="h-3.5 w-3.5 text-zinc-400" />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="rounded-[1rem] border-2 border-zinc-200 px-5 py-4 focus-within:border-black transition-colors">
+                        {stripePromise ? (
+                          <CardElement
+                            options={{
+                              style: {
+                                base: {
+                                  fontSize: "14px",
+                                  color: "#000",
+                                  fontFamily: "inherit",
+                                  fontWeight: "500",
+                                  "::placeholder": { color: "#a1a1aa" },
+                                },
+                                invalid: { color: "#ef4444" },
+                              },
+                              hidePostalCode: true,
+                            }}
+                            onChange={e => setCardComplete(e.complete && !e.error)}
                           />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold uppercase tracking-widest text-zinc-400">Expiry</label>
-                            <input
-                              type="text"
-                              placeholder="MM / YY"
-                              value={card.expiry}
-                              maxLength={7}
-                              onChange={e => {
-                                const v = e.target.value.replace(/\D/g, "").slice(0, 4);
-                                setCard(c => ({ ...c, expiry: v.length > 2 ? v.slice(0, 2) + " / " + v.slice(2) : v }));
-                              }}
-                              className="h-14 rounded-[1rem] border-2 border-zinc-200 px-5 text-sm font-mono outline-none focus:border-black transition-colors"
-                            />
-                          </div>
-                          <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold uppercase tracking-widest text-zinc-400">CVV</label>
-                            <input
-                              type="text"
-                              placeholder="000"
-                              maxLength={4}
-                              value={card.cvv}
-                              onChange={e => setCard(c => ({ ...c, cvv: e.target.value.replace(/\D/g, "").slice(0, 4) }))}
-                              className="h-14 rounded-[1rem] border-2 border-zinc-200 px-5 text-sm font-mono outline-none focus:border-black transition-colors"
-                            />
-                          </div>
-                        </div>
+                        ) : (
+                          <p className="text-sm text-zinc-400 py-1">Card entry disabled — Stripe key missing</p>
+                        )}
                       </div>
-                    )}
-
-                    {payMethod === "paypal" && (
-                      <div className="rounded-[1.5rem] bg-[#003087] p-8 text-white text-center mb-8">
-                        <p className="font-bold text-lg mb-2">Continue with PayPal</p>
-                        <p className="text-white/70 text-sm">You'll be redirected to PayPal to complete your payment securely.</p>
-                      </div>
-                    )}
-
-                    <div className="flex items-center gap-3 mb-8">
-                      <button
-                        onClick={() => setSaveInfo(s => !s)}
-                        className={`h-6 w-10 rounded-full transition-colors relative ${saveInfo ? "bg-black" : "bg-zinc-200"}`}
-                      >
-                        <span className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${saveInfo ? "translate-x-5" : "translate-x-1"}`} />
-                      </button>
-                      <p className="text-sm font-medium">Save payment info for next time</p>
+                      <p className="text-xs text-zinc-400 mt-2 flex items-center gap-1.5">
+                        <Lock className="h-3 w-3" /> Secured by Stripe — we never store your card details
+                      </p>
                     </div>
 
                     <button
                       onClick={() => setStep(2)}
-                      className="w-full h-16 bg-black text-white rounded-[1.5rem] font-bold text-base flex items-center justify-center gap-2 hover:bg-zinc-800 transition-colors active:scale-[0.99]"
+                      disabled={stripePromise ? !cardComplete : false}
+                      className="w-full h-16 bg-black text-white rounded-[1.5rem] font-bold text-base flex items-center justify-center gap-2 hover:bg-zinc-800 transition-colors active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       Review order <ChevronRight className="h-5 w-5" />
                     </button>
@@ -387,7 +388,7 @@ export default function CheckoutPage() {
                       {[
                         { label: "Delivering to", value: `${delivery.firstName} ${delivery.lastName}, ${delivery.address}, ${delivery.city} ${delivery.postcode}`.trim().replace(/^,\s*/, "") || "—" },
                         { label: "Email", value: delivery.email || "—" },
-                        { label: "Payment", value: payMethod === "card" ? `Card ending ····${card.number.replace(/\s/g, "").slice(-4) || "????"}` : "PayPal" },
+                        { label: "Payment", value: stripePromise ? "Card (Stripe)" : "Dev mode" },
                       ].map(({ label, value }) => (
                         <div key={label} className="flex justify-between py-4 border-b border-zinc-100">
                           <span className="text-xs font-bold uppercase tracking-widest text-zinc-400">{label}</span>
@@ -397,7 +398,10 @@ export default function CheckoutPage() {
                     </div>
 
                     {placeError && (
-                      <p className="text-sm font-bold text-red-500 bg-red-50 border border-red-100 rounded-2xl px-4 py-3 mb-4">{placeError}</p>
+                      <div className="flex items-start gap-3 rounded-[1.5rem] bg-red-50 border border-red-100 p-4 mb-4">
+                        <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+                        <p className="text-sm font-bold text-red-600">{placeError}</p>
+                      </div>
                     )}
 
                     <motion.button
@@ -407,7 +411,10 @@ export default function CheckoutPage() {
                       className="w-full py-5 bg-accent text-black rounded-[1.5rem] font-bold text-lg flex items-center justify-center gap-2 hover:bg-accent-dark transition-colors active:scale-[0.99] shadow-xl shadow-accent/20 disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                       {placing ? (
-                        "Placing order…"
+                        <span className="flex items-center gap-2">
+                          <span className="h-4 w-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                          Processing…
+                        </span>
                       ) : (
                         <><Zap className="h-5 w-5" /> Place order — £{total.toFixed(2)}</>
                       )}
@@ -503,6 +510,10 @@ export default function CheckoutPage() {
                       {text}
                     </div>
                   ))}
+                  <div className="flex items-center gap-2 text-xs text-zinc-500 font-medium pt-2 border-t border-zinc-100 mt-2">
+                    <Lock className="h-4 w-4 text-zinc-400 flex-shrink-0" />
+                    Powered by Stripe
+                  </div>
                 </div>
               </div>
             </div>

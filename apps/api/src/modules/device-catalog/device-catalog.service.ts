@@ -29,6 +29,12 @@ export class DeviceCatalogService {
         return this.prisma.deviceCatalog.update({ where: { id }, data: dto });
     }
 
+    async findOne(id: string) {
+        const item = await this.prisma.deviceCatalog.findUnique({ where: { id } });
+        if (!item) throw new NotFoundException('Device not found');
+        return item;
+    }
+
     async remove(id: string) {
         const existing = await this.prisma.deviceCatalog.findUnique({ where: { id } });
         if (!existing) throw new NotFoundException('Device not found');

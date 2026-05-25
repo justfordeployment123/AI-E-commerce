@@ -27,7 +27,7 @@ async function bootstrap() {
   // Lazy-load AppModule after dotenv has been applied.
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { AppModule } = require('./app.module') as typeof import('./app.module');
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { rawBody: true });
 
   app.use(compression());
   app.use(cookieParser());

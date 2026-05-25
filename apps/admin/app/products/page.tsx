@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Plus, Edit2, Trash2, X, Check, Package } from "lucide-react";
+import { Search, Plus, Edit2, Trash2, X, Check, Package, Image as ImageIcon } from "lucide-react";
 import { productsApi, type Product, type CreateProductPayload } from "../../lib/api";
 
 const CONDITIONS = ["Pristine", "Excellent", "Very Good", "Good", "Fair"];
@@ -16,6 +17,7 @@ const EMPTY_FORM: CreateProductPayload = {
 };
 
 export default function ProductsPage() {
+  const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -32,7 +34,7 @@ export default function ProductsPage() {
     try {
       const res = await productsApi.list({ limit: 200 });
       setProducts(res.items);
-    } catch { /* empty on fail */ }
+    } catch { /* ignore */ }
     finally { setLoading(false); }
   }
 
@@ -53,7 +55,8 @@ export default function ProductsPage() {
     setShowModal(true);
   }
 
-  function openEdit(p: Product) {
+  function openEdit(p: Product, e: React.MouseEvent) {
+    e.stopPropagation();
     setEditProduct(p);
     setFormData({
       name: p.name, category: p.category, brand: p.brand, model: p.model,
@@ -74,7 +77,7 @@ export default function ProductsPage() {
         setProducts(ps => ps.map(p => p.id === editProduct.id ? updated : p));
       } else {
         const created = await productsApi.create(formData);
-        setProducts(ps => [...ps, created]);
+        setProducts(ps => [created, ...ps]);
       }
       setShowModal(false);
     } catch (e) {
@@ -93,6 +96,9 @@ export default function ProductsPage() {
   }
 
   const storage = (p: Product) => (p.specs?.storage as string) ?? "—";
+  const countFor = (cat: string) => products.filter(p =>
+    cat === "All" ? true : p.category.toLowerCase() === cat.toLowerCase()
+  ).length;
 
   return (
     <div className="min-h-screen bg-background p-8">
@@ -100,7 +106,7 @@ export default function ProductsPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Products</h1>
           <p className="text-sm text-zinc-500 mt-1">
-            {products.length} total — {products.filter(p => p.stock === 0).length} out of stock
+            {products.length} total · {products.filter(p => p.isActive).length} active · {products.filter(p => p.stock === 0).length} out of stock
           </p>
         </div>
         <button
@@ -130,7 +136,7 @@ export default function ProductsPage() {
               onClick={() => setFilterCategory(cat)}
               className={`h-11 px-4 rounded-2xl text-sm font-bold transition-all ${filterCategory === cat ? "bg-black text-white" : "bg-white border border-zinc-200 hover:border-zinc-400"}`}
             >
-              {cat}
+              {cat} ({countFor(cat)})
             </button>
           ))}
         </div>
@@ -157,16 +163,34 @@ export default function ProductsPage() {
             </thead>
             <tbody className="divide-y divide-zinc-50">
               {filtered.map(p => (
-                <tr key={p.id} className="hover:bg-zinc-50/50 transition-colors group">
+                <tr
+                  key={p.id}
+                  onClick={() => router.push(`/products/${p.id}`)}
+                  className="hover:bg-zinc-50/50 transition-colors group cursor-pointer"
+                >
                   <td className="px-6 py-4">
-                    <p className="font-bold">{p.name}</p>
-                    <p className="text-xs text-zinc-400 mt-0.5">{p.brand} · {storage(p)}</p>
+                    <div className="flex items-center gap-3">
+                      {p.images?.[0] ? (
+                        <img src={p.images[0]} alt={p.name} className="h-10 w-10 rounded-xl object-cover border border-zinc-100 shrink-0" />
+                      ) : (
+                        <div className="h-10 w-10 rounded-xl bg-zinc-100 flex items-center justify-center shrink-0">
+                          <ImageIcon className="h-4 w-4 text-zinc-300" />
+                        </div>
+                      )}
+                      <div>
+                        <p className="font-bold">{p.name}</p>
+                        <p className="text-xs text-zinc-400 mt-0.5">{p.brand} · {storage(p)}</p>
+                      </div>
+                    </div>
                   </td>
                   <td className="px-4 py-4 text-zinc-500 font-medium capitalize">{p.category}</td>
                   <td className="px-4 py-4">
                     <span className="rounded-full bg-zinc-100 px-3 py-1 text-[10px] font-bold uppercase tracking-widest">{p.condition}</span>
                   </td>
-                  <td className="px-4 py-4 text-right font-bold font-mono">£{p.price}</td>
+                  <td className="px-4 py-4 text-right font-bold font-mono">
+                    £{p.price}
+                    {p.comparePrice && <span className="text-zinc-300 line-through ml-2 text-xs">£{p.comparePrice}</span>}
+                  </td>
                   <td className={`px-4 py-4 text-right font-bold font-mono ${p.stock === 0 ? "text-red-500" : p.stock <= 2 ? "text-amber-500" : ""}`}>
                     {p.stock}
                   </td>
@@ -177,10 +201,10 @@ export default function ProductsPage() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity justify-end">
-                      <button onClick={() => openEdit(p)} className="h-8 w-8 rounded-lg hover:bg-zinc-100 flex items-center justify-center transition-colors">
+                      <button onClick={e => openEdit(p, e)} className="h-8 w-8 rounded-lg hover:bg-zinc-100 flex items-center justify-center transition-colors">
                         <Edit2 className="h-3.5 w-3.5 text-zinc-400" />
                       </button>
-                      <button onClick={() => setDeleteId(p.id)} className="h-8 w-8 rounded-lg hover:bg-red-50 flex items-center justify-center transition-colors">
+                      <button onClick={e => { e.stopPropagation(); setDeleteId(p.id); }} className="h-8 w-8 rounded-lg hover:bg-red-50 flex items-center justify-center transition-colors">
                         <Trash2 className="h-3.5 w-3.5 text-red-400" />
                       </button>
                     </div>
@@ -241,7 +265,6 @@ export default function ProductsPage() {
                   </div>
                 ))}
 
-                {/* Storage in specs */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-bold uppercase tracking-widest text-zinc-400">Storage / Spec</label>
                   <input

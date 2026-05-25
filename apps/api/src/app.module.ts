@@ -22,6 +22,7 @@ import { StoresModule } from './modules/stores/stores.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { ShippingModule } from './modules/shipping/shipping.module';
+import { PaymentsModule } from './modules/payments/payments.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { ShippingModule } from './modules/shipping/shipping.module';
     UploadsModule,
     NotificationsModule,
     ShippingModule,
+    PaymentsModule,
   ],
   controllers: [AppController],
   providers: [

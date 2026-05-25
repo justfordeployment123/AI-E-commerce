@@ -99,6 +99,15 @@ export const cartApi = {
   clear: () => apiFetch<void>('/cart', { method: 'DELETE' }),
 };
 
+// ── Payments ─────────────────────────────────────────────────────────────────
+export const paymentsApi = {
+  createIntent: (items: { productId: string; quantity: number }[]) =>
+    apiFetch<{ clientSecret: string | null; amount: number; devMode: boolean }>(
+      '/payments/intent',
+      { method: 'POST', body: JSON.stringify({ items }) },
+    ),
+};
+
 // ── Orders ────────────────────────────────────────────────────────────────────
 export const ordersApi = {
   create: (data: CreateOrderPayload) =>

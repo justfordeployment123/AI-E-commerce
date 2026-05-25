@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus, Search, Trash2, Pencil, X, Check,
@@ -23,6 +24,7 @@ const CATEGORIES: Category[] = ["phones", "tablets", "consoles", "laptops", "acc
 const EMPTY_FORM = { brand: "", model: "", category: "phones" as Category, storageOptions: [""], isActive: true };
 
 export default function CatalogPage() {
+  const router = useRouter();
   const [devices, setDevices] = useState<DeviceCatalogItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -46,7 +48,7 @@ export default function CatalogPage() {
   useEffect(() => { load(); }, []);
 
   const filtered = devices.filter(d => {
-    const matchesCat = filterCat === "all" || d.category === filterCat;
+    const matchesCat = filterCat === "all" || d.category.toLowerCase() === filterCat;
     const q = search.toLowerCase();
     const matchesSearch = !q || d.brand.toLowerCase().includes(q) || d.model.toLowerCase().includes(q);
     return matchesCat && matchesSearch;
@@ -144,7 +146,7 @@ export default function CatalogPage() {
               onClick={() => setFilterCat(cat)}
               className={`h-10 px-4 rounded-xl text-xs font-bold transition-colors ${filterCat === cat ? "bg-zinc-950 text-white" : "bg-white border border-zinc-200 text-zinc-500 hover:border-zinc-400"}`}
             >
-              {CATEGORY_META[cat].label} ({devices.filter(d => d.category === cat).length})
+              {CATEGORY_META[cat].label} ({devices.filter(d => d.category.toLowerCase() === cat).length})
             </button>
           ))}
         </div>
@@ -155,8 +157,8 @@ export default function CatalogPage() {
         {CATEGORIES.map(cat => {
           const meta = CATEGORY_META[cat];
           const Icon = meta.icon;
-          const active = devices.filter(d => d.category === cat && d.isActive).length;
-          const total = devices.filter(d => d.category === cat).length;
+          const active = devices.filter(d => d.category.toLowerCase() === cat && d.isActive).length;
+          const total = devices.filter(d => d.category.toLowerCase() === cat).length;
           return (
             <div key={cat} className="bg-white rounded-2xl border border-zinc-100 p-4 flex items-center gap-3">
               <div className={`h-9 w-9 rounded-xl ${meta.color} flex items-center justify-center shrink-0`}>
@@ -197,7 +199,8 @@ export default function CatalogPage() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="grid grid-cols-[2fr_3fr_1.5fr_2fr_auto_auto] items-center px-6 py-4 hover:bg-zinc-50/60 transition-colors"
+                    onClick={() => router.push(`/catalog/${device.id}`)}
+                    className="grid grid-cols-[2fr_3fr_1.5fr_2fr_auto_auto] items-center px-6 py-4 hover:bg-zinc-50/60 transition-colors cursor-pointer"
                   >
                     <span className="text-sm font-bold text-zinc-900">{device.brand}</span>
                     <span className="text-sm font-medium text-zinc-700">{device.model}</span>
@@ -211,16 +214,16 @@ export default function CatalogPage() {
                         <span key={s} className="px-2 py-0.5 bg-zinc-100 text-zinc-500 rounded-md text-[11px] font-medium">{s}</span>
                       ))}
                     </div>
-                    <button onClick={() => toggleActive(device.id, device.isActive)} title={device.isActive ? "Disable" : "Enable"}>
+                    <button onClick={e => { e.stopPropagation(); toggleActive(device.id, device.isActive); }} title={device.isActive ? "Disable" : "Enable"}>
                       {device.isActive
                         ? <ToggleRight className="h-6 w-6 text-emerald-500" />
                         : <ToggleLeft className="h-6 w-6 text-zinc-300" />}
                     </button>
                     <div className="flex items-center gap-2 pl-4">
-                      <button onClick={() => openEdit(device)} className="h-8 w-8 rounded-lg flex items-center justify-center text-zinc-400 hover:text-black hover:bg-zinc-100 transition-colors">
+                      <button onClick={e => { e.stopPropagation(); openEdit(device); }} className="h-8 w-8 rounded-lg flex items-center justify-center text-zinc-400 hover:text-black hover:bg-zinc-100 transition-colors">
                         <Pencil className="h-3.5 w-3.5" />
                       </button>
-                      <button onClick={() => setDeleteId(device.id)} className="h-8 w-8 rounded-lg flex items-center justify-center text-zinc-400 hover:text-red-600 hover:bg-red-50 transition-colors">
+                      <button onClick={e => { e.stopPropagation(); setDeleteId(device.id); }} className="h-8 w-8 rounded-lg flex items-center justify-center text-zinc-400 hover:text-red-600 hover:bg-red-50 transition-colors">
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     </div>

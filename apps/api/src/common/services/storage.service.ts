@@ -53,9 +53,16 @@ export class StorageService {
   }
 
   // Call this everywhere an image URL needs to be served to a browser.
-  // Handles null, raw S3 keys, and old full-URL records safely.
+  // Handles null, raw S3 keys, old full-URL records, and external URLs safely.
   async resolveImageUrl(filePathOrUrl: string | null | undefined): Promise<string | null> {
     if (!filePathOrUrl) return null;
+    // External URLs not hosted on our storage — return them unchanged so they display directly
+    if (filePathOrUrl.startsWith('http')) {
+      const endpoint = (process.env.GARAGE_PUBLIC_URL || process.env.GARAGE_ENDPOINT || '').replace(/\/$/, '');
+      if (!endpoint || !filePathOrUrl.startsWith(endpoint)) {
+        return filePathOrUrl;
+      }
+    }
     try {
       return await this.generatePresignedUrl(filePathOrUrl);
     } catch {
