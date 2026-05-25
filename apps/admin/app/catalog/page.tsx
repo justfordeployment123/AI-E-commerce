@@ -1,13 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus, Search, Trash2, Pencil, X, Check,
-  Smartphone, Tablet, Gamepad2, Laptop, Headphones, ChevronDown, ToggleLeft, ToggleRight
+  Smartphone, Tablet, Gamepad2, Laptop, Headphones, ChevronDown,
+  ToggleLeft, ToggleRight, RefreshCw, TrendingUp, CheckCircle2, AlertCircle,
 } from "lucide-react";
-import { deviceCatalogApi, type DeviceCatalogItem } from "../../lib/api";
+import { deviceCatalogApi, scraperApi, type DeviceCatalogItem, type ScrapedPriceRow } from "../../lib/api";
+
+const SCRAPER_ENABLED = process.env.NEXT_PUBLIC_SCRAPER_ENABLED === "true";
 
 type Category = "phones" | "tablets" | "consoles" | "laptops" | "accessories";
 
@@ -20,21 +23,45 @@ const CATEGORY_META: Record<string, { label: string; icon: React.ElementType; co
 };
 
 const CATEGORIES: Category[] = ["phones", "tablets", "consoles", "laptops", "accessories"];
-
 const EMPTY_FORM = { brand: "", model: "", category: "phones" as Category, storageOptions: [""], isActive: true };
+
+function priceRange(prices: (number | null)[]): string | null {
+  const valid = prices.filter((p): p is number => p !== null && p > 0);
+  if (!valid.length) return null;
+  const min = Math.min(...valid);
+  const max = Math.max(...valid);
+  return min === max ? `£${min}` : `£${min}–£${max}`;
+}
 
 export default function CatalogPage() {
   const router = useRouter();
-  const [devices, setDevices] = useState<DeviceCatalogItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
+  const [devices, setDevices]     = useState<DeviceCatalogItem[]>([]);
+  const [loading, setLoading]     = useState(true);
+  const [search, setSearch]       = useState("");
   const [filterCat, setFilterCat] = useState<Category | "all">("all");
   const [modalOpen, setModalOpen] = useState(false);
-  const [editItem, setEditItem] = useState<DeviceCatalogItem | null>(null);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [form, setForm] = useState(EMPTY_FORM);
-  const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
+  const [editItem, setEditItem]   = useState<DeviceCatalogItem | null>(null);
+  const [deleteId, setDeleteId]   = useState<string | null>(null);
+  const [form, setForm]           = useState(EMPTY_FORM);
+  const [saving, setSaving]       = useState(false);
+  const [deleting, setDeleting]   = useState(false);
+
+  // Scraper state
+  const [priceMap, setPriceMap]   = useState<Map<string, number>>(new Map());
+  const [scraping, setScraping]   = useState(false);
+  const [scrapeMsg, setScrapeMsg] = useState("");
+
+  const loadPrices = useCallback(async () => {
+    try {
+      // Load up to 500 scraped price rows to build a deviceKey → marketPrice map
+      const res = await scraperApi.prices(1, 500);
+      const map = new Map<string, number>();
+      for (const row of res.items) {
+        if (row.marketPrice !== null) map.set(row.deviceKey, row.marketPrice);
+      }
+      setPriceMap(map);
+    } catch { /* non-fatal */ }
+  }, []);
 
   async function load() {
     setLoading(true);
@@ -45,7 +72,7 @@ export default function CatalogPage() {
     finally { setLoading(false); }
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); loadPrices(); }, [loadPrices]);
 
   const filtered = devices.filter(d => {
     const matchesCat = filterCat === "all" || d.category.toLowerCase() === filterCat;
@@ -54,18 +81,27 @@ export default function CatalogPage() {
     return matchesCat && matchesSearch;
   });
 
-  function openAdd() {
-    setEditItem(null);
-    setForm(EMPTY_FORM);
-    setModalOpen(true);
+  async function handleScrape() {
+    setScraping(true);
+    setScrapeMsg("");
+    try {
+      const res = await scraperApi.run();
+      setScrapeMsg(res.message);
+      // Reload prices after 5 s to pick up first DB writes
+      setTimeout(() => loadPrices(), 5000);
+    } catch (e: any) {
+      setScrapeMsg(e.message ?? "Failed to start scraper");
+    } finally {
+      setScraping(false);
+    }
   }
 
+  function openAdd() { setEditItem(null); setForm(EMPTY_FORM); setModalOpen(true); }
   function openEdit(d: DeviceCatalogItem) {
     setEditItem(d);
     setForm({ brand: d.brand, model: d.model, category: d.category as Category, storageOptions: [...d.storageOptions], isActive: d.isActive });
     setModalOpen(true);
   }
-
   function closeModal() { setModalOpen(false); setEditItem(null); }
 
   async function saveModal() {
@@ -107,21 +143,75 @@ export default function CatalogPage() {
     setForm(f => { const s = [...f.storageOptions]; s[idx] = val; return { ...f, storageOptions: s }; });
   }
 
+  // Build price summary for a device row
+  function devicePriceRange(device: DeviceCatalogItem): string | null {
+    const prices = device.storageOptions.map(storage => {
+      const key = storage ? `${device.brand} ${device.model} ${storage}` : `${device.brand} ${device.model}`;
+      return priceMap.get(key) ?? null;
+    });
+    return priceRange(prices);
+  }
+
+  const scrapeIsError = scrapeMsg.toLowerCase().includes("fail") || scrapeMsg.toLowerCase().includes("error");
+
   return (
     <div className="p-6 md:p-8 max-w-6xl mx-auto">
-      <div className="flex items-start justify-between mb-8 gap-4">
+
+      {/* Header */}
+      <div className="flex items-start justify-between mb-6 gap-4">
         <div>
           <h1 className="text-2xl font-bold text-zinc-900">Device Catalog</h1>
           <p className="text-sm text-zinc-400 font-medium mt-1">Manage which device models appear in the trade-in wizard.</p>
         </div>
-        <button
-          onClick={openAdd}
-          className="flex items-center gap-2 h-10 px-5 rounded-xl bg-zinc-950 text-white text-xs font-bold uppercase tracking-widest hover:bg-zinc-800 transition-colors"
-        >
-          <Plus className="h-4 w-4" /> Add Device
-        </button>
+        <div className="flex items-center gap-3">
+          {SCRAPER_ENABLED && (
+            <button
+              onClick={handleScrape}
+              disabled={scraping}
+              className="flex items-center gap-2 h-10 px-4 rounded-xl border-2 border-zinc-200 text-xs font-bold text-zinc-600 hover:border-zinc-400 hover:text-black transition-colors disabled:opacity-50"
+            >
+              {scraping
+                ? <><RefreshCw className="h-3.5 w-3.5 animate-spin" /> Scraping…</>
+                : <><TrendingUp className="h-3.5 w-3.5" /> Scrape Prices</>}
+            </button>
+          )}
+          <button
+            onClick={openAdd}
+            className="flex items-center gap-2 h-10 px-5 rounded-xl bg-zinc-950 text-white text-xs font-bold uppercase tracking-widest hover:bg-zinc-800 transition-colors"
+          >
+            <Plus className="h-4 w-4" /> Add Device
+          </button>
+        </div>
       </div>
 
+      {/* Scrape result banner */}
+      <AnimatePresence>
+        {SCRAPER_ENABLED && scrapeMsg && (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
+            className={`flex items-center gap-3 rounded-2xl px-5 py-3 mb-5 text-sm font-bold ${
+              scrapeIsError
+                ? "bg-red-50 border border-red-100 text-red-700"
+                : "bg-emerald-50 border border-emerald-100 text-emerald-700"
+            }`}
+          >
+            {scrapeIsError
+              ? <AlertCircle className="h-4 w-4 shrink-0" />
+              : <CheckCircle2 className="h-4 w-4 shrink-0" />}
+            {scrapeMsg}
+            {!scrapeIsError && (
+              <span className="font-normal text-emerald-600 ml-1">
+                — prices will update in the background. Market prices below will refresh shortly.
+              </span>
+            )}
+            <button onClick={() => setScrapeMsg("")} className="ml-auto text-current opacity-50 hover:opacity-100">
+              <X className="h-4 w-4" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
@@ -141,9 +231,7 @@ export default function CatalogPage() {
             All ({devices.length})
           </button>
           {CATEGORIES.map(cat => (
-            <button
-              key={cat}
-              onClick={() => setFilterCat(cat)}
+            <button key={cat} onClick={() => setFilterCat(cat)}
               className={`h-10 px-4 rounded-xl text-xs font-bold transition-colors ${filterCat === cat ? "bg-zinc-950 text-white" : "bg-white border border-zinc-200 text-zinc-500 hover:border-zinc-400"}`}
             >
               {CATEGORY_META[cat].label} ({devices.filter(d => d.category.toLowerCase() === cat).length})
@@ -153,12 +241,12 @@ export default function CatalogPage() {
       </div>
 
       {/* Stats bar */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
+      {/* <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
         {CATEGORIES.map(cat => {
           const meta = CATEGORY_META[cat];
           const Icon = meta.icon;
           const active = devices.filter(d => d.category.toLowerCase() === cat && d.isActive).length;
-          const total = devices.filter(d => d.category.toLowerCase() === cat).length;
+          const total  = devices.filter(d => d.category.toLowerCase() === cat).length;
           return (
             <div key={cat} className="bg-white rounded-2xl border border-zinc-100 p-4 flex items-center gap-3">
               <div className={`h-9 w-9 rounded-xl ${meta.color} flex items-center justify-center shrink-0`}>
@@ -171,11 +259,18 @@ export default function CatalogPage() {
             </div>
           );
         })}
-      </div>
+      </div> */}
 
+      {/* Table */}
       <div className="bg-white rounded-2xl border border-zinc-100 overflow-hidden">
-        <div className="grid grid-cols-[2fr_3fr_1.5fr_2fr_auto_auto] text-[10px] font-bold uppercase tracking-widest text-zinc-400 px-6 py-3 border-b border-zinc-100 bg-zinc-50">
-          <span>Brand</span><span>Model</span><span>Category</span><span>Storage Options</span><span>Status</span><span>Actions</span>
+        <div className={`grid ${SCRAPER_ENABLED ? "grid-cols-[2fr_3fr_1.5fr_2fr_1.5fr_auto_auto]" : "grid-cols-[2fr_3fr_1.5fr_2fr_auto_auto]"} text-[10px] font-bold uppercase tracking-widest text-zinc-400 px-6 py-3 border-b border-zinc-100 bg-zinc-50`}>
+          <span>Brand</span>
+          <span>Model</span>
+          <span>Category</span>
+          <span>Storage Options</span>
+          {SCRAPER_ENABLED && <span>CeX Price</span>}
+          <span>Status</span>
+          <span>Actions</span>
         </div>
 
         {loading ? (
@@ -192,6 +287,7 @@ export default function CatalogPage() {
               ) : filtered.map(device => {
                 const meta = CATEGORY_META[device.category] ?? CATEGORY_META.phones;
                 const Icon = meta.icon;
+                const range = devicePriceRange(device);
                 return (
                   <motion.div
                     key={device.id}
@@ -200,7 +296,7 @@ export default function CatalogPage() {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     onClick={() => router.push(`/catalog/${device.id}`)}
-                    className="grid grid-cols-[2fr_3fr_1.5fr_2fr_auto_auto] items-center px-6 py-4 hover:bg-zinc-50/60 transition-colors cursor-pointer"
+                    className={`grid ${SCRAPER_ENABLED ? "grid-cols-[2fr_3fr_1.5fr_2fr_1.5fr_auto_auto]" : "grid-cols-[2fr_3fr_1.5fr_2fr_auto_auto]"} items-center px-6 py-4 hover:bg-zinc-50/60 transition-colors cursor-pointer`}
                   >
                     <span className="text-sm font-bold text-zinc-900">{device.brand}</span>
                     <span className="text-sm font-medium text-zinc-700">{device.model}</span>
@@ -214,16 +310,37 @@ export default function CatalogPage() {
                         <span key={s} className="px-2 py-0.5 bg-zinc-100 text-zinc-500 rounded-md text-[11px] font-medium">{s}</span>
                       ))}
                     </div>
-                    <button onClick={e => { e.stopPropagation(); toggleActive(device.id, device.isActive); }} title={device.isActive ? "Disable" : "Enable"}>
+                    {/* Market price column */}
+                    {SCRAPER_ENABLED && (
+                      <span>
+                        {range ? (
+                          <span className="inline-flex items-center gap-1 font-mono font-bold text-xs text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg">
+                            <TrendingUp className="h-3 w-3" />{range}
+                          </span>
+                        ) : (
+                          <span className="text-[11px] text-zinc-300 font-medium">No data</span>
+                        )}
+                      </span>
+                    )}
+                    <button
+                      onClick={e => { e.stopPropagation(); toggleActive(device.id, device.isActive); }}
+                      title={device.isActive ? "Disable" : "Enable"}
+                    >
                       {device.isActive
                         ? <ToggleRight className="h-6 w-6 text-emerald-500" />
                         : <ToggleLeft className="h-6 w-6 text-zinc-300" />}
                     </button>
                     <div className="flex items-center gap-2 pl-4">
-                      <button onClick={e => { e.stopPropagation(); openEdit(device); }} className="h-8 w-8 rounded-lg flex items-center justify-center text-zinc-400 hover:text-black hover:bg-zinc-100 transition-colors">
+                      <button
+                        onClick={e => { e.stopPropagation(); openEdit(device); }}
+                        className="h-8 w-8 rounded-lg flex items-center justify-center text-zinc-400 hover:text-black hover:bg-zinc-100 transition-colors"
+                      >
                         <Pencil className="h-3.5 w-3.5" />
                       </button>
-                      <button onClick={e => { e.stopPropagation(); setDeleteId(device.id); }} className="h-8 w-8 rounded-lg flex items-center justify-center text-zinc-400 hover:text-red-600 hover:bg-red-50 transition-colors">
+                      <button
+                        onClick={e => { e.stopPropagation(); setDeleteId(device.id); }}
+                        className="h-8 w-8 rounded-lg flex items-center justify-center text-zinc-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                      >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     </div>
@@ -296,7 +413,10 @@ export default function CatalogPage() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <label className="text-[11px] font-bold uppercase tracking-widest text-zinc-400">Storage Options</label>
-                    <button type="button" onClick={() => setForm(f => ({ ...f, storageOptions: [...f.storageOptions, ""] }))} className="text-[11px] font-bold text-zinc-500 hover:text-black flex items-center gap-1 transition-colors">
+                    <button type="button"
+                      onClick={() => setForm(f => ({ ...f, storageOptions: [...f.storageOptions, ""] }))}
+                      className="text-[11px] font-bold text-zinc-500 hover:text-black flex items-center gap-1 transition-colors"
+                    >
                       <Plus className="h-3 w-3" /> Add
                     </button>
                   </div>
@@ -310,7 +430,10 @@ export default function CatalogPage() {
                           className="flex-1 h-9 rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm outline-none focus:border-black transition-colors"
                         />
                         {form.storageOptions.length > 1 && (
-                          <button type="button" onClick={() => setForm(f => ({ ...f, storageOptions: f.storageOptions.filter((_, i) => i !== idx) }))} className="h-9 w-9 rounded-xl border border-zinc-200 flex items-center justify-center text-zinc-400 hover:text-red-500 hover:border-red-200 transition-colors">
+                          <button type="button"
+                            onClick={() => setForm(f => ({ ...f, storageOptions: f.storageOptions.filter((_, i) => i !== idx) }))}
+                            className="h-9 w-9 rounded-xl border border-zinc-200 flex items-center justify-center text-zinc-400 hover:text-red-500 hover:border-red-200 transition-colors"
+                          >
                             <X className="h-3.5 w-3.5" />
                           </button>
                         )}
@@ -335,7 +458,9 @@ export default function CatalogPage() {
                 <button onClick={closeModal} className="flex-1 h-11 rounded-2xl border-2 border-zinc-200 text-sm font-bold hover:border-zinc-400 transition-colors">
                   Cancel
                 </button>
-                <button onClick={saveModal} disabled={saving} className="flex-1 h-11 rounded-2xl bg-zinc-950 text-white text-sm font-bold hover:bg-zinc-800 transition-colors disabled:opacity-60 flex items-center justify-center gap-2">
+                <button onClick={saveModal} disabled={saving}
+                  className="flex-1 h-11 rounded-2xl bg-zinc-950 text-white text-sm font-bold hover:bg-zinc-800 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+                >
                   {saving ? <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Check className="h-4 w-4" />}
                   {editItem ? "Save changes" : "Add device"}
                 </button>
@@ -366,7 +491,9 @@ export default function CatalogPage() {
                 <button onClick={() => setDeleteId(null)} className="flex-1 h-11 rounded-2xl border-2 border-zinc-200 text-sm font-bold hover:border-zinc-400 transition-colors">
                   Cancel
                 </button>
-                <button onClick={confirmDelete} disabled={deleting} className="flex-1 h-11 rounded-2xl bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition-colors disabled:opacity-60">
+                <button onClick={confirmDelete} disabled={deleting}
+                  className="flex-1 h-11 rounded-2xl bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition-colors disabled:opacity-60"
+                >
                   {deleting ? "Removing..." : "Remove"}
                 </button>
               </div>

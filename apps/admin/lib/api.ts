@@ -80,6 +80,56 @@ export const storesApi = {
   remove: (id: string) => apiFetch<void>(`/stores/${id}`, { method: 'DELETE' }),
 };
 
+// ── Scraper ───────────────────────────────────────────────────────────────────
+export interface ScrapedPriceRow {
+  id: string;
+  deviceKey: string;
+  brand: string;
+  model: string;
+  storage: string;
+  cexSellPrice: number | null;
+  cexCashPrice: number | null;
+  cexExchangePrice: number | null;
+  backMarketPrice: number | null;
+  musicMagpiePrice: number | null;
+  marketPrice: number | null;
+  scrapedAt: string;
+}
+
+export interface ScraperStats {
+  total: number;
+  withMarketPrice: number;
+  withCex: number;
+  withBM: number;
+  withMM: number;
+  lastScrapedAt: string | null;
+}
+
+export const scraperApi = {
+  run: (limit?: number) => {
+    const q = limit ? `?limit=${limit}` : '';
+    return apiFetch<{ message: string }>(`/scraper/run${q}`, { method: 'POST' });
+  },
+
+  prices: (page = 1, limit = 50, search?: string) => {
+    const q = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (search) q.set('search', search);
+    return apiFetch<{ items: ScrapedPriceRow[]; total: number; page: number; pages: number }>(`/scraper/prices?${q}`);
+  },
+
+  devicePrices: (brand: string, model: string) => {
+    const q = new URLSearchParams({ brand, model });
+    return apiFetch<ScrapedPriceRow[]>(`/scraper/device?${q}`);
+  },
+
+  scrapeDevice: (brand: string, model: string) => {
+    const q = new URLSearchParams({ brand, model });
+    return apiFetch<{ message: string }>(`/scraper/device?${q}`, { method: 'POST' });
+  },
+
+  stats: () => apiFetch<ScraperStats>('/scraper/stats'),
+};
+
 // ── Pricing Config ────────────────────────────────────────────────────────────
 export const pricingConfigApi = {
   list: () => apiFetch<{ key: string; value: number; label: string }[]>('/pricing-config'),

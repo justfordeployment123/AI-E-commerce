@@ -20,7 +20,7 @@ function PromoCarouselBanner() {
   const slides = [
     {
       title: "Weekend Offer+",
-      img: "/galaxy_watch_promo_1778927696615.png", 
+      img: "/homepage_top/galaxy_watch_promo_1778927696615.png", 
       text: "Save up to £20 on Galaxy Watch\nthis weekend only.*",
       bg: "bg-[#d4c3f4]", // Light purple
       accent: "text-purple-700",
@@ -29,7 +29,7 @@ function PromoCarouselBanner() {
     },
     {
       title: "Student Discount",
-      img: "/laptop_student_promo_1778927711734.png", 
+      img: "/homepage_top/laptop_student_promo_1778927711734.png", 
       text: "Get 5% off everything\nall year round.",
       bg: "bg-[#b8e4d3]", // Light green
       accent: "text-emerald-700",
@@ -38,7 +38,7 @@ function PromoCarouselBanner() {
     },
     {
       title: "Trade-in Bonus",
-      img: "/iphone_tradein_promo_1778927727005.png", 
+      img: "/homepage_top/iphone_tradein_promo_1778927727005.png", 
       text: "Extra £30 when you trade in\nyour old iPhone.",
       bg: "bg-[#ffdca8]", // Light orange
       accent: "text-orange-700",

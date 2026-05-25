@@ -10,6 +10,7 @@ import { ApproveTradeInDto } from './dto/approve-trade-in.dto';
 import { RejectTradeInDto } from './dto/reject-trade-in.dto';
 import { CounterOfferTradeInDto } from './dto/counter-offer-trade-in.dto';
 import { AiPriceDto } from './dto/ai-price.dto';
+import { ScraperService } from '../scraper/scraper.service';
 
 function applyMargin(marketPrice: number, marginPct: number): number {
     return Math.max(Math.round(marketPrice * (1 - marginPct / 100) / 5) * 5, 10);
@@ -24,6 +25,7 @@ export class TradeInsService {
         private readonly storage: StorageService,
         private readonly notifications: NotificationsService,
         private readonly shipping: ShippingService,
+        private readonly scraper: ScraperService,
     ) {}
 
     async submit(dto: CreateTradeInDto, userId?: string) {
@@ -242,7 +244,18 @@ export class TradeInsService {
         return row?.value ?? 30;
     }
 
-    async aiPrice(dto: AiPriceDto): Promise<{ price: number; aiUsed: boolean }> {
+    async aiPrice(dto: AiPriceDto): Promise<{ price: number; aiUsed: boolean; source?: string }> {
+        // 1. Try scraped competitor prices first (fresh data, no AI cost)
+        const storage = (dto.specs as Record<string, string>)?.storage ?? (dto.specs as Record<string, string>)?.Storage ?? '';
+        const scrapedMarketPrice = await this.scraper.lookupPrice(dto.brand, dto.model, storage);
+        if (scrapedMarketPrice !== null) {
+            const marginPct = await this.getMarginPct();
+            const offer = applyMargin(scrapedMarketPrice, marginPct);
+            this.logger.log(`Scraped price used for ${dto.brand} ${dto.model} ${storage}: market £${scrapedMarketPrice} → offer £${offer}`);
+            return { price: offer, aiUsed: false, source: 'scraped' };
+        }
+
+        // 2. Fall back to OpenAI
         const apiKey = process.env.OPENAI_API_KEY;
         if (!apiKey) throw new InternalServerErrorException('AI pricing is not configured');
 

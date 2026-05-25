@@ -5,9 +5,10 @@ import { DatabaseModule } from '../database/database.module';
 import { StorageModule } from '../../common/services/storage.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { ShippingModule } from '../shipping/shipping.module';
+import { ScraperModule } from '../scraper/scraper.module';
 
 @Module({
-    imports: [DatabaseModule, StorageModule, NotificationsModule, ShippingModule],
+    imports: [DatabaseModule, StorageModule, NotificationsModule, ShippingModule, ScraperModule],
     controllers: [TradeInsController],
     providers: [TradeInsService],
 })

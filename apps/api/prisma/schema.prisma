@@ -244,3 +244,22 @@ model DeviceCatalog {
   @@unique([brand, model])
   @@map("device_catalog")
 }
+
+model ScrapedPrice {
+  id                 String   @id @default(uuid())
+  deviceKey          String   @unique  // "Apple iPhone 15 Plus 128GB"
+  brand              String
+  model              String
+  storage            String
+  cexSellPrice       Float?
+  cexCashPrice       Float?
+  cexExchangePrice   Float?
+  backMarketPrice    Float?
+  musicMagpiePrice   Float?
+  marketPrice        Float?   // best available price computed from all sources
+  scrapedAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([brand, model])
+  @@map("scraped_prices")
+}
