@@ -3,6 +3,7 @@ import OpenAI from 'openai';
 import { PrismaService } from '../database/prisma.service';
 import { StorageService } from '../../common/services/storage.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { ShippingService } from '../shipping/shipping.service';
 import { CreateTradeInDto } from './dto/create-trade-in.dto';
 import { UpdateTradeInDto } from './dto/update-trade-in.dto';
 import { ApproveTradeInDto } from './dto/approve-trade-in.dto';
@@ -22,6 +23,7 @@ export class TradeInsService {
         private readonly prisma: PrismaService,
         private readonly storage: StorageService,
         private readonly notifications: NotificationsService,
+        private readonly shipping: ShippingService,
     ) {}
 
     async submit(dto: CreateTradeInDto, userId?: string) {
@@ -161,6 +163,31 @@ export class TradeInsService {
                 { tradeInId: id, reference: tradeIn.reference, price: tradeIn.offerPrice },
             );
         }
+
+        // Generate prepaid label for mail-in trade-ins
+        if (tradeIn.fulfillment === 'ship') {
+            const contact = tradeIn.contact as Record<string, string>;
+            try {
+                const result = await this.shipping.generatePrepaidLabel({
+                    reference:     tradeIn.reference,
+                    customerName:  contact.name  || 'Customer',
+                    customerEmail: contact.email || '',
+                    customerPhone: contact.phone,
+                    type:          'trade-in',
+                });
+                await this.prisma.tradeIn.update({
+                    where: { id },
+                    data:  { trackingNumber: result.trackingNumber },
+                });
+                await this.shipping.sendLabelEmail(
+                    { reference: tradeIn.reference, customerName: contact.name || 'Customer', customerEmail: contact.email || '', type: 'trade-in' },
+                    result,
+                );
+            } catch (err) {
+                this.logger.error(`Failed to generate shipping label for trade-in ${id}`, err);
+            }
+        }
+
         return updated;
     }
 

@@ -21,6 +21,7 @@ import { DeviceCatalogModule } from './modules/device-catalog/device-catalog.mod
 import { StoresModule } from './modules/stores/stores.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { ShippingModule } from './modules/shipping/shipping.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     StoresModule,
     UploadsModule,
     NotificationsModule,
+    ShippingModule,
   ],
   controllers: [AppController],
   providers: [

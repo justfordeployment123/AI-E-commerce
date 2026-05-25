@@ -267,6 +267,7 @@ export interface TradeInDetail extends TradeIn {
   specs: Record<string, string>;
   answers: Record<string, string>;
   adminNotes?: string;
+  trackingNumber?: string;
   images: string[];
   contact: Record<string, string>;
   storeId?: string;
@@ -289,6 +290,7 @@ export interface Repair {
 export interface RepairDetail extends Repair {
   issueNotes?: string;
   adminNotes?: string;
+  trackingNumber?: string;
   images: string[];
   contact: { name: string; email: string; phone?: string; address?: string; postcode?: string };
   updatedAt: string;

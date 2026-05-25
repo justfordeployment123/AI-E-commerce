@@ -4,9 +4,10 @@ import { TradeInsService } from './trade-ins.service';
 import { DatabaseModule } from '../database/database.module';
 import { StorageModule } from '../../common/services/storage.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { ShippingModule } from '../shipping/shipping.module';
 
 @Module({
-    imports: [DatabaseModule, StorageModule, NotificationsModule],
+    imports: [DatabaseModule, StorageModule, NotificationsModule, ShippingModule],
     controllers: [TradeInsController],
     providers: [TradeInsService],
 })

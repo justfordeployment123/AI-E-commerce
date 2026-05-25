@@ -1,7 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { StorageService } from '../../common/services/storage.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { ShippingService } from '../shipping/shipping.service';
 import { CreateRepairDto } from './dto/create-repair.dto';
 import { UpdateRepairDto } from './dto/update-repair.dto';
 import { SetQuoteDto } from './dto/set-quote.dto';
@@ -9,10 +10,13 @@ import { CompleteRepairDto } from './dto/complete-repair.dto';
 
 @Injectable()
 export class RepairsService {
+    private readonly logger = new Logger(RepairsService.name);
+
     constructor(
         private readonly prisma: PrismaService,
         private readonly storage: StorageService,
         private readonly notifications: NotificationsService,
+        private readonly shipping: ShippingService,
     ) {}
 
     async submit(dto: CreateRepairDto, userId?: string) {
@@ -165,7 +169,34 @@ export class RepairsService {
         if (repair.status !== 'QUOTE_SENT') {
             throw new BadRequestException('No quote to accept');
         }
-        return this.prisma.repair.update({ where: { id }, data: { status: 'APPROVED' } });
+
+        const updated = await this.prisma.repair.update({ where: { id }, data: { status: 'APPROVED' } });
+
+        // Generate prepaid label for mail-in repairs
+        if (repair.fulfillment === 'ship') {
+            const contact = repair.contact as Record<string, string>;
+            try {
+                const result = await this.shipping.generatePrepaidLabel({
+                    reference:     repair.reference,
+                    customerName:  contact.name  || 'Customer',
+                    customerEmail: contact.email || '',
+                    customerPhone: contact.phone,
+                    type:          'repair',
+                });
+                await this.prisma.repair.update({
+                    where: { id },
+                    data:  { trackingNumber: result.trackingNumber },
+                });
+                await this.shipping.sendLabelEmail(
+                    { reference: repair.reference, customerName: contact.name || 'Customer', customerEmail: contact.email || '', type: 'repair' },
+                    result,
+                );
+            } catch (err) {
+                this.logger.error(`Failed to generate shipping label for repair ${id}`, err);
+            }
+        }
+
+        return updated;
     }
 
     async declineQuote(id: string, userId: string) {

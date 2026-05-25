@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { repairsApi, type Repair } from "../../../lib/api";
 import {
   ArrowLeft, Check, X, Wrench, Truck, MapPin, Mail, Phone,
-  Clock, RefreshCw, Image as ImageIcon,
+  Clock, RefreshCw, Image as ImageIcon, Package,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -330,6 +330,26 @@ export default function RepairDetailPage() {
                 </div>
               )}
             </div>
+
+            {/* Tracking */}
+            {item.trackingNumber && (
+              <div className="bg-white rounded-3xl border border-zinc-100 shadow-sm p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <Package className="h-4 w-4 text-zinc-400" />
+                  <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-400">Shipment Tracking</h2>
+                </div>
+                <p className="text-xs text-zinc-400 font-medium mb-1">Royal Mail Tracking Number</p>
+                <p className="font-mono font-bold text-base text-zinc-900 mb-3">{item.trackingNumber}</p>
+                <a
+                  href={`https://www.royalmail.com/track-your-item#/tracking-results/${item.trackingNumber}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 h-9 px-4 rounded-xl bg-zinc-950 text-white text-xs font-bold hover:bg-zinc-800 transition-colors"
+                >
+                  <Truck className="h-3.5 w-3.5" /> Track on Royal Mail
+                </a>
+              </div>
+            )}
 
             {/* Admin notes */}
             {item.adminNotes && (

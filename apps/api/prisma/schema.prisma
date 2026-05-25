@@ -131,26 +131,28 @@ model OrderItem {
 }
 
 model TradeIn {
-  id           String        @id @default(uuid())
-  reference    String        @unique @default(cuid())
-  userId       String?
-  user         User?         @relation(fields: [userId], references: [id])
-  category     String
-  brand        String
-  model        String
-  specs        Json          @default("{}")
-  condition    String
-  answers      Json          @default("{}")
-  fulfillment  String        // ship | dropoff
-  offerPrice   Float
-  images       String[]
-  status       TradeInStatus @default(SUBMITTED)
-  contact      Json
-  storeId      String?
-  adminNotes   String?
-  counterOffer Float?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  id              String        @id @default(uuid())
+  reference       String        @unique @default(cuid())
+  userId          String?
+  user            User?         @relation(fields: [userId], references: [id])
+  category        String
+  brand           String
+  model           String
+  specs           Json          @default("{}")
+  condition       String
+  answers         Json          @default("{}")
+  fulfillment     String        // ship | dropoff
+  offerPrice      Float
+  images          String[]
+  status          TradeInStatus @default(SUBMITTED)
+  contact         Json
+  storeId         String?
+  adminNotes      String?
+  counterOffer    Float?
+  trackingNumber  String?
+  labelUrl        String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
   @@index([status])
   @@index([userId])
@@ -159,23 +161,25 @@ model TradeIn {
 }
 
 model Repair {
-  id          String       @id @default(uuid())
-  reference   String       @unique @default(cuid())
-  userId      String?
-  user        User?        @relation(fields: [userId], references: [id])
-  deviceType  String
-  brand       String
-  model       String
-  issue       String
-  issueNotes  String?
-  fulfillment String       // ship | dropoff
-  images      String[]
-  status      RepairStatus @default(SUBMITTED)
-  quote       Float?
-  contact     Json
-  adminNotes  String?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id             String       @id @default(uuid())
+  reference      String       @unique @default(cuid())
+  userId         String?
+  user           User?        @relation(fields: [userId], references: [id])
+  deviceType     String
+  brand          String
+  model          String
+  issue          String
+  issueNotes     String?
+  fulfillment    String       // ship | dropoff
+  images         String[]
+  status         RepairStatus @default(SUBMITTED)
+  quote          Float?
+  contact        Json
+  adminNotes     String?
+  trackingNumber String?
+  labelUrl       String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
   @@index([status])
   @@index([userId])

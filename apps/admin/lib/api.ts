@@ -287,6 +287,7 @@ export interface Repair {
   fulfillment: string;
   contact: { name: string; email: string; phone: string; address?: string; postcode?: string };
   adminNotes?: string;
+  trackingNumber?: string;
   createdAt: string;
   updatedAt: string;
   user?: { id: string; name: string; email: string };

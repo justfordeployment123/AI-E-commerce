@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft, CheckCircle, XCircle, Clock, Wrench,
-  Truck, MapPin, ImageIcon, User, Mail, Phone, Home,
+  Truck, MapPin, ImageIcon, User, Mail, Phone, Home, Package,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { repairsApi, type RepairDetail } from "../../../../lib/api";
@@ -41,12 +41,17 @@ export default function RepairDetailPage() {
       .finally(() => setLoading(false));
   }, [user, id]);
 
+  async function refetch() {
+    const fresh = await repairsApi.myById(id);
+    setRepair(fresh);
+  }
+
   async function acceptQuote() {
     if (!repair) return;
     setActing(true); setError(null);
     try {
-      const updated = await repairsApi.acceptQuote(repair.id);
-      setRepair(prev => prev ? { ...prev, ...updated } : prev);
+      await repairsApi.acceptQuote(repair.id);
+      await refetch();
     } catch (e: any) { setError(e?.message ?? "Failed to accept quote"); }
     finally { setActing(false); }
   }
@@ -55,8 +60,8 @@ export default function RepairDetailPage() {
     if (!repair) return;
     setActing(true); setError(null);
     try {
-      const updated = await repairsApi.declineQuote(repair.id);
-      setRepair(prev => prev ? { ...prev, ...updated } : prev);
+      await repairsApi.declineQuote(repair.id);
+      await refetch();
     } catch (e: any) { setError(e?.message ?? "Failed to decline quote"); }
     finally { setActing(false); }
   }
@@ -175,6 +180,29 @@ export default function RepairDetailPage() {
             </div>
           </div>
         </div>
+
+        {/* Tracking */}
+        {repair.trackingNumber && (
+          <div className="rounded-2xl bg-zinc-950 text-white p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <Package className="h-4 w-4 text-zinc-400" />
+              <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Your Prepaid Shipping Label</p>
+            </div>
+            <p className="text-xs text-zinc-400 mb-1">Royal Mail Tracking Number</p>
+            <p className="font-mono font-bold text-lg text-white mb-3">{repair.trackingNumber}</p>
+            <p className="text-xs text-zinc-400 mb-4 leading-relaxed">
+              Your prepaid label has been emailed to you. Print it, attach it to your securely packaged device, and drop it at any Post Office.
+            </p>
+            <a
+              href={`https://www.royalmail.com/track-your-item#/tracking-results/${repair.trackingNumber}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 h-9 px-4 rounded-xl bg-white text-zinc-950 text-xs font-bold hover:bg-zinc-100 transition-colors"
+            >
+              <Truck className="h-3.5 w-3.5" /> Track your parcel
+            </a>
+          </div>
+        )}
 
         {/* Contact details */}
         {repair.contact && (

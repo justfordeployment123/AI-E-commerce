@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft, CheckCircle, XCircle, Clock, RefreshCw,
   Truck, MapPin, ImageIcon, User, Mail, Phone, Home,
-  MessageSquare, Tag,
+  MessageSquare, Tag, Package,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { tradeInsApi, type TradeInDetail } from "../../../../lib/api";
@@ -85,12 +85,17 @@ export default function TradeInDetailPage() {
       .finally(() => setLoading(false));
   }, [user, id]);
 
+  async function refetch() {
+    const fresh = await tradeInsApi.myById(id);
+    setTradeIn(fresh);
+  }
+
   async function acceptCounter() {
     if (!tradeIn) return;
     setActing(true); setError(null);
     try {
-      const updated = await tradeInsApi.acceptCounter(tradeIn.id);
-      setTradeIn(prev => prev ? { ...prev, ...updated } : prev);
+      await tradeInsApi.acceptCounter(tradeIn.id);
+      await refetch();
     } catch (e: any) { setError(e?.message ?? "Failed to accept offer"); }
     finally { setActing(false); }
   }
@@ -99,8 +104,8 @@ export default function TradeInDetailPage() {
     if (!tradeIn) return;
     setActing(true); setError(null);
     try {
-      const updated = await tradeInsApi.declineCounter(tradeIn.id);
-      setTradeIn(prev => prev ? { ...prev, ...updated } : prev);
+      await tradeInsApi.declineCounter(tradeIn.id);
+      await refetch();
     } catch (e: any) { setError(e?.message ?? "Failed to decline offer"); }
     finally { setActing(false); }
   }
@@ -228,6 +233,29 @@ export default function TradeInDetailPage() {
           <div className="rounded-2xl bg-amber-50 border border-amber-100 px-4 py-3">
             <p className="text-[10px] font-bold uppercase tracking-widest text-amber-600 mb-1">Note from TechStop</p>
             <p className="text-sm text-amber-800">{tradeIn.adminNotes}</p>
+          </div>
+        )}
+
+        {/* Tracking */}
+        {tradeIn.trackingNumber && (
+          <div className="rounded-2xl bg-zinc-950 text-white p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <Package className="h-4 w-4 text-zinc-400" />
+              <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Your Prepaid Shipping Label</p>
+            </div>
+            <p className="text-xs text-zinc-400 mb-1">Royal Mail Tracking Number</p>
+            <p className="font-mono font-bold text-lg text-white mb-3">{tradeIn.trackingNumber}</p>
+            <p className="text-xs text-zinc-400 mb-4 leading-relaxed">
+              Your prepaid label has been emailed to you. Print it, attach it to your securely packaged device, and drop it at any Post Office.
+            </p>
+            <a
+              href={`https://www.royalmail.com/track-your-item#/tracking-results/${tradeIn.trackingNumber}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 h-9 px-4 rounded-xl bg-white text-zinc-950 text-xs font-bold hover:bg-zinc-100 transition-colors"
+            >
+              <Truck className="h-3.5 w-3.5" /> Track your parcel
+            </a>
           </div>
         )}
 
