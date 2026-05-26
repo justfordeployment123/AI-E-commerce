@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { notFound, useParams } from "next/navigation";
 import { useCart } from "../../../context/cart-context";
-import { productsApi } from "../../../lib/api";
+import { productsApi, reviewsApi } from "../../../lib/api";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import {
@@ -302,6 +302,7 @@ export default function CategoryPage() {
   const [displayProducts, setDisplayProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [subBrands, setSubBrands] = useState<{ brand: string; image: string | null }[]>([]);
+  const [liveReviews, setLiveReviews] = useState<typeof MOCK_REVIEWS | null>(null);
 
   const { addItem } = useCart();
 
@@ -340,6 +341,24 @@ export default function CategoryPage() {
 
     productsApi.brands(apiCategory)
       .then(setSubBrands)
+      .catch(() => {});
+
+    reviewsApi.recent(4)
+      .then(res => {
+        if (res.length > 0) {
+          setLiveReviews(res.map((r, i) => ({
+            id: i + 1,
+            name: r.user?.name ?? r.guestName ?? 'Verified Buyer',
+            rating: r.rating,
+            date: new Date(r.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+            text: r.body,
+            model: (r as any).product?.name ?? '',
+            verified: true,
+            image: (r as any).product?.coverImage ?? `https://picsum.photos/seed/rev${i}/400/500`,
+            thumbnail: (r as any).product?.coverImage ?? `https://picsum.photos/seed/thumb${i}/100/100`,
+          })));
+        }
+      })
       .catch(() => {});
   }, [categorySlug]);
 
@@ -982,7 +1001,7 @@ export default function CategoryPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {MOCK_REVIEWS.map((rev) => (
+              {(liveReviews ?? MOCK_REVIEWS).map((rev) => (
                 <div key={rev.id} className="flex flex-col group">
                   
                   {/* Top Portion: Photo with text & badge overlay */}

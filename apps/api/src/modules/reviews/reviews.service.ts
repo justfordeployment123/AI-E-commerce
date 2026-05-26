@@ -16,7 +16,7 @@ export class ReviewsService {
       take: limit,
       include: {
         user: { select: { name: true } },
-        product: { select: { name: true, slug: true, category: true, condition: true } },
+        product: { select: { name: true, slug: true, category: true, condition: true, images: true } },
       },
     });
     return Promise.all(reviews.map(r => this.resolveImages(r)));
@@ -107,6 +107,14 @@ export class ReviewsService {
     const images = await Promise.all(
       (review.images as string[]).map(img => this.storage.resolveImageUrl(img)),
     );
-    return { ...review, images: images.filter(Boolean) };
+    const productImages = review.product?.images as string[] | undefined;
+    const productImage = productImages?.length
+      ? await this.storage.resolveImageUrl(productImages[0])
+      : null;
+    return {
+      ...review,
+      images: images.filter(Boolean),
+      product: review.product ? { ...review.product, coverImage: productImage } : review.product,
+    };
   }
 }
