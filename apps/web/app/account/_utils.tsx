@@ -15,7 +15,6 @@ export const STATUS_CONFIG: Record<string, { label: string; color: string; icon:
   completed:    { label: "Completed",    color: "bg-emerald-100 text-emerald-700",  icon: Check },
   quote_sent:   { label: "Quote Sent",   color: "bg-blue-100 text-blue-700",        icon: Clock },
   in_progress:  { label: "In Progress",  color: "bg-violet-100 text-violet-700",    icon: Wrench },
-  cancelled:    { label: "Cancelled",    color: "bg-red-100 text-red-700",           icon: RefreshCw },
 };
 
 export function statusCfg(status: string) {
