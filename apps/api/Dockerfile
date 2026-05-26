@@ -59,6 +59,8 @@ COPY --from=prod-deps /app/node_modules ./node_modules
 # builder's node_modules. prod-deps never runs generate, so we copy it across.
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
+RUN node_modules/.bin/playwright install --with-deps chromium
+
 USER nestjs
 
 EXPOSE 3002
