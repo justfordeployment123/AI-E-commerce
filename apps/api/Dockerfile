@@ -10,7 +10,7 @@ RUN apt-get update -y && apt-get install -y --no-install-recommends openssl ca-c
 # Install ALL dependencies (including devDeps) regardless of NODE_ENV.
 # Build tools like @nestjs/cli are devDeps and must be present in the builder stage.
 COPY package*.json ./
-RUN npm ci --include=dev --no-audit --no-fund
+RUN npm install --no-audit --no-fund
 
 FROM node:24-bookworm-slim AS builder
 WORKDIR /app
@@ -34,7 +34,7 @@ RUN apt-get update -y && apt-get install -y --no-install-recommends openssl ca-c
     && rm -rf /var/lib/apt/lists/*
 
 COPY package*.json ./
-RUN npm ci --omit=dev --no-audit --no-fund
+RUN npm install --omit=dev --no-audit --no-fund
 
 FROM node:24-bookworm-slim AS runner
 WORKDIR /app
