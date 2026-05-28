@@ -1,6 +1,9 @@
 import { Module } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { ScheduleModule } from '@nestjs/schedule';
+import { ScraperCronModule } from './modules/scraper-cron/scraper-cron.module';
+import { ScraperDataModule } from './modules/scraper-data/scraper-data.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule } from './modules/config/config.module';
@@ -23,7 +26,6 @@ import { UploadsModule } from './modules/uploads/uploads.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { ShippingModule } from './modules/shipping/shipping.module';
 import { PaymentsModule } from './modules/payments/payments.module';
-import { ScraperModule } from './modules/scraper/scraper.module';
 import { SupportModule } from './modules/support/support.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
 import { SeedModule } from './modules/seed/seed.module';
@@ -34,7 +36,10 @@ import { SeedModule } from './modules/seed/seed.module';
     DatabaseModule,
     CacheModule,
     HealthModule,
+    ScheduleModule.forRoot(),
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 60 }]),
+    ScraperCronModule,
+    ScraperDataModule,
     AuthModule,
     UsersModule,
     ProductsModule,
@@ -50,7 +55,6 @@ import { SeedModule } from './modules/seed/seed.module';
     NotificationsModule,
     ShippingModule,
     PaymentsModule,
-    ScraperModule,
     SupportModule,
     ReviewsModule,
     SeedModule,

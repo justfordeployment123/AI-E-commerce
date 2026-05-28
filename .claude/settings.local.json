@@ -61,7 +61,17 @@
       "Bash(Get-ChildItem -Path \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\admin\\\\app\" -Recurse -Filter \"*.tsx\")",
       "Bash(Get-ChildItem -Path \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\\\\public\" -Recurse -Force)",
       "Bash(Sort-Object FullName)",
-      "Bash(xargs grep -l \"showcase\\\\|bento\\\\|banners\\\\|audio\\\\|consoles\")"
+      "Bash(xargs grep -l \"showcase\\\\|bento\\\\|banners\\\\|audio\\\\|consoles\")",
+      "Bash(npx --yes @nestjs/cli new scraper --skip-git --package-manager npm --strict)",
+      "PowerShell(New-Item -ItemType Directory -Force \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\scraper\\\\src\\\\modules\\\\database\")",
+      "PowerShell(New-Item -ItemType Directory -Force \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\scraper\\\\src\\\\modules\\\\scraper\")",
+      "PowerShell(Copy-Item \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\api\\\\src\\\\modules\\\\database\\\\database.module.ts\" \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\scraper\\\\src\\\\modules\\\\database\\\\database.module.ts\")",
+      "PowerShell(Copy-Item \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\api\\\\src\\\\modules\\\\database\\\\prisma.service.ts\" \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\scraper\\\\src\\\\modules\\\\database\\\\prisma.service.ts\")",
+      "PowerShell(Copy-Item \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\api\\\\src\\\\modules\\\\scraper\\\\scraper.service.ts\" \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\scraper\\\\src\\\\modules\\\\scraper\\\\scraper.service.ts\")",
+      "PowerShell(Get-ChildItem \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\scraper\" -Recurse | Where-Object { !$_.PSIsContainer -and $_.FullName -notmatch 'node_modules' } | Select-Object -ExpandProperty FullName | ForEach-Object { $_.Replace\\(\"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\\", \"\"\\) })",
+      "PowerShell(New-Item -ItemType Directory -Force \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\api\\\\src\\\\modules\\\\scraper-cron\")",
+      "PowerShell(cd \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\api\"; $env:PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION = \"run all yourself\"; npx prisma migrate reset --force 2>&1 | Select-Object -Last 15)",
+      "PowerShell(New-Item -ItemType Directory -Force \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\api\\\\src\\\\modules\\\\scraper-data\")"
     ],
     "additionalDirectories": [
       "d:\\CODE\\Projects\\Markhor Systems Projects\\Ai-Ecommerce\\apps\\web\\app\\account\\repairs",

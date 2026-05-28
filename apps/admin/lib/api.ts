@@ -105,10 +105,19 @@ export interface ScraperStats {
   lastScrapedAt: string | null;
 }
 
+export interface ScraperRun {
+  id: string;
+  status: 'RUNNING' | 'COMPLETED' | 'FAILED';
+  startedAt: string;
+  finishedAt: string | null;
+  totalScraped: number | null;
+  errorMessage: string | null;
+}
+
 export const scraperApi = {
   run: (limit?: number) => {
     const q = limit ? `?limit=${limit}` : '';
-    return apiFetch<{ message: string }>(`/scraper/run${q}`, { method: 'POST' });
+    return apiFetch<{ ok: boolean; message: string }>(`/scraper/run${q}`, { method: 'POST' });
   },
 
   prices: (page = 1, limit = 50, search?: string) => {
@@ -128,6 +137,8 @@ export const scraperApi = {
   },
 
   stats: () => apiFetch<ScraperStats>('/scraper/stats'),
+
+  runs: (limit = 20) => apiFetch<ScraperRun[]>(`/scraper/runs?limit=${limit}`),
 };
 
 // ── Pricing Config ────────────────────────────────────────────────────────────

@@ -7,6 +7,5 @@ import { ScraperController } from './scraper.controller';
     imports: [DatabaseModule],
     controllers: [ScraperController],
     providers: [ScraperService],
-    exports: [ScraperService],
 })
 export class ScraperModule {}

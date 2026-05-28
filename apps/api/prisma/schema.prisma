@@ -42,6 +42,12 @@ enum RepairStatus {
   CANCELLED
 }
 
+enum ScraperRunStatus {
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
 // ─── Models ───────────────────────────────────────────────────────────────────
 
 model User {
@@ -264,6 +270,17 @@ model ScrapedPrice {
 
   @@index([brand, model])
   @@map("scraped_prices")
+}
+
+model ScraperRun {
+  id            String    @id @default(uuid())
+  status        ScraperRunStatus @default(RUNNING)
+  startedAt     DateTime  @default(now())
+  finishedAt    DateTime?
+  totalScraped  Int?
+  errorMessage  String?
+
+  @@map("scraper_runs")
 }
 
 model HelplineNumber {

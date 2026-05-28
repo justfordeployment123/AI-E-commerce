@@ -1,12 +1,7 @@
-import { Controller, Post, Get, Query, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
-import { ScraperService } from './scraper.service';
-import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { RolesGuard } from '../../common/guards/roles.guard';
-import { Roles } from '../../common/decorators/roles.decorator';
+import { Controller, Post, Get, Query, HttpCode, HttpStatus } from '@nestjs/common';
+import { ScraperService } from './scraper.service.js';
 
 @Controller('scraper')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('ADMIN')
 export class ScraperController {
     constructor(private readonly scraperService: ScraperService) {}
 

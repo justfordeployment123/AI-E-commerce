@@ -31,6 +31,10 @@ export class ScraperService {
     async runScraper(limit?: number): Promise<Record<string, DevicePrices>> {
         this.logger.log('Starting competitor price scraper…');
 
+        const run = await this.prisma.scraperRun.create({
+            data: { status: 'RUNNING' },
+        });
+
         const devices = await this.prisma.deviceCatalog.findMany({ where: { isActive: true } });
         this.logger.log(`Found ${devices.length} active devices in catalog.`);
 
@@ -130,19 +134,22 @@ export class ScraperService {
                     await this.delay(1500 + Math.random() * 1500);
                 }
             }
-        } finally {
-            // Always close browser even if an item throws mid-loop
+        } catch (err: any) {
             await browser.close();
+            await this.prisma.scraperRun.update({
+                where: { id: run.id },
+                data: { status: 'FAILED', finishedAt: new Date(), errorMessage: err?.message ?? 'Unknown error' },
+            });
+            this.logger.error(`Scraper failed: ${err?.message}`);
+            throw err;
         }
 
-        // Write JSON backup for debugging
-        const downloadsDir = path.join(process.cwd(), 'prisma', 'downloads');
-        if (!fs.existsSync(downloadsDir)) fs.mkdirSync(downloadsDir, { recursive: true });
-        fs.writeFileSync(
-            path.join(downloadsDir, 'scraped_prices.json'),
-            JSON.stringify({ scrapedAt: new Date().toISOString(), totalScraped: itemsToScrape.length, prices: results }, null, 2),
-            'utf-8',
-        );
+        await browser.close();
+
+        await this.prisma.scraperRun.update({
+            where: { id: run.id },
+            data: { status: 'COMPLETED', finishedAt: new Date(), totalScraped: itemsToScrape.length },
+        });
 
         this.logger.log(`Scraper finished — ${itemsToScrape.length} variants processed.`);
         return results;
