@@ -47,7 +47,7 @@ export default function ProductDetailPage() {
           price: p.price, comparePrice: p.comparePrice,
           stock: p.stock ?? 0, description: p.description ?? "",
           isActive: p.isActive,
-          storage: (p.specs?.storage as string) ?? "",
+          storage: p.storage ?? "",
         });
       })
       .catch(() => router.replace("/products"))
@@ -59,13 +59,13 @@ export default function ProductDetailPage() {
     setSaving(true); setError(""); setSuccess("");
     try {
       await productsApi.update(product.id, {
-        name: form.name, brand: form.brand, model: form.model,
-        category: form.category, condition: form.condition,
+        name: form.name, condition: form.condition,
+        storage: form.storage,
         price: Number(form.price),
         comparePrice: form.comparePrice ? Number(form.comparePrice) : undefined,
         stock: Number(form.stock), description: form.description,
         isActive: form.isActive,
-        specs: { ...product.specs, storage: form.storage },
+        specs: product.specs,
         images: rawImagePaths,
       });
       // re-fetch to get fresh presigned display URLs

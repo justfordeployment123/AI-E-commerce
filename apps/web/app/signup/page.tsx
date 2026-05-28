@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Mail, Lock, ArrowRight, User, ChevronLeft, Zap, CheckCircle2 } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, ArrowRight, User, ChevronLeft, Zap, CheckCircle2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "../../context/auth-context";
 
@@ -13,6 +13,7 @@ export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
@@ -93,15 +94,22 @@ export default function SignupPage() {
             <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 ml-1">Password</label>
             <div className="relative group">
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
                 minLength={8}
-                className="w-full h-13 rounded-2xl bg-zinc-50 px-12 text-sm font-bold focus:ring-2 focus:ring-black outline-none border-2 border-transparent transition-all focus:bg-white shadow-sm"
+                className="w-full h-13 rounded-2xl bg-zinc-50 pl-12 pr-12 text-sm font-bold focus:ring-2 focus:ring-black outline-none border-2 border-transparent transition-all focus:bg-white shadow-sm"
               />
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-300 group-focus-within:text-black transition-colors" />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-300 hover:text-black transition-colors"
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
             </div>
           </div>
 

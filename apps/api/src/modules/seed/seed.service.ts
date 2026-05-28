@@ -106,7 +106,7 @@ export class SeedService {
     async runSeed(): Promise<SeedResult> {
         const productsJsonPath = path.join(this.downloadsDir, 'products.json');
         if (!fs.existsSync(productsJsonPath)) {
-            throw new Error(`products.json not found at ${productsJsonPath}. Make sure the image/data files are bundled in the container.`);
+            throw new Error(`products.json not found at ${productsJsonPath}.`);
         }
 
         const productsData: any[] = JSON.parse(fs.readFileSync(productsJsonPath, 'utf8'));
@@ -127,26 +127,27 @@ export class SeedService {
                 create: config,
             });
         }
-        this.logger.log(`Seeded ${PRICING_DEFAULTS.length} pricing configs`);
         return PRICING_DEFAULTS.length;
     }
 
     private async seedDeviceCatalog(): Promise<number> {
+        // Must clear in FK-dependency order before recreating
+        await this.prisma.orderItem.deleteMany({});
+        await this.prisma.product.deleteMany({});
         await this.prisma.deviceCatalog.deleteMany({});
+
         for (const dev of DEVICE_CATALOG) {
             await this.prisma.deviceCatalog.create({
                 data: { brand: dev.brand, model: dev.model, category: dev.category, storageOptions: dev.storageOptions, isActive: true },
             });
         }
-        this.logger.log(`Seeded ${DEVICE_CATALOG.length} devices in trade-in catalog`);
+        this.logger.log(`Seeded ${DEVICE_CATALOG.length} device catalog entries`);
         return DEVICE_CATALOG.length;
     }
 
     private async uploadImage(productSlug: string, imageFilename: string): Promise<string> {
         const localPath = path.join(this.downloadsDir, imageFilename);
-        if (!fs.existsSync(localPath)) {
-            throw new Error(`Image file not found: ${localPath}`);
-        }
+        if (!fs.existsSync(localPath)) throw new Error(`Image file not found: ${localPath}`);
         const s3Key = `products/${productSlug}/${imageFilename}`;
         const buffer = fs.readFileSync(localPath);
         await this.s3Client.send(new PutObjectCommand({
@@ -158,57 +159,96 @@ export class SeedService {
         return s3Key;
     }
 
+    private normalizeCategory(raw: string): string {
+        const map: Record<string, string> = {
+            'phones': 'phones', 'tablets': 'tablets',
+            'consoles': 'consoles', 'laptops': 'laptops',
+            'accessories': 'accessories',
+            'laptops / macbooks': 'laptops',
+        };
+        return map[raw.toLowerCase()] ?? raw.toLowerCase();
+    }
+
     private async seedProducts(productsData: any[]): Promise<SeedResult['products']> {
         let created = 0;
         let updated = 0;
         const errors: string[] = [];
 
-        for (let i = 0; i < productsData.length; i++) {
-            const prod = productsData[i];
-            try {
-                const slug = prod.slug as string;
-                const s3Keys: string[] = [];
+        // Build brand::model → catalogId lookup from what was just seeded
+        const catalogEntries = await this.prisma.deviceCatalog.findMany({
+            select: { id: true, brand: true, model: true },
+        });
+        const catalogMap = new Map<string, string>(
+            catalogEntries.map(e => [`${e.brand}::${e.model}`, e.id]),
+        );
 
+        for (const prod of productsData) {
+            try {
+                const brand = prod.brand as string;
+                const model = prod.model as string;
+
+                // Auto-create catalog entry if this brand/model isn't in the hardcoded list
+                let catalogId = catalogMap.get(`${brand}::${model}`);
+                if (!catalogId) {
+                    const storage = (prod.specs?.Storage || prod.specs?.storage || '') as string;
+                    const entry = await this.prisma.deviceCatalog.upsert({
+                        where: { brand_model: { brand, model } },
+                        update: {},
+                        create: {
+                            brand,
+                            model,
+                            category: this.normalizeCategory(prod.category ?? 'phones'),
+                            storageOptions: storage ? [storage] : [],
+                            isActive: true,
+                        },
+                    });
+                    catalogId = entry.id;
+                    catalogMap.set(`${brand}::${model}`, catalogId);
+                }
+
+                const slug = prod.slug as string;
+                const storage = (prod.specs?.Storage || prod.specs?.storage || '') as string;
+                const { Storage: _S, storage: _s, ...remainingSpecs } = prod.specs ?? {};
+
+                const s3Keys: string[] = [];
                 if (Array.isArray(prod.images)) {
                     for (const imgFilename of prod.images as string[]) {
                         try {
-                            const key = await this.uploadImage(slug, imgFilename);
-                            s3Keys.push(key);
+                            s3Keys.push(await this.uploadImage(slug, imgFilename));
                         } catch (e: any) {
-                            this.logger.warn(`Image upload skipped for "${prod.name}" / "${imgFilename}": ${e.message}`);
+                            this.logger.warn(`Image skipped "${prod.name}" / "${imgFilename}": ${e.message}`);
                         }
                     }
                 }
 
                 const data = {
+                    catalogId,
                     name: prod.name,
                     slug,
-                    category: prod.category === 'Laptops / MacBooks' ? 'Laptops' : prod.category,
-                    brand: prod.brand,
-                    model: prod.model,
                     condition: prod.condition,
+                    storage,
                     price: Number(prod.price),
                     comparePrice: prod.comparePrice ? Number(prod.comparePrice) : null,
                     stock: Number(prod.stock ?? 10),
                     images: s3Keys.length > 0 ? s3Keys : (Array.isArray(prod.images) ? prod.images : []),
-                    specs: prod.specs ?? {},
+                    specs: remainingSpecs ?? {},
                     description: prod.description ?? '',
                     rating: Number(prod.rating ?? 0),
                     reviewCount: Number(prod.reviewCount ?? 0),
                     isActive: prod.isActive !== undefined ? Boolean(prod.isActive) : true,
-                } as never;
+                };
 
                 const existing = await this.prisma.product.findUnique({ where: { slug } });
                 if (existing) {
-                    await this.prisma.product.update({ where: { slug }, data });
+                    await this.prisma.product.update({ where: { slug }, data: data as never });
                     updated++;
                 } else {
-                    await this.prisma.product.create({ data });
+                    await this.prisma.product.create({ data: data as never });
                     created++;
                 }
 
                 if ((created + updated) % 10 === 0) {
-                    this.logger.log(`Progress: ${created + updated}/${productsData.length} products processed`);
+                    this.logger.log(`Progress: ${created + updated}/${productsData.length}`);
                 }
             } catch (e: any) {
                 errors.push(`${prod.name ?? prod.slug}: ${e.message}`);

@@ -13,23 +13,19 @@ import {
 export class CreateProductDto {
     @IsString()
     @IsNotEmpty()
+    catalogId!: string;
+
+    @IsString()
+    @IsNotEmpty()
     name!: string;
 
     @IsString()
     @IsNotEmpty()
-    category!: string;
-
-    @IsString()
-    @IsNotEmpty()
-    brand!: string;
-
-    @IsString()
-    @IsNotEmpty()
-    model!: string;
-
-    @IsString()
-    @IsNotEmpty()
     condition!: string;
+
+    @IsString()
+    @IsOptional()
+    storage?: string;
 
     @IsNumber()
     @IsPositive()

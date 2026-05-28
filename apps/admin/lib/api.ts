@@ -56,6 +56,9 @@ export const deviceCatalogApi = {
     apiFetch<DeviceCatalogItem>(`/device-catalog/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   remove: (id: string) =>
     apiFetch<void>(`/device-catalog/${id}`, { method: 'DELETE' }),
+
+  removeAll: () =>
+    apiFetch<{ message: string }>('/device-catalog/all', { method: 'DELETE' }),
 };
 
 // ── Stores ────────────────────────────────────────────────────────────────────
@@ -199,6 +202,9 @@ export const productsApi = {
 
   remove: (id: string) =>
     apiFetch<void>(`/products/${id}`, { method: 'DELETE' }),
+
+  removeAll: () =>
+    apiFetch<{ message: string }>('/products/all', { method: 'DELETE' }),
 };
 
 // ── Orders ────────────────────────────────────────────────────────────────────
@@ -281,12 +287,15 @@ export interface AdminUser {
 
 export interface Product {
   id: string;
+  catalogId: string;
   name: string;
   slug: string;
-  category: string;
+  // Flattened from DeviceCatalog on every response
   brand: string;
   model: string;
+  category: string;
   condition: string;
+  storage: string;
   price: number;
   comparePrice?: number;
   stock: number;
@@ -299,11 +308,10 @@ export interface Product {
 }
 
 export interface CreateProductPayload {
+  catalogId: string;
   name: string;
-  category: string;
-  brand: string;
-  model: string;
   condition: string;
+  storage?: string;
   price: number;
   comparePrice?: number;
   stock?: number;

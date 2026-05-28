@@ -16,7 +16,7 @@ export class ReviewsService {
       take: limit,
       include: {
         user: { select: { name: true } },
-        product: { select: { name: true, slug: true, category: true, condition: true, images: true } },
+        product: { select: { name: true, slug: true, condition: true, images: true, catalog: { select: { category: true } } } },
       },
     });
     return Promise.all(reviews.map(r => this.resolveImages(r)));
@@ -58,7 +58,7 @@ export class ReviewsService {
       where,
       orderBy: { createdAt: 'desc' },
       include: {
-        product: { select: { name: true, slug: true, category: true } },
+        product: { select: { name: true, slug: true, catalog: { select: { category: true } } } },
         user: { select: { name: true } },
       },
     });

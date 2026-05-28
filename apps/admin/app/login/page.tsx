@@ -170,7 +170,7 @@ export default function AdminLoginPage() {
             </button>
           </form>
 
-          <p className="text-center text-[11px] text-white/15 font-medium mt-10">
+          <p suppressHydrationWarning className="text-center text-[11px] text-white/15 font-medium mt-10">
             TechStop Leicester &copy; {new Date().getFullYear()}
           </p>
         </motion.div>

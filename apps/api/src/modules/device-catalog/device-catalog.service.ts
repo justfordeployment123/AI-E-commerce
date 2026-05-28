@@ -36,6 +36,12 @@ export class DeviceCatalogService {
     }
 
     async remove(id: string) {
+        if (id === 'all') {
+            await this.prisma.orderItem.deleteMany({});
+            await this.prisma.product.deleteMany({});
+            await this.prisma.deviceCatalog.deleteMany({});
+            return { message: 'All devices and products deleted' };
+        }
         const existing = await this.prisma.deviceCatalog.findUnique({ where: { id } });
         if (!existing) throw new NotFoundException('Device not found');
         await this.prisma.deviceCatalog.delete({ where: { id } });

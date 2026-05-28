@@ -51,20 +51,25 @@ export default function CatalogDetailPage() {
       setLoading(true);
       setError("");
       try {
-        const [devItem, prodList] = await Promise.all([
-          deviceCatalogApi.getById(id),
-          productsApi.list({ limit: 200 }),
-        ]);
+        const devItem = await deviceCatalogApi.getById(id);
         setDevice(devItem);
-        setProducts(
-          prodList.items.filter(
-            p => p.brand.toLowerCase() === devItem.brand.toLowerCase() &&
-                 p.model.toLowerCase() === devItem.model.toLowerCase(),
-          ),
-        );
-        // Load scraped prices for this device
-        const devicePrices = await scraperApi.devicePrices(devItem.brand, devItem.model);
-        setPrices(devicePrices);
+
+        // Products and scraper prices are non-fatal
+        productsApi.list({ limit: 200 })
+          .then(prodList =>
+            setProducts(
+              prodList.items.filter(p =>
+                p.catalogId === devItem.id ||
+                (p.brand?.toLowerCase() === devItem.brand.toLowerCase() &&
+                 p.model?.toLowerCase() === devItem.model.toLowerCase()),
+              ),
+            ),
+          )
+          .catch(() => {});
+
+        scraperApi.devicePrices(devItem.brand, devItem.model)
+          .then(setPrices)
+          .catch(() => {});
       } catch (err: any) {
         setError(err.message || "Failed to load catalog details");
       } finally {
@@ -325,7 +330,7 @@ export default function CatalogDetailPage() {
                       )}
                       <div>
                         <p className="font-bold text-zinc-950 group-hover:text-black">{p.name}</p>
-                        <p className="text-xs text-zinc-400 mt-0.5">Storage: {(p.specs?.storage as string) || "—"}</p>
+                        <p className="text-xs text-zinc-400 mt-0.5">Storage: {p.storage || "—"}</p>
                       </div>
                     </div>
                   </td>

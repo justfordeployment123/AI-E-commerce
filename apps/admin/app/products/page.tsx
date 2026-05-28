@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Plus, Edit2, Trash2, X, Check, Package, Image as ImageIcon, ChevronDown, ExternalLink } from "lucide-react";
+import { Search, Plus, Edit2, Trash2, X, Check, Package, Image as ImageIcon, ChevronDown, ExternalLink, AlertTriangle } from "lucide-react";
 import { productsApi, deviceCatalogApi, type Product, type CreateProductPayload, type DeviceCatalogItem } from "../../lib/api";
 
 const CONDITIONS = ["Pristine", "Excellent", "Very Good", "Good", "Fair"];
@@ -14,10 +14,9 @@ const CAT_MAP: Record<string, string> = {
 };
 
 const EMPTY_FORM: CreateProductPayload = {
-  name: "", category: "Phones", brand: "", model: "",
-  condition: "Excellent", price: 0, comparePrice: undefined,
+  catalogId: "", name: "", condition: "Excellent",
+  storage: "", price: 0, comparePrice: undefined,
   stock: 0, description: "", isActive: true,
-  specs: { storage: "" },
 };
 
 export default function ProductsPage() {
@@ -30,6 +29,9 @@ export default function ProductsPage() {
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [formData, setFormData]     = useState<CreateProductPayload>(EMPTY_FORM);
   const [deleteId, setDeleteId]     = useState<string | null>(null);
+  const [showDeleteAll, setShowDeleteAll] = useState(false);
+  const [deleteAllInput, setDeleteAllInput] = useState("");
+  const [deletingAll, setDeletingAll] = useState(false);
   const [saving, setSaving]         = useState(false);
   const [error, setError]           = useState("");
 
@@ -90,8 +92,8 @@ export default function ProductsPage() {
     e.stopPropagation();
     setEditProduct(p);
     setFormData({
-      name: p.name, category: p.category, brand: p.brand, model: p.model,
-      condition: p.condition, price: p.price, comparePrice: p.comparePrice,
+      catalogId: p.catalogId, name: p.name, condition: p.condition,
+      storage: p.storage, price: p.price, comparePrice: p.comparePrice,
       stock: p.stock, description: p.description ?? "",
       isActive: p.isActive, specs: p.specs,
     });
@@ -107,12 +109,25 @@ export default function ProductsPage() {
     const suggestedName = `${dev.brand} ${dev.model}${firstStorage ? ` ${firstStorage}` : ""}`;
     setFormData(f => ({
       ...f,
+      catalogId: dev.id,
       name: suggestedName,
-      brand: dev.brand,
-      model: dev.model,
-      category: CAT_MAP[dev.category.toLowerCase()] ?? "Phones",
-      specs: { ...f.specs, storage: firstStorage },
+      storage: firstStorage,
     }));
+  }
+
+  async function handleDeleteAll() {
+    setDeletingAll(true);
+    setError("");
+    try {
+      await productsApi.removeAll();
+      setProducts([]);
+      setShowDeleteAll(false);
+      setDeleteAllInput("");
+    } catch (e: any) {
+      setError(e.message || "Delete failed. Please try again.");
+    } finally {
+      setDeletingAll(false);
+    }
   }
 
   async function saveProduct() {
@@ -142,7 +157,7 @@ export default function ProductsPage() {
     setDeleteId(null);
   }
 
-  const storage = (p: Product) => (p.specs?.storage as string) ?? "—";
+  const storage = (p: Product) => p.storage || "—";
   const countFor = (cat: string) => products.filter(p =>
     cat === "All" ? true : p.category.toLowerCase() === cat.toLowerCase()
   ).length;
@@ -156,12 +171,20 @@ export default function ProductsPage() {
             {products.length} total · {products.filter(p => p.isActive).length} active · {products.filter(p => p.stock === 0).length} out of stock
           </p>
         </div>
-        <button
-          onClick={openAdd}
-          className="flex items-center gap-2 h-11 px-5 bg-black text-white rounded-2xl text-sm font-bold hover:bg-zinc-800 transition-colors"
-        >
-          <Plus className="h-4 w-4" /> Add product
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => { setShowDeleteAll(true); setDeleteAllInput(""); }}
+            className="flex items-center gap-2 h-11 px-4 bg-red-50 text-red-600 border border-red-200 rounded-2xl text-sm font-bold hover:bg-red-100 transition-colors"
+          >
+            <Trash2 className="h-4 w-4" /> Delete All
+          </button>
+          <button
+            onClick={openAdd}
+            className="flex items-center gap-2 h-11 px-5 bg-black text-white rounded-2xl text-sm font-bold hover:bg-zinc-800 transition-colors"
+          >
+            <Plus className="h-4 w-4" /> Add product
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -393,24 +416,12 @@ export default function ProductsPage() {
                   </div>
                 )}
 
-                {/* ── EDIT MODE: show brand / model as editable inputs ──────── */}
+                {/* ── EDIT MODE: show device info read-only ──────────────── */}
                 {editProduct && (
-                  <div className="grid grid-cols-2 gap-4">
-                    {[
-                      { key: "brand", label: "Brand", placeholder: "Apple" },
-                      { key: "model", label: "Model", placeholder: "iPhone 14 Pro" },
-                    ].map(({ key, label, placeholder }) => (
-                      <div key={key} className="flex flex-col gap-1.5">
-                        <label className="text-xs font-bold uppercase tracking-widest text-zinc-400">{label}</label>
-                        <input
-                          type="text"
-                          placeholder={placeholder}
-                          value={(formData[key as keyof CreateProductPayload] as string) ?? ""}
-                          onChange={e => setFormData(f => ({ ...f, [key]: e.target.value }))}
-                          className="h-12 rounded-[0.875rem] border-2 border-zinc-200 px-4 text-sm font-medium outline-none focus:border-black transition-colors"
-                        />
-                      </div>
-                    ))}
+                  <div className="px-4 py-3 bg-zinc-50 rounded-xl border border-zinc-100 text-sm">
+                    <span className="font-bold text-zinc-700">{editProduct.brand} {editProduct.model}</span>
+                    <span className="text-zinc-400 ml-2">· {editProduct.category}</span>
+                    <p className="text-xs text-zinc-400 mt-0.5">Device catalog entry — edit from the Device Catalog page.</p>
                   </div>
                 )}
 
@@ -435,12 +446,12 @@ export default function ProductsPage() {
                   {!editProduct && selectedDevice ? (
                     <div className="relative">
                       <select
-                        value={(formData.specs?.storage as string) ?? ""}
+                        value={formData.storage ?? ""}
                         onChange={e => {
                           const newStorage = e.target.value;
                           setFormData(f => ({
                             ...f,
-                            specs: { ...f.specs, storage: newStorage },
+                            storage: newStorage,
                             name: `${selectedDevice.brand} ${selectedDevice.model}${newStorage ? ` ${newStorage}` : ""}`,
                           }));
                         }}
@@ -456,8 +467,8 @@ export default function ProductsPage() {
                     <input
                       type="text"
                       placeholder="256 GB"
-                      value={(formData.specs?.storage as string) ?? ""}
-                      onChange={e => setFormData(f => ({ ...f, specs: { ...f.specs, storage: e.target.value } }))}
+                      value={formData.storage ?? ""}
+                      onChange={e => setFormData(f => ({ ...f, storage: e.target.value }))}
                       className="h-12 rounded-[0.875rem] border-2 border-zinc-200 px-4 text-sm font-medium outline-none focus:border-black transition-colors"
                     />
                   )}
@@ -506,37 +517,18 @@ export default function ProductsPage() {
                   />
                 </div>
 
-                {/* Category + Condition */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-bold uppercase tracking-widest text-zinc-400">Category</label>
-                    <div className="relative">
-                      <select
-                        value={formData.category}
-                        onChange={e => setFormData(f => ({ ...f, category: e.target.value }))}
-                        disabled={!editProduct && !!selectedDevice}
-                        className="h-12 w-full rounded-[0.875rem] border-2 border-zinc-200 pl-4 pr-10 text-sm font-medium outline-none focus:border-black transition-colors bg-white appearance-none disabled:opacity-60 disabled:cursor-not-allowed"
-                      >
-                        {CATEGORIES.map(c => <option key={c}>{c}</option>)}
-                      </select>
-                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
-                    </div>
-                    {!editProduct && selectedDevice && (
-                      <p className="text-[11px] text-zinc-400">Set by catalog device</p>
-                    )}
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-bold uppercase tracking-widest text-zinc-400">Condition</label>
-                    <div className="relative">
-                      <select
-                        value={formData.condition}
-                        onChange={e => setFormData(f => ({ ...f, condition: e.target.value }))}
-                        className="h-12 w-full rounded-[0.875rem] border-2 border-zinc-200 pl-4 pr-10 text-sm font-medium outline-none focus:border-black transition-colors bg-white appearance-none"
-                      >
-                        {CONDITIONS.map(c => <option key={c}>{c}</option>)}
-                      </select>
-                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
-                    </div>
+                {/* Condition */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold uppercase tracking-widest text-zinc-400">Condition</label>
+                  <div className="relative">
+                    <select
+                      value={formData.condition}
+                      onChange={e => setFormData(f => ({ ...f, condition: e.target.value }))}
+                      className="h-12 w-full rounded-[0.875rem] border-2 border-zinc-200 pl-4 pr-10 text-sm font-medium outline-none focus:border-black transition-colors bg-white appearance-none"
+                    >
+                      {CONDITIONS.map(c => <option key={c}>{c}</option>)}
+                    </select>
+                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
                   </div>
                 </div>
 
@@ -560,11 +552,53 @@ export default function ProductsPage() {
                 </button>
                 <button
                   onClick={saveProduct}
-                  disabled={saving || (!editProduct && !selectedDevice)}
+                  disabled={saving || (!editProduct && !formData.catalogId)}
                   className="flex-1 h-12 rounded-2xl bg-black text-white font-bold text-sm hover:bg-zinc-800 transition-colors flex items-center justify-center gap-2 disabled:opacity-40"
                 >
                   {saving ? <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Check className="h-4 w-4" />}
                   {editProduct ? "Save changes" : "Add product"}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete All confirm */}
+      <AnimatePresence>
+        {showDeleteAll && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
+              className="bg-white rounded-3xl p-8 w-full max-w-sm shadow-2xl"
+            >
+              <div className="h-14 w-14 rounded-2xl bg-red-100 flex items-center justify-center mx-auto mb-5">
+                <AlertTriangle className="h-6 w-6 text-red-500" />
+              </div>
+              <h3 className="font-bold text-lg mb-1 text-center">Delete all products?</h3>
+              <p className="text-sm text-zinc-500 mb-5 text-center">This will permanently delete every product. This cannot be undone.</p>
+              <p className="text-xs font-bold text-zinc-500 mb-2">Type <span className="font-mono bg-zinc-100 px-1.5 py-0.5 rounded">delete all</span> to confirm</p>
+              <input
+                type="text"
+                value={deleteAllInput}
+                onChange={e => { setDeleteAllInput(e.target.value); setError(""); }}
+                placeholder="delete all"
+                className="w-full h-11 rounded-xl border-2 border-zinc-200 px-4 text-sm font-medium outline-none focus:border-red-400 transition-colors mb-4"
+              />
+              {error && (
+                <p className="text-xs text-red-600 font-medium mb-3 text-center">{error}</p>
+              )}
+              <div className="flex gap-3">
+                <button onClick={() => { setShowDeleteAll(false); setError(""); }} className="flex-1 h-11 rounded-2xl border-2 border-zinc-200 font-bold text-sm">Cancel</button>
+                <button
+                  onClick={handleDeleteAll}
+                  disabled={deleteAllInput !== "delete all" || deletingAll}
+                  className="flex-1 h-11 rounded-2xl bg-red-500 text-white font-bold text-sm hover:bg-red-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {deletingAll ? "Deleting…" : "Delete All"}
                 </button>
               </div>
             </motion.div>

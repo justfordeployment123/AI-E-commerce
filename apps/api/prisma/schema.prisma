@@ -75,30 +75,29 @@ model User {
 }
 
 model Product {
-  id           String   @id @default(uuid())
+  id           String        @id @default(uuid())
+  catalogId    String
+  catalog      DeviceCatalog @relation(fields: [catalogId], references: [id])
   name         String
-  slug         String   @unique
-  category     String
-  brand        String
-  model        String
-  condition    String   // Mint, Good, Refurbished, Excellent
+  slug         String        @unique
+  condition    String
+  storage      String        @default("")
   price        Float
   comparePrice Float?
-  stock        Int      @default(0)
+  stock        Int           @default(0)
   images       String[]
-  specs        Json     @default("{}")
+  specs        Json          @default("{}")
   description  String?
-  rating       Float    @default(0)
-  reviewCount  Int      @default(0)
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  rating       Float         @default(0)
+  reviewCount  Int           @default(0)
+  isActive     Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 
   orderItems OrderItem[]
   reviews    Review[]
 
-  @@index([category])
-  @@index([brand])
+  @@index([catalogId])
   @@index([condition])
   @@index([isActive, createdAt])
   @@map("products")
@@ -240,14 +239,15 @@ model Store {
 }
 
 model DeviceCatalog {
-  id             String   @id @default(uuid())
+  id             String    @id @default(uuid())
   brand          String
   model          String
   category       String
   storageOptions String[]
-  isActive       Boolean  @default(true)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  products       Product[]
 
   @@unique([brand, model])
   @@map("device_catalog")

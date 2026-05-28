@@ -53,6 +53,11 @@ async function uploadProductImage(
     return s3Key;
 }
 
+function normalizeCategory(raw: string): string {
+    if (raw === 'Laptops / MacBooks') return 'Laptops';
+    return raw;
+}
+
 async function main() {
     const downloadsDir = path.join(__dirname, 'downloads');
     const productsJsonPath = path.join(downloadsDir, 'products.json');
@@ -66,9 +71,42 @@ async function main() {
 
     await ensureBucketExists(s3Client, bucketName);
 
+    // Clear existing data
     await prisma.product.deleteMany({});
-    console.log('Cleared existing products');
+    await prisma.deviceCatalog.deleteMany({});
+    console.log('Cleared existing products and device catalog');
 
+    // ── Step 1: Build unique device catalog from products data ────────────────
+    const catalogMap = new Map<string, { brand: string; model: string; category: string; storageOptions: Set<string> }>();
+
+    for (const prod of productsData) {
+        const brand = prod.brand as string;
+        const model = prod.model as string;
+        const category = normalizeCategory(prod.category as string);
+        const storage = (prod.specs?.Storage || prod.specs?.storage || '') as string;
+        const key = `${brand}::${model}`;
+
+        if (!catalogMap.has(key)) {
+            catalogMap.set(key, { brand, model, category, storageOptions: new Set() });
+        }
+        if (storage) catalogMap.get(key)!.storageOptions.add(storage);
+    }
+
+    const catalogIdByKey = new Map<string, string>();
+    for (const [key, data] of catalogMap.entries()) {
+        const entry = await prisma.deviceCatalog.create({
+            data: {
+                brand: data.brand,
+                model: data.model,
+                category: data.category,
+                storageOptions: Array.from(data.storageOptions),
+            },
+        });
+        catalogIdByKey.set(key, entry.id);
+    }
+    console.log(`Created ${catalogMap.size} device catalog entries`);
+
+    // ── Step 2: Seed products with catalogId ──────────────────────────────────
     let success = 0;
     for (const prod of productsData) {
         const s3Keys: string[] = [];
@@ -84,20 +122,30 @@ async function main() {
             }
         }
 
+        const catalogKey = `${prod.brand}::${prod.model}`;
+        const catalogId = catalogIdByKey.get(catalogKey);
+        if (!catalogId) {
+            console.error(`  No catalog entry for "${prod.brand} ${prod.model}" — skipping`);
+            continue;
+        }
+
+        const storage = (prod.specs?.Storage || prod.specs?.storage || '') as string;
+        // Remove storage from specs since it's now a dedicated column
+        const { Storage: _S, storage: _s, ...remainingSpecs } = prod.specs ?? {};
+
         try {
             await prisma.product.create({
                 data: {
+                    catalogId,
                     name: prod.name,
                     slug: prod.slug,
-                    category: prod.category === 'Laptops / MacBooks' ? 'Laptops' : prod.category,
-                    brand: prod.brand,
-                    model: prod.model,
                     condition: prod.condition,
+                    storage,
                     price: Number(prod.price),
                     comparePrice: prod.comparePrice ? Number(prod.comparePrice) : null,
                     stock: Number(prod.stock ?? 0),
                     images: s3Keys,
-                    specs: prod.specs ?? {},
+                    specs: remainingSpecs ?? {},
                     description: prod.description ?? '',
                     rating: Number(prod.rating ?? 0),
                     reviewCount: Number(prod.reviewCount ?? 0),

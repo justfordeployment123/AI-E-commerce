@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus, Search, Trash2, Pencil, X, Check,
   Smartphone, Tablet, Gamepad2, Laptop, Headphones, ChevronDown,
-  ToggleLeft, ToggleRight, RefreshCw, TrendingUp, CheckCircle2, AlertCircle,
+  ToggleLeft, ToggleRight, RefreshCw, TrendingUp, CheckCircle2, AlertCircle, AlertTriangle,
 } from "lucide-react";
 import { deviceCatalogApi, scraperApi, type DeviceCatalogItem, type ScrapedPriceRow } from "../../lib/api";
 
@@ -45,6 +45,10 @@ export default function CatalogPage() {
   const [form, setForm]           = useState(EMPTY_FORM);
   const [saving, setSaving]       = useState(false);
   const [deleting, setDeleting]   = useState(false);
+  const [showDeleteAll, setShowDeleteAll] = useState(false);
+  const [deleteAllInput, setDeleteAllInput] = useState("");
+  const [deletingAll, setDeletingAll] = useState(false);
+  const [deleteAllError, setDeleteAllError] = useState("");
 
   // Scraper state
   const [priceMap, setPriceMap]   = useState<Map<string, number>>(new Map());
@@ -97,6 +101,21 @@ export default function CatalogPage() {
   }
 
   function openAdd() { setEditItem(null); setForm(EMPTY_FORM); setModalOpen(true); }
+
+  async function handleDeleteAll() {
+    setDeletingAll(true);
+    setDeleteAllError("");
+    try {
+      await deviceCatalogApi.removeAll();
+      setDevices([]);
+      setShowDeleteAll(false);
+      setDeleteAllInput("");
+    } catch (e: any) {
+      setDeleteAllError(e.message || "Delete failed. Please try again.");
+    } finally {
+      setDeletingAll(false);
+    }
+  }
   function openEdit(d: DeviceCatalogItem) {
     setEditItem(d);
     setForm({ brand: d.brand, model: d.model, category: d.category as Category, storageOptions: [...d.storageOptions], isActive: d.isActive });
@@ -175,6 +194,12 @@ export default function CatalogPage() {
                 : <><TrendingUp className="h-3.5 w-3.5" /> Scrape Prices</>}
             </button>
           )}
+          <button
+            onClick={() => { setShowDeleteAll(true); setDeleteAllInput(""); }}
+            className="flex items-center gap-2 h-10 px-4 rounded-xl bg-red-50 text-red-600 border border-red-200 text-xs font-bold uppercase tracking-widest hover:bg-red-100 transition-colors"
+          >
+            <Trash2 className="h-3.5 w-3.5" /> Delete All
+          </button>
           <button
             onClick={openAdd}
             className="flex items-center gap-2 h-10 px-5 rounded-xl bg-zinc-950 text-white text-xs font-bold uppercase tracking-widest hover:bg-zinc-800 transition-colors"
@@ -495,6 +520,51 @@ export default function CatalogPage() {
                   className="flex-1 h-11 rounded-2xl bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition-colors disabled:opacity-60"
                 >
                   {deleting ? "Removing..." : "Remove"}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete All confirm */}
+      <AnimatePresence>
+        {showDeleteAll && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ type: "spring", stiffness: 380, damping: 30 }}
+              className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-7"
+            >
+              <div className="h-14 w-14 rounded-2xl bg-red-50 flex items-center justify-center mx-auto mb-5">
+                <AlertTriangle className="h-7 w-7 text-red-500" />
+              </div>
+              <h3 className="font-bold text-lg mb-1 text-center">Delete all devices?</h3>
+              <p className="text-sm text-zinc-500 mb-5 text-center">This will permanently delete every device and all linked products. This cannot be undone.</p>
+              <p className="text-xs font-bold text-zinc-500 mb-2">Type <span className="font-mono bg-zinc-100 px-1.5 py-0.5 rounded">delete all</span> to confirm</p>
+              <input
+                type="text"
+                value={deleteAllInput}
+                onChange={e => { setDeleteAllInput(e.target.value); setDeleteAllError(""); }}
+                placeholder="delete all"
+                className="w-full h-11 rounded-xl border-2 border-zinc-200 px-4 text-sm font-medium outline-none focus:border-red-400 transition-colors mb-4"
+              />
+              {deleteAllError && (
+                <p className="text-xs text-red-600 font-medium mb-3 text-center">{deleteAllError}</p>
+              )}
+              <div className="flex gap-3">
+                <button onClick={() => { setShowDeleteAll(false); setDeleteAllError(""); }} className="flex-1 h-11 rounded-2xl border-2 border-zinc-200 text-sm font-bold hover:border-zinc-400 transition-colors">
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteAll}
+                  disabled={deleteAllInput !== "delete all" || deletingAll}
+                  className="flex-1 h-11 rounded-2xl bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {deletingAll ? "Deleting…" : "Delete All"}
                 </button>
               </div>
             </motion.div>
