@@ -75,6 +75,19 @@ export class ScraperDataService {
         }
     }
 
+    async lookupPrice(brand: string, model: string, storage?: string): Promise<number | null> {
+        const rows = await this.prisma.scrapedPrice.findMany({
+            where: {
+                brand: { equals: brand, mode: 'insensitive' },
+                model: { equals: model, mode: 'insensitive' },
+                ...(storage ? { storage: { equals: storage, mode: 'insensitive' } } : {}),
+            },
+            orderBy: { scrapedAt: 'desc' },
+            take: 1,
+        });
+        return rows[0]?.marketPrice ?? null;
+    }
+
     async triggerDeviceScrape(brand: string, model: string) {
         const scraperUrl = process.env.SCRAPER_URL;
         if (!scraperUrl) return { ok: false, message: 'Scraper service is not configured.' };

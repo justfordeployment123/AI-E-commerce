@@ -5,5 +5,6 @@ import { ScraperDataController } from './scraper-data.controller';
 @Module({
     controllers: [ScraperDataController],
     providers: [ScraperDataService],
+    exports: [ScraperDataService],
 })
 export class ScraperDataModule {}

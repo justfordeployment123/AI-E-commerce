@@ -10,7 +10,7 @@ import { ApproveTradeInDto } from './dto/approve-trade-in.dto';
 import { RejectTradeInDto } from './dto/reject-trade-in.dto';
 import { CounterOfferTradeInDto } from './dto/counter-offer-trade-in.dto';
 import { AiPriceDto } from './dto/ai-price.dto';
-import { ScraperService } from '../scraper/scraper.service';
+import { ScraperDataService } from '../scraper-data/scraper-data.service';
 
 function applyMargin(marketPrice: number, marginPct: number): number {
     return Math.max(Math.round(marketPrice * (1 - marginPct / 100) / 5) * 5, 10);
@@ -25,7 +25,7 @@ export class TradeInsService {
         private readonly storage: StorageService,
         private readonly notifications: NotificationsService,
         private readonly shipping: ShippingService,
-        private readonly scraper: ScraperService,
+        private readonly scraper: ScraperDataService,
     ) {}
 
     async submit(dto: CreateTradeInDto, userId?: string) {
