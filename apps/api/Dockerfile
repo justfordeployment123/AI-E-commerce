@@ -26,15 +26,8 @@ RUN npm run build
 # Compile seed script so it can be run with plain `node` in the runner stage
 RUN node_modules/.bin/tsc prisma/seed.ts --outDir dist/prisma --esModuleInterop --resolveJsonModule --module commonjs --target es2020 --skipLibCheck 2>/dev/null || true
 
-FROM node:24-bookworm-slim AS prod-deps
-WORKDIR /app
-
-# Needed for Prisma's query engine binary.
-RUN apt-get update -y && apt-get install -y --no-install-recommends openssl ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
-
-COPY package*.json ./
-RUN npm install --omit=dev --no-audit --no-fund
+FROM deps AS prod-deps
+RUN npm prune --omit=dev --no-audit --no-fund
 
 FROM node:24-bookworm-slim AS runner
 WORKDIR /app
