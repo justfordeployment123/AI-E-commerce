@@ -6,7 +6,7 @@ import { StorageService } from './storage.service';
 export class StorageProxyController {
   constructor(private readonly storage: StorageService) {}
 
-  @Get(':key(*)')
+  @Get('*key')
   async proxy(@Param('key') key: string, @Res() res: Response) {
     try {
       const stream = await this.storage.getObjectStream(key);
