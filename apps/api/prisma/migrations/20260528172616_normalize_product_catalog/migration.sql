@@ -1,4 +1,4 @@
-﻿-- Clear dependent data so the schema change runs on empty tables
+-- Clear dependent data so the schema change runs on empty tables
 TRUNCATE TABLE "order_items" CASCADE;
 TRUNCATE TABLE "products" CASCADE;
 TRUNCATE TABLE "device_catalog" CASCADE;
