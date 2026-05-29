@@ -165,9 +165,19 @@ export class StorageService implements OnModuleInit {
     );
   }
 
-  async getObjectStream(key: string): Promise<NodeJS.ReadableStream> {
+  async getObject(key: string): Promise<{
+    stream: NodeJS.ReadableStream;
+    contentType?: string;
+    contentLength?: number;
+    etag?: string;
+  }> {
     const command = new GetObjectCommand({ Bucket: this.bucketName, Key: key });
     const response = await this.s3Client.send(command);
-    return response.Body as NodeJS.ReadableStream;
+    return {
+      stream: response.Body as NodeJS.ReadableStream,
+      contentType: response.ContentType,
+      contentLength: response.ContentLength,
+      etag: response.ETag,
+    };
   }
 }
