@@ -73,7 +73,12 @@
       "PowerShell(cd \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\api\"; $env:PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION = \"run all yourself\"; npx prisma migrate reset --force 2>&1 | Select-Object -Last 15)",
       "PowerShell(New-Item -ItemType Directory -Force \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\api\\\\src\\\\modules\\\\scraper-data\")",
       "Bash(node -e \"const d = require\\('d:/CODE/Projects/Markhor Systems Projects/Ai-Ecommerce/apps/api/prisma/downloads/products.json'\\); console.log\\(JSON.stringify\\(d[0], null, 2\\)\\)\")",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "PowerShell(pip --version)",
+      "PowerShell(python --version)",
+      "PowerShell(pip install code-review-graph)",
+      "Bash(code-review-graph install *)",
+      "Bash(code-review-graph build *)"
     ],
     "additionalDirectories": [
       "d:\\CODE\\Projects\\Markhor Systems Projects\\Ai-Ecommerce\\apps\\web\\app\\account\\repairs",

@@ -150,12 +150,17 @@ export class ProductsService {
 
     async remove(id: string) {
         if (id === 'all') {
+            const products = await this.prisma.product.findMany({ select: { images: true } });
+            const imageKeys = products.flatMap(p => p.images as string[]).filter(Boolean);
             await this.prisma.orderItem.deleteMany({});
             await this.prisma.product.deleteMany({});
+            await this.storage.deleteFiles(imageKeys);
             return { message: 'All products deleted' };
         }
-        await this.prisma.product.findUniqueOrThrow({ where: { id } });
+        const product = await this.prisma.product.findUniqueOrThrow({ where: { id } });
+        const imageKeys = (product.images as string[]).filter(Boolean);
         await this.prisma.product.delete({ where: { id } });
+        await this.storage.deleteFiles(imageKeys);
         return { message: 'Product deleted' };
     }
 }

@@ -5,6 +5,7 @@ import {
   GetObjectCommand,
   CreateBucketCommand,
   HeadBucketCommand,
+  DeleteObjectsCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { v4 as uuidv4 } from 'uuid';
@@ -121,6 +122,23 @@ export class StorageService implements OnModuleInit {
       return await this.generatePresignedUrl(filePathOrUrl);
     } catch {
       return null;
+    }
+  }
+
+  async deleteFiles(keys: string[]): Promise<void> {
+    if (!keys.length) return;
+    // S3 DeleteObjects accepts max 1000 keys per request
+    const chunks: string[][] = [];
+    for (let i = 0; i < keys.length; i += 1000) chunks.push(keys.slice(i, i + 1000));
+    for (const chunk of chunks) {
+      try {
+        await this.s3Client.send(new DeleteObjectsCommand({
+          Bucket: this.bucketName,
+          Delete: { Objects: chunk.map(k => ({ Key: k })), Quiet: true },
+        }));
+      } catch (err: any) {
+        this.logger.warn(`S3 bulk delete partial failure: ${err?.message}`);
+      }
     }
   }
 
