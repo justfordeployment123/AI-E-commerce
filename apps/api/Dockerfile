@@ -56,4 +56,4 @@ USER nestjs
 
 EXPOSE 3002
 
-CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy && npm run start:prod"]
+CMD ["sh", "-c", "node_modules/.bin/prisma migrate resolve --rolled-back '20260528172616_normalize_product_catalog' 2>/dev/null || true && node_modules/.bin/prisma migrate deploy && npm run start:prod"]
