@@ -20,15 +20,12 @@ export class HealthService {
         garage: boolean;
         openAi: boolean;
         scraper: boolean;
-        storageProxy: boolean;
         postgresError?: string;
         redisError?: string;
         garageError?: string;
         openAiError?: string;
         scraperUrl: string;
         scraperError?: string;
-        storageProxyUrl: string | null;
-        storageProxyError?: string;
         databaseUrlConfigured: boolean;
         redisUrlConfigured: boolean;
         garageConfigured: boolean;
@@ -44,9 +41,7 @@ export class HealthService {
             this.checkScraper(),
         ]);
 
-        const proxyUrl = process.env.GARAGE_PROXY_URL || null;
         const scraperUrl = process.env.SCRAPER_URL || 'http://localhost:3003';
-        const storageProxy = Boolean(proxyUrl);
         const status = postgresCheck.ok && redisCheck.ok && garageCheck.ok ? 'ok' : 'degraded';
 
         return {
@@ -56,15 +51,12 @@ export class HealthService {
             garage: garageCheck.ok,
             openAi: openAiCheck.ok,
             scraper: scraperCheck.ok,
-            storageProxy,
             postgresError: postgresCheck.error,
             redisError: redisCheck.error,
             garageError: garageCheck.error,
             openAiError: openAiCheck.error,
             scraperUrl,
             scraperError: scraperCheck.error,
-            storageProxyUrl: proxyUrl,
-            storageProxyError: !proxyUrl ? 'GARAGE_PROXY_URL not configured' : undefined,
             databaseUrlConfigured: Boolean(process.env.DATABASE_URL),
             redisUrlConfigured: Boolean(process.env.REDIS_URL),
             garageConfigured: Boolean(process.env.GARAGE_ENDPOINT),

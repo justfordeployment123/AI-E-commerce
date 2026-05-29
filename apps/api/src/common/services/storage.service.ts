@@ -150,14 +150,6 @@ export class StorageService implements OnModuleInit {
       key = url.pathname.replace(`/${this.bucketName}/`, '');
     }
 
-    // When a proxy base URL is configured (e.g. https://api.techstopuk.com/storage),
-    // return a simple proxy URL instead of a presigned S3 URL so images are
-    // always served over HTTPS regardless of the underlying storage endpoint.
-    const proxyBase = process.env.GARAGE_PROXY_URL;
-    if (proxyBase) {
-      return `${proxyBase.replace(/\/$/, '')}/${key}`;
-    }
-
     return getSignedUrl(
       this.publicClient,
       new GetObjectCommand({ Bucket: this.bucketName, Key: key }),
@@ -165,19 +157,4 @@ export class StorageService implements OnModuleInit {
     );
   }
 
-  async getObject(key: string): Promise<{
-    stream: NodeJS.ReadableStream;
-    contentType?: string;
-    contentLength?: number;
-    etag?: string;
-  }> {
-    const command = new GetObjectCommand({ Bucket: this.bucketName, Key: key });
-    const response = await this.s3Client.send(command);
-    return {
-      stream: response.Body as NodeJS.ReadableStream,
-      contentType: response.ContentType,
-      contentLength: response.ContentLength,
-      etag: response.ETag,
-    };
-  }
 }
