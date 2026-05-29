@@ -1,0 +1,29 @@
+version: '3.8'
+services:
+  minio:
+    image: 'minio/minio:latest'
+    restart: unless-stopped
+    ports:
+      - '9100:9000'
+      - '9501:9001'
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    command: 'server /data --console-address ":9001"'
+    networks:
+      - coolify
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.minio-api.rule=Host(`storage.techstopuk.com`)"
+      - "traefik.http.routers.minio-api.entrypoints=https"
+      - "traefik.http.routers.minio-api.tls=true"
+      - "traefik.http.routers.minio-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.minio-api.loadbalancer.server.port=9000"
+    healthcheck:
+      test: [CMD, curl, -f, 'http://localhost:9000/minio/health/live']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+networks:
+  coolify:
+    external: true
