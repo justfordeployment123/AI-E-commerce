@@ -19,10 +19,16 @@ export class HealthService {
         redis: boolean;
         garage: boolean;
         openAi: boolean;
+        scraper: boolean;
+        storageProxy: boolean;
         postgresError?: string;
         redisError?: string;
         garageError?: string;
         openAiError?: string;
+        scraperUrl: string;
+        scraperError?: string;
+        storageProxyUrl: string | null;
+        storageProxyError?: string;
         databaseUrlConfigured: boolean;
         redisUrlConfigured: boolean;
         garageConfigured: boolean;
@@ -30,29 +36,35 @@ export class HealthService {
         database?: { tableCount: number; tables: string[] };
         timestamp: string;
     }> {
-        const [postgresCheck, redisCheck, garageCheck, openAiCheck] = await Promise.all([
+        const [postgresCheck, redisCheck, garageCheck, openAiCheck, scraperCheck] = await Promise.all([
             this.checkPostgres(),
             this.checkRedis(),
             this.checkGarage(),
             this.checkOpenAi(),
+            this.checkScraper(),
         ]);
 
-        const postgres = postgresCheck.ok;
-        const redis = redisCheck.ok;
-        const garage = garageCheck.ok;
-        const openAi = openAiCheck.ok;
-        const status = postgres && redis && garage ? 'ok' : 'degraded';
+        const proxyUrl = process.env.GARAGE_PROXY_URL || null;
+        const scraperUrl = process.env.SCRAPER_URL || 'http://localhost:3003';
+        const storageProxy = Boolean(proxyUrl);
+        const status = postgresCheck.ok && redisCheck.ok && garageCheck.ok ? 'ok' : 'degraded';
 
         return {
             status,
-            postgres,
-            redis,
-            garage,
-            openAi,
+            postgres: postgresCheck.ok,
+            redis: redisCheck.ok,
+            garage: garageCheck.ok,
+            openAi: openAiCheck.ok,
+            scraper: scraperCheck.ok,
+            storageProxy,
             postgresError: postgresCheck.error,
             redisError: redisCheck.error,
             garageError: garageCheck.error,
             openAiError: openAiCheck.error,
+            scraperUrl,
+            scraperError: scraperCheck.error,
+            storageProxyUrl: proxyUrl,
+            storageProxyError: !proxyUrl ? 'GARAGE_PROXY_URL not configured' : undefined,
             databaseUrlConfigured: Boolean(process.env.DATABASE_URL),
             redisUrlConfigured: Boolean(process.env.REDIS_URL),
             garageConfigured: Boolean(process.env.GARAGE_ENDPOINT),
@@ -125,6 +137,16 @@ export class HealthService {
             // List models is the lightest call — no tokens consumed, just auth check
             await openai.models.list();
             return { ok: true };
+        } catch (error) {
+            return { ok: false, error: this.sanitizeError(error) };
+        }
+    }
+
+    private async checkScraper(): Promise<{ ok: boolean; error?: string }> {
+        const url = process.env.SCRAPER_URL || 'http://localhost:3003';
+        try {
+            const res = await fetch(`${url}/health`, { signal: AbortSignal.timeout(3000) });
+            return res.ok ? { ok: true } : { ok: false, error: `HTTP ${res.status}` };
         } catch (error) {
             return { ok: false, error: this.sanitizeError(error) };
         }
