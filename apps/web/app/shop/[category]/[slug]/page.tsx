@@ -144,7 +144,7 @@ export default function ProductDetailPage() {
 
   if (loadingProduct) {
     return (
-      <div className="flex min-h-screen flex-col bg-[#f5f5f7] font-sans">
+      <div className="flex min-h-screen flex-col bg-background text-foreground font-sans selection:bg-accent selection:text-white">
         <Navbar />
         <main className="flex-1 mx-auto max-w-7xl px-4 py-12 w-full">
           <div className="grid lg:grid-cols-2 gap-16 animate-pulse">
@@ -169,7 +169,7 @@ export default function ProductDetailPage() {
 
   if (!product) {
     return (
-      <div className="flex min-h-screen flex-col bg-[#f5f5f7] font-sans">
+      <div className="flex min-h-screen flex-col bg-background text-foreground font-sans selection:bg-accent selection:text-white">
         <Navbar />
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
@@ -189,7 +189,7 @@ export default function ProductDetailPage() {
   const specs = product.specs as Record<string, unknown>;
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#f5f5f7] text-black font-sans selection:bg-accent selection:text-black">
+    <div className="flex min-h-screen flex-col bg-background text-foreground font-sans selection:bg-accent selection:text-white">
       <Navbar />
 
       {/* Breadcrumb */}
@@ -277,7 +277,7 @@ export default function ProductDetailPage() {
               <div className="flex items-center gap-2 mb-8">
                 <div className="flex">
                   {[1,2,3,4,5].map(i => (
-                    <Star key={i} className={`h-4 w-4 ${i <= Math.round(product.rating) ? "fill-black text-black" : "text-zinc-200"}`} />
+                    <Star key={i} className={`h-4 w-4 ${i <= Math.round(product.rating) ? "fill-amber-400 text-amber-400" : "text-zinc-200 dark:text-zinc-800"}`} />
                   ))}
                 </div>
                 <span className="text-sm font-bold">{product.rating.toFixed(1)}</span>
@@ -328,7 +328,7 @@ export default function ProductDetailPage() {
                       ? "bg-zinc-100 text-zinc-400 cursor-not-allowed"
                       : added
                       ? "bg-emerald-500 text-white"
-                      : "bg-black text-white hover:bg-zinc-800"
+                      : "bg-accent text-white hover:bg-accent-dark shadow-lg shadow-accent/20"
                   }`}
                 >
                   {product.stock === 0 ? (
@@ -457,7 +457,7 @@ export default function ProductDetailPage() {
           {!showReviewForm && (
             <button
               onClick={() => { setShowReviewForm(true); setReviewSubmitted(false); }}
-              className="h-10 px-5 rounded-2xl bg-black text-white text-sm font-bold hover:bg-zinc-800 transition-colors"
+              className="h-10 px-5 rounded-2xl bg-accent text-white text-sm font-bold hover:bg-accent-dark transition-colors shadow-md shadow-accent/10"
             >
               Write a Review
             </button>
@@ -471,7 +471,7 @@ export default function ProductDetailPage() {
               <p className="text-6xl font-bold">{product.rating.toFixed(1)}</p>
               <div className="flex justify-center mt-2">
                 {[1,2,3,4,5].map(i => (
-                  <Star key={i} className={`h-4 w-4 ${i <= Math.round(product.rating) ? "fill-black text-black" : "text-zinc-200"}`} />
+                  <Star key={i} className={`h-4 w-4 ${i <= Math.round(product.rating) ? "fill-amber-400 text-amber-400" : "text-zinc-200 dark:text-zinc-800"}`} />
                 ))}
               </div>
               <p className="text-xs text-zinc-500 font-medium mt-1">{reviews.length} review{reviews.length !== 1 ? "s" : ""}</p>
@@ -483,9 +483,9 @@ export default function ProductDetailPage() {
                 return (
                   <div key={star} className="flex items-center gap-3">
                     <span className="text-xs font-bold w-4 text-right">{star}</span>
-                    <Star className="h-3.5 w-3.5 fill-black text-black shrink-0" />
-                    <div className="flex-1 h-2 bg-zinc-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-black rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
+                    <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400 shrink-0" />
+                    <div className="flex-1 h-2 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                      <div className="h-full bg-accent rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
                     </div>
                     <span className="text-xs text-zinc-400 font-medium w-8">{pct}%</span>
                   </div>
@@ -551,7 +551,7 @@ export default function ProductDetailPage() {
                       value={reviewName}
                       onChange={e => setReviewName(e.target.value)}
                       placeholder="e.g. John D."
-                      className="w-full h-12 px-4 rounded-2xl border border-zinc-200 bg-zinc-50 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-black/10"
+                      className="w-full h-12 px-4 rounded-2xl border border-zinc-200 bg-zinc-50 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-accent"
                     />
                   </div>
 
@@ -564,7 +564,7 @@ export default function ProductDetailPage() {
                       placeholder="What did you think of this product?"
                       rows={4}
                       required
-                      className="w-full px-4 py-3 rounded-2xl border border-zinc-200 bg-zinc-50 text-sm font-medium resize-none focus:outline-none focus:ring-2 focus:ring-black/10"
+                      className="w-full px-4 py-3 rounded-2xl border border-zinc-200 bg-zinc-50 text-sm font-medium resize-none focus:outline-none focus:ring-2 focus:ring-accent"
                     />
                   </div>
 
@@ -612,7 +612,7 @@ export default function ProductDetailPage() {
                   <button
                     type="submit"
                     disabled={submittingReview || !reviewBody.trim()}
-                    className="w-full h-12 rounded-2xl bg-black text-white font-bold flex items-center justify-center gap-2 disabled:opacity-50 hover:bg-zinc-800 transition-colors"
+                    className="w-full h-12 rounded-2xl bg-accent text-white font-bold flex items-center justify-center gap-2 disabled:opacity-50 hover:bg-accent-dark transition-colors"
                   >
                     {submittingReview ? <><Loader2 className="h-4 w-4 animate-spin" /> Submitting…</> : <><Send className="h-4 w-4" /> Submit Review</>}
                   </button>

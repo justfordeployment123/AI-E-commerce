@@ -2,16 +2,16 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #000000;
-  --page-bg: #ffffff;
-  --ink: #000000;
-  --accent: #d7ff5f; /* Back Market Lime Green */
-  --accent-dark: #b8e600;
-  --muted: #f5f5f7;
-  --border: #e2e2e2;
+  --foreground: #0f172a;
+  --page-bg: #f8fafc;
+  --ink: #0f172a;
+  --accent: #e30613; /* TechStop Red */
+  --accent-dark: #be123c;
+  --muted: #f1f5f9;
+  --border: #e2e8f0;
   
-  /* Mood Colors - Back Market Style */
-  --mood-sky: #e0f2fe;
+  /* Mood Colors - Light Mode */
+  --mood-sky: #f0f9ff;
   --mood-rose: #fff1f2;
   --mood-amber: #fffbeb;
   --mood-emerald: #ecfdf5;
@@ -42,16 +42,62 @@
 }
 
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #000000;
-    --foreground: #ffffff;
-    --page-bg: #000000;
-    --ink: #ffffff;
-    --muted: #1c1c1e;
-    --border: #333333;
-  }
+
+:root[data-theme="dark"] {
+  --background: #090a0f;
+  --foreground: #f8fafc;
+  --page-bg: #090a0f;
+  --ink: #f8fafc;
+  --accent: #ff2430; /* Glowing Electric Red */
+  --accent-dark: #be123c;
+  --muted: #151821;
+  --border: #1e2230;
+  
+  /* Mood Colors - Dark Mode */
+  --mood-rose: #2d1418;
+  --mood-sky: #0c2233;
+  --mood-amber: #332200;
+  --mood-emerald: #062e1e;
+  --mood-violet: #22123b;
 }
+
+:root[data-theme="light"] {
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --page-bg: #f8fafc;
+  --ink: #0f172a;
+  --accent: #e30613; /* TechStop Red */
+  --accent-dark: #be123c;
+  --muted: #f1f5f9;
+  --border: #e2e8f0;
+  
+  /* Mood Colors - Light Mode */
+  --mood-sky: #f0f9ff;
+  --mood-rose: #fff1f2;
+  --mood-amber: #fffbeb;
+  --mood-emerald: #ecfdf5;
+  --mood-violet: #f5f3ff;
+}
+
+html body .bg-white {
+  background-color: var(--background);
+}
+html body .bg-zinc-50 {
+  background-color: var(--muted);
+}
+html body .text-zinc-950 {
+  color: var(--foreground);
+}
+html body .text-zinc-900 {
+  color: var(--foreground);
+}
+html body .border-zinc-100 {
+  border-color: var(--border);
+}
+html body .border-zinc-200 {
+  border-color: var(--border);
+}
+
 @layer utilities {
   .scrollbar-hide {
     -ms-overflow-style: none;  /* IE and Edge */

@@ -270,7 +270,7 @@ export default function RepairPage() {
   const estimatorIssues = ISSUES[calcCategory] ?? [];
 
   return (
-    <div className="flex min-h-screen flex-col bg-white text-black font-sans relative overflow-x-hidden">
+    <div className="flex min-h-screen flex-col bg-background text-foreground font-sans relative overflow-x-hidden selection:bg-accent selection:text-white">
       <Navbar />
 
       <style dangerouslySetInnerHTML={{ __html: `
@@ -445,7 +445,7 @@ export default function RepairPage() {
                         * Diagnostics run on receipt. Quote fixed and sent for your confirmation before work.
                       </p>
                     </div>
-                    <button onClick={handleEstimatorBook} className="w-full h-14 bg-white hover:bg-accent text-zinc-950 font-black text-xs uppercase tracking-wider rounded-xl transition-colors flex items-center justify-center gap-2">
+                    <button onClick={handleEstimatorBook} className="w-full h-14 bg-white hover:bg-accent text-zinc-950 hover:text-white font-black text-xs uppercase tracking-wider rounded-xl transition-colors flex items-center justify-center gap-2">
                       Book this repair <ArrowRight className="h-4 w-4" />
                     </button>
                   </div>
@@ -488,7 +488,7 @@ export default function RepairPage() {
                   <div key={idx} className="flex flex-col justify-between p-8 rounded-3xl bg-zinc-50 border border-zinc-150/40 relative hover:shadow-md transition-all shadow-sm">
                     <div>
                       <div className="flex gap-0.5 mb-4">
-                        {[...Array(rev.rating)].map((_, i) => <Star key={i} className="h-4 w-4 fill-accent text-accent" />)}
+                        {[...Array(rev.rating)].map((_, i) => <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />)}
                       </div>
                       <h4 className="font-extrabold text-sm text-zinc-950 mb-2">&ldquo;{rev.title}&rdquo;</h4>
                       <p className="text-zinc-500 text-xs font-semibold leading-relaxed mb-6">&ldquo;{rev.review}&rdquo;</p>
@@ -660,7 +660,7 @@ export default function RepairPage() {
                                     placeholder={`E.g. ${state.deviceType === "Phone" ? "iPhone 14 Pro, Galaxy S23" : state.deviceType === "Console" ? "PS5 Digital, Xbox Series X" : "MacBook Air M2, XPS 15"}`}
                                     value={state.model}
                                     onChange={e => setState(s => ({ ...s, model: e.target.value }))}
-                                    className="h-14 rounded-[1rem] border-2 border-zinc-200 px-5 text-sm font-medium outline-none focus:border-black transition-colors"
+                                    className="h-14 rounded-[1rem] border-2 border-zinc-200 px-5 text-sm font-medium outline-none focus:border-accent transition-colors"
                                   />
                                 </div>
                               </div>
@@ -725,7 +725,7 @@ export default function RepairPage() {
                                       value={state.issueNotes}
                                       onChange={e => setState(s => ({ ...s, issueNotes: e.target.value }))}
                                       rows={3}
-                                      className="w-full rounded-[1rem] border-2 border-zinc-200 px-5 py-4 text-sm font-medium outline-none focus:border-black transition-colors resize-none"
+                                      className="w-full rounded-[1rem] border-2 border-zinc-200 px-5 py-4 text-sm font-medium outline-none focus:border-accent transition-colors resize-none"
                                     />
                                   </motion.div>
                                 )}
@@ -927,7 +927,7 @@ export default function RepairPage() {
                                         placeholder={placeholder}
                                         value={state.contact[key as keyof typeof state.contact]}
                                         onChange={e => setState(s => ({ ...s, contact: { ...s.contact, [key]: e.target.value } }))}
-                                        className="h-14 rounded-[1rem] border-2 border-zinc-200 px-5 text-sm font-medium outline-none focus:border-black transition-colors"
+                                        className="h-14 rounded-[1rem] border-2 border-zinc-200 px-5 text-sm font-medium outline-none focus:border-accent transition-colors"
                                       />
                                     </div>
                                   ));

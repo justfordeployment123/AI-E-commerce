@@ -18,12 +18,12 @@ import Footer from "../../components/Footer";
 
 export default function SustainabilityPage() {
   return (
-    <div className="flex min-h-screen flex-col bg-white text-black font-sans selection:bg-accent selection:text-black">
+    <div className="flex min-h-screen flex-col bg-background text-foreground font-sans selection:bg-accent selection:text-white">
       <Navbar />
 
       <main className="flex-1">
         {/* Hero Section (Back Market Mood Emerald) */}
-        <section className="bg-mood-emerald py-24 md:py-32 overflow-hidden border-b border-zinc-100 relative">
+        <section className="bg-mood-emerald dark:bg-zinc-950/20 py-24 md:py-32 overflow-hidden border-b border-zinc-100 dark:border-zinc-900 relative">
            <div className="absolute top-0 right-0 w-1/2 h-full bg-white/20 blur-[150px] rounded-full translate-x-1/2" />
           
           <div className="mx-auto max-w-7xl px-4 relative z-10 text-center lg:text-left">
@@ -32,7 +32,7 @@ export default function SustainabilityPage() {
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="inline-flex items-center gap-2 rounded-full bg-black text-white px-4 py-2 text-[10px] font-bold uppercase tracking-widest mb-8"
+                  className="inline-flex items-center gap-2 rounded-full bg-black dark:bg-zinc-900 text-white px-4 py-2 text-[10px] font-bold uppercase tracking-widest mb-8 border border-transparent dark:border-zinc-800"
                 >
                   <Leaf className="h-3.5 w-3.5 text-accent" />
                   Eco-Certified Marketplace
@@ -44,13 +44,13 @@ export default function SustainabilityPage() {
                   className="font-serif text-5xl md:text-8xl font-medium mb-8 leading-[0.9] tracking-tighter"
                 >
                   Tech that <br/>
-                  <span className="italic text-emerald-900">loves Earth.</span>
+                  <span className="italic text-emerald-950 dark:text-emerald-450">loves Earth.</span>
                 </motion.h1>
                 <motion.p 
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
-                  className="text-xl text-black/60 mb-12 max-w-lg mx-auto lg:mx-0 leading-relaxed font-medium"
+                  className="text-xl text-black/60 dark:text-zinc-400 mb-12 max-w-lg mx-auto lg:mx-0 leading-relaxed font-medium"
                 >
                   Buying refurbished isn't just about saving cash—it's about saving the planet. One device at a time.
                 </motion.p>
@@ -61,9 +61,9 @@ export default function SustainabilityPage() {
                   transition={{ delay: 0.3 }}
                   className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
                 >
-                  <a href="/shop/phones" className="h-16 px-10 bg-black text-white rounded-2xl font-bold flex items-center justify-center gap-3 transition-transform hover:scale-105 active:scale-95 shadow-2xl">
+                  <a href="/shop/phones" className="h-16 px-10 bg-black dark:bg-accent text-white rounded-2xl font-bold flex items-center justify-center gap-3 transition-transform hover:scale-105 active:scale-95 shadow-2xl hover:bg-zinc-850 dark:hover:bg-accent-dark">
                     Shop Sustainably
-                    <ArrowRight className="h-5 w-5 text-accent" />
+                    <ArrowRight className="h-5 w-5 text-white" />
                   </a>
                 </motion.div>
               </div>
@@ -74,14 +74,14 @@ export default function SustainabilityPage() {
                 transition={{ delay: 0.2 }}
                 className="relative hidden lg:block"
               >
-                 <div className="aspect-square bg-white rounded-[4rem] p-12 -rotate-6 shadow-2xl flex flex-col justify-center text-center relative overflow-hidden group">
+                 <div className="aspect-square bg-white dark:bg-zinc-900 rounded-[4rem] p-12 -rotate-6 shadow-2xl flex flex-col justify-center text-center relative overflow-hidden group border border-transparent dark:border-zinc-800">
                     <div className="absolute inset-0 bg-gradient-to-br from-mood-emerald/20 to-transparent" />
                     <div className="relative z-10">
-                       <div className="h-24 w-24 rounded-3xl bg-mood-emerald flex items-center justify-center mx-auto mb-8 rotate-12 transition-transform group-hover:scale-110">
-                          <TreeDeciduous className="h-12 w-12 text-black" />
+                       <div className="h-24 w-24 rounded-3xl bg-mood-emerald dark:bg-emerald-950/40 flex items-center justify-center mx-auto mb-8 rotate-12 transition-transform group-hover:scale-110 border border-transparent dark:border-emerald-800">
+                          <TreeDeciduous className="h-12 w-12 text-black dark:text-white" />
                        </div>
-                       <h3 className="text-4xl font-serif font-medium mb-2">12,000+</h3>
-                       <p className="text-sm font-bold uppercase tracking-widest text-zinc-400">Trees saved this year</p>
+                       <h3 className="text-4xl font-serif font-medium mb-2 text-zinc-950 dark:text-white">12,000+</h3>
+                       <p className="text-sm font-bold uppercase tracking-widest text-zinc-450">Trees saved this year</p>
                     </div>
                  </div>
               </motion.div>
@@ -127,13 +127,13 @@ export default function SustainabilityPage() {
                 transition={{ delay: index * 0.1 }}
                 className="group relative"
               >
-                <div className={`aspect-square rounded-[3rem] ${item.mood} p-10 flex flex-col justify-between transition-transform group-hover:-translate-y-2`}>
-                   <div className="h-16 w-16 rounded-2xl bg-white flex items-center justify-center shadow-sm">
-                     <item.icon className="h-8 w-8 text-black" strokeWidth={1.5} />
+                <div className={`aspect-square rounded-[3rem] ${item.mood} dark:bg-zinc-900/40 p-10 flex flex-col justify-between transition-transform group-hover:-translate-y-2 border border-transparent dark:border-zinc-800`}>
+                   <div className="h-16 w-16 rounded-2xl bg-white dark:bg-zinc-800 flex items-center justify-center shadow-sm">
+                     <item.icon className="h-8 w-8 text-black dark:text-white" strokeWidth={1.5} />
                    </div>
                    <div>
-                     <h3 className="text-3xl font-serif font-medium mb-4">{item.title}</h3>
-                     <p className="text-black/60 leading-relaxed font-medium">{item.text}</p>
+                     <h3 className="text-3xl font-serif font-medium mb-4 text-zinc-950 dark:text-white">{item.title}</h3>
+                     <p className="text-black/60 dark:text-zinc-400 leading-relaxed font-medium">{item.text}</p>
                    </div>
                 </div>
               </motion.div>
@@ -142,7 +142,7 @@ export default function SustainabilityPage() {
         </section>
 
         {/* Long Form Mission (High Contrast) */}
-        <section className="py-32 bg-zinc-950 text-white overflow-hidden">
+        <section className="py-32 bg-zinc-950 text-white overflow-hidden border-y border-zinc-900">
            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
               <div className="grid lg:grid-cols-2 gap-24 items-center">
                  <div className="relative">
@@ -153,11 +153,11 @@ export default function SustainabilityPage() {
                         className="absolute inset-0 w-full h-full object-cover opacity-30 grayscale transition-all duration-1000 group-hover:grayscale-0 group-hover:scale-110"
                        />
                        <div className="relative z-10 h-full flex flex-col justify-end">
-                          <div className="bg-white text-black p-10 rounded-[3rem] shadow-2xl">
+                          <div className="bg-white dark:bg-zinc-900 text-black dark:text-white p-10 rounded-[3rem] shadow-2xl border border-transparent dark:border-zinc-800">
                              <div className="h-12 w-12 rounded-2xl bg-emerald-500 flex items-center justify-center text-white mb-6">
-                                <Globe className="h-6 w-6" />
+                                <Globe className="h-6 w-6 text-white" />
                              </div>
-                             <p className="text-2xl font-serif font-medium mb-4">"Buying refurbished is the most impactful thing you can do for the planet."</p>
+                             <p className="text-2xl font-serif font-medium mb-4 text-zinc-950 dark:text-zinc-100">"Buying refurbished is the most impactful thing you can do for the planet."</p>
                              <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">— TechStop Ethics Board</p>
                           </div>
                        </div>
@@ -186,14 +186,14 @@ export default function SustainabilityPage() {
         </section>
 
         {/* CTA */}
-        <section className="py-32 bg-white text-center">
+        <section className="py-32 bg-background text-center">
            <div className="mx-auto max-w-4xl px-4">
-              <h2 className="font-serif text-5xl md:text-8xl font-medium mb-12">Join the movement.</h2>
+              <h2 className="font-serif text-5xl md:text-8xl font-medium mb-12 text-zinc-950 dark:text-white">Join the movement.</h2>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <a href="/shop/phones" className="h-20 px-16 bg-black text-white rounded-[2rem] font-bold text-lg transition-all hover:scale-105 active:scale-95 shadow-2xl inline-flex items-center justify-center">
+                  <a href="/shop/phones" className="h-20 px-16 bg-black dark:bg-accent text-white rounded-[2rem] font-bold text-lg transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-accent/10 inline-flex items-center justify-center hover:bg-zinc-850 dark:hover:bg-accent-dark">
                      Browse All Tech
                   </a>
-                  <a href="/sell" className="h-20 px-16 border-2 border-zinc-100 text-black rounded-[2rem] font-bold text-lg hover:bg-zinc-50 transition-all inline-flex items-center justify-center">
+                  <a href="/sell" className="h-20 px-16 border-2 border-zinc-150 dark:border-zinc-850 text-black dark:text-white bg-transparent rounded-[2rem] font-bold text-lg hover:bg-zinc-50 dark:hover:bg-zinc-850 transition-all inline-flex items-center justify-center">
                      Sell Your Device
                   </a>
               </div>

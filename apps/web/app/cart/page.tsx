@@ -27,10 +27,10 @@ function CartPageContent() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen flex-col bg-[#f5f5f7] text-black font-sans">
+      <div className="flex min-h-screen flex-col bg-background text-foreground font-sans selection:bg-accent selection:text-white">
         <Navbar />
         <main className="flex-1 flex items-center justify-center min-h-screen">
-          <div className="h-12 w-12 border-4 border-zinc-200 border-t-black rounded-full animate-spin" />
+          <div className="h-12 w-12 border-4 border-zinc-200 border-t-accent rounded-full animate-spin" />
         </main>
         <Footer />
       </div>
@@ -39,7 +39,7 @@ function CartPageContent() {
 
   if (items.length === 0) {
     return (
-      <div className="flex min-h-screen flex-col bg-[#f5f5f7] text-black font-sans">
+      <div className="flex min-h-screen flex-col bg-background text-foreground font-sans selection:bg-accent selection:text-white">
         <div className="min-h-screen">
           <Navbar />
           <main className="flex-1 flex flex-col items-center justify-center px-4 py-20 text-center">
@@ -66,7 +66,7 @@ function CartPageContent() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#f5f5f7] text-black font-sans selection:bg-accent selection:text-black">
+    <div className="flex min-h-screen flex-col bg-background text-foreground font-sans selection:bg-accent selection:text-white">
       <Navbar />
 
       <main className="mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8 py-8 md:py-12">
@@ -186,7 +186,7 @@ function CartPageContent() {
 
                 <a
                   href="/checkout"
-                  className="w-full h-14 bg-black text-white rounded-full font-bold text-lg hover:scale-[1.02] transition-transform flex items-center justify-center gap-2"
+                  className="w-full h-14 bg-accent hover:bg-accent-dark text-white rounded-full font-bold text-lg transition-colors flex items-center justify-center gap-2 shadow-lg shadow-accent/20"
                 >
                   Checkout securely
                 </a>

@@ -34,6 +34,11 @@ export const metadata: Metadata = {
   description:
     "Premium marketplace for certified refurbished electronics with warranty, quality grading, and fast delivery.",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/Icon/icon.png",
+    shortcut: "/Icon/icon.png",
+    apple: "/Icon/icon.png",
+  },
 };
 
 export default function RootLayout({
@@ -45,7 +50,24 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} ${newsreader.variable} ${outfit.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var theme = localStorage.getItem('ts-theme');
+                  if (theme) {
+                    document.documentElement.setAttribute('data-theme', theme);
+                  }
+                } catch (e) {}
+              })();
+            `
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col">
         <AuthProvider>
           <CartProvider>

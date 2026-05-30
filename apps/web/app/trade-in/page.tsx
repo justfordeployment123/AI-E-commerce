@@ -31,12 +31,12 @@ function GoogleIcon() {
 // ─── Data ──────────────────────────────────────────────────────────────────
 
 const CATEGORIES = [
-  { id: "Phone", label: "Smartphone", icon: Smartphone, img: "/bento_smartphones.png", mood: "bg-sky-500/10 border-sky-500/20", moodIcon: "text-sky-500", glow: "hover:shadow-sky-500/10", sub: "iPhone, Galaxy, Pixel, OnePlus", count: "60+ models" },
-  { id: "Tablet", label: "Tablet / iPad", icon: Tablet, img: "/bento_tablets.png", mood: "bg-rose-500/10 border-rose-500/20", moodIcon: "text-rose-500", glow: "hover:shadow-rose-500/10", sub: "iPad, Galaxy Tab, Surface Pro", count: "20+ models" },
-  { id: "Console", label: "Gaming Console", icon: Gamepad2, img: "/bento_gaming.png", mood: "bg-violet-500/10 border-violet-500/20", moodIcon: "text-violet-500", glow: "hover:shadow-violet-500/10", sub: "PS5, Xbox Series, Switch", count: "17 models" },
-  { id: "Laptop", label: "Laptop & MacBook", icon: Laptop, img: "/bento_laptops.png", mood: "bg-amber-500/10 border-amber-500/20", moodIcon: "text-amber-600", glow: "hover:shadow-amber-500/10", sub: "MacBook, XPS, ThinkPad", count: "25+ models" },
-  { id: "Smartwatch", label: "Smartwatch", icon: Watch, img: "/galaxy_watch_promo_1778927696615.png", mood: "bg-emerald-500/10 border-emerald-500/20", moodIcon: "text-emerald-500", glow: "hover:shadow-emerald-500/10", sub: "Apple Watch, Galaxy Watch, Fitbit", count: "30+ models" },
-  { id: "Audio", label: "Audio & Headphones", icon: Headphones, img: "/bento_audio.png", mood: "bg-indigo-500/10 border-indigo-500/20", moodIcon: "text-indigo-500", glow: "hover:shadow-indigo-500/10", sub: "AirPods, Sony, Bose", count: "25+ models" },
+  { id: "Phone", label: "Smartphone", icon: Smartphone, img: "/phones/samsung/bento_smartphones.png", mood: "bg-sky-500/10 border-sky-500/20", moodIcon: "text-sky-500", glow: "hover:shadow-sky-500/10", sub: "iPhone, Galaxy, Pixel, OnePlus", count: "60+ models" },
+  { id: "Tablet", label: "Tablet / iPad", icon: Tablet, img: "/tablets/ipad/showcase_ipad_pro.png", mood: "bg-rose-500/10 border-rose-500/20", moodIcon: "text-rose-500", glow: "hover:shadow-rose-500/10", sub: "iPad, Galaxy Tab, Surface Pro", count: "20+ models" },
+  { id: "Console", label: "Gaming Console", icon: Gamepad2, img: "/consoles/showcase_ps5.png", mood: "bg-violet-500/10 border-violet-500/20", moodIcon: "text-violet-500", glow: "hover:shadow-violet-500/10", sub: "PS5, Xbox Series, Switch", count: "17 models" },
+  { id: "Laptop", label: "Laptop & MacBook", icon: Laptop, img: "/laptops/MacBook/showcase_macbook.png", mood: "bg-amber-500/10 border-amber-500/20", moodIcon: "text-amber-600", glow: "hover:shadow-amber-500/10", sub: "MacBook, XPS, ThinkPad", count: "25+ models" },
+  { id: "Smartwatch", label: "Smartwatch", icon: Watch, img: "/Other/watch/galaxy_watch_promo_1778927696615.png", mood: "bg-emerald-500/10 border-emerald-500/20", moodIcon: "text-emerald-500", glow: "hover:shadow-emerald-500/10", sub: "Apple Watch, Galaxy Watch, Fitbit", count: "30+ models" },
+  { id: "Audio", label: "Audio & Headphones", icon: Headphones, img: "/audio/bento_audio.png", mood: "bg-indigo-500/10 border-indigo-500/20", moodIcon: "text-indigo-500", glow: "hover:shadow-indigo-500/10", sub: "AirPods, Sony, Bose", count: "25+ models" },
 ];
 
 const BRANDS: Record<string, string[]> = {
@@ -560,7 +560,7 @@ export default function TradeInPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-white text-zinc-950 font-sans relative overflow-x-hidden">
+    <div className="min-h-screen flex flex-col bg-background text-foreground font-sans relative overflow-x-hidden selection:bg-accent selection:text-white">
       <Navbar />
 
       <style dangerouslySetInnerHTML={{ __html: `
@@ -585,7 +585,7 @@ export default function TradeInPage() {
           background: #d4d4d8;
         }
       ` }} />
-      <div className="flex-1 bg-white relative">
+      <div className="flex-1 bg-background relative">
 
           {/* Subtle top background decorative orb */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[600px] h-[350px] bg-sky-500/10 blur-[130px] rounded-full pointer-events-none -z-10" />
@@ -594,7 +594,7 @@ export default function TradeInPage() {
           <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-24 pb-16 text-center">
 
             {/* Trustpilot-style Rating Badge */}
-            <div className="inline-flex flex-wrap items-center justify-center gap-2 rounded-full bg-emerald-50 border border-emerald-100/50 px-4 py-2 text-xs font-bold text-emerald-800 mb-8 shadow-sm">
+            <div className="inline-flex flex-wrap items-center justify-center gap-2 rounded-full bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100/50 dark:border-emerald-900/30 px-4 py-2 text-xs font-bold text-emerald-800 dark:text-emerald-400 mb-8 shadow-sm">
               <span className="flex items-center gap-0.5 text-emerald-600">
                 <Star className="h-3.5 w-3.5 fill-emerald-500 text-emerald-500" />
                 <Star className="h-3.5 w-3.5 fill-emerald-500 text-emerald-500" />
@@ -607,7 +607,7 @@ export default function TradeInPage() {
               <span className="text-emerald-600 font-medium">Over 25,000+ happy sellers</span>
             </div>
 
-            <h1 className="font-serif text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight text-zinc-950 mb-8 max-w-4xl mx-auto leading-none">
+            <h1 className="font-serif text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight text-zinc-950 dark:text-white mb-8 max-w-4xl mx-auto leading-none">
               Sell your tech for cash. <br />
               <span className="text-transparent bg-clip-text bg-linear-to-r from-zinc-500 via-zinc-800 to-zinc-950">Fast. Fair. Easy.</span>
             </h1>
@@ -625,9 +625,9 @@ export default function TradeInPage() {
                   onFocus={() => setIsSearchFocused(true)}
                   onBlur={() => setTimeout(() => setIsSearchFocused(false), 220)}
                   placeholder="Search your device (e.g. iPhone 15 Pro, Watch Ultra, PS5...)"
-                  className="h-16 w-full rounded-2xl bg-zinc-100 border-2 border-transparent pl-14 pr-6 text-sm font-semibold outline-none focus:border-zinc-950 focus:bg-white transition-all shadow-lg hover:bg-zinc-200/50 placeholder:text-zinc-400"
+                  className="h-16 w-full rounded-2xl bg-zinc-100 dark:bg-zinc-900 border-2 border-transparent focus:border-accent focus:bg-white focus:dark:bg-zinc-900 pl-14 pr-6 text-sm font-semibold outline-none text-foreground transition-all shadow-lg hover:bg-zinc-200/50 dark:hover:bg-zinc-800 placeholder:text-zinc-400"
                 />
-                <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400 group-focus-within:text-zinc-950 transition-colors" />
+                <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400 group-focus-within:text-accent transition-colors" />
               </div>
 
               <AnimatePresence>
@@ -636,24 +636,24 @@ export default function TradeInPage() {
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 12 }}
-                    className="absolute left-0 right-0 top-full mt-2 bg-white border border-zinc-200 rounded-2xl shadow-2xl overflow-hidden text-left z-30 p-2"
+                    className="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden text-left z-30 p-2"
                   >
                     {suggestions.map((sug, i) => (
                       <button
                         key={i}
                         onClick={() => handleSelectSuggestion(sug)}
-                        className="w-full flex items-center justify-between p-3.5 hover:bg-zinc-50 rounded-xl transition-colors text-left"
+                        className="w-full flex items-center justify-between p-3.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 rounded-xl transition-colors text-left"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 bg-zinc-100 rounded-lg flex items-center justify-center text-zinc-500">
+                          <div className="h-8 w-8 bg-zinc-100 dark:bg-zinc-800 rounded-lg flex items-center justify-center text-zinc-500">
                             <Smartphone className="h-4.5 w-4.5" />
                           </div>
                           <div>
-                            <p className="text-xs font-extrabold text-zinc-950">{sug.name}</p>
+                            <p className="text-xs font-extrabold text-zinc-950 dark:text-white">{sug.name}</p>
                             <p className="text-[9px] text-zinc-400 font-bold uppercase tracking-wider mt-0.5">{sug.brand} · {sug.category}</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-zinc-400 hover:text-black">
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-zinc-400 hover:text-black dark:hover:text-white">
                           Get Cash <ChevronRight className="h-3.5 w-3.5" />
                         </div>
                       </button>
@@ -684,7 +684,7 @@ export default function TradeInPage() {
             </div>
 
             {/* Value Proposition Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-5xl mx-auto border-t border-b border-zinc-200 py-10 mb-28">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-5xl mx-auto border-t border-b border-zinc-200 dark:border-zinc-800 py-10 mb-28">
               {[
                 { Icon: Shield, title: "Highest Value Guaranteed", desc: "Always-updated market rates" },
                 { Icon: Zap, title: "Paid Within 48 Hours", desc: "Straight bank transfer deposit" },
@@ -692,17 +692,17 @@ export default function TradeInPage() {
                 { Icon: Clock, title: "14-Day Offer Lock-in", desc: "Protection against price drop" },
               ].map((item, idx) => (
                 <div key={idx} className="flex flex-col items-center text-center">
-                  <div className="h-12 w-12 bg-zinc-50 rounded-2xl border border-zinc-200 flex items-center justify-center mb-3">
-                    <item.Icon className="h-5.5 w-5.5 text-zinc-700" strokeWidth={1.8} />
+                  <div className="h-12 w-12 bg-zinc-50 dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 flex items-center justify-center mb-3">
+                    <item.Icon className="h-5.5 w-5.5 text-zinc-700 dark:text-zinc-300" strokeWidth={1.8} />
                   </div>
-                  <h4 className="text-xs font-black uppercase tracking-wider text-zinc-900 leading-tight mb-1">{item.title}</h4>
+                  <h4 className="text-xs font-black uppercase tracking-wider text-zinc-900 dark:text-zinc-200 leading-tight mb-1">{item.title}</h4>
                   <p className="text-[10px] text-zinc-400 font-semibold">{item.desc}</p>
                 </div>
               ))}
             </div>
 
             {/* Category Cards Section with Real Beautiful Product Images */}
-            <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-zinc-950 mb-12 text-center">
+            <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-zinc-950 dark:text-white mb-12 text-center">
               Select category to get started
             </h2>
 
@@ -714,24 +714,31 @@ export default function TradeInPage() {
                     whileHover={{ y: -6, scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => startWizard(cat.id)}
-                    className="flex flex-col rounded-3xl border border-zinc-200 bg-white shadow-sm hover:shadow-xl hover:border-zinc-950 transition-all group overflow-hidden w-full"
+                    className="flex flex-col rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm hover:shadow-2xl hover:border-zinc-300 dark:hover:border-zinc-600 transition-all duration-300 group overflow-hidden w-full text-left"
                   >
-                    {/* Centered Image with custom gradient backdrop */}
-                    <div className="w-full aspect-[4/3] bg-linear-to-b from-zinc-50 to-white border-b border-zinc-100 flex items-center justify-center p-4 relative overflow-hidden">
+                    {/* Image area */}
+                    <div className={`w-full aspect-[4/3] ${cat.mood} relative overflow-hidden`}>
                       <img
                         src={cat.img}
                         alt={cat.label}
-                        className="h-full w-full object-contain filter drop-shadow-md transition-transform duration-500 group-hover:scale-[1.05]"
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.06]"
                       />
-                    </div>
-                    {/* Details section */}
-                    <div className="p-6 flex-1 flex flex-col justify-between">
-                      <div>
-                        <h3 className="font-extrabold text-lg text-zinc-950 mb-1 leading-tight">{cat.label}</h3>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">{cat.count}</p>
+                      {/* Bottom fade into card */}
+                      <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-white/60 to-transparent dark:from-zinc-900/60 pointer-events-none" />
+                      {/* Model count badge */}
+                      <div className="absolute top-3 right-3 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-300 border border-zinc-200/60 dark:border-zinc-700/60">
+                        {cat.count}
                       </div>
-                      <div className="mt-6 flex items-center gap-1.5 text-xs font-bold text-zinc-500 group-hover:text-black transition-colors">
-                        Start BuyBack <ChevronRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
+                    </div>
+
+                    {/* Details */}
+                    <div className="px-5 py-4 flex items-center justify-between">
+                      <div>
+                        <h3 className="font-extrabold text-base text-zinc-950 dark:text-white leading-tight">{cat.label}</h3>
+                        <p className="text-xs text-zinc-400 mt-0.5">{cat.sub}</p>
+                      </div>
+                      <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${cat.mood} group-hover:scale-110 transition-transform duration-200`}>
+                        <ChevronRight className={`h-4 w-4 ${cat.moodIcon} group-hover:translate-x-0.5 transition-transform`} />
                       </div>
                     </div>
                   </motion.button>
@@ -747,41 +754,42 @@ export default function TradeInPage() {
                     <Sparkles className="h-3.5 w-3.5 fill-sky-600 text-sky-600" />
                     High Demand Valuations
                   </div>
-                  <h2 className="font-serif text-4xl md:text-5xl font-bold tracking-tight text-zinc-950 leading-none">
+                  <h2 className="font-serif text-4xl md:text-5xl font-bold tracking-tight text-zinc-950 dark:text-white leading-none">
                     Hot trade-in prices
                   </h2>
                 </div>
-                <p className="text-zinc-500 font-semibold text-sm max-w-sm mt-4 md:mt-0 leading-relaxed">
+                <p className="text-zinc-500 dark:text-zinc-450 font-semibold text-sm max-w-sm mt-4 md:mt-0 leading-relaxed">
                   Ready to upgrade? We are currently paying premium rates for these popular devices:
                 </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {[
-                  { name: "iPhone 15 Pro Max", val: "£780", img: "/showcase_iphone.png", category: "Phone", brand: "Apple" },
-                  { name: "MacBook Pro 16\" M3 Max", val: "£1,800", img: "/showcase_macbook.png", category: "Laptop", brand: "Apple" },
-                  { name: "PS5 Disc Edition", val: "£340", img: "/showcase_ps5.png", category: "Console", brand: "Sony PlayStation" },
-                  { name: "AirPods Max", val: "£260", img: "/showcase_airpods_max.png", category: "Audio", brand: "Apple" }
+                  { name: "iPhone 15 Pro Max", val: "£780", img: "/phones/iphone/showcase_iphone.png", category: "Phone", brand: "Apple", mood: "bg-sky-500/10" },
+                  { name: "MacBook Pro 16\" M3 Max", val: "£1,800", img: "/laptops/MacBook/showcase_macbook.png", category: "Laptop", brand: "Apple", mood: "bg-amber-500/10" },
+                  { name: "PS5 Disc Edition", val: "£340", img: "/consoles/showcase_ps5.png", category: "Console", brand: "Sony PlayStation", mood: "bg-violet-500/10" },
+                  { name: "AirPods Max", val: "£260", img: "/audio/showcase_airpods_max.png", category: "Audio", brand: "Apple", mood: "bg-indigo-500/10" }
                 ].map((item, i) => (
                   <motion.div
                     key={i}
-                    whileHover={{ y: -4, boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)" }}
-                    className="bg-white border border-zinc-200 rounded-3xl p-6 flex flex-col justify-between hover:border-zinc-950 transition-all group shadow-sm"
+                    whileHover={{ y: -6 }}
+                    className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl flex flex-col overflow-hidden hover:shadow-xl hover:border-zinc-300 dark:hover:border-zinc-600 transition-all duration-300 group shadow-sm"
                   >
-                    <div className="w-full aspect-[4/3] bg-zinc-50 rounded-2xl flex items-center justify-center p-4 mb-6 relative overflow-hidden">
-                      <img src={item.img} alt={item.name} className="h-full w-full object-contain filter drop-shadow-sm group-hover:scale-105 transition-transform" />
+                    <div className={`w-full aspect-[4/3] ${item.mood} relative overflow-hidden`}>
+                      <img src={item.img} alt={item.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                      <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-white/50 to-transparent dark:from-zinc-900/50 pointer-events-none" />
                     </div>
-                    <div>
+                    <div className="p-5">
                       <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">{item.brand}</span>
-                      <h4 className="font-extrabold text-base text-zinc-900 leading-tight mb-2 mt-1 truncate">{item.name}</h4>
-                      <div className="flex items-baseline justify-between mt-4">
+                      <h4 className="font-extrabold text-base text-zinc-900 dark:text-white leading-tight mt-0.5 truncate">{item.name}</h4>
+                      <div className="flex items-center justify-between mt-4">
                         <div>
                           <p className="text-[9px] font-black uppercase tracking-widest text-zinc-400 leading-none">Up to</p>
-                          <p className="text-2xl font-black text-zinc-950 font-mono mt-1">{item.val}</p>
+                          <p className="text-2xl font-black text-zinc-950 dark:text-white mt-0.5">{item.val}</p>
                         </div>
                         <button
                           onClick={() => handleSelectSuggestion({ name: item.name, category: item.category, brand: item.brand })}
-                          className="px-4 py-2 bg-zinc-950 hover:bg-zinc-800 text-white rounded-xl text-xs font-black transition-colors"
+                          className="px-4 py-2.5 bg-zinc-950 dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-100 text-white dark:text-zinc-950 rounded-xl text-xs font-black transition-colors"
                         >
                           Sell Now
                         </button>
@@ -817,7 +825,7 @@ export default function TradeInPage() {
                         <select
                           value={calcCategory}
                           onChange={(e) => setCalcCategory(e.target.value)}
-                          className="w-full h-12 bg-white/5 border border-white/10 rounded-xl px-4 text-xs font-bold text-white outline-none focus:border-sky-500 transition-colors"
+                          className="w-full h-12 bg-white/5 border border-white/10 rounded-xl px-4 text-xs font-bold text-white outline-none focus:border-accent transition-colors"
                         >
                           {Object.keys(CALC_STATS).map((cat) => (
                             <option key={cat} value={cat} className="bg-zinc-900 text-white">
@@ -881,7 +889,7 @@ export default function TradeInPage() {
 
             {/* "3 Easy Steps" component */}
             <div className="max-w-5xl mx-auto mb-32">
-              <h2 className="font-serif text-4xl md:text-5xl font-medium tracking-tight text-zinc-950 mb-14 text-center">
+              <h2 className="font-serif text-4xl md:text-5xl font-medium tracking-tight text-zinc-950 dark:text-white mb-14 text-center">
                 Just 3 easy steps
               </h2>
               <div className="grid md:grid-cols-3 gap-8 text-left">
@@ -890,12 +898,12 @@ export default function TradeInPage() {
                   { step: "2", title: "Free Postage Label", desc: "Pack your device securely and dispatch it using our prepaid, fully-insured Royal Mail parcel shipping labels." },
                   { step: "3", title: "Direct Bank Transfer", desc: "Our technicians inspect the hardware. Upon verification, funds are released directly to your account within 48 hours." },
                 ].map((item) => (
-                  <div key={item.step} className="flex flex-col items-start p-8 rounded-[2rem] bg-zinc-50 border border-zinc-200 relative hover:shadow-md transition-all">
-                    <div className="h-10 w-10 rounded-xl bg-black text-white font-black text-sm flex items-center justify-center mb-6">
+                  <div key={item.step} className="flex flex-col items-start p-8 rounded-[2rem] bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 relative hover:shadow-md transition-all">
+                    <div className="h-10 w-10 rounded-xl bg-black dark:bg-zinc-800 text-white font-black text-sm flex items-center justify-center mb-6">
                       {item.step}
                     </div>
-                    <h4 className="font-extrabold text-lg text-zinc-950 mb-2">{item.title}</h4>
-                    <p className="text-zinc-500 text-xs font-semibold leading-relaxed">{item.desc}</p>
+                    <h4 className="font-extrabold text-lg text-zinc-950 dark:text-white mb-2">{item.title}</h4>
+                    <p className="text-zinc-500 dark:text-zinc-400 text-xs font-semibold leading-relaxed">{item.desc}</p>
                   </div>
                 ))}
               </div>
@@ -903,7 +911,7 @@ export default function TradeInPage() {
 
             {/* Verified Customer Reviews Section */}
             <div className="max-w-5xl mx-auto mb-32 text-left">
-              <h2 className="font-serif text-4xl md:text-5xl font-bold tracking-tight text-zinc-950 mb-12 text-center">
+              <h2 className="font-serif text-4xl md:text-5xl font-bold tracking-tight text-zinc-950 dark:text-white mb-12 text-center">
                 Loved by 25,000+ happy sellers
               </h2>
               <div className="grid md:grid-cols-3 gap-8">
@@ -930,22 +938,22 @@ export default function TradeInPage() {
                     review: "I decided to do the in-store drop off at Leicester center rather than shipping. Technicians tested my PS5 and had cash in my hand in less than 10 minutes. Extremely polite staff!"
                   }
                 ].map((rev, idx) => (
-                  <div key={idx} className="flex flex-col justify-between p-8 rounded-3xl bg-zinc-50 border border-zinc-200 relative hover:shadow-md transition-all shadow-sm">
+                  <div key={idx} className="flex flex-col justify-between p-8 rounded-3xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 relative hover:shadow-md transition-all shadow-sm">
                     <div>
                       <div className="flex gap-0.5 text-zinc-900 mb-4">
                         {Array.from({ length: rev.rating }).map((_, i) => (
-                          <Star key={i} className="h-4 w-4 fill-sky-400 text-sky-400 border-none" />
+                          <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400 border-none" />
                         ))}
                       </div>
-                      <h4 className="font-extrabold text-sm text-zinc-950 mb-2">"{rev.title}"</h4>
-                      <p className="text-zinc-500 text-xs font-semibold leading-relaxed mb-6">"{rev.review}"</p>
+                      <h4 className="font-extrabold text-sm text-zinc-950 dark:text-white mb-2">"{rev.title}"</h4>
+                      <p className="text-zinc-500 dark:text-zinc-400 text-xs font-semibold leading-relaxed mb-6">"{rev.review}"</p>
                     </div>
-                    <div className="flex items-center gap-3 pt-4 border-t border-zinc-200/50">
-                      <div className="h-8 w-8 bg-zinc-200/60 rounded-full flex items-center justify-center font-black text-xs text-zinc-700">
+                    <div className="flex items-center gap-3 pt-4 border-t border-zinc-200/50 dark:border-zinc-800/50">
+                      <div className="h-8 w-8 bg-zinc-200/60 dark:bg-zinc-800 rounded-full flex items-center justify-center font-black text-xs text-zinc-700 dark:text-zinc-300">
                         {rev.name[0]}
                       </div>
                       <div>
-                        <p className="text-xs font-black text-zinc-950">{rev.name}</p>
+                        <p className="text-xs font-black text-zinc-950 dark:text-white">{rev.name}</p>
                         <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider mt-0.5">{rev.loc} · Verified Seller</p>
                       </div>
                     </div>
@@ -956,7 +964,7 @@ export default function TradeInPage() {
 
             {/* Impact section */}
             <div className="max-w-5xl mx-auto mb-32 text-left">
-              <div className="bg-zinc-950 text-white rounded-[3rem] p-10 md:p-16 grid md:grid-cols-3 gap-12 relative overflow-hidden shadow-2xl">
+              <div className="bg-zinc-950 text-white rounded-[3rem] p-10 md:p-16 grid md:grid-cols-3 gap-12 relative overflow-hidden shadow-2xl border border-zinc-900">
                 <div className="absolute bottom-0 right-0 w-96 h-96 bg-sky-500/5 blur-[100px] rounded-full pointer-events-none" />
                 {[
                   { num: "1.5M+", title: "Devices Repurposed", desc: "We've saved over 1.5 million functional gadgets from leaking toxic chemical e-waste into landfills." },
@@ -974,7 +982,7 @@ export default function TradeInPage() {
 
             {/* FAQs Accordion */}
             <div className="max-w-3xl mx-auto mb-20 text-left">
-              <h2 className="font-serif text-4xl md:text-5xl font-medium tracking-tight text-center text-zinc-950 mb-14">
+              <h2 className="font-serif text-4xl md:text-5xl font-medium tracking-tight text-center text-zinc-950 dark:text-white mb-14">
                 Frequently asked questions
               </h2>
               <div className="space-y-4">
@@ -985,10 +993,10 @@ export default function TradeInPage() {
                   { q: "What happens to the data on my device?", a: "We run hardware through an enterprise-grade sanitization wipe that permanently destroys all files and accounts. For safety, we recommend clearing personal iCloud, Google accounts, and factory resetting before dispatch." },
                   { q: "What if the device condition is different than described?", a: "If our in-store inspection reveals errors in grading (e.g., cracked back glass, dead pixels), we issue an adjusted quote. If you choose to decline, we mail the device back to you for free with return tracking provided." }
                 ].map((faq, idx) => (
-                  <div key={idx} className="border border-zinc-200 rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow">
+                  <div key={idx} className="border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden bg-white dark:bg-zinc-900 shadow-sm hover:shadow-md transition-shadow">
                     <button
                       onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
-                      className="w-full flex items-center justify-between p-6 text-left font-bold text-sm text-zinc-950 hover:bg-zinc-50 transition-colors"
+                      className="w-full flex items-center justify-between p-6 text-left font-bold text-sm text-zinc-950 dark:text-white hover:bg-zinc-50 dark:hover:bg-zinc-850 transition-colors"
                     >
                       <span className="flex items-center gap-3">
                         <HelpCircle className="h-4.5 w-4.5 text-zinc-400 shrink-0" />
@@ -1004,7 +1012,7 @@ export default function TradeInPage() {
                           exit={{ height: 0, opacity: 0 }}
                           transition={{ duration: 0.25, ease: "easeInOut" }}
                         >
-                          <div className="px-6 pb-6 text-xs text-zinc-500 font-semibold leading-relaxed border-t border-zinc-100 pt-4 bg-zinc-50/50">
+                          <div className="px-6 pb-6 text-xs text-zinc-500 dark:text-zinc-400 font-semibold leading-relaxed border-t border-zinc-100 dark:border-zinc-800 pt-4 bg-zinc-50/50 dark:bg-zinc-950/20">
                             {faq.a}
                           </div>
                         </motion.div>
@@ -1036,13 +1044,13 @@ export default function TradeInPage() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ type: "spring", duration: 0.4 }}
-              className="relative bg-zinc-50 rounded-[2.5rem] border border-zinc-200 shadow-2xl overflow-hidden w-full max-w-4xl min-h-[500px] flex flex-col z-10 max-h-[90vh]"
+              className="relative bg-zinc-50 dark:bg-zinc-900 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-2xl overflow-hidden w-full max-w-4xl min-h-[500px] flex flex-col z-10 max-h-[90vh]"
             >
               {/* Close Button */}
               <button
                 type="button"
                 onClick={closeWizard}
-                className="absolute top-6 right-6 h-10 w-10 rounded-full border border-zinc-200 bg-white hover:border-zinc-950 flex items-center justify-center text-zinc-500 hover:text-zinc-950 transition-colors z-20 cursor-pointer shadow-sm"
+                className="absolute top-6 right-6 h-10 w-10 rounded-full border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-800 hover:border-zinc-950 dark:hover:border-white flex items-center justify-center text-zinc-500 hover:text-zinc-950 dark:hover:text-white transition-colors z-20 cursor-pointer shadow-sm shadow-zinc-900/5"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -1081,18 +1089,18 @@ export default function TradeInPage() {
                 <div className="w-full max-w-4xl mx-auto space-y-6">
 
                   {/* Wizard Navigation / Progress Header */}
-                  <div className="bg-white rounded-3xl border border-zinc-200/80 shadow-sm p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="bg-white dark:bg-zinc-950 rounded-3xl border border-zinc-200/80 dark:border-zinc-850 shadow-sm p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
                       <button
                         onClick={handleBack}
-                        className="h-10 px-4 rounded-xl border border-zinc-200 hover:border-zinc-950 flex items-center gap-2 text-xs font-bold text-zinc-600 hover:text-zinc-950 transition-colors"
-                >
+                        className="h-10 px-4 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:border-zinc-950 dark:hover:border-white flex items-center gap-2 text-xs font-bold text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white transition-colors bg-white dark:bg-zinc-800"
+                      >
                   <ArrowLeft className="h-4 w-4" /> Back
                 </button>
-                <div className="h-4 w-px bg-zinc-200 hidden md:block" />
+                <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-800 hidden md:block" />
                 <div>
                   <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400 block">Step {phase} of 6</span>
-                  <span className="text-sm font-extrabold text-zinc-800">{PHASE_LABELS[phase - 1]}</span>
+                  <span className="text-sm font-extrabold text-zinc-800 dark:text-zinc-200">{PHASE_LABELS[phase - 1]}</span>
                 </div>
               </div>
 
@@ -1237,7 +1245,7 @@ export default function TradeInPage() {
                                   placeholder={`Filter ${state.brand} models...`}
                                   value={wizardModelSearch}
                                   onChange={(e) => setWizardModelSearch(e.target.value)}
-                                  className="h-12 w-full rounded-xl bg-zinc-50 border border-zinc-200 pl-11 pr-4 text-xs font-semibold outline-none focus:border-zinc-950 focus:bg-white transition-all"
+                                  className="h-12 w-full rounded-xl bg-zinc-50 border border-zinc-200 pl-11 pr-4 text-xs font-semibold outline-none focus:border-accent focus:bg-white transition-all"
                                 />
                                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-zinc-400" />
                                 {wizardModelSearch && (
@@ -1816,7 +1824,7 @@ export default function TradeInPage() {
                                                 ...s,
                                                 contact: { ...s.contact, [inp.key]: e.target.value }
                                               }))}
-                                              className="h-12 w-full rounded-xl border border-zinc-300 px-4 text-xs font-semibold outline-none focus:border-zinc-950 transition-colors"
+                                              className="h-12 w-full rounded-xl border border-zinc-300 px-4 text-xs font-semibold outline-none focus:border-accent transition-colors"
                                             />
                                           </div>
                                         ))}

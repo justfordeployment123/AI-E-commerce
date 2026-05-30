@@ -340,16 +340,16 @@ export default function HelpPage() {
   ];
 
   return (
-    <div className="flex min-h-screen flex-col bg-white text-black font-sans selection:bg-accent selection:text-black">
+    <div className="flex min-h-screen flex-col bg-background text-foreground font-sans selection:bg-accent selection:text-white">
       <Navbar />
 
       <main className="flex-1">
         
         {/* Back Market Clean Search Hero Section */}
-        <section className="bg-zinc-50 py-20 border-b border-zinc-200/80">
+        <section className="bg-zinc-50 dark:bg-zinc-950/50 py-20 border-b border-zinc-200/80 dark:border-zinc-800/80">
           <div className="mx-auto max-w-4xl px-4 text-center">
             
-            <h1 className="font-serif text-4xl md:text-5xl font-bold tracking-tight text-zinc-900 mb-6">
+            <h1 className="font-serif text-4xl md:text-5xl font-bold tracking-tight text-zinc-900 dark:text-white mb-6">
               How can we help?
             </h1>
             
@@ -362,14 +362,14 @@ export default function HelpPage() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onFocus={() => setIsSearchFocused(true)}
                   placeholder="Search our help center articles..."
-                  className="w-full h-16 rounded-2xl bg-white border border-zinc-300 focus:border-zinc-950 px-14 text-sm md:text-base font-bold text-zinc-900 outline-none transition-all"
+                  className="w-full h-16 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 focus:border-accent dark:focus:border-accent px-14 text-sm md:text-base font-bold text-zinc-900 dark:text-white outline-none transition-all"
                 />
-                <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400 group-focus-within:text-zinc-950 transition-colors" />
+                <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400 group-focus-within:text-accent transition-colors" />
                 
                 {searchQuery.trim() && (
                   <button 
                     onClick={() => setSearchQuery("")}
-                    className="absolute right-5 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full hover:bg-zinc-100 flex items-center justify-center text-zinc-400"
+                    className="absolute right-5 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center justify-center text-zinc-400"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -388,7 +388,7 @@ export default function HelpPage() {
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 8 }}
-                      className="absolute left-0 right-0 mt-2 bg-white border border-zinc-250 rounded-2xl shadow-xl p-3 text-left z-45 max-h-[300px] overflow-y-auto"
+                      className="absolute left-0 right-0 mt-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-xl p-3 text-left z-45 max-h-[300px] overflow-y-auto"
                     >
                       <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2 px-3">
                         Matched Articles ({matchedArticles.length})
@@ -399,10 +399,10 @@ export default function HelpPage() {
                             <button
                               key={art.id}
                               onClick={() => handleOpenArticle(art)}
-                              className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-zinc-50 transition-colors text-left"
+                              className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors text-left"
                             >
                               <div>
-                                <p className="font-extrabold text-sm text-zinc-950">{art.title}</p>
+                                <p className="font-extrabold text-sm text-zinc-950 dark:text-white">{art.title}</p>
                                 <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider mt-0.5">{art.category}</p>
                               </div>
                               <ChevronRight className="h-4 w-4 text-zinc-400" />
@@ -428,38 +428,38 @@ export default function HelpPage() {
           <div className="grid md:grid-cols-2 gap-6">
             
             {/* Card A: Order Specific Support */}
-            <div className="bg-white border border-zinc-200 rounded-[2rem] p-8 shadow-sm flex flex-col justify-between items-start text-left">
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2rem] p-8 shadow-sm flex flex-col justify-between items-start text-left">
               <div>
-                <div className="h-10 w-10 bg-zinc-100 rounded-xl flex items-center justify-center text-zinc-900 mb-4">
+                <div className="h-10 w-10 bg-zinc-100 dark:bg-zinc-800 rounded-xl flex items-center justify-center text-zinc-900 dark:text-white mb-4">
                   <Package className="h-5 w-5" />
                 </div>
-                <h3 className="text-xl font-bold text-zinc-950 mb-2">I need help with an order</h3>
-                <p className="text-zinc-500 text-xs font-semibold leading-relaxed mb-6">
+                <h3 className="text-xl font-bold text-zinc-950 dark:text-white mb-2">I need help with an order</h3>
+                <p className="text-zinc-500 dark:text-zinc-400 text-xs font-semibold leading-relaxed mb-6">
                   Track delivery, request return labels, cancel items, or contact the seller regarding an active purchase.
                 </p>
               </div>
               <button
                 onClick={openOrdersModal}
-                className="w-full h-14 bg-black hover:bg-zinc-800 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2"
+                className="w-full h-14 bg-black dark:bg-accent hover:bg-zinc-800 dark:hover:bg-accent-dark text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2"
               >
                 Get help with an order <ArrowRight className="h-4 w-4" />
               </button>
             </div>
 
             {/* Card B: General Support */}
-            <div className="bg-white border border-zinc-200 rounded-[2rem] p-8 shadow-sm flex flex-col justify-between items-start text-left">
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2rem] p-8 shadow-sm flex flex-col justify-between items-start text-left">
               <div>
-                <div className="h-10 w-10 bg-zinc-100 rounded-xl flex items-center justify-center text-zinc-900 mb-4">
+                <div className="h-10 w-10 bg-zinc-100 dark:bg-zinc-800 rounded-xl flex items-center justify-center text-zinc-900 dark:text-white mb-4">
                   <HelpCircle className="h-5 w-5" />
                 </div>
-                <h3 className="text-xl font-bold text-zinc-950 mb-2">I need help with something else</h3>
-                <p className="text-zinc-500 text-xs font-semibold leading-relaxed mb-6">
+                <h3 className="text-xl font-bold text-zinc-950 dark:text-white mb-2">I need help with something else</h3>
+                <p className="text-zinc-500 dark:text-zinc-400 text-xs font-semibold leading-relaxed mb-6">
                   Learn about trading in devices, our 12-month hardware warranty, payment financing, and managing your account profile.
                 </p>
               </div>
               <button 
                 onClick={scrollToCategories}
-                className="w-full h-14 border border-zinc-300 hover:border-zinc-950 text-zinc-950 hover:bg-zinc-50 font-bold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center"
+                className="w-full h-14 border border-zinc-300 dark:border-zinc-700 hover:border-zinc-950 dark:hover:border-white text-zinc-950 dark:text-white hover:bg-zinc-50 dark:hover:bg-zinc-800 font-bold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center"
               >
                 Browse FAQ categories
               </button>
@@ -470,7 +470,7 @@ export default function HelpPage() {
 
         {/* Minimalist Categories Grid (No Colored Cards) */}
         <section ref={categoriesRef} className="py-28 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <h2 className="font-serif text-3xl md:text-4xl font-bold tracking-tight text-center text-zinc-900 mb-14">
+          <h2 className="font-serif text-3xl md:text-4xl font-bold tracking-tight text-center text-zinc-900 dark:text-white mb-14">
             Browse all topics
           </h2>
           
@@ -482,25 +482,25 @@ export default function HelpPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.05 }}
-                className="bg-white border border-zinc-200/80 rounded-[2rem] p-8 hover:border-zinc-950 transition-all hover:shadow-lg flex flex-col justify-between text-left"
+                className="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 rounded-[2rem] p-8 hover:border-zinc-950 dark:hover:border-white transition-all hover:shadow-lg flex flex-col justify-between text-left"
               >
                 <div>
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-bold text-zinc-950">{cat.title}</h3>
+                    <h3 className="text-lg font-bold text-zinc-950 dark:text-white">{cat.title}</h3>
                     <cat.icon className="h-5 w-5 text-zinc-400" strokeWidth={1.5} />
                   </div>
-                  <p className="text-zinc-400 text-[11px] font-semibold mb-6">{cat.desc}</p>
+                  <p className="text-zinc-400 dark:text-zinc-400 text-[11px] font-semibold mb-6">{cat.desc}</p>
                   
-                  <div className="space-y-3.5 border-t border-zinc-100 pt-4">
+                  <div className="space-y-3.5 border-t border-zinc-100 dark:border-zinc-800 pt-4">
                     {cat.links.map((link) => {
                       const linkedArticle = ARTICLES.find(a => a.id === link.articleId);
                       return (
                         <button
                           key={link.label}
                           onClick={() => linkedArticle && handleOpenArticle(linkedArticle)}
-                          className="w-full flex items-center justify-between text-left group/link py-1 hover:text-zinc-600 transition-colors"
+                          className="w-full flex items-center justify-between text-left group/link py-1 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
                         >
-                          <span className="text-xs font-bold text-zinc-800 group-hover/link:underline">{link.label}</span>
+                          <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200 group-hover/link:underline">{link.label}</span>
                           <ChevronRight className="h-3.5 w-3.5 text-zinc-400 group-hover/link:translate-x-0.5 transition-transform" />
                         </button>
                       );
@@ -513,9 +513,9 @@ export default function HelpPage() {
         </section>
 
         {/* Popular Answers Accordion */}
-        <section className="py-28 bg-zinc-50 border-y border-zinc-200/80">
+        <section className="py-28 bg-zinc-50 dark:bg-zinc-950/50 border-y border-zinc-200/80 dark:border-zinc-800/80">
           <div className="mx-auto max-w-4xl px-4">
-            <h2 className="font-serif text-3xl md:text-4xl font-bold mb-12 text-center text-zinc-900">
+            <h2 className="font-serif text-3xl md:text-4xl font-bold mb-12 text-center text-zinc-900 dark:text-white">
               Popular Questions
             </h2>
             <div className="space-y-4">
@@ -533,10 +533,10 @@ export default function HelpPage() {
                   a: "After you ship your device and our technicians check it (within 24 hours of receipt), we release your funds immediately. Bank transfers typically clear in your account within 2 hours."
                 }
               ].map((faq, idx) => (
-                <div key={idx} className="border border-zinc-200 bg-white rounded-2xl overflow-hidden shadow-sm">
+                <div key={idx} className="border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden shadow-sm">
                   <button
                     onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
-                    className="w-full flex items-center justify-between p-6 text-left font-bold text-sm text-zinc-950 hover:bg-zinc-50 transition-colors"
+                    className="w-full flex items-center justify-between p-6 text-left font-bold text-sm text-zinc-950 dark:text-white hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
                   >
                     <span className="flex items-center gap-3">
                       <HelpCircle className="h-4.5 w-4.5 text-zinc-400 shrink-0" />
@@ -552,7 +552,7 @@ export default function HelpPage() {
                         exit={{ height: 0, opacity: 0 }}
                         transition={{ duration: 0.2, ease: "easeInOut" }}
                       >
-                        <div className="px-6 pb-6 text-xs text-zinc-500 font-semibold leading-relaxed border-t border-zinc-100 pt-4 bg-zinc-50/50">
+                        <div className="px-6 pb-6 text-xs text-zinc-500 dark:text-zinc-400 font-semibold leading-relaxed border-t border-zinc-100 dark:border-zinc-800 pt-4 bg-zinc-50/50 dark:bg-zinc-950/30">
                           {faq.a}
                         </div>
                       </motion.div>
@@ -565,16 +565,16 @@ export default function HelpPage() {
         </section>
 
         {/* Support Call-to-Action Section */}
-        <section className="py-28 bg-white">
+        <section className="py-28 bg-background">
           <div className="mx-auto max-w-4xl px-4 text-center">
-            <h2 className="font-serif text-3xl md:text-4xl font-bold text-zinc-950 mb-4">Still need help?</h2>
-            <p className="text-zinc-500 text-xs font-semibold leading-relaxed mb-10 max-w-md mx-auto">
+            <h2 className="font-serif text-3xl md:text-4xl font-bold text-zinc-950 dark:text-white mb-4">Still need help?</h2>
+            <p className="text-zinc-500 dark:text-zinc-400 text-xs font-semibold leading-relaxed mb-10 max-w-md mx-auto">
               Reach out to our team in Leicester for fast live help.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-4 mb-12">
               <button
                 onClick={handleOpenChat}
-                className="h-16 px-8 bg-black hover:bg-zinc-800 text-white font-bold rounded-2xl flex items-center gap-3 transition-colors text-xs uppercase tracking-wider"
+                className="h-16 px-8 bg-black dark:bg-accent hover:bg-zinc-800 dark:hover:bg-accent-dark text-white font-bold rounded-2xl flex items-center gap-3 transition-colors text-xs uppercase tracking-wider shadow-lg shadow-accent/15"
               >
                 <MessageCircle className="h-4 w-4" />
                 Start a Live Chat
@@ -590,14 +590,14 @@ export default function HelpPage() {
                     <a
                       key={h.id}
                       href={`tel:${h.number.replace(/\s/g, "")}`}
-                      className="flex items-center gap-3 h-14 px-6 rounded-2xl border-2 border-zinc-200 hover:border-zinc-950 bg-white transition-all group"
+                      className="flex items-center gap-3 h-14 px-6 rounded-2xl border-2 border-zinc-200 dark:border-zinc-800 hover:border-zinc-950 dark:hover:border-white bg-white dark:bg-zinc-900 transition-all group"
                     >
-                      <div className="h-8 w-8 rounded-xl bg-emerald-50 flex items-center justify-center group-hover:bg-emerald-100 transition-colors">
-                        <Phone className="h-4 w-4 text-emerald-600" />
+                      <div className="h-8 w-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 flex items-center justify-center group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/35 transition-colors">
+                        <Phone className="h-4 w-4 text-emerald-600 dark:text-emerald-450" />
                       </div>
                       <div className="text-left">
                         <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">{h.label}</p>
-                        <p className="text-sm font-bold text-zinc-950 font-mono">{h.number}</p>
+                        <p className="text-sm font-bold text-zinc-950 dark:text-white font-mono">{h.number}</p>
                       </div>
                     </a>
                   ))}
@@ -624,16 +624,16 @@ export default function HelpPage() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-white border border-zinc-200 rounded-[2rem] p-8 shadow-2xl z-55 text-left"
+              className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2rem] p-8 shadow-2xl z-55 text-left"
             >
               <div className="flex justify-between items-center mb-6">
                 <div>
-                  <h3 className="text-xl font-bold text-zinc-900">Select an order</h3>
-                  <p className="text-zinc-500 text-[11px] font-semibold mt-1">Choose which order you need support with.</p>
+                  <h3 className="text-xl font-bold text-zinc-900 dark:text-white">Select an order</h3>
+                  <p className="text-zinc-500 dark:text-zinc-400 text-[11px] font-semibold mt-1">Choose which order you need support with.</p>
                 </div>
                 <button 
                   onClick={() => setIsOrdersModalOpen(false)}
-                  className="h-8 w-8 rounded-full border border-zinc-200 flex items-center justify-center text-zinc-400 hover:text-zinc-950"
+                  className="h-8 w-8 rounded-full border border-zinc-200 dark:border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-zinc-950 dark:hover:text-white"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -643,19 +643,19 @@ export default function HelpPage() {
                 {loadingOrders ? (
                   <div className="space-y-3">
                     {[1, 2, 3].map(i => (
-                      <div key={i} className="h-20 rounded-2xl bg-zinc-100 animate-pulse" />
+                      <div key={i} className="h-20 rounded-2xl bg-zinc-100 dark:bg-zinc-800 animate-pulse" />
                     ))}
                   </div>
                 ) : !localStorage.getItem("ts_token") ? (
                   <div className="py-10 text-center">
-                    <Package className="h-10 w-10 text-zinc-200 mx-auto mb-3" />
-                    <p className="font-bold text-sm text-zinc-700">Sign in to see your orders</p>
+                    <Package className="h-10 w-10 text-zinc-200 dark:text-zinc-700 mx-auto mb-3" />
+                    <p className="font-bold text-sm text-zinc-700 dark:text-zinc-300">Sign in to see your orders</p>
                     <p className="text-xs text-zinc-400 mt-1">Log in to your account to get order-specific support.</p>
                   </div>
                 ) : userOrders.length === 0 ? (
                   <div className="py-10 text-center">
-                    <Package className="h-10 w-10 text-zinc-200 mx-auto mb-3" />
-                    <p className="font-bold text-sm text-zinc-700">No orders found</p>
+                    <Package className="h-10 w-10 text-zinc-200 dark:text-zinc-700 mx-auto mb-3" />
+                    <p className="font-bold text-sm text-zinc-700 dark:text-zinc-300">No orders found</p>
                     <p className="text-xs text-zinc-400 mt-1">You haven't placed any orders yet.</p>
                   </div>
                 ) : (
@@ -672,19 +672,19 @@ export default function HelpPage() {
                       <button
                         key={order.id}
                         onClick={() => handleSelectOrderForHelp(order)}
-                        className="w-full flex items-center justify-between p-4 border border-zinc-200 hover:border-zinc-950 rounded-2xl transition-all text-left bg-white group"
+                        className="w-full flex items-center justify-between p-4 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-950 dark:hover:border-white rounded-2xl transition-all text-left bg-white dark:bg-zinc-900 group"
                       >
                         <div className="flex gap-4 items-center min-w-0">
-                          <div className="h-12 w-12 bg-zinc-50 border border-zinc-200 rounded-xl flex items-center justify-center text-zinc-900 shrink-0">
+                          <div className="h-12 w-12 bg-zinc-50 dark:bg-zinc-850 border border-zinc-200 dark:border-zinc-800 rounded-xl flex items-center justify-center text-zinc-900 dark:text-white shrink-0">
                             <Package className="h-5 w-5 text-zinc-500" />
                           </div>
                           <div className="min-w-0">
-                            <p className="text-xs font-black text-zinc-900 truncate">{displayName}</p>
+                            <p className="text-xs font-black text-zinc-900 dark:text-white truncate">{displayName}</p>
                             <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider mt-0.5">
                               Order {shortId} · {purchaseDate}
                             </p>
                             <span className={`inline-block mt-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
-                              isActive ? "bg-blue-50 text-blue-600 border border-blue-100" : "bg-zinc-100 text-zinc-500 border border-zinc-200"
+                              isActive ? "bg-blue-50 dark:bg-blue-950/20 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/30" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700"
                             }`}>
                               {statusLabel}
                             </span>
@@ -697,7 +697,7 @@ export default function HelpPage() {
                 )}
               </div>
 
-              <div className="mt-6 border-t border-zinc-100 pt-5 text-center">
+              <div className="mt-6 border-t border-zinc-100 dark:border-zinc-800 pt-5 text-center">
                 <p className="text-[10px] font-semibold text-zinc-400">
                   Don't see your order here? Make sure you are logged into the correct account.
                 </p>
@@ -726,17 +726,17 @@ export default function HelpPage() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 220 }}
-              className="fixed right-0 top-0 bottom-0 w-full max-w-lg bg-white shadow-2xl z-50 flex flex-col border-l border-zinc-200"
+              className="fixed right-0 top-0 bottom-0 w-full max-w-lg bg-white dark:bg-zinc-900 shadow-2xl z-55 flex flex-col border-l border-zinc-200 dark:border-zinc-800"
             >
               {/* Drawer Header */}
-              <div className="p-6 border-b border-zinc-150 flex items-center justify-between bg-zinc-50">
+              <div className="p-6 border-b border-zinc-150 dark:border-zinc-800 flex items-center justify-between bg-zinc-50 dark:bg-zinc-950/50">
                 <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 bg-black text-white rounded-xl flex items-center justify-center">
-                    {drawerType === "article" && <HelpCircle className="h-4.5 w-4.5 text-accent" />}
-                    {drawerType === "chat" && <MessageCircle className="h-4.5 w-4.5 text-accent" />}
+                  <div className="h-9 w-9 bg-black dark:bg-accent text-white rounded-xl flex items-center justify-center">
+                    {drawerType === "article" && <HelpCircle className="h-4.5 w-4.5 text-white" />}
+                    {drawerType === "chat" && <MessageCircle className="h-4.5 w-4.5 text-white" />}
                   </div>
                   <div className="text-left">
-                    <h3 className="font-extrabold text-sm text-zinc-900 leading-tight">
+                    <h3 className="font-extrabold text-sm text-zinc-900 dark:text-white leading-tight">
                       {drawerType === "article" && "Help Guide"}
                       {drawerType === "chat" && "Support Chat"}
                     </h3>
@@ -748,7 +748,7 @@ export default function HelpPage() {
                 </div>
                 <button 
                   onClick={() => setDrawerType(null)}
-                  className="h-8 w-8 rounded-full border border-zinc-200 flex items-center justify-center text-zinc-400 hover:text-black hover:bg-zinc-100 transition-all"
+                  className="h-8 w-8 rounded-full border border-zinc-200 dark:border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-black dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -760,32 +760,32 @@ export default function HelpPage() {
                 {/* 1. Article View */}
                 {drawerType === "article" && selectedArticle && (
                   <div className="prose prose-zinc max-w-none">
-                    <h2 className="font-serif text-3xl font-bold tracking-tight text-zinc-950 mb-6">
+                    <h2 className="font-serif text-3xl font-bold tracking-tight text-zinc-950 dark:text-white mb-6">
                       {selectedArticle.title}
                     </h2>
-                    <div className="text-zinc-650 text-xs md:text-sm font-semibold leading-relaxed space-y-4 whitespace-pre-line border-t border-zinc-100 pt-6">
+                    <div className="text-zinc-650 dark:text-zinc-300 text-xs md:text-sm font-semibold leading-relaxed space-y-4 whitespace-pre-line border-t border-zinc-100 dark:border-zinc-800 pt-6">
                       {selectedArticle.content.split("\n\n").map((para, i) => {
                         // Bold tags conversion logic
                         if (para.includes("**")) {
-                          const parts = para.split("**");
-                          return (
-                            <p key={i}>
-                              {parts.map((p, idx) => idx % 2 === 1 ? <strong key={idx} className="text-zinc-950 font-black">{p}</strong> : p)}
-                            </p>
-                          );
+                           const parts = para.split("**");
+                           return (
+                             <p key={i}>
+                               {parts.map((p, idx) => idx % 2 === 1 ? <strong key={idx} className="text-zinc-950 dark:text-white font-black">{p}</strong> : p)}
+                             </p>
+                           );
                         }
                         return <p key={i}>{para}</p>;
                       })}
                     </div>
                     
-                    <div className="mt-12 p-5 rounded-2xl bg-zinc-50 border border-zinc-150/40 flex items-center justify-between">
+                    <div className="mt-12 p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-150/40 dark:border-zinc-800/40 flex items-center justify-between">
                       <div>
-                        <p className="font-bold text-xs text-zinc-900">Was this helpful?</p>
+                        <p className="font-bold text-xs text-zinc-900 dark:text-white">Was this helpful?</p>
                         <p className="text-[10px] text-zinc-400 font-medium">94% of users found this helpful</p>
                       </div>
                       <div className="flex gap-2">
-                        <button className="px-4 py-2 border border-zinc-200 hover:border-zinc-900 rounded-lg text-xs font-bold transition-all bg-white">Yes</button>
-                        <button className="px-4 py-2 border border-zinc-200 hover:border-zinc-900 rounded-lg text-xs font-bold transition-all bg-white">No</button>
+                        <button className="px-4 py-2 border border-zinc-200 dark:border-zinc-700 hover:border-zinc-900 dark:hover:border-white rounded-lg text-xs font-bold transition-all bg-white dark:bg-zinc-800 text-foreground">Yes</button>
+                        <button className="px-4 py-2 border border-zinc-200 dark:border-zinc-700 hover:border-zinc-900 dark:hover:border-white rounded-lg text-xs font-bold transition-all bg-white dark:bg-zinc-800 text-foreground">No</button>
                       </div>
                     </div>
                   </div>
@@ -799,45 +799,45 @@ export default function HelpPage() {
                     {chatStep === "form" && (
                       <form onSubmit={handleStartChat} className="space-y-4 max-w-sm mx-auto pt-4">
                         <div className="text-center mb-6">
-                          <div className="h-14 w-14 rounded-2xl bg-zinc-950 flex items-center justify-center mx-auto mb-3">
+                          <div className="h-14 w-14 rounded-2xl bg-zinc-950 dark:bg-zinc-800 flex items-center justify-center mx-auto mb-3">
                             <MessageCircle className="h-6 w-6 text-accent" />
                           </div>
-                          <h3 className="font-bold text-zinc-950 text-lg">Start a live chat</h3>
-                          <p className="text-zinc-500 text-xs mt-1">Our team typically responds within 3 minutes.</p>
+                          <h3 className="font-bold text-zinc-950 dark:text-white text-lg">Start a live chat</h3>
+                          <p className="text-zinc-500 dark:text-zinc-400 text-xs mt-1">Our team typically responds within 3 minutes.</p>
                         </div>
                         {chatOrderRef && (
-                          <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-zinc-100 border border-zinc-200">
+                          <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-705">
                             <Package className="h-4 w-4 text-zinc-500 shrink-0" />
                             <div>
                               <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Order Reference</p>
-                              <p className="text-sm font-bold text-zinc-900">{chatOrderRef}</p>
+                              <p className="text-sm font-bold text-zinc-900 dark:text-white">{chatOrderRef}</p>
                             </div>
                           </div>
                         )}
                         <div>
-                          <label className="text-xs font-bold text-zinc-700 block mb-1.5">Your name *</label>
+                          <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 block mb-1.5">Your name *</label>
                           <input
                             value={chatName}
                             onChange={e => setChatName(e.target.value)}
                             placeholder="e.g. Sarah"
                             required
-                            className="w-full h-11 px-4 rounded-xl border-2 border-zinc-200 focus:border-black outline-none text-sm transition-colors"
+                            className="w-full h-11 px-4 rounded-xl border-2 border-zinc-200 dark:border-zinc-700 focus:border-accent dark:focus:border-accent bg-white dark:bg-zinc-800 text-foreground outline-none text-sm transition-colors"
                           />
                         </div>
                         <div>
-                          <label className="text-xs font-bold text-zinc-700 block mb-1.5">Email <span className="text-zinc-400 font-normal">(optional)</span></label>
+                          <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 block mb-1.5">Email <span className="text-zinc-400 font-normal">(optional)</span></label>
                           <input
                             value={chatEmail}
                             onChange={e => setChatEmail(e.target.value)}
                             placeholder="you@example.com"
                             type="email"
-                            className="w-full h-11 px-4 rounded-xl border-2 border-zinc-200 focus:border-black outline-none text-sm transition-colors"
+                            className="w-full h-11 px-4 rounded-xl border-2 border-zinc-200 dark:border-zinc-700 focus:border-accent dark:focus:border-accent bg-white dark:bg-zinc-800 text-foreground outline-none text-sm transition-colors"
                           />
                         </div>
                         <button
                           type="submit"
                           disabled={chatStarting || !chatName.trim()}
-                          className="w-full h-12 bg-black text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-zinc-800 transition-colors disabled:opacity-50"
+                          className="w-full h-12 bg-accent text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-accent-dark transition-colors disabled:opacity-50"
                         >
                           {chatStarting ? <><RefreshCw className="h-4 w-4 animate-spin" /> Connecting…</> : <>Start Chat <ArrowRight className="h-4 w-4" /></>}
                         </button>
@@ -847,8 +847,8 @@ export default function HelpPage() {
                     {/* Step 2: Live chat messages */}
                     {chatStep === "chat" && (
                       <>
-                        <div className="flex items-center gap-2 mb-4 pb-3 border-b border-zinc-100">
-                          <Circle className={`h-2 w-2 ${chatConnected ? "fill-emerald-500 text-emerald-500" : "fill-zinc-300 text-zinc-300"}`} />
+                        <div className="flex items-center gap-2 mb-4 pb-3 border-b border-zinc-100 dark:border-zinc-800">
+                          <Circle className={`h-2 w-2 ${chatConnected ? "fill-emerald-500 text-emerald-500" : "fill-zinc-300 text-zinc-350"}`} />
                           <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
                             {chatConnected ? "Connected · Agent will respond shortly" : "Connecting…"}
                           </span>
@@ -860,10 +860,10 @@ export default function HelpPage() {
                             return (
                               <div key={msg.id ?? i} className={`flex ${isCustomer ? "justify-end" : "justify-start"}`}>
                                 <div className={`flex gap-3 max-w-[85%] ${isCustomer ? "flex-row-reverse" : "flex-row"}`}>
-                                  <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 text-xs font-black ${isCustomer ? "bg-zinc-800 text-white" : "bg-accent text-zinc-950"}`}>
+                                  <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 text-xs font-black ${isCustomer ? "bg-zinc-850 dark:bg-zinc-700 text-white" : "bg-accent text-white"}`}>
                                     {isCustomer ? <User className="h-4 w-4" /> : "TS"}
                                   </div>
-                                  <div className={`p-4 rounded-2xl text-xs md:text-sm font-semibold leading-relaxed ${isCustomer ? "bg-black text-white rounded-tr-none" : "bg-zinc-100 text-zinc-900 rounded-tl-none"}`}>
+                                  <div className={`p-4 rounded-2xl text-xs md:text-sm font-semibold leading-relaxed ${isCustomer ? "bg-black dark:bg-zinc-800 text-white rounded-tr-none" : "bg-zinc-100 dark:bg-zinc-950/60 text-zinc-900 dark:text-zinc-150 rounded-tl-none border border-transparent dark:border-zinc-850/50"}`}>
                                     {body}
                                   </div>
                                 </div>
@@ -874,19 +874,19 @@ export default function HelpPage() {
                         </div>
 
                         {/* Chat Input */}
-                        <div className="pt-3 border-t border-zinc-100 flex gap-2">
+                        <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex gap-2">
                           <input
                             type="text"
                             value={chatInput}
                             onChange={e => setChatInput(e.target.value)}
                             onKeyDown={e => e.key === "Enter" && handleSendChat()}
                             placeholder="Type a message…"
-                            className="flex-1 h-12 bg-zinc-50 border border-zinc-200 px-4 text-xs font-bold text-zinc-800 rounded-xl outline-none focus:bg-white focus:border-black transition-all"
+                            className="flex-1 h-12 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-850 px-4 text-xs font-bold text-zinc-800 dark:text-zinc-200 rounded-xl outline-none focus:bg-white focus:dark:bg-zinc-900 focus:border-accent focus:dark:border-accent transition-all"
                           />
                           <button
                             onClick={handleSendChat}
                             disabled={!chatInput.trim()}
-                            className="h-12 w-12 bg-black hover:bg-zinc-800 text-white rounded-xl flex items-center justify-center transition-colors shrink-0 disabled:opacity-40"
+                            className="h-12 w-12 bg-accent hover:bg-accent-dark text-white rounded-xl flex items-center justify-center transition-colors shrink-0 disabled:opacity-40"
                           >
                             <Send className="h-4 w-4" />
                           </button>

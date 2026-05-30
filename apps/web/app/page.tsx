@@ -325,7 +325,7 @@ function Hero() {
               transition={{ duration: 0.5, delay: 0.18 }}
               className="mb-8 max-w-[520px] relative"
             >
-              <div className="flex items-center gap-3 h-14 px-5 rounded-2xl bg-zinc-50 border border-zinc-200 focus-within:ring-2 focus-within:ring-zinc-950 focus-within:border-transparent focus-within:bg-white transition-all">
+              <div className="flex items-center gap-3 h-14 px-5 rounded-2xl bg-zinc-50 border border-zinc-200 focus-within:ring-2 focus-within:ring-accent focus-within:border-transparent focus-within:bg-background transition-all">
                 <Search className="h-5 w-5 text-zinc-400 flex-shrink-0" />
                 <input
                   type="text"
@@ -867,7 +867,7 @@ function HowItWorks() {
               >
                 <span className="text-[11px] font-bold text-zinc-300 tracking-widest pt-1 w-8 flex-shrink-0">{step.num}</span>
                 <div className="h-10 w-10 rounded-xl bg-white border border-zinc-200 flex items-center justify-center flex-shrink-0 group-hover:bg-accent group-hover:border-accent transition-colors">
-                  <step.icon className="h-5 w-5 text-zinc-600 group-hover:text-zinc-950 transition-colors" />
+                  <step.icon className="h-5 w-5 text-zinc-600 group-hover:text-white transition-colors" />
                 </div>
                 <div>
                   <h3 className="font-bold text-zinc-950 mb-1">{step.title}</h3>
@@ -917,7 +917,7 @@ function Reviews() {
           <div className="flex items-center gap-6 bg-white rounded-3xl px-7 py-5 border border-zinc-100 shadow-sm self-start md:self-auto">
             <div>
               <div className="flex gap-0.5 mb-1.5">
-                {[...Array(5)].map((_, i) => <Star key={i} className="h-5 w-5 fill-accent text-accent" />)}
+                {[...Array(5)].map((_, i) => <Star key={i} className="h-5 w-5 fill-amber-400 text-amber-400" />)}
               </div>
               <p className="text-3xl font-bold text-zinc-950 leading-none">{displayRating}</p>
               <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mt-1">out of 5</p>
@@ -947,7 +947,7 @@ function Reviews() {
               className="flex-shrink-0 w-[320px] md:w-[360px] bg-white rounded-3xl p-7 border border-zinc-100 flex flex-col gap-5 shadow-sm hover:shadow-md transition-shadow"
             >
               <div className="flex gap-0.5">
-                {[...Array(r.rating)].map((_: unknown, j: number) => <Star key={j} className="h-4 w-4 fill-accent text-accent" />)}
+                {[...Array(r.rating)].map((_: unknown, j: number) => <Star key={j} className="h-4 w-4 fill-amber-400 text-amber-400" />)}
               </div>
               <p className="text-zinc-700 leading-relaxed text-[15px] flex-1">"{r.body}"</p>
               {r.images?.length > 0 && (
@@ -981,26 +981,26 @@ function SustainabilityBanner() {
   ];
 
   return (
-    <section className="relative overflow-hidden bg-accent py-24">
-      <div className="absolute inset-0 opacity-[0.07]"
-        style={{ backgroundImage: "radial-gradient(circle, #000 1px, transparent 1px)", backgroundSize: "28px 28px" }}
+    <section className="relative overflow-hidden bg-zinc-950 text-white py-24 border-y border-zinc-900">
+      <div className="absolute inset-0 opacity-[0.03]"
+        style={{ backgroundImage: "radial-gradient(circle, #fff 1px, transparent 1px)", backgroundSize: "28px 28px" }}
       />
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-700 mb-4">Our impact</p>
-            <h2 className="font-serif text-5xl md:text-6xl font-medium text-zinc-950 leading-tight mb-6">
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-accent mb-4">Our impact</p>
+            <h2 className="font-serif text-5xl md:text-6xl font-medium text-white leading-tight mb-6">
               Good for your wallet.<br /><i>Great for the planet.</i>
             </h2>
-            <p className="text-zinc-700 text-lg leading-relaxed max-w-[44ch] mb-8">
+            <p className="text-zinc-400 text-lg leading-relaxed max-w-[44ch] mb-8 font-semibold">
               Every refurbished device sold is one less product in a landfill. Together, our customers have made a measurable difference.
             </p>
-            <a href="/sustainability" className="inline-flex items-center gap-2 h-12 px-6 bg-zinc-950 text-white rounded-2xl font-bold text-sm hover:bg-zinc-800 transition-colors">
+            <a href="/sustainability" className="inline-flex items-center gap-2 h-12 px-6 bg-accent hover:bg-accent-dark text-white rounded-2xl font-bold text-sm transition-colors shadow-lg shadow-accent/20">
               See our full impact report <ArrowRight className="h-4 w-4" />
             </a>
           </div>
 
-          <div className="flex flex-col gap-px bg-zinc-950/10 rounded-3xl overflow-hidden">
+          <div className="flex flex-col gap-px bg-zinc-900 rounded-3xl overflow-hidden border border-zinc-900">
             {stats.map((s, i) => (
               <motion.div
                 key={i}
@@ -1008,14 +1008,14 @@ function SustainabilityBanner() {
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className="bg-accent/40 backdrop-blur-sm px-8 py-7 flex items-center gap-6"
+                className="bg-zinc-950/60 backdrop-blur-sm px-8 py-7 flex items-center gap-6"
               >
-                <div className="h-12 w-12 rounded-2xl bg-zinc-950/10 flex items-center justify-center flex-shrink-0">
-                  <s.icon className="h-6 w-6 text-zinc-950" />
+                <div className="h-12 w-12 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center flex-shrink-0">
+                  <s.icon className="h-6 w-6 text-accent" />
                 </div>
                 <div>
-                  <p className="text-3xl font-bold text-zinc-950 tracking-tight">{s.val}</p>
-                  <p className="text-sm font-medium text-zinc-700">{s.label}</p>
+                  <p className="text-3xl font-bold text-white tracking-tight">{s.val}</p>
+                  <p className="text-sm font-medium text-zinc-400">{s.label}</p>
                 </div>
               </motion.div>
             ))}
@@ -1046,7 +1046,12 @@ function AppPreview() {
 
             <div className="relative">
               {/* Frame */}
-              <div className="relative w-[272px] rounded-[3rem] bg-zinc-950 p-2.5 shadow-2xl ring-1 ring-white/10">
+              <div className="relative w-[272px] rounded-[3rem] bg-zinc-950 p-2.5 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)] ring-1 ring-white/10">
+                {/* Dynamic Island / Camera Notch */}
+                <div className="absolute top-5 left-1/2 -translate-x-1/2 w-16 h-3.5 bg-black rounded-full z-30 flex items-center justify-between px-1.5 pointer-events-none">
+                  <div className="h-1 w-1 rounded-full bg-blue-900/40" />
+                  <div className="h-1.5 w-1.5 rounded-full bg-zinc-900" />
+                </div>
                 {/* Screen */}
                 <div className="rounded-[2.5rem] overflow-hidden bg-white" style={{ aspectRatio: "9/19.5" }}>
                   <div className="flex flex-col h-full bg-white text-zinc-950 text-[11px]">
@@ -1069,12 +1074,12 @@ function AppPreview() {
                     </div>
 
                     {/* Flash deal */}
-                    <div className="mx-4 mb-3 rounded-2xl bg-accent p-3">
-                      <p className="text-[8px] font-bold uppercase tracking-widest text-zinc-600 mb-0.5">Flash Deal · 2h left</p>
+                    <div className="mx-4 mb-3 rounded-2xl bg-accent p-3 text-white">
+                      <p className="text-[8px] font-bold uppercase tracking-widest text-white/70 mb-0.5">Flash Deal · 2h left</p>
                       <p className="text-[11px] font-bold">iPhone 15 Pro</p>
                       <div className="flex items-baseline gap-1.5 mt-0.5">
                         <span className="text-sm font-bold">£679</span>
-                        <span className="text-[9px] text-zinc-600 line-through">£1,199</span>
+                        <span className="text-[9px] text-white/70 line-through">£1,199</span>
                       </div>
                     </div>
 
@@ -1151,12 +1156,12 @@ function AppPreview() {
               <motion.div
                 animate={{ y: [0, -7, 0] }}
                 transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
-                className="absolute -right-4 bottom-20 bg-accent rounded-2xl px-3.5 py-2.5 shadow-xl z-20"
+                className="absolute -right-4 bottom-20 bg-accent text-white rounded-2xl px-3.5 py-2.5 shadow-xl z-20"
               >
                 <div className="flex gap-0.5 mb-0.5">
-                  {[...Array(5)].map((_, k) => <Star key={k} className="h-3 w-3 fill-zinc-950 text-zinc-950" />)}
+                  {[...Array(5)].map((_, k) => <Star key={k} className="h-3 w-3 fill-white text-white" />)}
                 </div>
-                <p className="text-[9px] font-bold text-zinc-800">Verified purchase</p>
+                <p className="text-[9px] font-bold text-white/90">Verified purchase</p>
               </motion.div>
             </div>
           </div>
@@ -1182,7 +1187,7 @@ function AppPreview() {
                   className="flex items-start gap-5 group"
                 >
                   <div className="h-11 w-11 rounded-2xl bg-zinc-50 border border-zinc-100 flex items-center justify-center flex-shrink-0 group-hover:bg-accent group-hover:border-accent transition-all duration-300">
-                    <f.Icon className="h-5 w-5 text-zinc-950" />
+                    <f.Icon className="h-5 w-5 text-zinc-950 group-hover:text-white transition-colors" />
                   </div>
                   <div>
                     <h3 className="font-bold text-zinc-950 mb-1">{f.title}</h3>
@@ -1720,7 +1725,7 @@ function GradeGuide() {
 
                 {/* Most Popular badge */}
                 {g.featured && (
-                  <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-accent text-zinc-950 text-[9px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-full whitespace-nowrap shadow-lg">
+                  <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-accent text-white text-[9px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-full whitespace-nowrap shadow-lg">
                     Most Popular
                   </div>
                 )}
@@ -1729,7 +1734,7 @@ function GradeGuide() {
                 <div className="absolute top-4 left-5 flex flex-col gap-1.5">
                   <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">{g.num}</span>
                   <div className="flex items-center gap-1">
-                    {[...Array(5)].map((_, k) => <Star key={k} className="h-3 w-3 fill-accent text-accent" />)}
+                    {[...Array(5)].map((_, k) => <Star key={k} className="h-3 w-3 fill-amber-400 text-amber-400" />)}
                     <span className="text-[10px] font-bold text-white/70 ml-1">{g.rating} · {g.reviewCount}</span>
                   </div>
                 </div>
@@ -1843,7 +1848,7 @@ function GradeGuide() {
                 {/* CTA */}
                 <a
                   href="/shop/phones"
-                  className={`mt-auto flex items-center justify-center gap-2 h-11 rounded-2xl bg-zinc-800 hover:bg-accent text-zinc-300 hover:text-zinc-950 font-bold text-sm transition-all duration-200`}
+                  className={`mt-auto flex items-center justify-center gap-2 h-11 rounded-2xl bg-zinc-800 hover:bg-accent text-zinc-300 hover:text-white font-bold text-sm transition-all duration-200`}
                 >
                   Shop {g.name} <ArrowRight className="h-4 w-4" />
                 </a>
@@ -1983,9 +1988,9 @@ function SavingsComparison() {
                         <p className="text-xl md:text-2xl font-bold text-zinc-950">£{item.ourPrice.toLocaleString()}</p>
                         <p className="text-[10px] font-bold uppercase text-zinc-400 mt-0.5">TechStop</p>
                       </div>
-                      <div className="flex-shrink-0 h-14 w-[90px] bg-accent rounded-2xl flex flex-col items-center justify-center">
-                        <p className="text-base font-bold text-zinc-950 leading-none">-{pct}%</p>
-                        <p className="text-[9px] font-bold text-zinc-700 mt-0.5">Save £{saving}</p>
+                      <div className="flex-shrink-0 h-14 w-[90px] bg-accent rounded-2xl flex flex-col items-center justify-center text-white">
+                        <p className="text-base font-bold leading-none">-{pct}%</p>
+                        <p className="text-[9px] font-bold text-white/90 mt-0.5">Save £{saving}</p>
                       </div>
                     </Link>
                   </motion.div>
@@ -2027,7 +2032,7 @@ function ProductCard({ name, type, spec, price, was, grade, img, index = 0, link
         <div className="relative aspect-square rounded-2xl bg-zinc-50 overflow-hidden mb-3 ring-1 ring-zinc-100 group-hover:ring-transparent group-hover:shadow-xl transition-all duration-300">
           <img src={img} alt={name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
           <div className={`absolute top-3 left-3 px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest ${GRADE_STYLE[grade] ?? "bg-zinc-100 text-zinc-600"}`}>{grade}</div>
-          <div className="absolute top-3 right-3 px-2 py-1 rounded-full bg-accent text-zinc-950 text-[9px] font-bold">-{pct}%</div>
+          <div className="absolute top-3 right-3 px-2 py-1 rounded-full bg-accent text-white text-[9px] font-bold">-{pct}%</div>
           <button className="absolute bottom-3 right-3 h-10 w-10 rounded-full bg-zinc-950 text-white flex items-center justify-center opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 shadow-lg">
             <ShoppingCart className="h-4 w-4" />
           </button>
@@ -2320,7 +2325,7 @@ function BudgetPicks() {
         <div className="flex items-center justify-between mb-8 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-4">
             <h3 className="font-serif text-3xl md:text-4xl font-medium text-zinc-950">{title}</h3>
-            <span className="px-3 py-1 bg-accent text-zinc-950 text-[10px] font-bold uppercase tracking-widest rounded-full">{badge}</span>
+            <span className="px-3 py-1 bg-accent text-white text-[10px] font-bold uppercase tracking-widest rounded-full">{badge}</span>
           </div>
           <a href="/shop/phones" className="hidden sm:flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-zinc-950 transition-colors">
             See all <ArrowRight className="h-3.5 w-3.5" />
@@ -2393,7 +2398,7 @@ function SellCTA() {
             </p>
           </div>
           <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row gap-4 lg:justify-end">
-            <a href="/sell" className="h-14 px-8 bg-accent text-zinc-950 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-accent/90 transition-colors">
+            <a href="/sell" className="h-14 px-8 bg-accent text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-accent-dark transition-colors">
               Get instant quote <ArrowRight className="h-4 w-4" />
             </a>
             <a href="/how-it-works" className="h-14 px-8 border border-zinc-700 text-white rounded-2xl font-bold text-sm flex items-center justify-center hover:border-zinc-400 transition-colors">
@@ -2425,7 +2430,7 @@ function Newsletter() {
               <input
                 type="email"
                 placeholder="you@example.com"
-                className="h-14 flex-1 px-6 rounded-2xl bg-white border border-zinc-200 text-sm font-medium outline-none focus:ring-2 focus:ring-zinc-950 transition-shadow"
+                className="h-14 flex-1 px-6 rounded-2xl bg-white border border-zinc-200 text-sm font-medium outline-none focus:ring-2 focus:ring-accent transition-shadow"
               />
               <button className="h-14 px-7 bg-zinc-950 text-white rounded-2xl font-bold text-sm hover:bg-zinc-800 transition-colors flex-shrink-0">
                 Subscribe
@@ -2464,7 +2469,7 @@ function AsSeenIn() {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function HomePage() {
   return (
-    <main className="flex min-h-screen flex-col bg-white text-zinc-950 font-sans">
+    <main className="flex min-h-screen flex-col bg-background text-foreground font-sans">
       <Navbar />
       <PromoCarouselBanner />
       <MarqueeStrip />

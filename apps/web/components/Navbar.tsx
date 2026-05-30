@@ -1,10 +1,10 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import {
   ShoppingCart, Search, Menu, ChevronRight, X, Zap, ArrowRight,
   Smartphone, Tablet, Gamepad2, Laptop, Headphones, RefreshCw, Wrench,
-  Package, Settings, LogOut, LogIn
+  Package, Settings, LogOut, LogIn, Sun, Moon
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
@@ -30,6 +30,23 @@ export default function Navbar() {
   const profileRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const { user, loading, logout } = useAuth();
+
+  const [theme, setTheme] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    const currentTheme = document.documentElement.getAttribute("data-theme") || 
+      (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    setTheme(currentTheme);
+    setMounted(true);
+  }, []);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === "dark" ? "light" : "dark";
+    setTheme(nextTheme);
+    document.documentElement.setAttribute("data-theme", nextTheme);
+    localStorage.setItem("ts-theme", nextTheme);
+  };
 
   const MOCK_SEARCH_ITEMS = [
     { id: "iphone-15-pro", title: "iPhone 15 Pro", category: "phones", brand: "Apple", price: "739", image: "https://picsum.photos/seed/iphone_wanted/100/100" },
@@ -64,19 +81,23 @@ export default function Navbar() {
         </div>
       </div>
 
-      <header className="sticky top-0 z-50 border-b border-zinc-150 bg-white/95 backdrop-blur-md text-black font-sans">
+      <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur-md text-foreground font-sans">
         {/* Tier 1: Main row (Logo, Search, Actions) */}
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 border-b border-zinc-100/80">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 border-b border-border/40">
           <div className="flex h-14 md:h-16 items-center justify-between gap-4">
             
             {/* Left: Mobile hamburger menu toggle + Logo */}
             <div className="flex items-center gap-4 shrink-0">
-              <button className="lg:hidden" onClick={() => setIsOpen(!isOpen)} aria-label="Toggle menu">
+              <button className="lg:hidden text-foreground" onClick={() => setIsOpen(!isOpen)} aria-label="Toggle menu">
                 {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
               </button>
               
-              <Link href="/" className="text-xl md:text-2xl font-black tracking-tighter text-black flex items-center gap-1">
-                TECHSTOP<span className="text-zinc-400 font-bold tracking-normal text-lg md:text-xl">LEICESTER</span>
+              <Link href="/" className="flex items-center">
+                <img
+                  src={mounted && theme === "dark" ? "/Icon/logo_white.png" : "/Icon/logo_black.png"}
+                  alt="TechStop Leicester"
+                  className="h-8 md:h-9 w-auto object-contain"
+                />
               </Link>
             </div>
 
@@ -92,7 +113,7 @@ export default function Navbar() {
                     setTimeout(() => setIsSearchFocused(false), 200);
                   }}
                   placeholder="Search for iPhones, MacBooks, iPads, Consoles..."
-                  className="h-11 w-full rounded-2xl bg-zinc-100 pl-11 pr-4 text-sm font-semibold outline-none transition-all focus:ring-2 focus:ring-black focus:bg-white border border-transparent"
+                  className="h-11 w-full rounded-2xl bg-muted pl-11 pr-4 text-sm font-semibold outline-none transition-all focus:ring-2 focus:ring-accent focus:bg-background border border-border/40 text-foreground animate-none"
                 />
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400" />
               </div>
@@ -104,7 +125,7 @@ export default function Navbar() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 10 }}
-                    className="absolute left-0 right-0 top-full mt-2 bg-white border border-zinc-200 rounded-[24px] shadow-2xl overflow-hidden z-50 p-5"
+                    className="absolute left-0 right-0 top-full mt-2 bg-background border border-border rounded-[24px] shadow-2xl overflow-hidden z-50 p-5 text-foreground"
                   >
                     {searchQuery === "" ? (
                       <div className="space-y-4">
@@ -115,7 +136,7 @@ export default function Navbar() {
                               <button
                                 key={term}
                                 onClick={() => setSearchQuery(term)}
-                                className="px-3.5 py-1.5 rounded-xl bg-zinc-50 border border-zinc-200 text-xs font-bold hover:border-black hover:bg-white transition-colors"
+                                className="px-3.5 py-1.5 rounded-xl bg-muted border border-border text-xs font-bold hover:border-accent hover:bg-background transition-colors text-foreground"
                               >
                                 {term}
                               </button>
@@ -130,9 +151,9 @@ export default function Navbar() {
                               <Link
                                 key={label}
                                 href={href}
-                                className="flex flex-col items-center justify-center p-3 rounded-2xl bg-zinc-50 hover:bg-black hover:text-white border border-zinc-150/60 hover:border-black transition-all group"
+                                className="flex flex-col items-center justify-center p-3 rounded-2xl bg-muted hover:bg-accent hover:text-white border border-border/40 hover:border-accent transition-all group text-foreground"
                               >
-                                <Icon className="h-5 w-5 text-zinc-500 group-hover:text-white transition-colors mb-1.5" />
+                                <Icon className="h-5 w-5 text-zinc-400 group-hover:text-white transition-colors mb-1.5" />
                                 <span className="text-[10px] font-extrabold">{label}</span>
                               </Link>
                             ))}
@@ -150,16 +171,16 @@ export default function Navbar() {
                             <Link
                               key={item.id}
                               href={`/shop/${item.category}`}
-                              className="flex items-center gap-4 p-2 rounded-xl hover:bg-zinc-50 transition-colors group"
+                              className="flex items-center gap-4 p-2 rounded-xl hover:bg-muted transition-colors group text-foreground"
                             >
-                              <div className="h-10 w-10 bg-zinc-100 rounded-lg p-1.5 flex items-center justify-center shrink-0">
-                                <img src={item.image} alt={item.title} className="h-full w-full object-contain mix-blend-multiply" />
+                              <div className="h-10 w-10 bg-muted rounded-lg p-1.5 flex items-center justify-center shrink-0">
+                                <img src={item.image} alt={item.title} className="h-full w-full object-contain mix-blend-multiply dark:brightness-95" />
                               </div>
                               <div className="min-w-0 flex-1">
-                                <p className="text-xs font-bold text-zinc-950 group-hover:text-black">{item.title}</p>
+                                <p className="text-xs font-bold text-foreground group-hover:text-accent">{item.title}</p>
                                 <p className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider mt-0.5">{item.brand} • {item.category}</p>
                               </div>
-                              <span className="text-xs font-extrabold text-zinc-950">£{item.price}</span>
+                              <span className="text-xs font-extrabold text-foreground">£{item.price}</span>
                             </Link>
                           ))}
                           {MOCK_SEARCH_ITEMS.filter((item) =>
@@ -181,13 +202,13 @@ export default function Navbar() {
 
               {/* Auth button */}
               {loading ? (
-                <div className="h-10 w-10 rounded-[14px] bg-zinc-100 animate-pulse" />
+                <div className="h-10 w-10 rounded-[14px] bg-muted animate-pulse" />
               ) : user ? (
                 /* Logged-in avatar + dropdown */
                 <div ref={profileRef} className="relative">
                   <button
                     onClick={() => setProfileOpen((o) => !o)}
-                    className="flex items-center justify-center h-10 w-10 md:h-11 md:w-11 rounded-[14px] bg-zinc-950 text-accent font-black text-sm uppercase tracking-tight transition-transform hover:scale-105 active:scale-95 shadow-md shadow-black/10 select-none"
+                    className="flex items-center justify-center h-10 w-10 md:h-11 md:w-11 rounded-[14px] bg-accent text-white font-black text-sm uppercase tracking-tight transition-transform hover:scale-105 active:scale-95 shadow-md shadow-accent/20 select-none"
                     aria-label="Profile menu"
                   >
                     {user.name.charAt(0)}
@@ -204,11 +225,11 @@ export default function Navbar() {
                           animate={{ opacity: 1, scale: 1, y: 0 }}
                           exit={{ opacity: 0, scale: 0.95, y: 8 }}
                           transition={{ duration: 0.15 }}
-                          className="absolute right-0 top-full mt-2 w-56 bg-white border border-zinc-200 rounded-2xl shadow-2xl z-50 overflow-hidden"
+                          className="absolute right-0 top-full mt-2 w-56 bg-background border border-border rounded-2xl shadow-2xl z-50 overflow-hidden text-foreground"
                         >
                           {/* User info header */}
-                          <div className="px-4 py-3 border-b border-zinc-100">
-                            <p className="text-xs font-black text-zinc-950 truncate">{user.name}</p>
+                          <div className="px-4 py-3 border-b border-border">
+                            <p className="text-xs font-black text-foreground truncate">{user.name}</p>
                             <p className="text-[10px] text-zinc-400 font-semibold truncate mt-0.5">{user.email}</p>
                           </div>
 
@@ -217,7 +238,7 @@ export default function Navbar() {
                             <Link
                               href="/account/settings"
                               onClick={() => setProfileOpen(false)}
-                              className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold text-zinc-700 hover:bg-zinc-50 hover:text-zinc-950 transition-colors"
+                              className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold text-zinc-500 hover:bg-muted hover:text-foreground transition-colors"
                             >
                               <Settings className="h-3.5 w-3.5 text-zinc-400" />
                               My Account
@@ -225,7 +246,7 @@ export default function Navbar() {
                             <Link
                               href="/account/orders"
                               onClick={() => setProfileOpen(false)}
-                              className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold text-zinc-700 hover:bg-zinc-50 hover:text-zinc-950 transition-colors"
+                              className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold text-zinc-500 hover:bg-muted hover:text-foreground transition-colors"
                             >
                               <Package className="h-3.5 w-3.5 text-zinc-400" />
                               My Orders
@@ -233,10 +254,10 @@ export default function Navbar() {
                           </div>
 
                           {/* Sign out */}
-                          <div className="p-1.5 border-t border-zinc-100">
+                          <div className="p-1.5 border-t border-border">
                             <button
                               onClick={() => { logout(); setProfileOpen(false); }}
-                              className="flex w-full items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold text-red-500 hover:bg-red-50 transition-colors"
+                              className="flex w-full items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold text-red-500 hover:bg-red-500/10 transition-colors"
                             >
                               <LogOut className="h-3.5 w-3.5" />
                               Sign Out
@@ -251,19 +272,35 @@ export default function Navbar() {
                 /* Not logged in */
                 <Link
                   href="/account"
-                  className="flex items-center gap-2 h-10 px-4 rounded-xl bg-zinc-950 text-white hover:bg-zinc-800 transition-all font-bold text-xs uppercase tracking-wide"
+                  className="flex items-center gap-2 h-10 px-4 rounded-xl bg-accent text-white hover:bg-accent-dark transition-all font-bold text-xs uppercase tracking-wide shadow-md shadow-accent/20"
                 >
                   <LogIn className="h-4 w-4" />
                   <span className="hidden sm:inline">Sign In</span>
                 </Link>
               )}
 
+              {/* Theme Toggle Button */}
+              <button
+                onClick={toggleTheme}
+                className="flex items-center justify-center h-10 w-10 md:h-11 md:w-11 rounded-[14px] bg-muted hover:bg-zinc-200 dark:hover:bg-zinc-800 text-foreground transition-transform hover:scale-105 active:scale-95 border border-border/40 shrink-0 cursor-pointer"
+                title="Toggle Theme"
+                aria-label="Toggle Theme"
+              >
+                {!mounted ? (
+                  <div className="h-4 w-4 md:h-5 md:w-5" />
+                ) : theme === "dark" ? (
+                  <Sun className="h-4 w-4 md:h-5 md:w-5 text-yellow-500 fill-yellow-500/20" />
+                ) : (
+                  <Moon className="h-4 w-4 md:h-5 md:w-5 text-zinc-750 fill-zinc-750/10" />
+                )}
+              </button>
+
               {user && <NotificationBell />}
 
-              <Link href="/cart" className="relative flex items-center justify-center h-10 w-10 md:h-11 md:w-11 rounded-[14px] bg-accent text-black transition-transform hover:scale-105 active:scale-95 shadow-md shadow-accent/20">
+              <Link href="/cart" className="relative flex items-center justify-center h-10 w-10 md:h-11 md:w-11 rounded-[14px] bg-accent text-white transition-transform hover:scale-105 active:scale-95 shadow-md shadow-accent/20">
                 <ShoppingCart className="h-4 w-4 md:h-5 md:w-5" />
                 {itemsCount > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-4 w-4 md:h-5 md:w-5 items-center justify-center rounded-full bg-black text-[9px] font-bold text-white ring-2 ring-white">
+                  <span className="absolute -top-1 -right-1 flex h-4 w-4 md:h-5 md:w-5 items-center justify-center rounded-full bg-black text-[9px] font-bold text-white ring-2 ring-background">
                     {itemsCount}
                   </span>
                 )}
@@ -274,10 +311,10 @@ export default function Navbar() {
         </div>
 
         {/* Tier 2: Category Bar (Desktop only) */}
-        <div className="hidden lg:block bg-zinc-50/50">
+        <div className="hidden lg:block bg-muted/30 border-b border-border/20">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between">
             {/* Category Links */}
-            <nav className="flex items-center gap-1.5 text-xs font-bold relative bg-zinc-100/50 p-1 rounded-full border border-zinc-200/40">
+            <nav className="flex items-center gap-1.5 text-xs font-bold relative bg-muted p-1 rounded-full border border-border/40">
               {[
                 { label: "All Products", href: "/" },
                 ...SHOP_CATEGORIES
@@ -288,13 +325,13 @@ export default function Navbar() {
                     key={label}
                     href={href}
                     className={`relative px-4 py-2 rounded-full transition-colors duration-250 ${
-                      isActive ? "text-white z-10 font-extrabold" : "text-zinc-600 hover:text-black font-semibold"
+                      isActive ? "text-white z-10 font-extrabold" : "text-zinc-500 dark:text-zinc-400 hover:text-foreground font-semibold"
                     }`}
                   >
                     {isActive && (
                       <motion.div
                         layoutId="activeCategoryTab"
-                        className="absolute inset-0 bg-zinc-950 rounded-full -z-10 shadow-sm"
+                        className="absolute inset-0 bg-accent rounded-full -z-10 shadow-sm"
                         transition={{ type: "spring", stiffness: 350, damping: 28 }}
                       />
                     )}
@@ -318,8 +355,8 @@ export default function Navbar() {
                     href={href}
                     className={`relative px-4 py-2 rounded-full flex items-center gap-1.5 transition-colors duration-250 ${
                       isActive
-                        ? "bg-zinc-950 text-white shadow-sm font-extrabold"
-                        : "text-zinc-500 hover:text-black font-semibold hover:bg-zinc-100/60"
+                        ? "bg-accent text-white shadow-sm font-extrabold"
+                        : "text-zinc-500 dark:text-zinc-400 hover:text-foreground font-semibold hover:bg-muted"
                     }`}
                   >
                     {Icon && <Icon className={`h-3.5 w-3.5 ${isActive ? "text-white" : "text-zinc-500"}`} />}
@@ -338,7 +375,7 @@ export default function Navbar() {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              className="lg:hidden border-t border-zinc-100 bg-white overflow-hidden"
+              className="lg:hidden border-t border-border bg-background overflow-hidden text-foreground"
             >
               <div className="px-4 py-6 space-y-1">
                 {/* Search bar inside mobile drawer */}
@@ -347,7 +384,7 @@ export default function Navbar() {
                     <input
                       type="text"
                       placeholder="Search products..."
-                      className="h-11 w-full rounded-xl bg-zinc-100 pl-10 pr-4 text-sm font-bold outline-none"
+                      className="h-11 w-full rounded-xl bg-muted pl-10 pr-4 text-sm font-bold outline-none text-foreground border border-border/40"
                     />
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
                   </div>
@@ -359,11 +396,11 @@ export default function Navbar() {
                   href="/"
                   onClick={() => setIsOpen(false)}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                    pathname === "/" ? "bg-black text-white" : "hover:bg-zinc-50"
+                    pathname === "/" ? "bg-accent text-white" : "hover:bg-muted text-foreground"
                   }`}
                 >
                   All Products
-                  <ChevronRight className={`h-4 w-4 ml-auto ${pathname === "/" ? "text-white" : "text-zinc-300"}`} />
+                  <ChevronRight className={`h-4 w-4 ml-auto ${pathname === "/" ? "text-white" : "text-zinc-400"}`} />
                 </Link>
                 {SHOP_CATEGORIES.map(({ label, href, icon: Icon }) => {
                   const isActive = pathname?.startsWith(href);
@@ -373,17 +410,17 @@ export default function Navbar() {
                       href={href}
                       onClick={() => setIsOpen(false)}
                       className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
-                        isActive ? "bg-black text-white" : "hover:bg-zinc-50"
+                        isActive ? "bg-accent text-white" : "hover:bg-muted text-foreground"
                       }`}
                     >
-                      <Icon className={`h-4 w-4 ${isActive ? "text-white" : "text-zinc-500"}`} strokeWidth={1.8} />
+                      <Icon className={`h-4 w-4 ${isActive ? "text-white" : "text-zinc-400"}`} strokeWidth={1.8} />
                       <span className="text-sm font-bold">{label}</span>
-                      <ChevronRight className={`h-4 w-4 ml-auto ${isActive ? "text-white" : "text-zinc-300"}`} />
+                      <ChevronRight className={`h-4 w-4 ml-auto ${isActive ? "text-white" : "text-zinc-400"}`} />
                     </Link>
                   );
                 })}
 
-                <div className="pt-3 mt-3 border-t border-zinc-100 space-y-1">
+                <div className="pt-3 mt-3 border-t border-border space-y-1">
                   {[
                     { label: "Sell Your Device", href: "/trade-in", icon: RefreshCw },
                     { label: "Book a Repair", href: "/repair", icon: Wrench },
@@ -396,43 +433,43 @@ export default function Navbar() {
                         href={href}
                         onClick={() => setIsOpen(false)}
                         className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                          isActive ? "bg-black text-white" : "hover:bg-zinc-50 text-zinc-700"
+                          isActive ? "bg-accent text-white" : "hover:bg-muted text-foreground"
                         }`}
                       >
-                        {Icon && <Icon className={`h-4 w-4 ${isActive ? "text-white" : "text-zinc-500"}`} strokeWidth={1.8} />}
+                        {Icon && <Icon className={`h-4 w-4 ${isActive ? "text-white" : "text-zinc-400"}`} strokeWidth={1.8} />}
                         <span>{label}</span>
-                        <ChevronRight className={`h-4 w-4 ml-auto ${isActive ? "text-white" : "text-zinc-300"}`} />
+                        <ChevronRight className={`h-4 w-4 ml-auto ${isActive ? "text-white" : "text-zinc-400"}`} />
                       </Link>
                     );
                   })}
                 </div>
 
                 {/* Mobile account section */}
-                <div className="pt-3 mt-3 border-t border-zinc-100">
+                <div className="pt-3 mt-3 border-t border-border">
                   {user ? (
                     <>
                       <div className="flex items-center gap-3 px-3 py-2.5 mb-1">
-                        <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-zinc-950 text-accent font-black text-sm shrink-0">
+                        <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-accent text-white font-black text-sm shrink-0">
                           {user.name.charAt(0)}
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-black text-zinc-950 truncate">{user.name}</p>
+                          <p className="text-sm font-black text-foreground truncate">{user.name}</p>
                           <p className="text-[10px] text-zinc-400 font-semibold truncate">{user.email}</p>
                         </div>
                       </div>
-                      <Link href="/account/settings" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold hover:bg-zinc-50 text-zinc-700 transition-all">
+                      <Link href="/account/settings" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold hover:bg-muted text-foreground transition-all">
                         <Settings className="h-4 w-4 text-zinc-400" strokeWidth={1.8} />
                         <span>My Account</span>
-                        <ChevronRight className="h-4 w-4 ml-auto text-zinc-300" />
+                        <ChevronRight className="h-4 w-4 ml-auto text-zinc-400" />
                       </Link>
-                      <Link href="/account/orders" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold hover:bg-zinc-50 text-zinc-700 transition-all">
+                      <Link href="/account/orders" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold hover:bg-muted text-foreground transition-all">
                         <Package className="h-4 w-4 text-zinc-400" strokeWidth={1.8} />
                         <span>My Orders</span>
-                        <ChevronRight className="h-4 w-4 ml-auto text-zinc-300" />
+                        <ChevronRight className="h-4 w-4 ml-auto text-zinc-400" />
                       </Link>
                       <button
                         onClick={() => { logout(); setIsOpen(false); }}
-                        className="flex w-full items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-red-500 hover:bg-red-50 transition-all"
+                        className="flex w-full items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-red-500 hover:bg-red-500/10 transition-all"
                       >
                         <LogOut className="h-4 w-4" strokeWidth={1.8} />
                         <span>Sign Out</span>
@@ -442,7 +479,7 @@ export default function Navbar() {
                     <Link
                       href="/account"
                       onClick={() => setIsOpen(false)}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold bg-zinc-950 text-white transition-all"
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold bg-accent text-white transition-all shadow-md shadow-accent/20"
                     >
                       <LogIn className="h-4 w-4" strokeWidth={1.8} />
                       <span>Sign In / Create Account</span>

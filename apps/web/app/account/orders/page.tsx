@@ -237,7 +237,7 @@ export default function OrdersPage() {
                 <p className="text-sm text-zinc-500 mb-6">Your review is pending approval and will appear on the product page once approved.</p>
                 <button
                   onClick={closeModal}
-                  className="h-11 px-8 rounded-2xl bg-black text-white font-bold text-sm hover:bg-zinc-800 transition-colors"
+                  className="h-11 px-8 rounded-2xl bg-accent text-white font-bold text-sm hover:bg-accent-dark transition-colors"
                 >
                   Done
                 </button>
@@ -262,7 +262,7 @@ export default function OrdersPage() {
                       onChange={e => setBody(e.target.value)}
                       rows={4}
                       placeholder="Share your experience with this product…"
-                      className="w-full rounded-2xl border border-zinc-200 px-4 py-3 text-sm text-zinc-900 placeholder-zinc-400 resize-none outline-none focus:border-zinc-400 transition-colors"
+                      className="w-full rounded-2xl border border-zinc-200 px-4 py-3 text-sm text-zinc-900 placeholder-zinc-400 resize-none outline-none focus:border-accent transition-colors"
                     />
                   </div>
 
@@ -301,7 +301,7 @@ export default function OrdersPage() {
                 <button
                   onClick={submitReview}
                   disabled={rating === 0 || !body.trim() || submitting}
-                  className="mt-6 w-full h-12 rounded-2xl bg-black text-white font-bold text-sm hover:bg-zinc-800 transition-colors disabled:opacity-40 flex items-center justify-center gap-2"
+                  className="mt-6 w-full h-12 rounded-2xl bg-accent text-white font-bold text-sm hover:bg-accent-dark transition-colors disabled:opacity-40 flex items-center justify-center gap-2"
                 >
                   {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
                   {submitting ? "Submitting…" : "Submit review"}

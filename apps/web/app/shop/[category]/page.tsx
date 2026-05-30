@@ -407,7 +407,7 @@ export default function CategoryPage() {
   if (sort === "rating") filtered = [...filtered].sort((a, b) => b.rating - a.rating);
 
   return (
-    <div className="min-h-screen bg-[#f5f5f7] text-black font-sans selection:bg-accent selection:text-black">
+    <div className="min-h-screen bg-background text-foreground font-sans selection:bg-accent selection:text-white">
       <Navbar />
 
       {/* ── Header ─────────────────────────────────────────────────── */}
@@ -521,8 +521,8 @@ export default function CategoryPage() {
               {allProducts.slice(0, 8).map(product => (
                 <Link href={`/shop/${categorySlug}/${product.id}`} key={`top-${product.id}`} className="shrink-0 w-[240px] md:w-[280px] group block">
                   <div className="bg-white rounded-[32px] p-3 border border-zinc-200 hover:border-black hover:shadow-xl transition-all duration-300 h-full flex flex-col">
-                    <div className="relative aspect-square rounded-[24px] bg-[#f5f5f7] mb-5 overflow-hidden flex items-center justify-center p-5">
-                      <span className="absolute top-4 left-4 inline-flex px-2.5 py-1 rounded-full bg-accent text-[10px] font-bold text-black border border-accent shadow-sm uppercase tracking-wider z-10">
+                    <div className="relative aspect-square rounded-[24px] bg-muted mb-5 overflow-hidden flex items-center justify-center p-5">
+                      <span className="absolute top-4 left-4 inline-flex px-2.5 py-1 rounded-full bg-accent text-[10px] font-bold text-white border border-accent shadow-sm uppercase tracking-wider z-10">
                         Best Seller
                       </span>
                       {product.image && <img src={product.image} alt={product.title} className="max-h-full max-w-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform" />}
@@ -617,10 +617,10 @@ export default function CategoryPage() {
                               
                               {/* Rating stars */}
                               <div className="flex items-center gap-1.5 mb-3">
-                                <div className="flex items-center text-zinc-950">
-                                  <Star className="h-3 w-3 fill-black text-black" strokeWidth={3} />
+                                <div className="flex items-center text-amber-400">
+                                  <Star className="h-3 w-3 fill-amber-400 text-amber-400" strokeWidth={3} />
                                 </div>
-                                <span className="text-[10px] font-bold text-zinc-800">{product.rating}</span>
+                                <span className="text-[10px] font-bold text-zinc-800 dark:text-zinc-300">{product.rating}</span>
                                 <span className="text-[10px] text-zinc-400 font-semibold">({product.reviews})</span>
                               </div>
 
@@ -820,7 +820,7 @@ export default function CategoryPage() {
                            <div className="absolute top-0 right-0 w-64 h-64 bg-accent/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
                            <h3 className="font-bold text-2xl mb-3 relative z-10">Got an old device?</h3>
                            <p className="text-zinc-400 font-medium mb-8 relative z-10">Trade it in and get extra cash towards your new refurbished tech.</p>
-                           <Link href="/sell" className="h-12 px-6 rounded-full bg-accent text-black font-bold flex items-center gap-2 hover:scale-105 transition-transform relative z-10">
+                           <Link href="/sell" className="h-12 px-6 rounded-full bg-accent text-white font-bold flex items-center gap-2 hover:scale-105 transition-transform relative z-10">
                              Get an offer <ArrowRight className="h-4 w-4" />
                            </Link>
                         </div>
@@ -871,8 +871,8 @@ export default function CategoryPage() {
                             <span className="text-xs font-bold text-zinc-500 uppercase tracking-wide">{product.storage}</span>
                             <span className="w-1 h-1 rounded-full bg-zinc-300" />
                             <div className="flex items-center gap-1">
-                              <Star className="h-3.5 w-3.5 fill-black text-black" />
-                              <span className="text-xs font-bold">{product.rating}</span>
+                              <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                              <span className="text-xs font-bold text-foreground">{product.rating}</span>
                               <span className="text-xs text-zinc-400 font-medium">({product.reviews})</span>
                             </div>
                           </div>
@@ -928,14 +928,14 @@ export default function CategoryPage() {
                       key={step.id}
                       onClick={() => setSelectedDiagnostic(step.id)}
                       className={`w-full text-left px-5 py-4 rounded-[20px] font-bold text-sm flex items-center justify-between transition-all ${
-                        isActive ? "bg-accent text-black shadow-lg scale-[1.02]" : "bg-white/5 text-zinc-300 hover:bg-white/10"
+                        isActive ? "bg-accent text-white shadow-lg scale-[1.02]" : "bg-white/5 text-zinc-300 hover:bg-white/10"
                       }`}
                     >
                       <span className="flex items-center gap-3">
                         {React.createElement(step.icon, { className: "h-5 w-5" })}
                         {step.label}
                       </span>
-                      {isActive && <span className="h-2 w-2 rounded-full bg-black"></span>}
+                      {isActive && <span className="h-2 w-2 rounded-full bg-white"></span>}
                     </button>
                   );
                 })}
@@ -1182,7 +1182,7 @@ export default function CategoryPage() {
           ].map(({ icon: Icon, text }) => (
             <div key={text} className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-full bg-accent flex items-center justify-center">
-                 <Icon className="h-5 w-5 text-black" />
+                 <Icon className="h-5 w-5 text-white" />
               </div>
               <span className="text-sm font-bold">{text}</span>
             </div>

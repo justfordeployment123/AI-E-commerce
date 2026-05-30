@@ -85,7 +85,7 @@ export default function SettingsPage() {
                 type="text"
                 value={name}
                 onChange={e => setName(e.target.value)}
-                className="h-14 rounded-[1rem] border-2 border-zinc-200 px-5 text-sm font-medium outline-none focus:border-black transition-colors"
+                className="h-14 rounded-[1rem] border-2 border-zinc-200 px-5 text-sm font-medium outline-none focus:border-accent transition-colors"
               />
             </div>
 
@@ -107,7 +107,7 @@ export default function SettingsPage() {
                 value={phone}
                 onChange={e => setPhone(e.target.value)}
                 placeholder="+44 7700 000000"
-                className="h-14 rounded-[1rem] border-2 border-zinc-200 px-5 text-sm font-medium outline-none focus:border-black transition-colors"
+                className="h-14 rounded-[1rem] border-2 border-zinc-200 px-5 text-sm font-medium outline-none focus:border-accent transition-colors"
               />
             </div>
           </div>
@@ -123,7 +123,7 @@ export default function SettingsPage() {
                 value={address}
                 onChange={e => setAddress(e.target.value)}
                 placeholder="123 High Street"
-                className="h-14 rounded-[1rem] border-2 border-zinc-200 px-5 text-sm font-medium outline-none focus:border-black transition-colors"
+                className="h-14 rounded-[1rem] border-2 border-zinc-200 px-5 text-sm font-medium outline-none focus:border-accent transition-colors"
               />
             </div>
 
@@ -134,7 +134,7 @@ export default function SettingsPage() {
                 value={city}
                 onChange={e => setCity(e.target.value)}
                 placeholder="Leicester"
-                className="h-14 rounded-2xl border-2 border-zinc-200 px-5 text-sm font-medium outline-none focus:border-black transition-colors"
+                className="h-14 rounded-2xl border-2 border-zinc-200 px-5 text-sm font-medium outline-none focus:border-accent transition-colors"
               />
             </div>
 
@@ -145,7 +145,7 @@ export default function SettingsPage() {
                 value={postcode}
                 onChange={e => { setPostcode(e.target.value); setPostcodeError(""); }}
                 placeholder="LE1 1AA"
-                className={`h-14 rounded-2xl border-2 px-5 text-sm font-medium outline-none transition-colors ${postcodeError ? "border-red-400 focus:border-red-500" : "border-zinc-200 focus:border-black"}`}
+                className={`h-14 rounded-2xl border-2 px-5 text-sm font-medium outline-none transition-colors ${postcodeError ? "border-red-400 focus:border-red-500" : "border-zinc-200 focus:border-accent"}`}
               />
               {postcodeError && (
                 <p className="text-[11px] text-red-500 font-medium ml-1">{postcodeError}</p>
@@ -158,7 +158,7 @@ export default function SettingsPage() {
           <button
             type="submit"
             disabled={saving}
-            className="h-12 px-8 bg-black text-white rounded-[1rem] font-bold text-sm hover:bg-zinc-800 transition-colors disabled:opacity-50"
+            className="h-12 px-8 bg-accent text-white rounded-[1rem] font-bold text-sm hover:bg-accent-dark transition-colors disabled:opacity-50"
           >
             {saving ? "Saving…" : "Save changes"}
           </button>

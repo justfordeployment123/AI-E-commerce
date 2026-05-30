@@ -217,7 +217,7 @@ function CheckoutInner() {
 
   if (cartLoading) {
     return (
-      <div className="flex min-h-screen flex-col bg-white font-sans">
+      <div className="flex min-h-screen flex-col bg-background text-foreground font-sans selection:bg-accent selection:text-white">
         <Navbar />
         <main className="flex-1 flex items-center justify-center">
           <div className="h-12 w-12 border-4 border-zinc-200 border-t-black rounded-full animate-spin" />
@@ -229,7 +229,7 @@ function CheckoutInner() {
 
   if (items.length === 0 && !orderPlaced) {
     return (
-      <div className="flex min-h-screen flex-col bg-white font-sans">
+      <div className="flex min-h-screen flex-col bg-background text-foreground font-sans selection:bg-accent selection:text-white">
         <Navbar />
         <main className="flex-1 flex flex-col items-center justify-center px-4 py-20 text-center">
           <div className="h-32 w-32 bg-zinc-100 rounded-full flex items-center justify-center mb-8">
@@ -247,7 +247,7 @@ function CheckoutInner() {
 
   if (orderPlaced) {
     return (
-      <div className="flex min-h-screen flex-col bg-white font-sans">
+      <div className="flex min-h-screen flex-col bg-background text-foreground font-sans selection:bg-accent selection:text-white">
         <Navbar />
         <main className="flex-1 flex items-center justify-center px-4 py-16">
           <motion.div
@@ -262,7 +262,7 @@ function CheckoutInner() {
               transition={{ type: "spring", stiffness: 260, damping: 18, delay: 0.1 }}
               className="mx-auto h-24 w-24 bg-accent rounded-[2rem] flex items-center justify-center mb-8"
             >
-              <Check className="h-12 w-12 text-black" strokeWidth={2.5} />
+              <Check className="h-12 w-12 text-white" strokeWidth={2.5} />
             </motion.div>
 
             <h1 className="text-4xl font-bold tracking-tight text-black mb-3">Order confirmed!</h1>
@@ -302,7 +302,7 @@ function CheckoutInner() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-white text-black font-sans">
+    <div className="flex min-h-screen flex-col bg-background text-foreground font-sans selection:bg-accent selection:text-white">
       <Navbar />
 
       <main className="flex-1">
@@ -359,7 +359,7 @@ function CheckoutInner() {
                             placeholder={label}
                             value={delivery[key as keyof typeof delivery]}
                             onChange={e => setDelivery(d => ({ ...d, [key]: e.target.value }))}
-                            className="h-14 rounded-[1rem] border-2 border-zinc-200 px-5 text-sm font-medium outline-none focus:border-black transition-colors"
+                            className="h-14 rounded-[1rem] border-2 border-zinc-200 px-5 text-sm font-medium outline-none focus:border-accent transition-colors"
                           />
                         </div>
                       ))}
@@ -379,7 +379,7 @@ function CheckoutInner() {
                             placeholder={placeholder}
                             value={delivery[key as keyof typeof delivery]}
                             onChange={e => setDelivery(d => ({ ...d, [key]: e.target.value }))}
-                            className="h-14 rounded-[1rem] border-2 border-zinc-200 px-5 text-sm font-medium outline-none focus:border-black transition-colors"
+                            className="h-14 rounded-[1rem] border-2 border-zinc-200 px-5 text-sm font-medium outline-none focus:border-accent transition-colors"
                           />
                         </div>
                       ))}
@@ -540,7 +540,7 @@ function CheckoutInner() {
                       whileTap={{ scale: 0.98 }}
                       onClick={placeOrder}
                       disabled={placing}
-                      className="w-full py-5 bg-accent text-black rounded-[1.5rem] font-bold text-lg flex items-center justify-center gap-2 hover:bg-accent-dark transition-colors active:scale-[0.99] shadow-xl shadow-accent/20 disabled:opacity-60 disabled:cursor-not-allowed"
+                      className="w-full py-5 bg-accent text-white rounded-[1.5rem] font-bold text-lg flex items-center justify-center gap-2 hover:bg-accent-dark transition-colors active:scale-[0.99] shadow-xl shadow-accent/20 disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                       {placing ? (
                         <span className="flex items-center gap-2">
@@ -591,7 +591,7 @@ function CheckoutInner() {
                       value={promoCode}
                       onChange={e => setPromoCode(e.target.value.toUpperCase())}
                       disabled={promoApplied}
-                      className="flex-1 h-12 rounded-[1rem] border-2 border-zinc-200 px-4 text-sm font-mono outline-none focus:border-black transition-colors disabled:opacity-50"
+                      className="flex-1 h-12 rounded-[1rem] border-2 border-zinc-200 px-4 text-sm font-mono outline-none focus:border-accent transition-colors disabled:opacity-50"
                     />
                     <button
                       onClick={applyPromo}
