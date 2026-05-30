@@ -229,6 +229,82 @@ export const repairsApi = {
     apiFetch<Repair>(`/repairs/${id}/decline-quote`, { method: 'POST', auth: true }),
 };
 
+// ── Catalog (admin + public) ──────────────────────────────────────────────────
+
+async function uploadFileAuthed(endpoint: string, file: File): Promise<any> {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('ts_token') : null;
+  const formData = new FormData();
+  formData.append('file', file);
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const res = await fetch(`${API_BASE}${endpoint}`, { method: 'POST', headers, body: formData });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ message: res.statusText }));
+    throw new Error(body?.message ?? res.statusText);
+  }
+  return res.json();
+}
+
+export const catalogApi = {
+  // ── Categories ─────────────────────────────────────────────────────────────
+  listCategories: (includeInactive?: boolean) =>
+    apiFetch<CatalogCategory[]>(`/catalog/categories${includeInactive ? '?includeInactive=true' : ''}`),
+
+  createCategory: (data: { name: string; slug: string; description?: string; isActive?: boolean }) =>
+    apiFetch<CatalogCategory>('/catalog/categories', { method: 'POST', auth: true, body: JSON.stringify(data) }),
+
+  updateCategory: (id: string, data: Partial<{ name: string; slug: string; description?: string; isActive: boolean }>) =>
+    apiFetch<CatalogCategory>(`/catalog/categories/${id}`, { method: 'PATCH', auth: true, body: JSON.stringify(data) }),
+
+  uploadCategoryImage: (id: string, file: File) =>
+    uploadFileAuthed(`/catalog/categories/${id}/image`, file),
+
+  deleteCategory: (id: string) =>
+    apiFetch<void>(`/catalog/categories/${id}`, { method: 'DELETE', auth: true }),
+
+  // ── Brands ─────────────────────────────────────────────────────────────────
+  listBrands: (includeInactive?: boolean) =>
+    apiFetch<CatalogBrand[]>(`/catalog/brands${includeInactive ? '?includeInactive=true' : ''}`),
+
+  getBrandBySlug: (slug: string) =>
+    apiFetch<CatalogBrand & { brandCategories: CatalogBrandCategory[] }>(`/catalog/brands/${slug}`),
+
+  createBrand: (data: { name: string; slug: string; isActive?: boolean }) =>
+    apiFetch<CatalogBrand>('/catalog/brands', { method: 'POST', auth: true, body: JSON.stringify(data) }),
+
+  updateBrand: (id: string, data: Partial<{ name: string; slug: string; isActive: boolean }>) =>
+    apiFetch<CatalogBrand>(`/catalog/brands/${id}`, { method: 'PATCH', auth: true, body: JSON.stringify(data) }),
+
+  uploadBrandLogo: (id: string, file: File) =>
+    uploadFileAuthed(`/catalog/brands/${id}/logo`, file),
+
+  deleteBrand: (id: string) =>
+    apiFetch<void>(`/catalog/brands/${id}`, { method: 'DELETE', auth: true }),
+
+  // ── Brand-Categories ───────────────────────────────────────────────────────
+  listBrandCategories: (opts?: { includeInactive?: boolean; brandId?: string }) => {
+    const q = new URLSearchParams();
+    if (opts?.includeInactive) q.set('includeInactive', 'true');
+    if (opts?.brandId) q.set('brandId', opts.brandId);
+    return apiFetch<CatalogBrandCategory[]>(`/catalog/brand-categories?${q}`, { auth: true });
+  },
+
+  createBrandCategory: (data: { brandId: string; categoryId: string }) =>
+    apiFetch<CatalogBrandCategory>('/catalog/brand-categories', { method: 'POST', auth: true, body: JSON.stringify(data) }),
+
+  uploadBrandCategoryImage: (id: string, file: File) =>
+    uploadFileAuthed(`/catalog/brand-categories/${id}/images`, file),
+
+  deleteBrandCategoryImage: (id: string, imageKey: string) =>
+    apiFetch<CatalogBrandCategory>(
+      `/catalog/brand-categories/${id}/images/${encodeURIComponent(imageKey)}`,
+      { method: 'DELETE', auth: true },
+    ),
+
+  deleteBrandCategory: (id: string) =>
+    apiFetch<void>(`/catalog/brand-categories/${id}`, { method: 'DELETE', auth: true }),
+};
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 export interface User {
   id: string;
@@ -373,6 +449,39 @@ export interface Review {
   images: string[];
   isApproved: boolean;
   createdAt: string;
+}
+
+export interface CatalogCategory {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  image?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CatalogBrand {
+  id: string;
+  name: string;
+  slug: string;
+  logo?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CatalogBrandCategory {
+  id: string;
+  brandId: string;
+  brand: CatalogBrand;
+  categoryId: string;
+  category: CatalogCategory;
+  images: string[];
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface RepairPayload {

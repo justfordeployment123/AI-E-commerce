@@ -126,8 +126,8 @@ export class BrandCategoriesController {
     @Get()
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles('ADMIN')
-    list(@Query('includeInactive') includeInactive?: string) {
-        return this.catalog.listBrandCategories(includeInactive === 'true');
+    list(@Query('includeInactive') includeInactive?: string, @Query('brandId') brandId?: string) {
+        return this.catalog.listBrandCategories(includeInactive === 'true', brandId);
     }
 
     @Get(':id')

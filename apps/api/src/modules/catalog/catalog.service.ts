@@ -114,8 +114,9 @@ export class CatalogService {
 
     // ─── Brand-Categories ─────────────────────────────────────────────────────
 
-    async listBrandCategories(includeInactive = false) {
-        const where = includeInactive ? {} : { isActive: true };
+    async listBrandCategories(includeInactive = false, brandId?: string) {
+        const where: Record<string, unknown> = includeInactive ? {} : { isActive: true };
+        if (brandId) where.brandId = brandId;
         return this.prisma.brandCategory.findMany({
             where,
             include: { brand: true, category: true },
