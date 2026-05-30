@@ -6,7 +6,8 @@ import Link from "next/link";
 import {
   ShoppingCart, ShieldCheck, RefreshCw, Leaf, ArrowRight,
   Star, Search, Play, Recycle, TrendingUp, Package, BadgeCheck,
-  Zap, Check, Smartphone, Laptop, Headphones, Gamepad2, Tablet
+  Zap, Check, Smartphone, Laptop, Headphones, Gamepad2, Tablet,
+  ChevronLeft, ChevronRight
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import Navbar from "../components/Navbar";
@@ -18,147 +19,300 @@ const Footer = dynamic(() => import("../components/Footer"));
 // ─── Promo Carousel Banner ───────────────────────────────────────────────────
 function PromoCarouselBanner() {
   const [idx, setIdx] = useState(0);
+  const [tilt, setTilt] = useState({ x: 0, y: 0 });
+  const [isHovered, setIsHovered] = useState(false);
+
   const slides = [
     {
-      title: "Weekend Offer+",
-      img: "/homepage_top/galaxy_watch_promo_1778927696615.png", 
-      text: "Save up to £20 on Galaxy Watch\nthis weekend only.*",
-      bg: "bg-[#d4c3f4]", // Light purple
-      accent: "text-purple-700",
-      btn: "Save now",
-      link: "/shop/phones",
+      index: "01",
+      tabTitle: "Upgrade iPhone",
+      tag: "Featured Promotion",
+      titleLine1: "UPGRADE YOUR",
+      titleLine2: "IPHONE",
+      titleItalic: "for less.",
+      desc: "Get pristine, certified refurbished iPhones with a full 12-month warranty. Rigorously tested by in-house technicians, graded honestly.",
+      img: "/homepage_top/refurbished_iphone.png",
+      themeColor: "from-blue-500 to-indigo-600 dark:from-blue-400 dark:to-indigo-400",
+      bgGlow: "rgba(59, 130, 246, 0.15)",
+      specs: ["12-Month Warranty", "Pristine Condition", "Save up to 40%"],
+      badgeA: "Pristine Grade",
+      badgeB: "Save up to 40%",
+      btnText: "Shop Refurbished",
+      btnLink: "/shop/phones",
     },
     {
-      title: "Student Discount",
-      img: "/homepage_top/laptop_student_promo_1778927711734.png", 
-      text: "Get 5% off everything\nall year round.",
-      bg: "bg-[#b8e4d3]", // Light green
-      accent: "text-emerald-700",
-      btn: "Unlock code",
-      link: "/shop/laptops",
+      index: "02",
+      tabTitle: "Sell & Trade-In",
+      tag: "Instant Valuation",
+      titleLine1: "WE BUY TECH",
+      titleLine2: "FOR CASH",
+      titleItalic: "instantly.",
+      desc: "Trade in your old smartphones, MacBooks, or gaming consoles for instant cash. Best price match guaranteed with free insured shipping.",
+      img: "/homepage_top/sell_tech_cash.png",
+      themeColor: "from-amber-500 to-orange-600 dark:from-amber-400 dark:to-orange-400",
+      bgGlow: "rgba(245, 158, 11, 0.15)",
+      specs: ["Instant Quote", "Free Insured Shipping", "Best Price Match"],
+      badgeA: "Instant Payout",
+      badgeB: "Best Price Match",
+      btnText: "Get Cash Quote",
+      btnLink: "/sell",
     },
     {
-      title: "Trade-in Bonus",
-      img: "/homepage_top/iphone_tradein_promo_1778927727005.png", 
-      text: "Extra £30 when you trade in\nyour old iPhone.",
-      bg: "bg-[#ffdca8]", // Light orange
-      accent: "text-orange-700",
-      btn: "Get a quote",
-      link: "/shop/phones",
+      index: "03",
+      tabTitle: "Expert Repairs",
+      tag: "Certified Technicians",
+      titleLine1: "BOOK A DEVICE",
+      titleLine2: "REPAIR",
+      titleItalic: "today.",
+      desc: "Professional screen, battery, and diagnostic replacements. Express turnaround times using OEM-grade parts with warranty included.",
+      img: "/homepage_top/expert_repair.png",
+      themeColor: "from-emerald-500 to-teal-600 dark:from-emerald-400 dark:to-teal-400",
+      bgGlow: "rgba(16, 185, 129, 0.15)",
+      specs: ["Express Screen Fix", "OEM Grade Parts", "Repair Warranty"],
+      badgeA: "OEM Grade Parts",
+      badgeB: "Same-Day Fix",
+      btnText: "Book Repair",
+      btnLink: "/repair",
+    },
+    {
+      index: "04",
+      tabTitle: "Sustainability",
+      tag: "Green Technology",
+      titleLine1: "HELP US SAVE",
+      titleLine2: "THE PLANET",
+      titleItalic: "together.",
+      desc: "Refurbished tech prevents harmful electronic waste and cuts carbon footprint. Every device saved counts towards a cleaner earth.",
+      img: "/homepage_top/eco_friendly_tech.png",
+      themeColor: "from-green-500 to-emerald-600 dark:from-green-400 dark:to-emerald-400",
+      bgGlow: "rgba(34, 197, 94, 0.15)",
+      specs: ["Carbon Neutral Shipping", "Offset E-Waste", "-14kg CO2e Avg"],
+      badgeA: "100% Carbon Offset",
+      badgeB: "-14kg CO2e Avg",
+      btnText: "Our Sustainability",
+      btnLink: "/sustainability",
+    },
+    {
+      index: "05",
+      tabTitle: "Fast Shipping",
+      tag: "Express Shipping",
+      titleLine1: "FREE NEXT-DAY",
+      titleLine2: "DELIVERY",
+      titleItalic: "as standard.",
+      desc: "Get your tech delivered straight to your door. Free next-day secure courier shipping on all orders. Dispatch before 2pm business days.",
+      img: "/homepage_top/fast_delivery.png",
+      themeColor: "from-purple-500 to-fuchsia-600 dark:from-purple-400 dark:to-fuchsia-400",
+      bgGlow: "rgba(168, 85, 247, 0.15)",
+      specs: ["Free Secure Courier", "Next-Day Delivery", "Dispatched by 2pm"],
+      badgeA: "Free Next-Day",
+      badgeB: "Secure Dispatch",
+      btnText: "Shop All Tech",
+      btnLink: "/shop",
+    },
+    {
+      index: "06",
+      tabTitle: "Expert Support",
+      tag: "Here to Help",
+      titleLine1: "PREMIUM CUSTOMER",
+      titleLine2: "SUPPORT",
+      titleItalic: "for life.",
+      desc: "Direct access to our dedicated customer support desk via live chat, email, or store visits. Your satisfaction is fully guaranteed.",
+      img: "/homepage_top/expert_support.png",
+      themeColor: "from-teal-500 to-cyan-600 dark:from-teal-400 dark:to-cyan-400",
+      bgGlow: "rgba(20, 184, 166, 0.15)",
+      specs: ["Direct Support Desk", "12-Month Coverage", "In-Store & Online"],
+      badgeA: "Direct Call/Chat",
+      badgeB: "12-Month Covered",
+      btnText: "Help Center",
+      btnLink: "/help",
     }
   ];
 
   useEffect(() => {
     const timer = setInterval(() => {
       setIdx((prev) => (prev + 1) % slides.length);
-    }, 6000);
+    }, 5000);
     return () => clearInterval(timer);
   }, [slides.length]);
 
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    setTilt({ x: x * 20, y: -y * 20 });
+  };
+
+  const handleMouseLeave = () => {
+    setTilt({ x: 0, y: 0 });
+  };
+
   return (
-    <section className="w-full relative overflow-hidden bg-white">
-      <div className={`w-full transition-colors duration-700 ease-in-out ${slides[idx].bg}`}>
-        <div className="mx-auto max-w-[1600px] px-6 lg:px-12 py-12 md:py-20">
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-12 relative z-10">
+    <section 
+      className="w-full min-h-[60vh] lg:min-h-[65vh] bg-zinc-50 dark:bg-zinc-950 border-b border-zinc-200/60 dark:border-zinc-900 relative overflow-hidden flex flex-col justify-between py-8 lg:py-10"
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+    >
+      {/* Background Ambient Radial Glow */}
+      <div 
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full blur-[180px] pointer-events-none transition-all duration-1000 ease-in-out opacity-25"
+        style={{ backgroundColor: slides[idx].bgGlow }}
+      />
+      
+      {/* Background Grid Pattern */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
+
+      {/* Main Showcase Stage */}
+      <div className="mx-auto w-full max-w-[1500px] px-4 sm:px-6 lg:px-12 flex-1 flex items-center relative z-10">
+        <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-center w-full">
+          
+          {/* Left Column: Rich Text details */}
+          <div className="lg:col-span-6 flex flex-col gap-4 items-start text-left relative">
             
-            {/* Left: Title & Branding */}
-            <div className="w-full lg:w-[35%] flex flex-col gap-6 text-center lg:text-left">
-              <motion.div
-                key={`title-${idx}`}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="flex flex-col"
-              >
-                <span className="text-[11px] font-black uppercase tracking-[0.3em] text-zinc-950/40 mb-3 block">Special Event</span>
-                <h2 className="font-bold text-4xl md:text-6xl text-zinc-950 tracking-tighter leading-[0.95]">
-                  <span className="font-sans text-3xl font-black align-top mr-2 opacity-30">«</span>
-                  {slides[idx].title}
-                </h2>
-              </motion.div>
-            </div>
-            
-            {/* Center: Image with Decorative Elements */}
-            <div className="w-full lg:w-[30%] flex justify-center relative">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={idx}
-                  initial={{ opacity: 0, scale: 0.9, rotate: -2 }}
-                  animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                  exit={{ opacity: 0, scale: 1.1, rotate: 2 }}
-                  transition={{ duration: 0.5, ease: "easeOut" }}
-                  className="relative z-10 h-64 md:h-80 w-full flex items-center justify-center"
-                >
-                  <div className="absolute inset-0 bg-white/20 blur-3xl rounded-full scale-75" />
-                  <img 
-                    src={slides[idx].img} 
-                    alt={slides[idx].title} 
-                    className="h-full object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.15)] mix-blend-multiply transition-transform hover:scale-105 duration-500" 
-                  />
-                </motion.div>
-              </AnimatePresence>
+            {/* Giant outlined index number in the background */}
+            <div className="absolute -top-16 lg:-top-20 -left-10 text-[12rem] lg:text-[18rem] font-serif font-black select-none pointer-events-none leading-none tracking-tighter text-zinc-300/30 dark:text-zinc-800/15">
+              {slides[idx].index}
             </div>
 
-            {/* Right: CTA & Footer Text */}
-            <div className="w-full lg:w-[35%] flex flex-col items-center lg:items-end text-center lg:text-right gap-8">
+            <AnimatePresence mode="wait">
               <motion.div
-                key={`text-${idx}`}
-                initial={{ opacity: 0, y: 10 }}
+                key={idx}
+                initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex flex-col items-center lg:items-end gap-6"
+                exit={{ opacity: 0, y: -15 }}
+                transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+                className="flex flex-col gap-4 items-start relative z-10"
               >
-                <p className="text-2xl md:text-3xl font-bold text-zinc-950 whitespace-pre-line leading-tight tracking-tight">
-                  {slides[idx].text}
-                </p>
-                <a 
-                  href={slides[idx].link} 
-                  className="group relative inline-flex h-14 px-10 items-center justify-center bg-zinc-950 text-white rounded-2xl font-bold text-sm overflow-hidden transition-all hover:pr-12"
-                >
-                  <span className="relative z-10">{slides[idx].btn}</span>
-                  <ArrowRight className="absolute right-4 h-4 w-4 opacity-0 group-hover:opacity-100 transition-all" />
-                  <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform" />
-                </a>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 shadow-sm text-[9px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-400">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  {slides[idx].tag}
+                </span>
+
+                <h1 className="font-sans text-[clamp(2.2rem,5vw,3.8rem)] font-black leading-[0.9] tracking-tighter text-zinc-950 dark:text-white uppercase">
+                  {slides[idx].titleLine1} <br />
+                  {slides[idx].titleLine2}{" "}
+                  <span className={`font-serif italic font-light lowercase tracking-normal bg-clip-text text-transparent bg-gradient-to-r ${slides[idx].themeColor}`}>
+                    {slides[idx].titleItalic}
+                  </span>
+                </h1>
+
+                <div className="flex flex-wrap items-center gap-4 mt-2">
+                  <a
+                    href={slides[idx].btnLink}
+                    className="group relative inline-flex h-12 pl-6 pr-10 items-center justify-center bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 rounded-2xl font-bold text-xs overflow-hidden transition-all hover:bg-zinc-900 dark:hover:bg-zinc-50 shadow-md hover:shadow-lg active:scale-97 cursor-pointer"
+                  >
+                    <span className="relative z-10">{slides[idx].btnText}</span>
+                    <ArrowRight className="absolute right-4.5 h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
+                    <div className="absolute inset-0 bg-white/10 dark:bg-black/5 translate-y-full group-hover:translate-y-0 transition-transform" />
+                  </a>
+                  
+                  <a
+                    href="/how-it-works"
+                    className="inline-flex h-12 px-5 items-center justify-center rounded-2xl border border-zinc-200/80 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/50 dark:hover:bg-zinc-900/50 transition-colors font-bold text-xs"
+                  >
+                    How it Works
+                  </a>
+                </div>
               </motion.div>
-              
-              <div className="mt-4">
-                <p className="text-[10px] font-medium text-zinc-600/70 tracking-wide">*Terms and conditions apply. Limited time offer.</p>
-              </div>
-            </div>
+            </AnimatePresence>
+
           </div>
+
+          {/* Right Column: 3D Curved Showcase Card */}
+          <div className="lg:col-span-6 flex justify-center items-center relative min-h-[300px] lg:min-h-[400px]">
+            
+            {/* Dynamic Card Glow mesh behind Card */}
+            <div className={`absolute w-72 h-72 rounded-full blur-[80px] bg-gradient-to-tr ${slides[idx].themeColor} opacity-20`} />
+
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, scale: 0.96, rotateY: 10 }}
+                animate={{ opacity: 1, scale: 1, rotateY: 0 }}
+                exit={{ opacity: 0, scale: 0.96, rotateY: -10 }}
+                transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                className="relative w-[260px] h-[260px] sm:w-[340px] sm:h-[340px] lg:w-[380px] lg:h-[380px] rounded-[2.5rem] bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border border-white/85 dark:border-zinc-800/85 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.08)] dark:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.3)] flex items-center justify-center p-6 group duration-200 ease-out cursor-grab active:cursor-grabbing"
+                style={{ 
+                  transformStyle: "preserve-3d", 
+                  transform: `perspective(1000px) rotateY(${tilt.x}deg) rotateX(${tilt.y}deg)` 
+                }}
+              >
+                {/* Surface Reflection layer */}
+                <div className="absolute inset-0 rounded-[2.5rem] bg-gradient-to-tr from-white/0 via-white/5 to-white/10 dark:from-white/0 dark:via-white/2 dark:to-white/5 pointer-events-none" />
+
+                {/* Floating Shadow Under Image */}
+                <div className="absolute bottom-6 w-[80%] h-4 bg-black/5 dark:bg-black/20 blur-lg rounded-full scale-y-20 transition-transform duration-700 group-hover:scale-95 [transform:translateZ(10px)]" />
+
+                {/* Service image with floating frame */}
+                <motion.img 
+                  src={slides[idx].img} 
+                  alt={slides[idx].tabTitle} 
+                  animate={{ y: [0, -6, 0] }}
+                  transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                  className="max-h-[85%] max-w-[85%] object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.1)] mix-blend-multiply dark:mix-blend-normal transition-transform duration-700 group-hover:scale-103 [transform:translateZ(40px)] pointer-events-none select-none" 
+                />
+
+                {/* Floating Badge A */}
+                <div className="absolute -top-2.5 -right-2.5 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 rounded-xl px-3 py-1.5 text-[9px] font-black shadow-md [transform:translateZ(60px)] select-none pointer-events-none border border-zinc-900 dark:border-zinc-100">
+                  {slides[idx].badgeA}
+                </div>
+
+                {/* Floating Badge B */}
+                <div className="absolute -bottom-2.5 -left-2.5 bg-emerald-500 text-white rounded-xl px-3 py-1.5 text-[9px] font-black shadow-md [transform:translateZ(60px)] select-none pointer-events-none">
+                  {slides[idx].badgeB}
+                </div>
+
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
         </div>
       </div>
 
-      {/* Pagination & Navigation */}
-      <div className="absolute bottom-8 left-0 right-0 flex items-center justify-between px-8 lg:px-16 pointer-events-none">
-        <div className="flex items-center gap-3 pointer-events-auto">
-          {slides.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setIdx(i)}
-              className="group relative h-8 w-8 flex items-center justify-center"
-            >
-              <div className={`h-1.5 rounded-full transition-all duration-300 ${idx === i ? "w-6 bg-zinc-950" : "w-1.5 bg-zinc-950/20 group-hover:bg-zinc-950/40"}`} />
-            </button>
-          ))}
-        </div>
-        
-        <div className="flex gap-2 pointer-events-auto">
-          <button 
-            onClick={() => setIdx(i => (i === 0 ? slides.length - 1 : i - 1))} 
-            className="h-12 w-12 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 text-zinc-950 flex items-center justify-center hover:bg-white transition-all shadow-sm active:scale-95"
-          >
-            <span className="text-xl font-light">‹</span>
-          </button>
-          <button 
-            onClick={() => setIdx(i => (i === slides.length - 1 ? 0 : i + 1))} 
-            className="h-12 w-12 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 text-zinc-950 flex items-center justify-center hover:bg-white transition-all shadow-sm active:scale-95"
-          >
-            <span className="text-xl font-light">›</span>
-          </button>
+      {/* Bottom Floating Navigation Dock */}
+      <div className="mx-auto w-full max-w-[1500px] px-4 sm:px-6 lg:px-12 mt-6 relative z-20">
+        <div className="flex justify-center">
+          <div className="flex items-center gap-1 p-1.5 rounded-3xl bg-white/70 dark:bg-zinc-900/70 backdrop-blur-md border border-zinc-200/50 dark:border-zinc-800/50 shadow-lg overflow-x-auto scrollbar-hide max-w-full">
+            {slides.map((s, i) => {
+              const isActive = idx === i;
+              return (
+                <button
+                  key={s.index}
+                  onClick={() => setIdx(i)}
+                  className={`relative flex items-center gap-2 px-3.5 py-2.5 rounded-2xl transition-all duration-350 cursor-pointer whitespace-nowrap ${
+                    isActive 
+                      ? "bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 shadow-md font-bold" 
+                      : "text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-zinc-100/50 dark:hover:bg-zinc-800/50 font-semibold"
+                  }`}
+                >
+                  <span className={`text-[9px] font-black tracking-wider ${isActive ? "opacity-60" : "text-zinc-400"}`}>
+                    {s.index}
+                  </span>
+                  
+                  <span className="text-xs tracking-tight">
+                    {s.tabTitle}
+                  </span>
+
+                  {/* Autoplay loading indicator on the active button */}
+                  {isActive && (
+                    <div className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full overflow-hidden bg-white/20 dark:bg-black/10">
+                      <motion.div 
+                        key={idx}
+                        initial={{ width: "0%" }}
+                        animate={{ width: "100%" }}
+                        transition={{ duration: 5, ease: "linear" }}
+                        className="h-full bg-white dark:bg-zinc-950"
+                      />
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
     </section>
   );
 }
+
 
 // ─── Marquee Strip ────────────────────────────────────────────────────────────
 function MarqueeStrip() {
