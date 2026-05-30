@@ -4,7 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   LayoutDashboard, Package, RefreshCw, Wrench, ShoppingBag,
-  SlidersHorizontal, BarChart3, LogOut, ChevronRight, ListPlus, MapPin, TrendingUp, HeadphonesIcon, Star, Phone, DatabaseZap
+  SlidersHorizontal, BarChart3, LogOut, ChevronRight, ListPlus, MapPin, TrendingUp, HeadphonesIcon, Star, Phone, DatabaseZap, Layers
 } from "lucide-react";
 import { useAdminAuth } from "../context/auth-context";
 
@@ -14,6 +14,7 @@ const NAV = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/products", label: "Products", icon: Package, section: "Catalog" },
   { href: "/catalog", label: "Device Catalog", icon: ListPlus },
+  { href: "/catalog-mgmt", label: "Categories & Brands", icon: Layers },
   { href: "/seed", label: "Seed Database", icon: DatabaseZap },
   { href: "/trade-ins", label: "Trade-Ins", icon: RefreshCw, section: "Operations" },
   { href: "/repairs", label: "Repairs", icon: Wrench },

@@ -61,10 +61,75 @@ export const deviceCatalogApi = {
     apiFetch<{ message: string }>('/device-catalog/all', { method: 'DELETE' }),
 };
 
-// ── Catalog Brand-Categories ───────────────────────────────────────────────────
+// ── Catalog management (categories, brands, brand-categories) ─────────────────
+export interface CatalogCategoryItem {
+  id: string; name: string; slug: string; description?: string;
+  image?: string; isActive: boolean; createdAt: string; updatedAt: string;
+}
+export interface CatalogBrandItem {
+  id: string; name: string; slug: string; logo?: string;
+  isActive: boolean; createdAt: string; updatedAt: string;
+}
+
+export const catalogCategoriesApi = {
+  list: (includeInactive?: boolean) =>
+    apiFetch<CatalogCategoryItem[]>(`/catalog/categories${includeInactive ? '?includeInactive=true' : ''}`),
+  create: (data: { name: string; slug: string; description?: string; isActive?: boolean }) =>
+    apiFetch<CatalogCategoryItem>('/catalog/categories', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: Partial<{ name: string; slug: string; description: string; isActive: boolean }>) =>
+    apiFetch<CatalogCategoryItem>(`/catalog/categories/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  delete: (id: string) => apiFetch<void>(`/catalog/categories/${id}`, { method: 'DELETE' }),
+  uploadImage: async (id: string, file: File) => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('ts_admin_token') : null;
+    const fd = new FormData(); fd.append('file', file);
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const res = await fetch(`${API_BASE}/catalog/categories/${id}/image`, { method: 'POST', headers, body: fd });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message ?? res.statusText);
+    return res.json();
+  },
+};
+
+export const catalogBrandsApi = {
+  list: (includeInactive?: boolean) =>
+    apiFetch<CatalogBrandItem[]>(`/catalog/brands${includeInactive ? '?includeInactive=true' : ''}`),
+  create: (data: { name: string; slug: string; isActive?: boolean }) =>
+    apiFetch<CatalogBrandItem>('/catalog/brands', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: Partial<{ name: string; slug: string; isActive: boolean }>) =>
+    apiFetch<CatalogBrandItem>(`/catalog/brands/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  delete: (id: string) => apiFetch<void>(`/catalog/brands/${id}`, { method: 'DELETE' }),
+  uploadLogo: async (id: string, file: File) => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('ts_admin_token') : null;
+    const fd = new FormData(); fd.append('file', file);
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const res = await fetch(`${API_BASE}/catalog/brands/${id}/logo`, { method: 'POST', headers, body: fd });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message ?? res.statusText);
+    return res.json();
+  },
+};
+
 export const catalogBrandCategoryApi = {
-  list: () =>
-    apiFetch<BrandCategoryOption[]>('/catalog/brand-categories?includeInactive=true'),
+  list: (opts?: { includeInactive?: boolean; brandId?: string }) => {
+    const q = new URLSearchParams();
+    if (opts?.includeInactive) q.set('includeInactive', 'true');
+    if (opts?.brandId) q.set('brandId', opts.brandId);
+    return apiFetch<BrandCategoryOption[]>(`/catalog/brand-categories?${q}`);
+  },
+  create: (data: { brandId: string; categoryId: string }) =>
+    apiFetch<BrandCategoryOption>('/catalog/brand-categories', { method: 'POST', body: JSON.stringify(data) }),
+  delete: (id: string) => apiFetch<void>(`/catalog/brand-categories/${id}`, { method: 'DELETE' }),
+  deleteImage: (id: string, imageKey: string) =>
+    apiFetch<BrandCategoryOption>(`/catalog/brand-categories/${id}/images/${encodeURIComponent(imageKey)}`, { method: 'DELETE' }),
+  uploadImage: async (id: string, file: File) => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('ts_admin_token') : null;
+    const fd = new FormData(); fd.append('file', file);
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const res = await fetch(`${API_BASE}/catalog/brand-categories/${id}/images`, { method: 'POST', headers, body: fd });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message ?? res.statusText);
+    return res.json();
+  },
 };
 
 // ── Stores ────────────────────────────────────────────────────────────────────
@@ -415,9 +480,14 @@ export interface DeviceCatalogItem {
 
 export interface BrandCategoryOption {
   id: string;
+  brandId: string;
   brand: { id: string; name: string; slug: string };
+  categoryId: string;
   category: { id: string; name: string; slug: string };
+  images: string[];
   isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface DashboardData {
