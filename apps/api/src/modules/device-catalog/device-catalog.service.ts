@@ -10,38 +10,53 @@ export class DeviceCatalogService {
         private readonly storage: StorageService,
     ) {}
 
-    findAll(params?: { category?: string; search?: string; isActive?: boolean }) {
+    findAll(params?: { categorySlug?: string; brandSlug?: string; search?: string; isActive?: boolean }) {
         const where: Record<string, unknown> = {};
-        if (params?.category) where.category = params.category;
         if (params?.isActive !== undefined) where.isActive = params.isActive;
-        if (params?.search) {
-            where.OR = [
-                { brand: { contains: params.search, mode: 'insensitive' } },
-                { model: { contains: params.search, mode: 'insensitive' } },
-            ];
+        if (params?.categorySlug) {
+            where.brandCategory = { category: { slug: params.categorySlug } };
         }
-        return this.prisma.deviceCatalog.findMany({ where, orderBy: [{ brand: 'asc' }, { model: 'asc' }] });
+        if (params?.brandSlug) {
+            where.brandCategory = { brand: { slug: params.brandSlug } };
+        }
+        if (params?.search) {
+            where.model = { contains: params.search, mode: 'insensitive' };
+        }
+        return this.prisma.deviceCatalog.findMany({
+            where,
+            include: { brandCategory: { include: { brand: true, category: true } } },
+            orderBy: { model: 'asc' },
+        });
     }
 
     create(dto: UpsertDeviceDto) {
-        return this.prisma.deviceCatalog.create({ data: dto });
+        return this.prisma.deviceCatalog.create({
+            data: dto,
+            include: { brandCategory: { include: { brand: true, category: true } } },
+        });
     }
 
     async update(id: string, dto: Partial<UpsertDeviceDto>) {
         const existing = await this.prisma.deviceCatalog.findUnique({ where: { id } });
         if (!existing) throw new NotFoundException('Device not found');
-        return this.prisma.deviceCatalog.update({ where: { id }, data: dto });
+        return this.prisma.deviceCatalog.update({
+            where: { id },
+            data: dto,
+            include: { brandCategory: { include: { brand: true, category: true } } },
+        });
     }
 
     async findOne(id: string) {
-        const item = await this.prisma.deviceCatalog.findUnique({ where: { id } });
+        const item = await this.prisma.deviceCatalog.findUnique({
+            where: { id },
+            include: { brandCategory: { include: { brand: true, category: true } } },
+        });
         if (!item) throw new NotFoundException('Device not found');
         return item;
     }
 
     async remove(id: string) {
         if (id === 'all') {
-            // Collect all product image keys before deleting
             const products = await this.prisma.product.findMany({ select: { images: true } });
             const imageKeys = products.flatMap(p => p.images as string[]).filter(Boolean);
 
@@ -49,7 +64,6 @@ export class DeviceCatalogService {
             await this.prisma.product.deleteMany({});
             await this.prisma.deviceCatalog.deleteMany({});
 
-            // Delete images from Garage after DB records are gone
             await this.storage.deleteFiles(imageKeys);
 
             return { message: 'All devices and products deleted' };
@@ -57,7 +71,6 @@ export class DeviceCatalogService {
         const existing = await this.prisma.deviceCatalog.findUnique({ where: { id } });
         if (!existing) throw new NotFoundException('Device not found');
 
-        // Cascade-delete linked products + their Garage images
         const linkedProducts = await this.prisma.product.findMany({
             where: { catalogId: id },
             select: { id: true, images: true },

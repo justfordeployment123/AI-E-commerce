@@ -11,7 +11,15 @@ function slugify(text: string): string {
         .replace(/(^-|-$)/g, '');
 }
 
-const CATALOG_INCLUDE = { catalog: { select: { brand: true, model: true, category: true } } } as const;
+const CATALOG_INCLUDE = {
+    catalog: {
+        include: {
+            brandCategory: {
+                include: { brand: true, category: true },
+            },
+        },
+    },
+} as const;
 
 @Injectable()
 export class ProductsService {
@@ -28,25 +36,28 @@ export class ProductsService {
         return {
             ...rest,
             images: images.filter(Boolean) as string[],
-            brand: catalog?.brand ?? '',
+            brand: catalog?.brandCategory?.brand?.name ?? '',
             model: catalog?.model ?? '',
-            category: catalog?.category ?? '',
+            category: catalog?.brandCategory?.category?.name ?? '',
         };
     }
 
     async create(dto: CreateProductDto) {
-        const catalog = await this.prisma.deviceCatalog.findUnique({ where: { id: dto.catalogId } });
+        const catalog = await this.prisma.deviceCatalog.findUnique({
+            where: { id: dto.catalogId },
+            include: { brandCategory: { include: { brand: true } } },
+        });
         if (!catalog) throw new NotFoundException('Device catalog entry not found');
 
+        const brandName = catalog.brandCategory.brand.name;
         const storage = dto.storage ?? '';
-        const baseSlug = slugify(`${catalog.brand}-${catalog.model}-${dto.condition}${storage ? `-${storage}` : ''}`);
+        const baseSlug = slugify(`${brandName}-${catalog.model}-${dto.condition}${storage ? `-${storage}` : ''}`);
         let slug = baseSlug;
         let counter = 1;
         while (await this.prisma.product.findUnique({ where: { slug } })) {
             slug = `${baseSlug}-${counter++}`;
         }
 
-        // Add storage to catalog's storageOptions if not already there
         if (storage && !(catalog.storageOptions as string[]).includes(storage)) {
             await this.prisma.deviceCatalog.update({
                 where: { id: dto.catalogId },
@@ -85,15 +96,17 @@ export class ProductsService {
         }
 
         const catalogWhere: Record<string, unknown> = {};
-        if (category) catalogWhere.category = { equals: category, mode: 'insensitive' };
-        if (brand) catalogWhere.brand = { equals: brand, mode: 'insensitive' };
+        const brandCategoryWhere: Record<string, unknown> = {};
+        if (category) brandCategoryWhere.category = { name: { equals: category, mode: 'insensitive' } };
+        if (brand) brandCategoryWhere.brand = { name: { equals: brand, mode: 'insensitive' } };
+        if (Object.keys(brandCategoryWhere).length > 0) catalogWhere.brandCategory = brandCategoryWhere;
         if (Object.keys(catalogWhere).length > 0) where.catalog = { is: catalogWhere };
 
         if (search) {
             where.OR = [
                 { name: { contains: search, mode: 'insensitive' } },
-                { catalog: { is: { brand: { contains: search, mode: 'insensitive' } } } },
                 { catalog: { is: { model: { contains: search, mode: 'insensitive' } } } },
+                { catalog: { is: { brandCategory: { is: { brand: { is: { name: { contains: search, mode: 'insensitive' } } } } } } } },
             ];
         }
 
@@ -107,25 +120,28 @@ export class ProductsService {
     }
 
     async getBrands(category?: string) {
-        const catalogWhere: Record<string, unknown> = { isActive: true };
-        if (category) catalogWhere.category = { equals: category, mode: 'insensitive' };
+        const bcWhere: Record<string, unknown> = { isActive: true };
+        if (category) bcWhere.category = { name: { equals: category, mode: 'insensitive' } };
 
-        const rows = await this.prisma.deviceCatalog.findMany({
-            where: catalogWhere,
-            select: { brand: true },
-            distinct: ['brand'],
-            orderBy: { brand: 'asc' },
+        const brandCategories = await this.prisma.brandCategory.findMany({
+            where: bcWhere,
+            include: { brand: true },
+            distinct: ['brandId'],
+            orderBy: { brand: { name: 'asc' } },
         });
 
         const result: { brand: string; image: string | null }[] = [];
-        for (const row of rows) {
+        for (const bc of brandCategories) {
             const product = await this.prisma.product.findFirst({
-                where: { catalog: { is: { brand: row.brand } }, isActive: true },
+                where: {
+                    catalog: { is: { brandCategory: { is: { brandId: bc.brandId } } } },
+                    isActive: true,
+                },
                 select: { images: true },
             });
             const images = product?.images as string[] | null;
             const resolved = images?.[0] ? await this.storage.resolveImageUrl(images[0]) : null;
-            result.push({ brand: row.brand, image: resolved });
+            result.push({ brand: bc.brand.name, image: resolved });
         }
         return result;
     }

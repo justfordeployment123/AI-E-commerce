@@ -29,6 +29,7 @@ import { PaymentsModule } from './modules/payments/payments.module';
 import { SupportModule } from './modules/support/support.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
 import { SeedModule } from './modules/seed/seed.module';
+import { CatalogModule } from './modules/catalog/catalog.module';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { SeedModule } from './modules/seed/seed.module';
     SupportModule,
     ReviewsModule,
     SeedModule,
+    CatalogModule,
   ],
   controllers: [AppController],
   providers: [

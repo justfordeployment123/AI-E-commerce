@@ -11,12 +11,14 @@ export class DeviceCatalogController {
 
     @Get()
     findAll(
-        @Query('category') category?: string,
+        @Query('categorySlug') categorySlug?: string,
+        @Query('brandSlug') brandSlug?: string,
         @Query('search') search?: string,
         @Query('isActive') isActive?: string,
     ) {
         return this.service.findAll({
-            category,
+            categorySlug,
+            brandSlug,
             search,
             isActive: isActive !== undefined ? isActive === 'true' : undefined,
         });

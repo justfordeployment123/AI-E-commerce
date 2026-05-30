@@ -123,24 +123,26 @@ export class AdminService {
             }).then(async (rows) => {
                 const products = await this.prisma.product.findMany({
                     where: { id: { in: rows.map((r) => r.productId) } },
-                    select: { id: true, name: true, catalog: { select: { category: true } } },
+                    select: { id: true, name: true, catalog: { include: { brandCategory: { include: { category: true } } } } },
                 });
                 const byId = Object.fromEntries(products.map((p) => [p.id, p]));
                 return rows.map((r) => ({
                     productId: r.productId,
                     name: byId[r.productId]?.name ?? 'Unknown',
-                    category: byId[r.productId]?.catalog?.category ?? '—',
+                    category: byId[r.productId]?.catalog?.brandCategory?.category?.name ?? '—',
                     units: r._sum.quantity ?? 0,
                     revenue: r._sum.price ?? 0,
                 }));
             }),
             // Category split using a single aggregated query
             this.prisma.$queryRaw<{ category: string; total: bigint }[]>`
-                SELECT dc.category, SUM(oi.quantity)::bigint AS total
+                SELECT c.name AS category, SUM(oi.quantity)::bigint AS total
                 FROM order_items oi
                 JOIN products p ON oi."productId" = p.id
                 JOIN device_catalog dc ON p."catalogId" = dc.id
-                GROUP BY dc.category
+                JOIN brand_categories bc ON dc."brandCategoryId" = bc.id
+                JOIN categories c ON bc."categoryId" = c.id
+                GROUP BY c.name
                 ORDER BY total DESC
             `.then((rows) => {
                 const grand = rows.reduce((s, r) => s + Number(r.total), 0);

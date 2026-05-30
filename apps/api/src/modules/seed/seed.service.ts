@@ -131,14 +131,57 @@ export class SeedService {
     }
 
     private async seedDeviceCatalog(): Promise<number> {
-        // Must clear in FK-dependency order before recreating
         await this.prisma.orderItem.deleteMany({});
         await this.prisma.product.deleteMany({});
         await this.prisma.deviceCatalog.deleteMany({});
 
+        // Cache brand/category/brandCategory lookups to avoid repeated DB hits
+        const brandCache = new Map<string, string>();
+        const categoryCache = new Map<string, string>();
+        const bcCache = new Map<string, string>();
+
+        const findOrCreateBrand = async (name: string) => {
+            if (brandCache.has(name)) return brandCache.get(name)!;
+            const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+            const brand = await this.prisma.brand.upsert({
+                where: { slug },
+                update: {},
+                create: { name, slug },
+            });
+            brandCache.set(name, brand.id);
+            return brand.id;
+        };
+
+        const findOrCreateCategory = async (slug: string) => {
+            if (categoryCache.has(slug)) return categoryCache.get(slug)!;
+            const name = slug.charAt(0).toUpperCase() + slug.slice(1);
+            const cat = await this.prisma.category.upsert({
+                where: { slug },
+                update: {},
+                create: { name, slug },
+            });
+            categoryCache.set(slug, cat.id);
+            return cat.id;
+        };
+
+        const findOrCreateBrandCategory = async (brandId: string, categoryId: string) => {
+            const key = `${brandId}::${categoryId}`;
+            if (bcCache.has(key)) return bcCache.get(key)!;
+            const bc = await this.prisma.brandCategory.upsert({
+                where: { brandId_categoryId: { brandId, categoryId } },
+                update: {},
+                create: { brandId, categoryId },
+            });
+            bcCache.set(key, bc.id);
+            return bc.id;
+        };
+
         for (const dev of DEVICE_CATALOG) {
+            const brandId = await findOrCreateBrand(dev.brand);
+            const categoryId = await findOrCreateCategory(dev.category);
+            const brandCategoryId = await findOrCreateBrandCategory(brandId, categoryId);
             await this.prisma.deviceCatalog.create({
-                data: { brand: dev.brand, model: dev.model, category: dev.category, storageOptions: dev.storageOptions, isActive: true },
+                data: { brandCategoryId, model: dev.model, storageOptions: dev.storageOptions, isActive: true },
             });
         }
         this.logger.log(`Seeded ${DEVICE_CATALOG.length} device catalog entries`);
@@ -176,10 +219,10 @@ export class SeedService {
 
         // Build brand::model → catalogId lookup from what was just seeded
         const catalogEntries = await this.prisma.deviceCatalog.findMany({
-            select: { id: true, brand: true, model: true },
+            select: { id: true, model: true, brandCategory: { include: { brand: true } } },
         });
         const catalogMap = new Map<string, string>(
-            catalogEntries.map(e => [`${e.brand}::${e.model}`, e.id]),
+            catalogEntries.map(e => [`${e.brandCategory.brand.name}::${e.model}`, e.id]),
         );
 
         for (const prod of productsData) {
@@ -191,13 +234,32 @@ export class SeedService {
                 let catalogId = catalogMap.get(`${brand}::${model}`);
                 if (!catalogId) {
                     const storage = (prod.specs?.Storage || prod.specs?.storage || '') as string;
+                    const categorySlug = this.normalizeCategory(prod.category ?? 'phones');
+                    const brandSlug = brand.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
+                    const brandRecord = await this.prisma.brand.upsert({
+                        where: { slug: brandSlug },
+                        update: {},
+                        create: { name: brand, slug: brandSlug },
+                    });
+                    const catName = categorySlug.charAt(0).toUpperCase() + categorySlug.slice(1);
+                    const catRecord = await this.prisma.category.upsert({
+                        where: { slug: categorySlug },
+                        update: {},
+                        create: { name: catName, slug: categorySlug },
+                    });
+                    const bc = await this.prisma.brandCategory.upsert({
+                        where: { brandId_categoryId: { brandId: brandRecord.id, categoryId: catRecord.id } },
+                        update: {},
+                        create: { brandId: brandRecord.id, categoryId: catRecord.id },
+                    });
+
                     const entry = await this.prisma.deviceCatalog.upsert({
-                        where: { brand_model: { brand, model } },
+                        where: { brandCategoryId_model: { brandCategoryId: bc.id, model } },
                         update: {},
                         create: {
-                            brand,
+                            brandCategoryId: bc.id,
                             model,
-                            category: this.normalizeCategory(prod.category ?? 'phones'),
                             storageOptions: storage ? [storage] : [],
                             isActive: true,
                         },
