@@ -60,14 +60,14 @@ export default function CatalogDetailPage() {
             setProducts(
               prodList.items.filter(p =>
                 p.catalogId === devItem.id ||
-                (p.brand?.toLowerCase() === devItem.brand.toLowerCase() &&
+                (p.brand?.toLowerCase() === devItem.brandCategory.brand.name.toLowerCase() &&
                  p.model?.toLowerCase() === devItem.model.toLowerCase()),
               ),
             ),
           )
           .catch(() => {});
 
-        scraperApi.devicePrices(devItem.brand, devItem.model)
+        scraperApi.devicePrices(devItem.brandCategory.brand.name, devItem.model)
           .then(setPrices)
           .catch(() => {});
       } catch (err: any) {
@@ -84,11 +84,11 @@ export default function CatalogDetailPage() {
     setScrapeMsg("");
     try {
       // Scrape only this device's storage variants — much faster than the full catalog scrape
-      const res = await scraperApi.scrapeDevice(device.brand, device.model);
+      const res = await scraperApi.scrapeDevice(device.brandCategory.brand.name, device.model);
       setScrapeMsg(res.message);
       // Reload prices after 15 s to allow per-storage scrapes to finish
       setTimeout(async () => {
-        const fresh = await scraperApi.devicePrices(device.brand, device.model).catch(() => null);
+        const fresh = await scraperApi.devicePrices(device.brandCategory.brand.name, device.model).catch(() => null);
         if (fresh) setPrices(fresh);
         setScrapeMsg("");
       }, 15000);
@@ -123,7 +123,7 @@ export default function CatalogDetailPage() {
     );
   }
 
-  const meta       = CATEGORY_META[device.category] ?? CATEGORY_META.phones;
+  const meta       = CATEGORY_META[device.brandCategory.category.slug] ?? CATEGORY_META.phones;
   const Icon       = meta.icon;
   const totalStock = products.reduce((acc, p) => acc + p.stock, 0);
   const scrapeIsError = scrapeMsg.toLowerCase().includes("fail") || scrapeMsg.toLowerCase().includes("error");
@@ -153,7 +153,7 @@ export default function CatalogDetailPage() {
                 {device.isActive ? "Active" : "Inactive"}
               </span>
             </div>
-            <h1 className="text-3xl font-extrabold text-zinc-950 mb-1 leading-tight">{device.brand} {device.model}</h1>
+            <h1 className="text-3xl font-extrabold text-zinc-950 mb-1 leading-tight">{device.brandCategory.brand.name} {device.model}</h1>
             <p className="text-zinc-400 text-xs font-medium">Device Catalog ID: <span className="font-mono text-[10px]">{device.id}</span></p>
             <div className="mt-6">
               <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-400 mb-2">Configured Storage Variants</h3>

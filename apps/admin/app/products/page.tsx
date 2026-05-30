@@ -72,7 +72,7 @@ export default function ProductsPage() {
 
   const filteredCatalog = catalogDevices.filter(d => {
     const q = deviceQuery.toLowerCase();
-    return !q || d.brand.toLowerCase().includes(q) || d.model.toLowerCase().includes(q);
+    return !q || d.brandCategory.brand.name.toLowerCase().includes(q) || d.model.toLowerCase().includes(q);
   });
 
   function openAdd() {
@@ -104,9 +104,9 @@ export default function ProductsPage() {
   function selectCatalogDevice(dev: DeviceCatalogItem) {
     const firstStorage = dev.storageOptions[0] ?? "";
     setSelectedDevice(dev);
-    setDeviceQuery(`${dev.brand} ${dev.model}`);
+    setDeviceQuery(`${dev.brandCategory.brand.name} ${dev.model}`);
     setPickerOpen(false);
-    const suggestedName = `${dev.brand} ${dev.model}${firstStorage ? ` ${firstStorage}` : ""}`;
+    const suggestedName = `${dev.brandCategory.brand.name} ${dev.model}${firstStorage ? ` ${firstStorage}` : ""}`;
     setFormData(f => ({
       ...f,
       catalogId: dev.id,
@@ -379,11 +379,11 @@ export default function ProductsPage() {
                                     className="w-full text-left px-4 py-3 text-sm hover:bg-zinc-50 flex items-center gap-3 border-b border-zinc-50 last:border-0"
                                   >
                                     <div className="flex-1 min-w-0">
-                                      <span className="font-bold text-zinc-900">{dev.brand}</span>{" "}
+                                      <span className="font-bold text-zinc-900">{dev.brandCategory.brand.name}</span>{" "}
                                       <span className="text-zinc-700">{dev.model}</span>
                                     </div>
                                     <div className="flex items-center gap-2 shrink-0">
-                                      <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">{dev.category}</span>
+                                      <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">{dev.brandCategory.category.slug}</span>
                                       {!dev.isActive && (
                                         <span className="text-[10px] font-bold uppercase tracking-widest text-amber-500 bg-amber-50 px-1.5 py-0.5 rounded">inactive</span>
                                       )}
@@ -401,8 +401,8 @@ export default function ProductsPage() {
                     {selectedDevice ? (
                       <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 border border-emerald-100 rounded-xl text-xs">
                         <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                        <span className="font-bold text-emerald-800">{selectedDevice.brand} {selectedDevice.model}</span>
-                        <span className="text-emerald-600">· {CAT_MAP[selectedDevice.category] ?? selectedDevice.category}</span>
+                        <span className="font-bold text-emerald-800">{selectedDevice.brandCategory.brand.name} {selectedDevice.model}</span>
+                        <span className="text-emerald-600">· {CAT_MAP[selectedDevice.brandCategory.category.slug] ?? selectedDevice.brandCategory.category.slug}</span>
                         <span className="text-emerald-500 ml-auto">{selectedDevice.storageOptions.length} storage option{selectedDevice.storageOptions.length !== 1 ? "s" : ""}</span>
                       </div>
                     ) : (
@@ -452,7 +452,7 @@ export default function ProductsPage() {
                           setFormData(f => ({
                             ...f,
                             storage: newStorage,
-                            name: `${selectedDevice.brand} ${selectedDevice.model}${newStorage ? ` ${newStorage}` : ""}`,
+                            name: `${selectedDevice.brandCategory.brand.name} ${selectedDevice.model}${newStorage ? ` ${newStorage}` : ""}`,
                           }));
                         }}
                         className="h-12 w-full rounded-[0.875rem] border-2 border-zinc-200 pl-4 pr-10 text-sm font-medium outline-none focus:border-black transition-colors bg-white appearance-none"

@@ -42,23 +42,29 @@ export const adminApi = {
 
 // ── Device Catalog ────────────────────────────────────────────────────────────
 export const deviceCatalogApi = {
-  list: (params?: { category?: string; search?: string }) => {
+  list: (params?: { categorySlug?: string; brandSlug?: string; search?: string }) => {
     const q = new URLSearchParams();
-    if (params?.category) q.set('category', params.category);
+    if (params?.categorySlug) q.set('categorySlug', params.categorySlug);
+    if (params?.brandSlug) q.set('brandSlug', params.brandSlug);
     if (params?.search) q.set('search', params.search);
     return apiFetch<DeviceCatalogItem[]>(`/device-catalog?${q}`, { auth: false });
   },
   getById: (id: string) =>
     apiFetch<DeviceCatalogItem>(`/device-catalog/${id}`, { auth: false }),
-  create: (data: Omit<DeviceCatalogItem, 'id' | 'createdAt' | 'updatedAt'>) =>
+  create: (data: { brandCategoryId: string; model: string; storageOptions: string[]; isActive?: boolean }) =>
     apiFetch<DeviceCatalogItem>('/device-catalog', { method: 'POST', body: JSON.stringify(data) }),
-  update: (id: string, data: Partial<Omit<DeviceCatalogItem, 'id' | 'createdAt' | 'updatedAt'>>) =>
+  update: (id: string, data: Partial<{ brandCategoryId: string; model: string; storageOptions: string[]; isActive: boolean }>) =>
     apiFetch<DeviceCatalogItem>(`/device-catalog/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   remove: (id: string) =>
     apiFetch<void>(`/device-catalog/${id}`, { method: 'DELETE' }),
-
   removeAll: () =>
     apiFetch<{ message: string }>('/device-catalog/all', { method: 'DELETE' }),
+};
+
+// ── Catalog Brand-Categories ───────────────────────────────────────────────────
+export const catalogBrandCategoryApi = {
+  list: () =>
+    apiFetch<BrandCategoryOption[]>('/catalog/brand-categories?includeInactive=true'),
 };
 
 // ── Stores ────────────────────────────────────────────────────────────────────
@@ -394,13 +400,24 @@ export interface AnalyticsData {
 
 export interface DeviceCatalogItem {
   id: string;
-  brand: string;
+  brandCategoryId: string;
+  brandCategory: {
+    id: string;
+    brand: { id: string; name: string; slug: string; logo?: string };
+    category: { id: string; name: string; slug: string };
+  };
   model: string;
-  category: string;
   storageOptions: string[];
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface BrandCategoryOption {
+  id: string;
+  brand: { id: string; name: string; slug: string };
+  category: { id: string; name: string; slug: string };
+  isActive: boolean;
 }
 
 export interface DashboardData {
