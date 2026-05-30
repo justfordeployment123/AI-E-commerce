@@ -45,6 +45,11 @@ export default function Navbar() {
     const nextTheme = theme === "dark" ? "light" : "dark";
     setTheme(nextTheme);
     document.documentElement.setAttribute("data-theme", nextTheme);
+    if (nextTheme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
     localStorage.setItem("ts-theme", nextTheme);
   };
 
@@ -92,11 +97,16 @@ export default function Navbar() {
                 {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
               </button>
               
-              <Link href="/" className="flex items-center">
+              <Link href="/" className="flex items-center select-none">
                 <img
-                  src={mounted && theme === "dark" ? "/Icon/logo_white.png" : "/Icon/logo_black.png"}
+                  src="/Icon/logo_black.png"
                   alt="TechStop Leicester"
-                  className="h-8 md:h-9 w-auto object-contain"
+                  className="h-8 md:h-9 w-auto object-contain block dark:hidden"
+                />
+                <img
+                  src="/Icon/logo_white.png"
+                  alt="TechStop Leicester"
+                  className="h-8 md:h-9 w-auto object-contain hidden dark:block"
                 />
               </Link>
             </div>

@@ -51,8 +51,17 @@ export default function SignupPage() {
             Back to home
           </a>
           <div className="text-center lg:text-left">
-            <a href="/" className="text-2xl font-bold tracking-tighter inline-block mb-3 select-none">
-              TECH<span className="text-accent">STOP</span><span className="text-zinc-450 dark:text-zinc-550 font-medium">LEICESTER</span>
+            <a href="/" className="inline-block mb-3 select-none">
+              <img
+                src="/Icon/logo_black.png"
+                alt="TechStop Leicester"
+                className="h-7 w-auto object-contain block dark:hidden"
+              />
+              <img
+                src="/Icon/logo_white.png"
+                alt="TechStop Leicester"
+                className="h-7 w-auto object-contain hidden dark:block"
+              />
             </a>
             <h1 className="font-serif text-4xl md:text-5xl font-medium leading-[1.1] mb-2 text-zinc-950 dark:text-white">Start your <i>journey</i>.</h1>
             <p className="text-zinc-500 font-medium text-sm">Join 2M+ users saving the planet with premium tech.</p>

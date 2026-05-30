@@ -25,9 +25,14 @@ export default function Footer() {
           <div className="lg:col-span-1">
             <a href="/">
               <img
-                src={mounted && theme === "dark" ? "/Icon/logo_white.png" : "/Icon/logo_black.png"}
+                src="/Icon/logo_black.png"
                 alt="TechStop Leicester"
-                className="h-9 w-auto object-contain"
+                className="h-9 w-auto object-contain block dark:hidden"
+              />
+              <img
+                src="/Icon/logo_white.png"
+                alt="TechStop Leicester"
+                className="h-9 w-auto object-contain hidden dark:block"
               />
             </a>
             <p className="mt-8 text-zinc-500 leading-relaxed font-medium">

@@ -58,8 +58,17 @@ function LoginForm() {
             Back to home
           </a>
           <div className="text-center lg:text-left">
-            <a href="/" className="text-2xl font-bold tracking-tighter inline-block mb-3 select-none">
-              TECH<span className="text-accent">STOP</span><span className="text-zinc-450 dark:text-zinc-550 font-medium">LEICESTER</span>
+            <a href="/" className="inline-block mb-3 select-none">
+              <img
+                src="/Icon/logo_black.png"
+                alt="TechStop Leicester"
+                className="h-7 w-auto object-contain block dark:hidden"
+              />
+              <img
+                src="/Icon/logo_white.png"
+                alt="TechStop Leicester"
+                className="h-7 w-auto object-contain hidden dark:block"
+              />
             </a>
             <h1 className="font-serif text-4xl md:text-5xl font-medium leading-[1.1] mb-2 text-zinc-950 dark:text-white">Welcome <i>back</i>.</h1>
             <p className="text-zinc-500 font-medium text-sm">Log in to track your tech and manage your sell-ins.</p>

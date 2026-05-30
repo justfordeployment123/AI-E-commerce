@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Newsreader, Outfit } from "next/font/google";
+import { Geist, Geist_Mono, Inter, Plus_Jakarta_Sans, Playfair_Display, Lora } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "../context/auth-context";
 import { CartProvider } from "../context/cart-context";
@@ -16,15 +16,26 @@ const geistMono = Geist_Mono({
   display: "swap",
 });
 
-const newsreader = Newsreader({
-  variable: "--font-serif",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
-  style: ["normal", "italic"],
   display: "swap",
 });
 
-const outfit = Outfit({
-  variable: "--font-outfit",
+const plusJakartaSans = Plus_Jakarta_Sans({
+  variable: "--font-plus-jakarta",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const playfairDisplay = Playfair_Display({
+  variable: "--font-playfair",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const lora = Lora({
+  variable: "--font-lora",
   subsets: ["latin"],
   display: "swap",
 });
@@ -49,7 +60,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${newsreader.variable} ${outfit.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} ${plusJakartaSans.variable} ${playfairDisplay.variable} ${lora.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>
@@ -59,8 +70,13 @@ export default function RootLayout({
               (function() {
                 try {
                   var theme = localStorage.getItem('ts-theme');
-                  if (theme) {
-                    document.documentElement.setAttribute('data-theme', theme);
+                  var systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                  if (theme === 'dark' || (!theme && systemDark)) {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    document.documentElement.classList.add('dark');
+                  } else {
+                    document.documentElement.setAttribute('data-theme', 'light');
+                    document.documentElement.classList.remove('dark');
                   }
                 } catch (e) {}
               })();
