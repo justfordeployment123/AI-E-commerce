@@ -238,18 +238,62 @@ model Store {
   @@map("stores")
 }
 
-model DeviceCatalog {
-  id             String    @id @default(uuid())
-  brand          String
-  model          String
-  category       String
-  storageOptions String[]
-  isActive       Boolean   @default(true)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  products       Product[]
+model Category {
+  id              String          @id @default(uuid())
+  name            String          @unique
+  slug            String          @unique
+  description     String?
+  image           String?
+  isActive        Boolean         @default(true)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  brandCategories BrandCategory[]
 
-  @@unique([brand, model])
+  @@map("categories")
+}
+
+model Brand {
+  id              String          @id @default(uuid())
+  name            String          @unique
+  slug            String          @unique
+  logo            String?
+  isActive        Boolean         @default(true)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  brandCategories BrandCategory[]
+
+  @@map("brands")
+}
+
+model BrandCategory {
+  id             String        @id @default(uuid())
+  brandId        String
+  brand          Brand         @relation(fields: [brandId], references: [id])
+  categoryId     String
+  category       Category      @relation(fields: [categoryId], references: [id])
+  images         String[]
+  isActive       Boolean       @default(true)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  deviceCatalogs DeviceCatalog[]
+
+  @@unique([brandId, categoryId])
+  @@map("brand_categories")
+}
+
+model DeviceCatalog {
+  id              String        @id @default(uuid())
+  brandCategoryId String
+  brandCategory   BrandCategory @relation(fields: [brandCategoryId], references: [id])
+  model           String
+  storageOptions  String[]
+  isActive        Boolean       @default(true)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  products        Product[]
+
+  @@unique([brandCategoryId, model])
+  @@index([brandCategoryId])
   @@map("device_catalog")
 }
 
