@@ -3,7 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { tradeInsApi, storesApi, uploadsApi, type Store } from "../../lib/api";
+import { tradeInsApi, storesApi, uploadsApi, catalogApi, type Store } from "../../lib/api";
 import {
   Smartphone, Tablet, Gamepad2, Laptop, ArrowLeft, ArrowRight,
   Check, ChevronRight, MapPin, Zap, Shield, Clock,
@@ -314,6 +314,44 @@ export default function TradeInPage() {
         .finally(() => setStoresLoading(false));
     }
   }, [state.fulfillment]);
+
+  // Dynamic brand + model loading from catalog API
+  const CATEGORY_SLUG_MAP: Record<string, string> = {
+    Phone: "phones", Tablet: "tablets", Console: "consoles", Laptop: "laptops", Audio: "audio",
+  };
+  const [dynamicBrands, setDynamicBrands] = useState<string[]>([]);
+  const [dynamicModels, setDynamicModels] = useState<string[]>([]);
+
+  useEffect(() => {
+    setDynamicBrands([]); setDynamicModels([]);
+    const slug = CATEGORY_SLUG_MAP[state.category];
+    if (!slug) return;
+    catalogApi.listBrandCategories({ brandId: undefined })
+      .then(() => catalogApi.listCategories())
+      .then(cats => {
+        const cat = cats.find(c => c.slug === slug);
+        if (!cat) return;
+        return catalogApi.listBrandCategories({ includeInactive: false });
+      })
+      .then(bcs => {
+        if (!bcs) return;
+        const slug2 = CATEGORY_SLUG_MAP[state.category];
+        const filtered = bcs.filter(bc => bc.category.slug === slug2);
+        setDynamicBrands(filtered.map(bc => bc.brand.name));
+      })
+      .catch(() => {});
+  }, [state.category]);
+
+  useEffect(() => {
+    setDynamicModels([]);
+    const catSlug = CATEGORY_SLUG_MAP[state.category];
+    if (!catSlug || !state.brand) return;
+    const brandSlug = state.brand.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002"}/device-catalog?categorySlug=${catSlug}&brandSlug=${brandSlug}`)
+      .then(r => r.json())
+      .then((entries: { model: string }[]) => setDynamicModels(entries.map(e => e.model)))
+      .catch(() => {});
+  }, [state.category, state.brand]);
 
   const [submitting, setSubmitting] = useState(false);
   const [submitRef, setSubmitRef] = useState("");
@@ -1215,7 +1253,7 @@ export default function TradeInPage() {
                             >
                               <StepHeader label="Which brand is it?" sub={`Choose the manufacturer for your ${state.category.toLowerCase()}.`} />
                               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                {(BRANDS[state.category] ?? []).map((brand) => (
+                                {(dynamicBrands.length > 0 ? dynamicBrands : (BRANDS[state.category] ?? [])).map((brand) => (
                                   <motion.button
                                     key={brand}
                                     whileHover={{ y: -3, scale: 1.02, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.05)" }}
@@ -1259,7 +1297,7 @@ export default function TradeInPage() {
                               </div>
 
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-72 overflow-y-auto pr-1 custom-scrollbar">
-                                {(MODELS[state.category]?.[state.brand] ?? [])
+                                {(dynamicModels.length > 0 ? dynamicModels : (MODELS[state.category]?.[state.brand] ?? []))
                                   .filter(m => m.toLowerCase().includes(wizardModelSearch.toLowerCase()))
                                   .map((model) => (
                                     <motion.button

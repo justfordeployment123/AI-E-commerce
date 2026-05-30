@@ -15,6 +15,7 @@ import {
 import Navbar from "../../../components/Navbar";
 import Footer from "../../../components/Footer";
 import { imageRegistry, pick } from "../../../lib/localImages";
+import { catalogApi } from "../../../lib/api";
 
 // ─── Category meta ──────────────────────────────────────────────────────────
 
@@ -312,54 +313,34 @@ export default function CategoryPage() {
     return map;
   }, [subBrands, categorySlug]);
 
-  const CATEGORY_API_MAP: Record<string, string> = {
-    phones: "Phones", tablets: "Tablets", consoles: "Consoles", laptops: "Laptops", audio: "Accessories",
-  };
-
   useEffect(() => {
-    const apiCategory = CATEGORY_API_MAP[categorySlug];
     setLoading(true);
-    if (!apiCategory) { setLoading(false); return; }
-    productsApi.list({ category: apiCategory, limit: 100 })
-      .then(res => {
-        setDisplayProducts(res.items.map(p => ({
-          id: p.slug,
-          title: p.name,
-          brand: p.brand,
-          grade: p.condition,
-          storage: String((p.specs as Record<string, unknown>)?.storage ?? "—"),
-          price: p.price,
-          originalPrice: p.comparePrice ?? p.price,
-          rating: p.rating,
-          reviews: p.reviewCount,
-          image: p.images[0] ?? "",
-          stock: p.stock,
-        })));
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-
-    productsApi.brands(apiCategory)
-      .then(setSubBrands)
-      .catch(() => {});
-
-    reviewsApi.recent(4)
-      .then(res => {
-        if (res.length > 0) {
-          setLiveReviews(res.map((r, i) => ({
-            id: i + 1,
-            name: r.user?.name ?? r.guestName ?? 'Verified Buyer',
+    catalogApi.listCategories()
+      .then(cats => cats.find(c => c.slug === categorySlug)?.name ?? null)
+      .catch(() => null)
+      .then(async (apiCategory) => {
+        if (!apiCategory) { setLoading(false); return; }
+        productsApi.brands(apiCategory).then(setSubBrands).catch(() => {});
+        reviewsApi.recent(4).then(res => {
+          if (res.length > 0) setLiveReviews(res.map((r, i) => ({
+            id: i + 1, name: r.user?.name ?? r.guestName ?? 'Verified Buyer',
             rating: r.rating,
             date: new Date(r.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
-            text: r.body,
-            model: (r as any).product?.name ?? '',
-            verified: true,
+            text: r.body, model: (r as any).product?.name ?? '', verified: true,
             image: (r as any).product?.coverImage ?? `https://picsum.photos/seed/rev${i}/400/500`,
             thumbnail: (r as any).product?.coverImage ?? `https://picsum.photos/seed/thumb${i}/100/100`,
           })));
-        }
-      })
-      .catch(() => {});
+        }).catch(() => {});
+        try {
+          const res = await productsApi.list({ category: apiCategory, limit: 100 });
+          setDisplayProducts(res.items.map(p => ({
+            id: p.slug, title: p.name, brand: p.brand, grade: p.condition,
+            storage: String((p.specs as Record<string, unknown>)?.storage ?? "—"),
+            price: p.price, originalPrice: p.comparePrice ?? p.price,
+            rating: p.rating, reviews: p.reviewCount, image: p.images[0] ?? "", stock: p.stock,
+          })));
+        } catch { /* ignore */ } finally { setLoading(false); }
+      });
   }, [categorySlug]);
 
   if (!meta) {
