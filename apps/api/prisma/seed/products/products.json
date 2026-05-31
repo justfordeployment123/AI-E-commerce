@@ -21,7 +21,7 @@
     "reviewCount": 10,
     "isActive": true,
     "images": [
-      "apple-iphone-11.jpg"
+      "apple-iphone-11.png"
     ]
   },
   {
@@ -46,7 +46,7 @@
     "reviewCount": 5,
     "isActive": true,
     "images": [
-      "apple-iphone-11.jpg"
+      "apple-iphone-11.png"
     ]
   },
   {
@@ -71,7 +71,7 @@
     "reviewCount": 21,
     "isActive": true,
     "images": [
-      "apple-iphone-11-pro.jpg"
+      "apple-iphone-11-pro.png"
     ]
   },
   {
@@ -96,7 +96,7 @@
     "reviewCount": 42,
     "isActive": true,
     "images": [
-      "apple-iphone-11-pro-max.jpg"
+      "apple-iphone-11-pro-max.png"
     ]
   },
   {
@@ -121,7 +121,7 @@
     "reviewCount": 43,
     "isActive": true,
     "images": [
-      "apple-iphone-11-pro-max.jpg"
+      "apple-iphone-11-pro-max.png"
     ]
   },
   {
@@ -146,7 +146,7 @@
     "reviewCount": 10,
     "isActive": true,
     "images": [
-      "apple-iphone-12.jpg"
+      "apple-iphone-12.png"
     ]
   },
   {
@@ -171,7 +171,7 @@
     "reviewCount": 28,
     "isActive": true,
     "images": [
-      "apple-iphone-12-mini.jpg"
+      "apple-iphone-12-mini.png"
     ]
   },
   {
@@ -196,7 +196,7 @@
     "reviewCount": 42,
     "isActive": true,
     "images": [
-      "apple-iphone-12-mini.jpg"
+      "apple-iphone-12-mini.png"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "reviewCount": 16,
     "isActive": true,
     "images": [
-      "apple-iphone-12-pro.jpg"
+      "apple-iphone-12-pro.png"
     ]
   },
   {
@@ -246,7 +246,7 @@
     "reviewCount": 37,
     "isActive": true,
     "images": [
-      "apple-iphone-12-pro-max.jpg"
+      "apple-iphone-12-pro-max.png"
     ]
   },
   {
@@ -271,7 +271,7 @@
     "reviewCount": 10,
     "isActive": true,
     "images": [
-      "apple-iphone-12-pro-max.jpg"
+      "apple-iphone-12-pro-max.png"
     ]
   },
   {
@@ -296,7 +296,7 @@
     "reviewCount": 22,
     "isActive": true,
     "images": [
-      "apple-iphone-13.jpg"
+      "apple-iphone-13.png"
     ]
   },
   {
@@ -321,7 +321,7 @@
     "reviewCount": 14,
     "isActive": true,
     "images": [
-      "apple-iphone-13-mini.jpg"
+      "apple-iphone-13-mini.png"
     ]
   },
   {
@@ -346,7 +346,7 @@
     "reviewCount": 18,
     "isActive": true,
     "images": [
-      "apple-iphone-13-mini.jpg"
+      "apple-iphone-13-mini.png"
     ]
   },
   {
@@ -371,7 +371,7 @@
     "reviewCount": 50,
     "isActive": true,
     "images": [
-      "apple-iphone-13-pro.jpg"
+      "apple-iphone-13-pro.png"
     ]
   },
   {
@@ -396,7 +396,7 @@
     "reviewCount": 48,
     "isActive": true,
     "images": [
-      "apple-iphone-13-pro-max.jpg"
+      "apple-iphone-13-pro-max.png"
     ]
   },
   {
@@ -421,7 +421,7 @@
     "reviewCount": 46,
     "isActive": true,
     "images": [
-      "apple-iphone-13-pro-max.jpg"
+      "apple-iphone-13-pro-max.png"
     ]
   },
   {
@@ -446,7 +446,7 @@
     "reviewCount": 46,
     "isActive": true,
     "images": [
-      "apple-iphone-14.jpg"
+      "apple-iphone-14.png"
     ]
   },
   {
@@ -471,7 +471,7 @@
     "reviewCount": 50,
     "isActive": true,
     "images": [
-      "apple-iphone-14-plus.jpg"
+      "apple-iphone-14-plus.png"
     ]
   },
   {
@@ -496,7 +496,7 @@
     "reviewCount": 54,
     "isActive": true,
     "images": [
-      "apple-iphone-14-plus.jpg"
+      "apple-iphone-14-plus.png"
     ]
   },
   {
@@ -521,7 +521,7 @@
     "reviewCount": 17,
     "isActive": true,
     "images": [
-      "apple-iphone-14-pro.jpg"
+      "apple-iphone-14-pro.png"
     ]
   },
   {
@@ -546,7 +546,7 @@
     "reviewCount": 46,
     "isActive": true,
     "images": [
-      "apple-iphone-14-pro-max.jpg"
+      "apple-iphone-14-pro-max.png"
     ]
   },
   {
@@ -571,7 +571,7 @@
     "reviewCount": 15,
     "isActive": true,
     "images": [
-      "apple-iphone-14-pro-max.jpg"
+      "apple-iphone-14-pro-max.png"
     ]
   },
   {
@@ -596,7 +596,7 @@
     "reviewCount": 8,
     "isActive": true,
     "images": [
-      "apple-iphone-15.jpg"
+      "apple-iphone-15.png"
     ]
   },
   {
@@ -621,7 +621,7 @@
     "reviewCount": 9,
     "isActive": true,
     "images": [
-      "apple-iphone-15-plus.jpg"
+      "apple-iphone-15-plus.png"
     ]
   },
   {
@@ -646,7 +646,7 @@
     "reviewCount": 16,
     "isActive": true,
     "images": [
-      "apple-iphone-15-plus.jpg"
+      "apple-iphone-15-plus.png"
     ]
   },
   {
@@ -671,7 +671,7 @@
     "reviewCount": 7,
     "isActive": true,
     "images": [
-      "apple-iphone-15-pro.jpg"
+      "apple-iphone-15-pro.png"
     ]
   },
   {
@@ -696,7 +696,7 @@
     "reviewCount": 49,
     "isActive": true,
     "images": [
-      "apple-iphone-15-pro-max.jpg"
+      "apple-iphone-15-pro-max.png"
     ]
   },
   {
@@ -721,7 +721,7 @@
     "reviewCount": 28,
     "isActive": true,
     "images": [
-      "apple-iphone-15-pro-max.jpg"
+      "apple-iphone-15-pro-max.png"
     ]
   },
   {
@@ -746,7 +746,7 @@
     "reviewCount": 54,
     "isActive": true,
     "images": [
-      "samsung-galaxy-s21-5g.jpg"
+      "samsung-galaxy-s21-5g.png"
     ]
   },
   {
@@ -771,7 +771,7 @@
     "reviewCount": 26,
     "isActive": true,
     "images": [
-      "samsung-galaxy-s21-5g.jpg"
+      "samsung-galaxy-s21-5g.png"
     ]
   },
   {
@@ -796,7 +796,7 @@
     "reviewCount": 7,
     "isActive": true,
     "images": [
-      "samsung-galaxy-s21-5g.jpg"
+      "samsung-galaxy-s21-5g.png"
     ]
   },
   {
@@ -821,7 +821,7 @@
     "reviewCount": 18,
     "isActive": true,
     "images": [
-      "samsung-galaxy-s21-ultra-5g.jpg"
+      "samsung-galaxy-s21-ultra-5g.png"
     ]
   },
   {
@@ -846,7 +846,7 @@
     "reviewCount": 50,
     "isActive": true,
     "images": [
-      "samsung-galaxy-s22.jpg"
+      "samsung-galaxy-s22.png"
     ]
   },
   {
@@ -871,7 +871,7 @@
     "reviewCount": 51,
     "isActive": true,
     "images": [
-      "samsung-galaxy-s22.jpg"
+      "samsung-galaxy-s22.png"
     ]
   },
   {
@@ -896,7 +896,7 @@
     "reviewCount": 14,
     "isActive": true,
     "images": [
-      "samsung-galaxy-s22.jpg"
+      "samsung-galaxy-s22.png"
     ]
   },
   {
@@ -921,7 +921,7 @@
     "reviewCount": 9,
     "isActive": true,
     "images": [
-      "samsung-galaxy-s22-ultra.jpg"
+      "samsung-galaxy-s22-ultra.png"
     ]
   },
   {
@@ -946,7 +946,7 @@
     "reviewCount": 39,
     "isActive": true,
     "images": [
-      "samsung-galaxy-s22-ultra.jpg"
+      "samsung-galaxy-s22-ultra.png"
     ]
   },
   {
@@ -971,7 +971,7 @@
     "reviewCount": 46,
     "isActive": true,
     "images": [
-      "samsung-galaxy-s23.jpg"
+      "samsung-galaxy-s23.png"
     ]
   },
   {
@@ -996,7 +996,7 @@
     "reviewCount": 48,
     "isActive": true,
     "images": [
-      "samsung-galaxy-s23.jpg"
+      "samsung-galaxy-s23.png"
     ]
   },
   {
@@ -1021,7 +1021,7 @@
     "reviewCount": 27,
     "isActive": true,
     "images": [
-      "samsung-galaxy-s23.jpg"
+      "samsung-galaxy-s23.png"
     ]
   },
   {
@@ -1046,7 +1046,7 @@
     "reviewCount": 43,
     "isActive": true,
     "images": [
-      "samsung-galaxy-s23-ultra.jpg"
+      "samsung-galaxy-s23-ultra.png"
     ]
   },
   {
@@ -1071,7 +1071,7 @@
     "reviewCount": 32,
     "isActive": true,
     "images": [
-      "samsung-galaxy-s24.jpg"
+      "samsung-galaxy-s24.png"
     ]
   },
   {
@@ -1096,7 +1096,7 @@
     "reviewCount": 26,
     "isActive": true,
     "images": [
-      "samsung-galaxy-s24.jpg"
+      "samsung-galaxy-s24.png"
     ]
   },
   {
@@ -1121,7 +1121,7 @@
     "reviewCount": 36,
     "isActive": true,
     "images": [
-      "samsung-galaxy-s24.jpg"
+      "samsung-galaxy-s24.png"
     ]
   },
   {
@@ -1146,7 +1146,7 @@
     "reviewCount": 10,
     "isActive": true,
     "images": [
-      "samsung-galaxy-s24-ultra.jpg"
+      "samsung-galaxy-s24-ultra.png"
     ]
   },
   {
@@ -1171,7 +1171,7 @@
     "reviewCount": 43,
     "isActive": true,
     "images": [
-      "samsung-galaxy-s24-ultra.jpg"
+      "samsung-galaxy-s24-ultra.png"
     ]
   },
   {
@@ -1196,7 +1196,7 @@
     "reviewCount": 31,
     "isActive": true,
     "images": [
-      "apple-ipad-9th-gen.jpg"
+      "apple-ipad-9th-gen.png"
     ]
   },
   {
@@ -1221,7 +1221,7 @@
     "reviewCount": 20,
     "isActive": true,
     "images": [
-      "apple-ipad-10th-gen.jpg"
+      "apple-ipad-10th-gen.png"
     ]
   },
   {
@@ -1246,7 +1246,7 @@
     "reviewCount": 26,
     "isActive": true,
     "images": [
-      "apple-ipad-10th-gen.jpg"
+      "apple-ipad-10th-gen.png"
     ]
   },
   {
@@ -1271,7 +1271,7 @@
     "reviewCount": 16,
     "isActive": true,
     "images": [
-      "apple-ipad-air-5th-gen.jpg"
+      "apple-ipad-air-5th-gen.png"
     ]
   },
   {
@@ -1296,7 +1296,7 @@
     "reviewCount": 17,
     "isActive": true,
     "images": [
-      "apple-ipad-mini-6th-gen.jpg"
+      "apple-ipad-mini-6th-gen.png"
     ]
   },
   {
@@ -1321,7 +1321,7 @@
     "reviewCount": 5,
     "isActive": true,
     "images": [
-      "apple-ipad-mini-6th-gen.jpg"
+      "apple-ipad-mini-6th-gen.png"
     ]
   },
   {
@@ -1346,7 +1346,7 @@
     "reviewCount": 16,
     "isActive": true,
     "images": [
-      "apple-ipad-pro-11-inch-m1.jpg"
+      "apple-ipad-pro-11-inch-m1.png"
     ]
   },
   {
@@ -1371,7 +1371,7 @@
     "reviewCount": 25,
     "isActive": true,
     "images": [
-      "apple-ipad-pro-11-inch-m2.jpg"
+      "apple-ipad-pro-11-inch-m2.png"
     ]
   },
   {
@@ -1396,7 +1396,7 @@
     "reviewCount": 6,
     "isActive": true,
     "images": [
-      "apple-ipad-pro-11-inch-m2.jpg"
+      "apple-ipad-pro-11-inch-m2.png"
     ]
   },
   {
@@ -1421,7 +1421,7 @@
     "reviewCount": 51,
     "isActive": true,
     "images": [
-      "apple-ipad-pro-12-9-inch-m1.jpg"
+      "apple-ipad-pro-12-9-inch-m1.png"
     ]
   },
   {
@@ -1446,7 +1446,7 @@
     "reviewCount": 26,
     "isActive": true,
     "images": [
-      "apple-ipad-pro-12-9-inch-m2.jpg"
+      "apple-ipad-pro-12-9-inch-m2.png"
     ]
   },
   {
@@ -1471,7 +1471,7 @@
     "reviewCount": 46,
     "isActive": true,
     "images": [
-      "apple-ipad-pro-12-9-inch-m2.jpg"
+      "apple-ipad-pro-12-9-inch-m2.png"
     ]
   },
   {
@@ -1496,7 +1496,7 @@
     "reviewCount": 25,
     "isActive": true,
     "images": [
-      "sony-playstation-3-slim.jpg"
+      "sony-playstation-3-slim.png"
     ]
   },
   {
@@ -1521,7 +1521,7 @@
     "reviewCount": 16,
     "isActive": true,
     "images": [
-      "sony-playstation-4.jpg"
+      "sony-playstation-4.png"
     ]
   },
   {
@@ -1546,7 +1546,7 @@
     "reviewCount": 14,
     "isActive": true,
     "images": [
-      "sony-playstation-4.jpg"
+      "sony-playstation-4.png"
     ]
   },
   {
@@ -1571,7 +1571,7 @@
     "reviewCount": 52,
     "isActive": true,
     "images": [
-      "sony-playstation-4-slim.jpg"
+      "sony-playstation-4-slim.png"
     ]
   },
   {
@@ -1596,7 +1596,7 @@
     "reviewCount": 30,
     "isActive": true,
     "images": [
-      "sony-playstation-4-pro.jpg"
+      "sony-playstation-4-pro.png"
     ]
   },
   {
@@ -1621,7 +1621,7 @@
     "reviewCount": 11,
     "isActive": true,
     "images": [
-      "sony-playstation-4-pro.jpg"
+      "sony-playstation-4-pro.png"
     ]
   },
   {
@@ -1646,7 +1646,7 @@
     "reviewCount": 41,
     "isActive": true,
     "images": [
-      "sony-playstation-5-disc-edition.jpg"
+      "sony-playstation-5-disc-edition.png"
     ]
   },
   {
@@ -1671,7 +1671,7 @@
     "reviewCount": 23,
     "isActive": true,
     "images": [
-      "sony-playstation-5-digital-edition.jpg"
+      "sony-playstation-5-digital-edition.png"
     ]
   },
   {
@@ -1696,7 +1696,7 @@
     "reviewCount": 28,
     "isActive": true,
     "images": [
-      "sony-playstation-5-digital-edition.jpg"
+      "sony-playstation-5-digital-edition.png"
     ]
   },
   {
@@ -1721,7 +1721,7 @@
     "reviewCount": 22,
     "isActive": true,
     "images": [
-      "microsoft-xbox-360-slim.jpg"
+      "microsoft-xbox-360-slim.png"
     ]
   },
   {
@@ -1746,7 +1746,7 @@
     "reviewCount": 6,
     "isActive": true,
     "images": [
-      "microsoft-xbox-one.jpg"
+      "microsoft-xbox-one.png"
     ]
   },
   {
@@ -1771,7 +1771,7 @@
     "reviewCount": 15,
     "isActive": true,
     "images": [
-      "microsoft-xbox-one.jpg"
+      "microsoft-xbox-one.png"
     ]
   },
   {
@@ -1796,7 +1796,7 @@
     "reviewCount": 37,
     "isActive": true,
     "images": [
-      "microsoft-xbox-one-s.jpg"
+      "microsoft-xbox-one-s.png"
     ]
   },
   {
@@ -1821,7 +1821,7 @@
     "reviewCount": 49,
     "isActive": true,
     "images": [
-      "microsoft-xbox-one-x.jpg"
+      "microsoft-xbox-one-x.png"
     ]
   },
   {
@@ -1846,7 +1846,7 @@
     "reviewCount": 43,
     "isActive": true,
     "images": [
-      "microsoft-xbox-one-x.jpg"
+      "microsoft-xbox-one-x.png"
     ]
   },
   {
@@ -1871,7 +1871,7 @@
     "reviewCount": 45,
     "isActive": true,
     "images": [
-      "microsoft-xbox-series-s.jpg"
+      "microsoft-xbox-series-s.png"
     ]
   },
   {
@@ -1896,7 +1896,7 @@
     "reviewCount": 34,
     "isActive": true,
     "images": [
-      "microsoft-xbox-series-x.jpg"
+      "microsoft-xbox-series-x.png"
     ]
   },
   {
@@ -1921,7 +1921,7 @@
     "reviewCount": 27,
     "isActive": true,
     "images": [
-      "microsoft-xbox-series-x.jpg"
+      "microsoft-xbox-series-x.png"
     ]
   },
   {
@@ -1946,7 +1946,7 @@
     "reviewCount": 21,
     "isActive": true,
     "images": [
-      "apple-macbook-air-m1-2020.jpg"
+      "apple-macbook-air-m1-2020.png"
     ]
   },
   {
@@ -1971,7 +1971,7 @@
     "reviewCount": 10,
     "isActive": true,
     "images": [
-      "apple-macbook-air-m2-2022.jpg"
+      "apple-macbook-air-m2-2022.png"
     ]
   },
   {
@@ -1996,7 +1996,7 @@
     "reviewCount": 28,
     "isActive": true,
     "images": [
-      "apple-macbook-air-m2-2022.jpg"
+      "apple-macbook-air-m2-2022.png"
     ]
   },
   {
@@ -2021,7 +2021,7 @@
     "reviewCount": 45,
     "isActive": true,
     "images": [
-      "apple-macbook-pro-13-inch-m1-2020.jpg"
+      "apple-macbook-pro-13-inch-m1-2020.png"
     ]
   },
   {
@@ -2046,7 +2046,7 @@
     "reviewCount": 5,
     "isActive": true,
     "images": [
-      "apple-macbook-pro-14-inch-m2-pro-2023.jpg"
+      "apple-macbook-pro-14-inch-m2-pro-2023.png"
     ]
   },
   {
@@ -2071,7 +2071,7 @@
     "reviewCount": 27,
     "isActive": true,
     "images": [
-      "apple-macbook-pro-14-inch-m2-pro-2023.jpg"
+      "apple-macbook-pro-14-inch-m2-pro-2023.png"
     ]
   },
   {
@@ -2096,7 +2096,7 @@
     "reviewCount": 20,
     "isActive": true,
     "images": [
-      "apple-macbook-pro-16-inch-m3-max-2023.jpg"
+      "apple-macbook-pro-16-inch-m3-max-2023.png"
     ]
   },
   {
@@ -2119,7 +2119,7 @@
     "reviewCount": 122,
     "isActive": true,
     "images": [
-      "apple-20w-usb-c-power-adapter.jpg"
+      "apple-20w-usb-c-power-adapter.png"
     ]
   },
   {
@@ -2142,7 +2142,7 @@
     "reviewCount": 95,
     "isActive": true,
     "images": [
-      "apple-magsafe-charger.jpg"
+      "apple-magsafe-charger.png"
     ]
   },
   {
@@ -2165,7 +2165,7 @@
     "reviewCount": 72,
     "isActive": true,
     "images": [
-      "sony-dualsense-wireless-controller.jpg"
+      "sony-dualsense-wireless-controller.png"
     ]
   },
   {
@@ -2188,7 +2188,7 @@
     "reviewCount": 24,
     "isActive": true,
     "images": [
-      "microsoft-xbox-wireless-controller.jpg"
+      "microsoft-xbox-wireless-controller.png"
     ]
   },
   {
@@ -2211,7 +2211,7 @@
     "reviewCount": 102,
     "isActive": true,
     "images": [
-      "apple-pencil-2nd-gen.jpg"
+      "apple-pencil-2nd-gen.png"
     ]
   }
 ]
