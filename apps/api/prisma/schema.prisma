@@ -271,6 +271,7 @@ model BrandCategory {
   brand          Brand         @relation(fields: [brandId], references: [id])
   categoryId     String
   category       Category      @relation(fields: [categoryId], references: [id])
+  alias          String?       // display name within this category e.g. "iPhone", "Xbox" — null = fall back to brand.name
   images         String[]
   isActive       Boolean       @default(true)
   createdAt      DateTime      @default(now())

@@ -484,6 +484,8 @@ export interface BrandCategoryOption {
   brand: { id: string; name: string; slug: string };
   categoryId: string;
   category: { id: string; name: string; slug: string };
+  /** null = fall back to brand.name when displaying */
+  alias: string | null;
   images: string[];
   isActive: boolean;
   createdAt: string;

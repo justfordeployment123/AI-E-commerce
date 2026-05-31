@@ -486,10 +486,19 @@ export interface CatalogBrandCategory {
   brand: CatalogBrand;
   categoryId: string;
   category: CatalogCategory;
+  /** Product-line display name. null = fall back to brand.name */
+  alias: string | null;
   images: string[];
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+/** Returns the display name for a brand within a category context.
+ *  e.g. Apple/Phones → "iPhone",  Apple/Tablets → "iPad",  Samsung → "Samsung"
+ */
+export function brandCategoryDisplayName(bc: CatalogBrandCategory): string {
+  return bc.alias ?? bc.brand.name;
 }
 
 export interface RepairPayload {

@@ -6,9 +6,17 @@ import * as path from 'path';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/** Extract brand slug from folder names like "apple[iphone]" → "apple" */
-function parseBrandFolderName(folderName: string): string {
-    return folderName.replace(/\[[^\]]*\]$/, '').trim();
+/**
+ * "apple[iphone]" → { slug: "apple", alias: "iphone" }
+ * "samsung"       → { slug: "samsung", alias: null }
+ * slug  = DB brand identity
+ * alias = display name within this category (e.g. "iPhone", "Xbox")
+ */
+function parseBrandFolderName(folderName: string): { slug: string; alias: string | null } {
+    const match = folderName.match(/^([^\[]+)(?:\[([^\]]+)\])?$/);
+    const slug  = (match?.[1] ?? folderName).trim().toLowerCase();
+    const raw   = match?.[2]?.trim().toLowerCase() ?? null;
+    return { slug, alias: raw && raw !== slug ? raw : null };
 }
 
 function isImageFile(name: string): boolean {
@@ -258,36 +266,35 @@ export class SeedService {
             );
 
             for (const brandFolder of brandFolders) {
-                const brandSlug = parseBrandFolderName(brandFolder);
+                const { slug: brandSlug, alias } = parseBrandFolderName(brandFolder);
                 const brandDir  = path.join(catDir, brandFolder);
+                // S3 subfolder uses alias if present (e.g. "xbox"), otherwise slug
+                const s3BrandPath = alias ?? brandSlug;
 
-                // Upsert brand (name capitalised from slug; logo seeded separately)
                 const brand = await this.prisma.brand.upsert({
                     where: { slug: brandSlug },
                     update: {},
                     create: { name: capitalize(brandSlug), slug: brandSlug },
                 });
 
-                // Upsert brand-category link
                 const bc = await this.prisma.brandCategory.upsert({
                     where: { brandId_categoryId: { brandId: brand.id, categoryId: cat.id } },
-                    update: {},
-                    create: { brandId: brand.id, categoryId: cat.id },
+                    update: { alias },
+                    create: { brandId: brand.id, categoryId: cat.id, alias },
                 });
 
-                // Upload images if the BC has none yet
                 const existingImages = (bc.images as string[]) ?? [];
                 if (existingImages.length === 0) {
                     const imgs = fs.readdirSync(brandDir).filter(isImageFile);
                     const keys: string[] = [];
                     for (const img of imgs) {
-                        const s3Key = `catalog/categories/${categorySlug}/${brandSlug}/${img}`;
+                        const s3Key = `catalog/categories/${categorySlug}/${s3BrandPath}/${img}`;
                         const uploaded = await this.uploadLocalFile(path.join(brandDir, img), s3Key);
                         if (uploaded) keys.push(uploaded);
                     }
                     if (keys.length) {
                         await this.prisma.brandCategory.update({ where: { id: bc.id }, data: { images: keys } });
-                        this.logger.log(`  ${keys.length} images → catalog/${categorySlug}/${brandSlug}/`);
+                        this.logger.log(`  ${keys.length} images → catalog/${categorySlug}/${s3BrandPath}/`);
                     }
                 }
             }

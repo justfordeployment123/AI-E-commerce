@@ -1,175 +1,432 @@
+/**
+ * Standalone seed script — run with:
+ *   npx ts-node --project tsconfig.json prisma/seed.ts
+ *
+ * Reads from prisma/seed/ folder structure:
+ *   seed/categories/{slug}/          → category hero image (first image found)
+ *   seed/categories/{slug}/{brand}/  → brand-category showcase images (all images)
+ *   seed/brands/{slug}/              → logo.png + brand images
+ *   seed/banners/                    → background banner images (all images)
+ *   seed/banners/promo_banners/      → slides.json + promo images
+ *   seed/products/                   → products.json + product images
+ */
+
 import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
-import { S3Client, PutObjectCommand, CreateBucketCommand, HeadBucketCommand } from '@aws-sdk/client-s3';
+import {
+    S3Client, PutObjectCommand,
+    CreateBucketCommand, HeadBucketCommand,
+} from '@aws-sdk/client-s3';
 import * as fs from 'fs';
 import * as path from 'path';
 
-const connectionString = process.env.DATABASE_URL ?? 'postgresql://ai_ecommerce:ai_ecommerce@localhost:5432/ai_ecommerce?schema=public';
-const pool = new Pool({ connectionString });
+// ─── DB + S3 setup ────────────────────────────────────────────────────────────
+
+const connectionString = process.env.DATABASE_URL
+    ?? 'postgresql://ai_ecommerce:ai_ecommerce@localhost:5432/ai_ecommerce?schema=public';
+const pool    = new Pool({ connectionString });
 const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
+const prisma  = new PrismaClient({ adapter });
 
 const bucketName = process.env.GARAGE_BUCKET || 'ai-ecommerce';
-const s3Client = new S3Client({
+const s3 = new S3Client({
     region: 'us-east-1',
     endpoint: process.env.GARAGE_ENDPOINT || 'http://localhost:9000',
     credentials: {
-        accessKeyId: process.env.GARAGE_ACCESS_KEY || 'minioadmin',
+        accessKeyId:     process.env.GARAGE_ACCESS_KEY || 'minioadmin',
         secretAccessKey: process.env.GARAGE_SECRET_KEY || 'minioadmin',
     },
     forcePathStyle: true,
 });
 
-async function ensureBucketExists(s3: S3Client, bucket: string): Promise<void> {
+const SEED_DIR = path.join(__dirname, 'seed');
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function isImage(name: string) {
+    return /\.(jpg|jpeg|png|webp)$/i.test(name);
+}
+
+/**
+ * "apple[iphone]" → { slug: "apple", alias: "iphone" }
+ * "samsung"       → { slug: "samsung", alias: null }
+ *
+ * slug  → used for DB lookups (the actual brand)
+ * alias → used for Garage S3 subfolder path (the product line name)
+ *         falls back to slug if no alias
+ */
+function parseBrandFolder(folderName: string): { slug: string; alias: string } {
+    const match = folderName.match(/^([^\[]+)(?:\[([^\]]+)\])?$/);
+    const slug  = (match?.[1] ?? folderName).trim().toLowerCase();
+    const alias = (match?.[2] ?? slug).trim().toLowerCase();
+    return { slug, alias };
+}
+
+/** Capitalise first letter */
+function cap(s: string) {
+    return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+async function ensureBucket() {
     try {
-        await s3.send(new HeadBucketCommand({ Bucket: bucket }));
+        await s3.send(new HeadBucketCommand({ Bucket: bucketName }));
     } catch {
-        console.log(`Bucket "${bucket}" not found. Creating...`);
-        await s3.send(new CreateBucketCommand({ Bucket: bucket }));
+        await s3.send(new CreateBucketCommand({ Bucket: bucketName }));
+        console.log(`  Bucket "${bucketName}" created`);
     }
 }
 
-async function uploadProductImage(
-    s3: S3Client,
-    bucket: string,
-    productSlug: string,
-    imageFilename: string,
-    downloadsDir: string
-): Promise<string> {
-    const localPath = path.join(downloadsDir, imageFilename);
-    if (!fs.existsSync(localPath)) {
-        throw new Error(`File not found: ${localPath}`);
-    }
-    const s3Key = `products/${productSlug}/${imageFilename}`;
+async function uploadFile(localPath: string, s3Key: string): Promise<string> {
     const buffer = fs.readFileSync(localPath);
+    const ext    = path.extname(localPath).toLowerCase();
+    const mime   = ext === '.png'  ? 'image/png'
+                 : ext === '.webp' ? 'image/webp'
+                 : 'image/jpeg';
     await s3.send(new PutObjectCommand({
-        Bucket: bucket,
-        Key: s3Key,
-        Body: buffer,
-        ContentType: 'image/jpeg',
+        Bucket: bucketName, Key: s3Key, Body: buffer, ContentType: mime,
     }));
     return s3Key;
 }
 
-function normalizeCategory(raw: string): string {
-    if (raw === 'Laptops / MacBooks') return 'Laptops';
-    return raw;
+// ─── Phase 1: Categories + brand-category images ──────────────────────────────
+
+async function seedCategories() {
+    const catDir = path.join(SEED_DIR, 'categories');
+    if (!fs.existsSync(catDir)) return;
+
+    const catFolders = fs.readdirSync(catDir)
+        .filter(d => fs.statSync(path.join(catDir, d)).isDirectory());
+
+    for (const catSlug of catFolders) {
+        const catPath = path.join(catDir, catSlug);
+        const catName = cap(catSlug);
+
+        // Upsert category
+        let cat = await prisma.category.upsert({
+            where:  { slug: catSlug },
+            update: {},
+            create: { name: catName, slug: catSlug },
+        });
+
+        // Hero image — first image at root of category folder
+        if (!cat.image) {
+            const heroFile = fs.readdirSync(catPath)
+                .find(f => isImage(f) && fs.statSync(path.join(catPath, f)).isFile());
+            if (heroFile) {
+                const key = await uploadFile(
+                    path.join(catPath, heroFile),
+                    `catalog/categories/${catSlug}/${heroFile}`,
+                );
+                cat = await prisma.category.update({ where: { id: cat.id }, data: { image: key } });
+                console.log(`  Category image: ${catSlug}/${heroFile}`);
+            }
+        }
+
+        // Brand subfolders → brand-category images
+        const brandFolders = fs.readdirSync(catPath)
+            .filter(d => fs.statSync(path.join(catPath, d)).isDirectory());
+
+        for (const brandFolder of brandFolders) {
+            const { slug: brandSlug, alias: brandAlias } = parseBrandFolder(brandFolder);
+            const brandPath = path.join(catPath, brandFolder);
+
+            // slug → DB brand identity; alias → S3 subfolder (e.g. "xbox" not "microsoft")
+            const brand = await prisma.brand.upsert({
+                where:  { slug: brandSlug },
+                update: {},
+                create: { name: cap(brandSlug), slug: brandSlug },
+            });
+
+            // alias = the product-line display name (e.g. "iphone", "xbox", "playstation")
+            // Capitalise it for display: "iphone" → "iPhone" handled in UI, store raw for flexibility
+            const alias = brandAlias !== brandSlug ? brandAlias : null;
+            const bc = await prisma.brandCategory.upsert({
+                where:  { brandId_categoryId: { brandId: brand.id, categoryId: cat.id } },
+                update: { alias },
+                create: { brandId: brand.id, categoryId: cat.id, alias },
+            });
+
+            if (((bc.images as string[]) ?? []).length === 0) {
+                const imgs = fs.readdirSync(brandPath).filter(isImage);
+                const keys: string[] = [];
+                for (const img of imgs) {
+                    // Use alias in Garage path: catalog/categories/consoles/xbox/
+                    keys.push(await uploadFile(
+                        path.join(brandPath, img),
+                        `catalog/categories/${catSlug}/${brandAlias}/${img}`,
+                    ));
+                }
+                if (keys.length) {
+                    await prisma.brandCategory.update({ where: { id: bc.id }, data: { images: keys } });
+                    console.log(`  Brand-cat images (${keys.length}): ${catSlug}/${brandAlias}/`);
+                }
+            }
+        }
+    }
+    console.log('✓ Categories & brand-category images done');
 }
 
-async function main() {
-    const downloadsDir = path.join(__dirname, 'downloads');
-    const productsJsonPath = path.join(downloadsDir, 'products.json');
+// ─── Phase 2: Brand logos + brand images ─────────────────────────────────────
 
-    if (!fs.existsSync(productsJsonPath)) {
-        throw new Error(`products.json not found at ${productsJsonPath}`);
+async function seedBrands() {
+    const brandsDir = path.join(SEED_DIR, 'brands');
+    if (!fs.existsSync(brandsDir)) return;
+
+    const dirs = fs.readdirSync(brandsDir)
+        .filter(d => fs.statSync(path.join(brandsDir, d)).isDirectory());
+
+    for (const brandSlug of dirs) {
+        const brandPath = path.join(brandsDir, brandSlug);
+
+        const brand = await prisma.brand.upsert({
+            where:  { slug: brandSlug },
+            update: {},
+            create: { name: cap(brandSlug), slug: brandSlug },
+        });
+
+        const imgs = fs.readdirSync(brandPath).filter(isImage);
+        for (const img of imgs) {
+            const s3Key = `catalog/brands/${brandSlug}/${img}`;
+            await uploadFile(path.join(brandPath, img), s3Key);
+
+            // logo.png → set as brand logo
+            if (img === 'logo.png' && !brand.logo) {
+                await prisma.brand.update({ where: { id: brand.id }, data: { logo: s3Key } });
+                console.log(`  Logo: brands/${brandSlug}/logo.png`);
+            }
+        }
     }
+    console.log('✓ Brand logos & images done');
+}
 
-    const productsData: any[] = JSON.parse(fs.readFileSync(productsJsonPath, 'utf8'));
-    console.log(`Loaded ${productsData.length} products from products.json`);
+// ─── Phase 3: Background banners ─────────────────────────────────────────────
 
-    await ensureBucketExists(s3Client, bucketName);
+async function seedBanners() {
+    const bannersDir = path.join(SEED_DIR, 'banners');
+    if (!fs.existsSync(bannersDir)) return;
 
-    // Clear existing data
+    // Only root-level images (skip promo_banners/ subfolder)
+    const files = fs.readdirSync(bannersDir)
+        .filter(f => isImage(f) && fs.statSync(path.join(bannersDir, f)).isFile());
+
+    for (let i = 0; i < files.length; i++) {
+        const filename = files[i]!;
+        const s3Key = `banners/${filename}`;
+        const existing = await prisma.banner.findUnique({ where: { key: s3Key } });
+        if (!existing) {
+            await uploadFile(path.join(bannersDir, filename), s3Key);
+            await prisma.banner.create({
+                data: { key: s3Key, label: filename.replace(/\.[^.]+$/, ''), order: i },
+            });
+            console.log(`  Banner: ${filename}`);
+        }
+    }
+    console.log('✓ Banners done');
+}
+
+// ─── Phase 4: Promo slides (reads slides.json) ────────────────────────────────
+
+async function seedPromoSlides() {
+    const slidesPath = path.join(SEED_DIR, 'banners', 'promo_banners', 'slides.json');
+    if (!fs.existsSync(slidesPath)) return;
+
+    const promoDir = path.join(SEED_DIR, 'banners', 'promo_banners');
+    const slides: any[] = JSON.parse(fs.readFileSync(slidesPath, 'utf8'));
+
+    for (let i = 0; i < slides.length; i++) {
+        const slide = slides[i]!;
+        const imgFile: string = slide.img ?? '';
+        let imgKey: string | null = null;
+
+        if (imgFile) {
+            const localPath = path.join(promoDir, imgFile);
+            if (fs.existsSync(localPath)) {
+                imgKey = await uploadFile(localPath, `banners/promo/${imgFile}`);
+                console.log(`  Promo image: ${imgFile}`);
+            }
+        }
+
+        const title    = [slide.titleLine1, slide.titleLine2].filter(Boolean).join(' ');
+        const subtitle = slide.desc ?? '';
+        const btnText  = slide.btnText ?? 'Shop Now';
+        const btnLink  = slide.btnLink ?? '/';
+
+        const existing = await prisma.promoSlide.findFirst({ where: { order: i } });
+        if (existing) {
+            await prisma.promoSlide.update({
+                where: { id: existing.id },
+                data: { imgKey: imgKey ?? existing.imgKey, title, subtitle, btnText, btnLink },
+            });
+        } else {
+            await prisma.promoSlide.create({
+                data: { imgKey, title, subtitle, btnText, btnLink, order: i, isActive: true },
+            });
+        }
+    }
+    console.log('✓ Promo slides done');
+}
+
+// ─── Phase 5: Device catalog (derived from products.json) ────────────────────
+
+async function seedDeviceCatalog(productsData: any[]) {
+    // Clear existing
+    await prisma.orderItem.deleteMany({});
     await prisma.product.deleteMany({});
     await prisma.deviceCatalog.deleteMany({});
-    console.log('Cleared existing products and device catalog');
 
-    // ── Step 1: Build unique device catalog from products data ────────────────
-    const catalogMap = new Map<string, { brand: string; model: string; category: string; storageOptions: Set<string> }>();
+    const NORM: Record<string, string> = {
+        'laptops / macbooks': 'laptops',
+        'accessories': 'audio',
+    };
+    const normCat = (raw: string) => NORM[raw.toLowerCase()] ?? raw.toLowerCase();
+
+    // Build unique brand+model+category combos from products.json
+    const catalogMap = new Map<string, { brandSlug: string; brandName: string; catSlug: string; model: string; storage: Set<string> }>();
 
     for (const prod of productsData) {
-        const brand = prod.brand as string;
-        const model = prod.model as string;
-        const category = normalizeCategory(prod.category as string);
-        const storage = (prod.specs?.Storage || prod.specs?.storage || '') as string;
-        const key = `${brand}::${model}`;
-
-        if (!catalogMap.has(key)) {
-            catalogMap.set(key, { brand, model, category, storageOptions: new Set() });
-        }
-        if (storage) catalogMap.get(key)!.storageOptions.add(storage);
+        const brandName = prod.brand as string;
+        const brandSlug = brandName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        const catSlug   = normCat(prod.category ?? 'phones');
+        const model     = prod.model as string;
+        const storage   = (prod.specs?.Storage || prod.specs?.storage || '') as string;
+        const key       = `${brandSlug}::${catSlug}::${model}`;
+        if (!catalogMap.has(key)) catalogMap.set(key, { brandSlug, brandName, catSlug, model, storage: new Set() });
+        if (storage) catalogMap.get(key)!.storage.add(storage);
     }
 
-    const catalogIdByKey = new Map<string, string>();
-    for (const [key, data] of catalogMap.entries()) {
-        const entry = await prisma.deviceCatalog.create({
-            data: {
-                brand: data.brand,
-                model: data.model,
-                category: data.category,
-                storageOptions: Array.from(data.storageOptions),
-            },
+    const catalogIdMap = new Map<string, string>();
+
+    for (const [key, data] of catalogMap) {
+        // Ensure brand exists
+        const brand = await prisma.brand.upsert({
+            where:  { slug: data.brandSlug },
+            update: {},
+            create: { name: data.brandName, slug: data.brandSlug },
         });
-        catalogIdByKey.set(key, entry.id);
+        // Ensure category exists
+        const cat = await prisma.category.upsert({
+            where:  { slug: data.catSlug },
+            update: {},
+            create: { name: cap(data.catSlug), slug: data.catSlug },
+        });
+        // Ensure brand-category link
+        const bc = await prisma.brandCategory.upsert({
+            where:  { brandId_categoryId: { brandId: brand.id, categoryId: cat.id } },
+            update: {},
+            create: { brandId: brand.id, categoryId: cat.id },
+        });
+        // Create device catalog entry
+        const entry = await prisma.deviceCatalog.upsert({
+            where:  { brandCategoryId_model: { brandCategoryId: bc.id, model: data.model } },
+            update: { storageOptions: Array.from(data.storage) },
+            create: { brandCategoryId: bc.id, model: data.model, storageOptions: Array.from(data.storage), isActive: true },
+        });
+        catalogIdMap.set(key, entry.id);
     }
-    console.log(`Created ${catalogMap.size} device catalog entries`);
 
-    // ── Step 2: Seed products with catalogId ──────────────────────────────────
-    let success = 0;
+    console.log(`✓ Device catalog: ${catalogMap.size} entries`);
+    return catalogIdMap;
+}
+
+// ─── Phase 6: Products (reads products.json, uploads images) ─────────────────
+
+async function seedProducts(productsData: any[], catalogIdMap: Map<string, string>) {
+    const productsDir = path.join(SEED_DIR, 'products');
+
+    const NORM: Record<string, string> = {
+        'laptops / macbooks': 'laptops',
+        'accessories': 'audio',
+    };
+    const normCat = (raw: string) => NORM[raw.toLowerCase()] ?? raw.toLowerCase();
+
+    let created = 0, skipped = 0;
+
     for (const prod of productsData) {
-        const s3Keys: string[] = [];
+        const brandName = prod.brand as string;
+        const brandSlug = brandName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        const catSlug   = normCat(prod.category ?? 'phones');
+        const model     = prod.model as string;
+        const deviceSlug = model.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        const catalogKey = `${brandSlug}::${catSlug}::${model}`;
+        const catalogId  = catalogIdMap.get(catalogKey);
 
+        if (!catalogId) { skipped++; continue; }
+
+        // Upload images → products/{cat}/{brand}/{device}/{filename}
+        const s3Keys: string[] = [];
         if (Array.isArray(prod.images)) {
-            for (const imgFilename of prod.images) {
+            for (const imgFile of prod.images as string[]) {
+                const localPath = path.join(productsDir, imgFile);
+                if (!fs.existsSync(localPath)) continue;
                 try {
-                    const key = await uploadProductImage(s3Client, bucketName, prod.slug, imgFilename, downloadsDir);
-                    s3Keys.push(key);
+                    s3Keys.push(await uploadFile(
+                        localPath,
+                        `products/${catSlug}/${brandSlug}/${deviceSlug}/${imgFile}`,
+                    ));
                 } catch (e: any) {
-                    console.error(`  Image upload failed "${prod.name}" / "${imgFilename}": ${e.message}`);
+                    console.warn(`  Skipped image ${imgFile}: ${e.message}`);
                 }
             }
         }
 
-        const catalogKey = `${prod.brand}::${prod.model}`;
-        const catalogId = catalogIdByKey.get(catalogKey);
-        if (!catalogId) {
-            console.error(`  No catalog entry for "${prod.brand} ${prod.model}" — skipping`);
-            continue;
-        }
-
         const storage = (prod.specs?.Storage || prod.specs?.storage || '') as string;
-        // Remove storage from specs since it's now a dedicated column
-        const { Storage: _S, storage: _s, ...remainingSpecs } = prod.specs ?? {};
+        const { Storage: _S, storage: _s, ...specs } = prod.specs ?? {};
 
         try {
             await prisma.product.create({
                 data: {
                     catalogId,
-                    name: prod.name,
-                    slug: prod.slug,
-                    condition: prod.condition,
+                    name:         prod.name,
+                    slug:         prod.slug,
+                    condition:    prod.condition,
                     storage,
-                    price: Number(prod.price),
+                    price:        Number(prod.price),
                     comparePrice: prod.comparePrice ? Number(prod.comparePrice) : null,
-                    stock: Number(prod.stock ?? 0),
-                    images: s3Keys,
-                    specs: remainingSpecs ?? {},
-                    description: prod.description ?? '',
-                    rating: Number(prod.rating ?? 0),
-                    reviewCount: Number(prod.reviewCount ?? 0),
-                    isActive: prod.isActive !== undefined ? Boolean(prod.isActive) : true,
+                    stock:        Number(prod.stock ?? 0),
+                    images:       s3Keys,
+                    specs:        specs ?? {},
+                    description:  prod.description ?? '',
+                    rating:       Number(prod.rating ?? 0),
+                    reviewCount:  Number(prod.reviewCount ?? 0),
+                    isActive:     prod.isActive !== false,
                 },
             });
-            success++;
-            if (success % 10 === 0 || success === productsData.length) {
-                console.log(`  ${success}/${productsData.length} products seeded`);
-            }
+            created++;
+            if (created % 10 === 0) console.log(`  ${created}/${productsData.length} products...`);
         } catch (e: any) {
-            console.error(`  Failed to insert "${prod.name}": ${e.message}`);
+            console.error(`  Failed "${prod.name}": ${e.message}`);
         }
     }
+    console.log(`✓ Products: ${created} created, ${skipped} skipped`);
+}
 
-    console.log(`\nDone — ${success}/${productsData.length} products seeded with images.`);
+// ─── Main ─────────────────────────────────────────────────────────────────────
+
+async function main() {
+    console.log('Starting seed...\n');
+
+    const productsJsonPath = path.join(SEED_DIR, 'products', 'products.json');
+    if (!fs.existsSync(productsJsonPath)) {
+        throw new Error(`products.json not found at ${productsJsonPath}`);
+    }
+    const productsData: any[] = JSON.parse(fs.readFileSync(productsJsonPath, 'utf8'));
+    console.log(`Loaded ${productsData.length} products from products.json\n`);
+
+    await ensureBucket();
+
+    await seedCategories();    // categories + brand-category images
+    await seedBrands();        // brand logos + brand images
+    await seedBanners();       // background banners
+    await seedPromoSlides();   // promo carousel from slides.json
+
+    const catalogIdMap = await seedDeviceCatalog(productsData);
+    await seedProducts(productsData, catalogIdMap);
+
+    console.log('\nSeed complete.');
 }
 
 main()
-    .catch((e) => {
-        console.error('Seed failed:', e);
-        process.exit(1);
-    })
-    .finally(async () => {
-        await prisma.$disconnect();
-        await pool.end();
-    });
+    .catch(e => { console.error('Seed failed:', e); process.exit(1); })
+    .finally(async () => { await prisma.$disconnect(); await pool.end(); });
