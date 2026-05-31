@@ -48,8 +48,8 @@ export class CatalogService {
     }
 
     async uploadCategoryImage(id: string, file: any) {
-        await this.getCategory(id);
-        const { filePath } = await this.storage.uploadFile(file, 'category-images', id);
+        const cat = await this.getCategory(id);
+        const { filePath } = await this.storage.uploadFile(file, `catalog/categories/${cat.slug}`);
         return this.prisma.category.update({ where: { id }, data: { image: filePath } });
     }
 
@@ -102,8 +102,8 @@ export class CatalogService {
     }
 
     async uploadBrandLogo(id: string, file: any) {
-        await this.getBrand(id);
-        const { filePath } = await this.storage.uploadFile(file, 'brand-logos', id);
+        const brand = await this.getBrand(id);
+        const { filePath } = await this.storage.uploadFile(file, `catalog/brands/${brand.slug}`);
         return this.prisma.brand.update({ where: { id }, data: { logo: filePath } });
     }
 
@@ -155,7 +155,7 @@ export class CatalogService {
         if (images.length >= MAX_BRAND_CATEGORY_IMAGES) {
             throw new BadRequestException(`Maximum ${MAX_BRAND_CATEGORY_IMAGES} images allowed per brand-category`);
         }
-        const { filePath } = await this.storage.uploadFile(file, 'brand-category-images', id);
+        const { filePath } = await this.storage.uploadFile(file, `catalog/${bc.category.slug}/${bc.brand.slug}`);
         const updated = await this.prisma.brandCategory.update({
             where: { id },
             data: { images: [...images, filePath] },
