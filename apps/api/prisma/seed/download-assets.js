@@ -1,6 +1,10 @@
 /**
  * Download brand logos from Clearbit Logo API.
- * Run once before seeding: node apps/api/prisma/seed/download-assets.js
+ *
+ * Run ONCE before seeding (requires internet):
+ *   node apps/api/prisma/seed/download-assets.js
+ *
+ * Logos are saved to: apps/api/prisma/seed/brands/logos/
  */
 
 const https = require('https');
@@ -8,7 +12,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
-const LOGOS_DIR = path.join(__dirname, 'logos');
+const LOGOS_DIR = path.join(__dirname, 'brands', 'logos');
 
 if (!fs.existsSync(LOGOS_DIR)) fs.mkdirSync(LOGOS_DIR, { recursive: true });
 
@@ -39,22 +43,19 @@ function download(url, dest) {
     const file = fs.createWriteStream(dest);
 
     client.get(url, (res) => {
-      // Follow redirects
       if (res.statusCode === 301 || res.statusCode === 302) {
         file.close();
         fs.unlinkSync(dest);
         return download(res.headers.location, dest).then(resolve).catch(reject);
       }
-
       if (res.statusCode !== 200) {
         file.close();
         fs.unlinkSync(dest);
-        return reject(new Error(`HTTP ${res.statusCode} for ${url}`));
+        return reject(new Error(`HTTP ${res.statusCode}`));
       }
-
       res.pipe(file);
       file.on('finish', () => { file.close(); resolve(); });
-      file.on('error', (err) => { fs.unlinkSync(dest); reject(err); });
+      file.on('error', (err) => { if (fs.existsSync(dest)) fs.unlinkSync(dest); reject(err); });
     }).on('error', (err) => {
       if (fs.existsSync(dest)) fs.unlinkSync(dest);
       reject(err);
@@ -64,6 +65,7 @@ function download(url, dest) {
 
 async function main() {
   console.log('Downloading brand logos from Clearbit...\n');
+  console.log(`Saving to: ${LOGOS_DIR}\n`);
 
   for (const brand of BRANDS) {
     const url = `https://logo.clearbit.com/${brand.domain}?size=256`;
@@ -71,14 +73,25 @@ async function main() {
     process.stdout.write(`  ${brand.slug.padEnd(12)}`);
     try {
       await download(url, dest);
-      if (!process.stdout.columns) console.log('  ✓');
-      else console.log(`  → ${path.basename(dest)}`);
+      console.log(`  ✓ ${path.basename(dest)}`);
     } catch (e) {
-      console.log(`  ✗ Failed: ${e.message}`);
+      console.log(`  ✗ Failed (${e.message}) — add manually to ${LOGOS_DIR}/${brand.slug}.png`);
     }
   }
 
-  console.log('\nDone. Logos saved to: apps/api/prisma/seed/logos/');
+  console.log('\n=== Seed folder structure ===');
+  console.log('prisma/seed/');
+  console.log('  products/       ← products.json + product images');
+  console.log('  categories/     ← phones.png, tablets.png, laptops.png, consoles.png, audio.png');
+  console.log('  brands/');
+  console.log('    logos/        ← apple.png, samsung.png, etc. (downloaded here)');
+  console.log('    phones/apple/ samsung/ google/ oneplus/');
+  console.log('    tablets/apple/');
+  console.log('    laptops/apple/');
+  console.log('    consoles/sony/ microsoft/');
+  console.log('    audio/apple/ sony/');
+  console.log('  banners/        ← banner images');
+  console.log('\nNow run the seed via admin panel or API.');
 }
 
 main();

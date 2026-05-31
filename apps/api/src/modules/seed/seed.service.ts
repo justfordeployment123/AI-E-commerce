@@ -4,37 +4,36 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import * as fs from 'fs';
 import * as path from 'path';
 
-// Images served from apps/web/public/ — paths relative to that root
+// All paths relative to prisma/seed/
 const CATEGORY_IMAGES: Record<string, string> = {
-    phones:      'phones/phone_1.png',
-    tablets:     'tablets/ipad/ipad_pro_1.png',
-    laptops:     'laptops/MacBook/showcase_macbook.png',
-    consoles:    'consoles/showcase_ps5.png',
-    audio:       'audio/bento_audio.png',
-    accessories: 'audio/bento_audio.png',
+    phones:      'categories/phones.png',
+    tablets:     'categories/tablets.png',
+    laptops:     'categories/laptops.png',
+    consoles:    'categories/consoles.png',
+    audio:       'categories/audio.png',
+    accessories: 'categories/audio.png',
 };
 
-// Multiple showcase images per brand+category
 const BRAND_CATEGORY_IMAGES: Record<string, Record<string, string[]>> = {
     phones: {
-        apple:   ['phones/iphone/showcase_iphone.png', 'phones/iphone/iphone_15.png', 'phones/iphone/iphone_tradein_promo_1778927727005.png'],
-        samsung: ['phones/samsung/showcase_galaxy_s24.png', 'phones/samsung/samsung_galaxy.png', 'phones/samsung/bento_smartphones.png'],
-        google:  ['phones/Google/pixel_1.png', 'phones/Google/pixel_2.png', 'phones/Google/pixel_3.png'],
-        oneplus: ['phones/OnePlus/oneplus_1.png', 'phones/OnePlus/oneplus_2.png', 'phones/OnePlus/oneplus_3.png'],
+        apple:   ['brands/phones/apple/showcase_iphone.png', 'brands/phones/apple/iphone_15.png', 'brands/phones/apple/refurbished_iphone.png'],
+        samsung: ['brands/phones/samsung/showcase_galaxy_s24.png', 'brands/phones/samsung/samsung_galaxy.png', 'brands/phones/samsung/bento_smartphones.png'],
+        google:  ['brands/phones/google/pixel_1.png', 'brands/phones/google/pixel_2.png', 'brands/phones/google/pixel_3.png'],
+        oneplus: ['brands/phones/oneplus/oneplus_1.png', 'brands/phones/oneplus/oneplus_2.png', 'brands/phones/oneplus/oneplus_3.png'],
     },
     tablets: {
-        apple: ['tablets/ipad/ipad_pro_1.png', 'tablets/ipad/ipad_pro_2.png', 'tablets/ipad/ipad_pro_3.png'],
+        apple: ['brands/tablets/apple/ipad_pro_1.png', 'brands/tablets/apple/ipad_pro_2.png', 'brands/tablets/apple/ipad_pro_3.png'],
     },
     laptops: {
-        apple: ['laptops/MacBook/showcase_macbook.png', 'laptops/MacBook/macbook_pro.png', 'laptops/MacBook/laptop_1.png'],
+        apple: ['brands/laptops/apple/showcase_macbook.png', 'brands/laptops/apple/macbook_pro.png', 'brands/laptops/apple/laptop_1.png', 'brands/laptops/apple/laptop_2.png'],
     },
     consoles: {
-        sony:      ['consoles/showcase_ps5.png', 'consoles/console_1.png', 'consoles/console_2.png'],
-        microsoft: ['consoles/microsoft-xbox-360-slim.jpg'],
+        sony:      ['brands/consoles/sony/showcase_ps5.png', 'brands/consoles/sony/console_1.png', 'brands/consoles/sony/console_2.png'],
+        microsoft: ['brands/consoles/microsoft/microsoft-xbox-360-slim.jpg'],
     },
     audio: {
-        apple: ['audio/showcase_airpods_max.png', 'audio/showcase_airpods_pro.png'],
-        sony:  ['audio/showcase_sony_wh1000xm5.png', 'audio/audio_1.png', 'audio/audio_2.png'],
+        apple: ['brands/audio/apple/showcase_airpods_max.png', 'brands/audio/apple/showcase_airpods_pro.png'],
+        sony:  ['brands/audio/sony/showcase_sony_wh1000xm5.png', 'brands/audio/sony/audio_1.png', 'brands/audio/sony/audio_2.png'],
     },
 };
 
@@ -137,9 +136,9 @@ export class SeedService {
             },
             forcePathStyle: true,
         });
-        this.downloadsDir  = path.join(process.cwd(), 'prisma', 'downloads');
-        this.webPublicDir  = path.join(process.cwd(), '..', 'web', 'public');
-        this.seedLogosDir  = path.join(process.cwd(), 'prisma', 'seed', 'logos');
+        this.downloadsDir  = path.join(process.cwd(), 'prisma', 'seed', 'products');
+        this.webPublicDir  = path.join(process.cwd(), 'prisma', 'seed');
+        this.seedLogosDir  = path.join(process.cwd(), 'prisma', 'seed', 'brands', 'logos');
     }
 
     // Upload any local file to S3 at the given key. Returns key or null if file missing.
@@ -163,7 +162,7 @@ export class SeedService {
     async runSeed(): Promise<SeedResult> {
         const productsJsonPath = path.join(this.downloadsDir, 'products.json');
         if (!fs.existsSync(productsJsonPath)) {
-            throw new Error(`products.json not found at ${productsJsonPath}.`);
+            throw new Error(`products.json not found at ${productsJsonPath}. Run: cp prisma/downloads/* prisma/seed/products/`);
         }
 
         const productsData: any[] = JSON.parse(fs.readFileSync(productsJsonPath, 'utf8'));
@@ -289,7 +288,7 @@ export class SeedService {
     }
 
     private async seedBanners(): Promise<number> {
-        const bannersDir = path.join(this.webPublicDir, 'banners');
+        const bannersDir = path.join(process.cwd(), 'prisma', 'seed', 'banners');
         if (!fs.existsSync(bannersDir)) {
             this.logger.warn('banners/ directory not found in web/public — skipping banner seed');
             return 0;
