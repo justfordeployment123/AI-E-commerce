@@ -21,6 +21,7 @@ const FOLDERS = [
   'category-images',
   'brand-logos',
   'brand-category-images',
+  'banners',
 ] as const;
 
 @Injectable()

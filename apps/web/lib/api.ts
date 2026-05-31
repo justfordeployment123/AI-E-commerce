@@ -229,6 +229,14 @@ export const repairsApi = {
     apiFetch<Repair>(`/repairs/${id}/decline-quote`, { method: 'POST', auth: true }),
 };
 
+// ── Banners ───────────────────────────────────────────────────────────────────
+export const bannersApi = {
+  random: (count = 4) =>
+    apiFetch<{ id: string; label: string | null; url: string | null }[]>(
+      `/banners/random?count=${count}`
+    ),
+};
+
 // ── Catalog (admin + public) ──────────────────────────────────────────────────
 
 async function uploadFileAuthed(endpoint: string, file: File): Promise<any> {

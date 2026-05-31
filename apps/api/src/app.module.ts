@@ -30,6 +30,7 @@ import { SupportModule } from './modules/support/support.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
 import { SeedModule } from './modules/seed/seed.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
+import { BannersModule } from './modules/banners/banners.module';
 
 @Module({
   imports: [
@@ -60,6 +61,7 @@ import { CatalogModule } from './modules/catalog/catalog.module';
     ReviewsModule,
     SeedModule,
     CatalogModule,
+    BannersModule,
   ],
   controllers: [AppController],
   providers: [

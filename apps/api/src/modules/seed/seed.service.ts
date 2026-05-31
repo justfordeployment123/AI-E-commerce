@@ -4,6 +4,40 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import * as fs from 'fs';
 import * as path from 'path';
 
+// Images served from apps/web/public/ — paths relative to that root
+const CATEGORY_IMAGES: Record<string, string> = {
+    phones:      'phones/phone_1.png',
+    tablets:     'tablets/ipad/ipad_pro_1.png',
+    laptops:     'laptops/MacBook/showcase_macbook.png',
+    consoles:    'consoles/showcase_ps5.png',
+    audio:       'audio/bento_audio.png',
+    accessories: 'audio/bento_audio.png',
+};
+
+// Multiple showcase images per brand+category
+const BRAND_CATEGORY_IMAGES: Record<string, Record<string, string[]>> = {
+    phones: {
+        apple:   ['phones/iphone/showcase_iphone.png', 'phones/iphone/iphone_15.png', 'phones/iphone/iphone_tradein_promo_1778927727005.png'],
+        samsung: ['phones/samsung/showcase_galaxy_s24.png', 'phones/samsung/samsung_galaxy.png', 'phones/samsung/bento_smartphones.png'],
+        google:  ['phones/Google/pixel_1.png', 'phones/Google/pixel_2.png', 'phones/Google/pixel_3.png'],
+        oneplus: ['phones/OnePlus/oneplus_1.png', 'phones/OnePlus/oneplus_2.png', 'phones/OnePlus/oneplus_3.png'],
+    },
+    tablets: {
+        apple: ['tablets/ipad/ipad_pro_1.png', 'tablets/ipad/ipad_pro_2.png', 'tablets/ipad/ipad_pro_3.png'],
+    },
+    laptops: {
+        apple: ['laptops/MacBook/showcase_macbook.png', 'laptops/MacBook/macbook_pro.png', 'laptops/MacBook/laptop_1.png'],
+    },
+    consoles: {
+        sony:      ['consoles/showcase_ps5.png', 'consoles/console_1.png', 'consoles/console_2.png'],
+        microsoft: ['consoles/microsoft-xbox-360-slim.jpg'],
+    },
+    audio: {
+        apple: ['audio/showcase_airpods_max.png', 'audio/showcase_airpods_pro.png'],
+        sony:  ['audio/showcase_sony_wh1000xm5.png', 'audio/audio_1.png', 'audio/audio_2.png'],
+    },
+};
+
 const PRICING_DEFAULTS = [
     { key: 'margin_pct', value: 30.0, label: 'Default Profit Margin (%)' },
     { key: 'multiplier_mint', value: 1.0, label: 'Mint Condition Multiplier' },
@@ -73,6 +107,7 @@ const DEVICE_CATALOG = [
 
 export interface SeedResult {
     pricingConfigs: number;
+    banners: number;
     deviceCatalog: number;
     products: {
         created: number;
@@ -88,6 +123,8 @@ export class SeedService {
     private readonly s3Client: S3Client;
     private readonly bucketName: string;
     private readonly downloadsDir: string;
+    private readonly webPublicDir: string;
+    private readonly seedLogosDir: string;
 
     constructor(private readonly prisma: PrismaService) {
         this.bucketName = process.env.GARAGE_BUCKET || 'ai-ecommerce';
@@ -100,7 +137,27 @@ export class SeedService {
             },
             forcePathStyle: true,
         });
-        this.downloadsDir = path.join(process.cwd(), 'prisma', 'downloads');
+        this.downloadsDir  = path.join(process.cwd(), 'prisma', 'downloads');
+        this.webPublicDir  = path.join(process.cwd(), '..', 'web', 'public');
+        this.seedLogosDir  = path.join(process.cwd(), 'prisma', 'seed', 'logos');
+    }
+
+    // Upload any local file to S3 at the given key. Returns key or null if file missing.
+    private async uploadLocalFile(localPath: string, s3Key: string): Promise<string | null> {
+        if (!fs.existsSync(localPath)) return null;
+        const buffer = fs.readFileSync(localPath);
+        const ext = path.extname(localPath).toLowerCase();
+        const mime = ext === '.jpg' || ext === '.jpeg' ? 'image/jpeg'
+                   : ext === '.png' ? 'image/png'
+                   : ext === '.webp' ? 'image/webp'
+                   : 'application/octet-stream';
+        await this.s3Client.send(new PutObjectCommand({
+            Bucket: this.bucketName,
+            Key:    s3Key,
+            Body:   buffer,
+            ContentType: mime,
+        }));
+        return s3Key;
     }
 
     async runSeed(): Promise<SeedResult> {
@@ -113,10 +170,11 @@ export class SeedService {
         this.logger.log(`Loaded ${productsData.length} products from products.json`);
 
         const pricingCount = await this.seedPricingConfigs();
-        const deviceCount = await this.seedDeviceCatalog();
+        const bannerCount  = await this.seedBanners();
+        const deviceCount  = await this.seedDeviceCatalog();
         const productsResult = await this.seedProducts(productsData);
 
-        return { pricingConfigs: pricingCount, deviceCatalog: deviceCount, products: productsResult };
+        return { pricingConfigs: pricingCount, banners: bannerCount, deviceCatalog: deviceCount, products: productsResult };
     }
 
     private async seedPricingConfigs(): Promise<number> {
@@ -135,19 +193,27 @@ export class SeedService {
         await this.prisma.product.deleteMany({});
         await this.prisma.deviceCatalog.deleteMany({});
 
-        // Cache brand/category/brandCategory lookups to avoid repeated DB hits
-        const brandCache = new Map<string, string>();
+        const brandCache    = new Map<string, string>();
         const categoryCache = new Map<string, string>();
-        const bcCache = new Map<string, string>();
+        const bcCache       = new Map<string, string>();
 
         const findOrCreateBrand = async (name: string) => {
             if (brandCache.has(name)) return brandCache.get(name)!;
             const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-            const brand = await this.prisma.brand.upsert({
-                where: { slug },
-                update: {},
-                create: { name, slug },
-            });
+            const existing = await this.prisma.brand.findUnique({ where: { slug } });
+            let brand = existing ?? await this.prisma.brand.create({ data: { name, slug } });
+
+            // Upload logo if not already set and the file exists
+            if (!brand.logo) {
+                const logoPath = path.join(this.seedLogosDir, `${slug}.png`);
+                const s3Key = `catalog/brands/${slug}/${slug}.png`;
+                const uploaded = await this.uploadLocalFile(logoPath, s3Key);
+                if (uploaded) {
+                    brand = await this.prisma.brand.update({ where: { id: brand.id }, data: { logo: uploaded } });
+                    this.logger.log(`  Logo uploaded for brand: ${name}`);
+                }
+            }
+
             brandCache.set(name, brand.id);
             return brand.id;
         };
@@ -155,37 +221,103 @@ export class SeedService {
         const findOrCreateCategory = async (slug: string) => {
             if (categoryCache.has(slug)) return categoryCache.get(slug)!;
             const name = slug.charAt(0).toUpperCase() + slug.slice(1);
-            const cat = await this.prisma.category.upsert({
-                where: { slug },
-                update: {},
-                create: { name, slug },
-            });
+            const existing = await this.prisma.category.findUnique({ where: { slug } });
+            let cat = existing ?? await this.prisma.category.create({ data: { name, slug } });
+
+            // Upload category image if not already set
+            if (!cat.image && CATEGORY_IMAGES[slug]) {
+                const imgPath = path.join(this.webPublicDir, CATEGORY_IMAGES[slug]);
+                const ext = path.extname(CATEGORY_IMAGES[slug]);
+                const s3Key = `catalog/categories/${slug}/${slug}${ext}`;
+                const uploaded = await this.uploadLocalFile(imgPath, s3Key);
+                if (uploaded) {
+                    cat = await this.prisma.category.update({ where: { id: cat.id }, data: { image: uploaded } });
+                    this.logger.log(`  Image uploaded for category: ${slug}`);
+                }
+            }
+
             categoryCache.set(slug, cat.id);
             return cat.id;
         };
 
-        const findOrCreateBrandCategory = async (brandId: string, categoryId: string) => {
+        const findOrCreateBrandCategory = async (brandId: string, brandSlug: string, categoryId: string, categorySlug: string) => {
             const key = `${brandId}::${categoryId}`;
             if (bcCache.has(key)) return bcCache.get(key)!;
-            const bc = await this.prisma.brandCategory.upsert({
+
+            const existing = await this.prisma.brandCategory.findUnique({
                 where: { brandId_categoryId: { brandId, categoryId } },
-                update: {},
-                create: { brandId, categoryId },
             });
+            let bc = existing ?? await this.prisma.brandCategory.create({ data: { brandId, categoryId } });
+
+            // Upload showcase images if not already seeded
+            const existingImages = (bc.images as string[]) ?? [];
+            if (existingImages.length === 0) {
+                const srcImages = BRAND_CATEGORY_IMAGES[categorySlug]?.[brandSlug] ?? [];
+                const uploadedKeys: string[] = [];
+                for (const relPath of srcImages) {
+                    const localPath = path.join(this.webPublicDir, relPath);
+                    const filename = path.basename(relPath);
+                    const s3Key = `catalog/${categorySlug}/${brandSlug}/${filename}`;
+                    const uploaded = await this.uploadLocalFile(localPath, s3Key);
+                    if (uploaded) uploadedKeys.push(uploaded);
+                }
+                if (uploadedKeys.length > 0) {
+                    bc = await this.prisma.brandCategory.update({
+                        where: { id: bc.id },
+                        data: { images: uploadedKeys },
+                    });
+                    this.logger.log(`  ${uploadedKeys.length} images uploaded for ${brandSlug}/${categorySlug}`);
+                }
+            }
+
             bcCache.set(key, bc.id);
             return bc.id;
         };
 
         for (const dev of DEVICE_CATALOG) {
-            const brandId = await findOrCreateBrand(dev.brand);
-            const categoryId = await findOrCreateCategory(dev.category);
-            const brandCategoryId = await findOrCreateBrandCategory(brandId, categoryId);
+            const brandSlug    = dev.brand.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+            const categorySlug = dev.category;
+            const brandId      = await findOrCreateBrand(dev.brand);
+            const categoryId   = await findOrCreateCategory(categorySlug);
+            const brandCategoryId = await findOrCreateBrandCategory(brandId, brandSlug, categoryId, categorySlug);
             await this.prisma.deviceCatalog.create({
                 data: { brandCategoryId, model: dev.model, storageOptions: dev.storageOptions, isActive: true },
             });
         }
         this.logger.log(`Seeded ${DEVICE_CATALOG.length} device catalog entries`);
         return DEVICE_CATALOG.length;
+    }
+
+    private async seedBanners(): Promise<number> {
+        const bannersDir = path.join(this.webPublicDir, 'banners');
+        if (!fs.existsSync(bannersDir)) {
+            this.logger.warn('banners/ directory not found in web/public — skipping banner seed');
+            return 0;
+        }
+
+        const files = fs.readdirSync(bannersDir).filter(f => /\.(jpg|jpeg|png|webp)$/i.test(f));
+        let count = 0;
+
+        for (let i = 0; i < files.length; i++) {
+            const filename = files[i]!;
+            const localPath = path.join(bannersDir, filename);
+            const s3Key = `banners/${filename}`;
+
+            const existing = await this.prisma.banner.findUnique({ where: { key: s3Key } });
+            if (!existing) {
+                const uploaded = await this.uploadLocalFile(localPath, s3Key);
+                if (uploaded) {
+                    await this.prisma.banner.create({
+                        data: { key: uploaded, label: filename.replace(/\.[^.]+$/, ''), order: i },
+                    });
+                    count++;
+                    this.logger.log(`  Banner uploaded: ${filename}`);
+                }
+            }
+        }
+
+        this.logger.log(`Seeded ${count} banners`);
+        return count;
     }
 
     private async uploadImage(productSlug: string, imageFilename: string): Promise<string> {
