@@ -42,4 +42,22 @@ export class BannersService {
         const b = await this.prisma.banner.findUniqueOrThrow({ where: { id } });
         return this.prisma.banner.update({ where: { id }, data: { isActive: !b.isActive } });
     }
+
+    async getPromoSlides() {
+        const slides = await this.prisma.promoSlide.findMany({
+            where: { isActive: true },
+            orderBy: { order: 'asc' },
+        });
+        return Promise.all(
+            slides.map(async (s) => ({
+                id:       s.id,
+                order:    s.order,
+                imgUrl:   await this.storage.resolveImageUrl(s.imgKey),
+                title:    s.title,
+                subtitle: s.subtitle,
+                btnText:  s.btnText,
+                btnLink:  s.btnLink,
+            })),
+        );
+    }
 }

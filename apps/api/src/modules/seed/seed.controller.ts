@@ -1,4 +1,4 @@
-import { Controller, Post, UseGuards } from '@nestjs/common';
+import { Controller, Delete, Post, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -13,5 +13,10 @@ export class SeedController {
     @Post('run')
     run() {
         return this.seedService.runSeed();
+    }
+
+    @Delete('purge')
+    purge() {
+        return this.seedService.purgeAll();
     }
 }

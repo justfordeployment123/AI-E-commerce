@@ -1,6 +1,7 @@
 import {
     Body,
     Controller,
+    Delete,
     Get,
     Param,
     Patch,
@@ -129,5 +130,12 @@ export class TradeInsController {
     @Roles('ADMIN')
     complete(@Param('id') id: string) {
         return this.tradeInsService.complete(id);
+    }
+
+    @Delete('purge')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('ADMIN')
+    purgeAll() {
+        return this.tradeInsService.purgeAll();
     }
 }

@@ -233,4 +233,12 @@ export class RepairsService {
         }
         return updated;
     }
+
+    async purgeAll(): Promise<{ deleted: number }> {
+        const all = await this.prisma.repair.findMany({ select: { images: true } });
+        const keys = all.flatMap(r => r.images as string[]).filter(Boolean);
+        if (keys.length) await this.storage.deleteFiles(keys);
+        await this.prisma.repair.deleteMany({});
+        return { deleted: keys.length };
+    }
 }

@@ -1,0 +1,216 @@
+{
+  "chargers": [
+    {
+      "id": "apple-20w-usb-c-power-adapter",
+      "name": "Apple 20W USB-C Power Adapter",
+      "brand": "Apple",
+      "price": 15.99,
+      "comparePrice": 25.00,
+      "image": "/others/chargers/apple-20w-usb-c-power-adapter.png"
+    },
+    {
+      "id": "apple-20w-usb-c-power-adapter-a2344",
+      "name": "Apple 20W USB-C Power Adapter (A2344)",
+      "brand": "Apple",
+      "price": 13.99,
+      "comparePrice": 25.00,
+      "image": "/others/chargers/apple-20w-usb-c-power-adapter-a2344.png"
+    },
+    {
+      "id": "apple-magsafe-charger",
+      "name": "Apple MagSafe Charger",
+      "brand": "Apple",
+      "price": 27.99,
+      "comparePrice": 45.00,
+      "image": "/others/chargers/apple-magsafe-charger.png"
+    }
+  ],
+  "cables": [
+    {
+      "id": "apple-lightning-to-3.5mm-headphone-jack-adapter",
+      "name": "Apple Lightning to 3.5mm Headphone Jack Adapter",
+      "brand": "Apple",
+      "price": 6.99,
+      "comparePrice": 12.00,
+      "image": "/others/cables/apple-lightning-to-3.5mm-headphone-jack-adapter.png"
+    },
+    {
+      "id": "apple-usb-c-to-lightning-cable-1m",
+      "name": "Apple USB-C to Lightning Cable (1m)",
+      "brand": "Apple",
+      "price": 12.99,
+      "comparePrice": 22.00,
+      "image": "/others/cables/apple-usb-c-to-lightning-cable-1m.png"
+    }
+  ],
+  "memory": [
+    {
+      "id": "16gb-ddr4-2666mhz-sodimm",
+      "name": "16GB DDR4 2666MHz SO-DIMM RAM",
+      "brand": "Generic",
+      "price": 28.99,
+      "comparePrice": 45.00,
+      "image": "/others/memory/16gb-ddr4-2666mhz-sodimm.png"
+    },
+    {
+      "id": "8gb-ddr3-1600mhz-sodimm",
+      "name": "8GB DDR3 1600MHz SO-DIMM RAM",
+      "brand": "Generic",
+      "price": 14.99,
+      "comparePrice": 24.00,
+      "image": "/others/memory/8gb-ddr3-1600mhz-sodimm.png"
+    },
+    {
+      "id": "ddr4-16gb-ram",
+      "name": "16GB DDR4 Desktop RAM",
+      "brand": "Generic",
+      "price": 24.99,
+      "comparePrice": 39.00,
+      "image": "/others/memory/ddr4-16gb-ram.png"
+    }
+  ],
+  "storage": [
+    {
+      "id": "crucial-p5-plus-2tb-nvme-m2",
+      "name": "Crucial P5 Plus 2TB NVMe M.2 SSD",
+      "brand": "Crucial",
+      "price": 89.99,
+      "comparePrice": 139.99,
+      "image": "/others/storage/crucial-p5-plus-2tb-nvme-m2.png"
+    },
+    {
+      "id": "samsung-microsd-express-256gb",
+      "name": "Samsung microSD Express 256GB",
+      "brand": "Samsung",
+      "price": 22.99,
+      "comparePrice": 34.99,
+      "image": "/others/storage/samsung-microsd-express-256gb.png"
+    },
+    {
+      "id": "samsung-1tb-2.5-sata-hdd",
+      "name": "Samsung 1TB 2.5\" SATA Hard Drive",
+      "brand": "Samsung",
+      "price": 34.99,
+      "comparePrice": 54.99,
+      "image": "/others/storage/samsung-1tb-2.5-sata-hdd.png"
+    },
+    {
+      "id": "generic-8gb-usb-flash-drive",
+      "name": "8GB USB Flash Drive",
+      "brand": "Generic",
+      "price": 4.99,
+      "comparePrice": 9.99,
+      "image": "/others/storage/generic-8gb-usb-flash-drive.png"
+    }
+  ],
+  "mouse": [
+    {
+      "id": "apple-magic-mouse-2-wireless",
+      "name": "Apple Magic Mouse 2 Wireless",
+      "brand": "Apple",
+      "price": 44.99,
+      "comparePrice": 79.00,
+      "image": "/others/mouse/apple-magic-mouse-2-wireless.png"
+    },
+    {
+      "id": "generic-optical-mouse-usb",
+      "name": "Generic USB Optical Mouse",
+      "brand": "Generic",
+      "price": 7.99,
+      "comparePrice": 14.99,
+      "image": "/others/mouse/generic-optical-mouse-usb.png"
+    }
+  ],
+  "graphics": [
+    {
+      "id": "amd-radeon-rx-580-8gb",
+      "name": "AMD Radeon RX 580 8GB",
+      "brand": "AMD",
+      "price": 79.99,
+      "comparePrice": 129.99,
+      "image": "/others/graphics/amd-radeon-rx-580-8gb.png"
+    },
+    {
+      "id": "nvidia-geforce-gtx-1060-6gb-gddr5",
+      "name": "NVIDIA GeForce GTX 1060 6GB GDDR5",
+      "brand": "NVIDIA",
+      "price": 69.99,
+      "comparePrice": 119.99,
+      "image": "/others/graphics/nvidia-geforce-gtx-1060-6gb-gddr5.png"
+    }
+  ],
+  "lens": [
+    {
+      "id": "canon-black-lens",
+      "name": "Canon Black Camera Lens",
+      "brand": "Canon",
+      "price": 89.99,
+      "comparePrice": 149.99,
+      "image": "/others/lens/canon-black-lens.png"
+    }
+  ],
+  "pen": [
+    {
+      "id": "apple-pencil-2nd-gen",
+      "name": "Apple Pencil (2nd Generation)",
+      "brand": "Apple",
+      "price": 69.99,
+      "comparePrice": 139.00,
+      "image": "/others/pen/apple-pencil-2nd-gen.png"
+    }
+  ],
+  "smart_watches": [
+    {
+      "id": "samsung-galaxy-watch7-40mm-green",
+      "name": "Samsung Galaxy Watch7 40mm (Green)",
+      "brand": "Samsung",
+      "price": 159.99,
+      "comparePrice": 289.00,
+      "image": "/others/smart_watches/samsung-galaxy-watch7-40mm-green.png"
+    },
+    {
+      "id": "apple-watch-se-2nd-gen-midnight-40mm",
+      "name": "Apple Watch SE 2nd Gen (GPS) 40mm Midnight",
+      "brand": "Apple",
+      "price": 174.99,
+      "comparePrice": 259.00,
+      "image": "/others/smart_watches/apple-watch-se-2nd-gen-midnight-40mm.png"
+    }
+  ],
+  "games": [
+    {
+      "id": "ea-battlefield-6",
+      "name": "Battlefield 6",
+      "brand": "EA",
+      "price": 34.99,
+      "comparePrice": 59.99,
+      "image": "/others/games/ea-battlefield-6.png"
+    },
+    {
+      "id": "activision-call-of-duty-black-ops-4",
+      "name": "Call of Duty: Black Ops 4",
+      "brand": "Activision",
+      "price": 9.99,
+      "comparePrice": 29.99,
+      "image": "/others/games/activision-call-of-duty-black-ops-4.png"
+    }
+  ],
+  "films": [
+    {
+      "id": "marvel-deadpool-2016",
+      "name": "Deadpool (15) 2016 — Blu-ray",
+      "brand": "Marvel",
+      "price": 5.99,
+      "comparePrice": 12.99,
+      "image": "/others/films/marvel-deadpool-2016.png"
+    },
+    {
+      "id": "disney-frozen-2013",
+      "name": "Frozen (PG) 2013 — Blu-ray",
+      "brand": "Disney",
+      "price": 4.99,
+      "comparePrice": 9.99,
+      "image": "/others/films/disney-frozen-2013.png"
+    }
+  ]
+}

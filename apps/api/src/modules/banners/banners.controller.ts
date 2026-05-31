@@ -22,6 +22,12 @@ export class BannersController {
         return this.banners.listAll();
     }
 
+    // Public — promo carousel slides with resolved image URLs
+    @Get('promo-slides')
+    getPromoSlides() {
+        return this.banners.getPromoSlides();
+    }
+
     // Admin — toggle active state
     @Patch(':id/toggle')
     @UseGuards(JwtAuthGuard, RolesGuard)

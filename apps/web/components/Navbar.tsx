@@ -1,10 +1,10 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import {
   ShoppingCart, Search, Menu, ChevronRight, X, Zap, ArrowRight,
   Smartphone, Tablet, Gamepad2, Laptop, Headphones, RefreshCw, Wrench,
-  Package, Settings, LogOut, LogIn, Sun, Moon
+  Package, Settings, LogOut, LogIn, Sun, Moon, MoreHorizontal
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
@@ -12,14 +12,53 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "../context/auth-context";
 import { useCart } from "../context/cart-context";
 import { NotificationBell } from "./NotificationBell";
+import { catalogApi } from "../lib/api";
 
-const SHOP_CATEGORIES = [
-  { label: "Phones", href: "/shop/phones", icon: Smartphone },
-  { label: "Tablets", href: "/shop/tablets", icon: Tablet },
-  { label: "Consoles", href: "/shop/consoles", icon: Gamepad2 },
-  { label: "Laptops", href: "/shop/laptops", icon: Laptop },
-  { label: "Audio", href: "/shop/audio", icon: Headphones },
-];
+const SLUG_ICON_MAP: Record<string, React.ElementType> = {
+  phones:   Smartphone,
+  tablets:  Tablet,
+  consoles: Gamepad2,
+  laptops:  Laptop,
+  audio:    Headphones,
+  other:    MoreHorizontal,
+};
+
+const CATEGORY_DROPDOWN_META: Record<string, {
+  plural: string;
+  description: string;
+  brands: string[];
+}> = {
+  phones: {
+    plural: "Smartphones",
+    description: "Certified refurbished smartphones with 2-year warranty. Every handset is unlocked, tested, and backed by our quality guarantee.",
+    brands: ["Apple", "Samsung", "Google", "OnePlus"],
+  },
+  tablets: {
+    plural: "Tablets",
+    description: "Refurbished iPads, Samsung Galaxy Tabs and Surface devices. Fully tested, screen checked, and sold with a 2-year warranty.",
+    brands: ["Apple", "Samsung", "Microsoft"],
+  },
+  consoles: {
+    plural: "Gaming Consoles",
+    description: "Certified refurbished PlayStation, Xbox and Nintendo consoles. Disc drives tested, HDMI verified, controllers included.",
+    brands: ["Sony", "Microsoft", "Nintendo"],
+  },
+  laptops: {
+    plural: "Laptops & MacBooks",
+    description: "Refurbished MacBooks, ThinkPads, Dell XPS and more. Every laptop is battery-tested, keyboard-checked, and ships with a warranty.",
+    brands: ["Apple", "Dell", "Lenovo", "HP"],
+  },
+  audio: {
+    plural: "Audio & Headphones",
+    description: "Genuine refurbished headphones, earbuds and speakers. Ultrasonic cleaned, battery-tested, and quality-graded.",
+    brands: ["Sony", "Apple", "Bose", "Samsung"],
+  },
+  other: {
+    plural: "Other Tech",
+    description: "Cables, chargers, memory, storage, smart watches, games, films and more — quality accessories at great prices.",
+    brands: ["Apple", "Samsung", "Crucial", "Canon"],
+  },
+};
 
 export default function Navbar() {
   const { count: itemsCount } = useCart();
@@ -33,12 +72,37 @@ export default function Navbar() {
 
   const [theme, setTheme] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [hoveredCat, setHoveredCat] = useState<string | null>(null);
+  const closeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [shopCategories, setShopCategories] = useState<{ label: string; href: string; slug: string; icon: React.ElementType }[]>([]);
+
+  function openDropdown(slug: string) {
+    if (closeTimeout.current) clearTimeout(closeTimeout.current);
+    setHoveredCat(slug);
+  }
+
+  function scheduleClose() {
+    closeTimeout.current = setTimeout(() => setHoveredCat(null), 120);
+  }
+
+  function cancelClose() {
+    if (closeTimeout.current) clearTimeout(closeTimeout.current);
+  }
 
   useEffect(() => {
-    const currentTheme = document.documentElement.getAttribute("data-theme") || 
+    const currentTheme = document.documentElement.getAttribute("data-theme") ||
       (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
     setTheme(currentTheme);
     setMounted(true);
+
+    catalogApi.listCategories().then(cats => {
+      setShopCategories(cats.map(c => ({
+        label: c.name,
+        href: `/shop/${c.slug}`,
+        slug: c.slug,
+        icon: SLUG_ICON_MAP[c.slug] ?? MoreHorizontal,
+      })));
+    }).catch(() => {});
   }, []);
 
   const toggleTheme = () => {
@@ -157,7 +221,7 @@ export default function Navbar() {
                         <div>
                           <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2.5">Shop Categories</p>
                           <div className="grid grid-cols-5 gap-3">
-                            {SHOP_CATEGORIES.map(({ label, href, icon: Icon }) => (
+                            {shopCategories.map(({ label, href, icon: Icon }) => (
                               <Link
                                 key={label}
                                 href={href}
@@ -321,19 +385,23 @@ export default function Navbar() {
         </div>
 
         {/* Tier 2: Category Bar (Desktop only) */}
-        <div className="hidden lg:block bg-muted/30 border-b border-border/20">
+        <div className="hidden lg:block bg-muted/30 border-b border-border/20 relative">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between">
             {/* Category Links */}
-            <nav className="flex items-center gap-1.5 text-xs font-bold relative bg-muted p-1 rounded-full border border-border/40">
+            <nav
+              className="flex items-center gap-1.5 text-xs font-bold relative bg-muted p-1 rounded-full border border-border/40"
+              onMouseLeave={scheduleClose}
+            >
               {[
-                { label: "All Products", href: "/" },
-                ...SHOP_CATEGORIES
-              ].map(({ label, href }) => {
+                { label: "All Products", href: "/", slug: "" },
+                ...shopCategories.map(c => ({ ...c, slug: c.href.replace("/shop/", "") }))
+              ].map(({ label, href, slug }) => {
                 const isActive = href === "/" ? pathname === "/" : pathname?.startsWith(href);
                 return (
                   <Link
                     key={label}
                     href={href}
+                    onMouseEnter={() => slug && CATEGORY_DROPDOWN_META[slug] ? openDropdown(slug) : setHoveredCat(null)}
                     className={`relative px-4 py-2 rounded-full transition-colors duration-250 ${
                       isActive ? "text-white z-10 font-extrabold" : "text-zinc-500 dark:text-zinc-400 hover:text-foreground font-semibold"
                     }`}
@@ -376,6 +444,69 @@ export default function Navbar() {
               })}
             </div>
           </div>
+
+          {/* ── Mega Menu Dropdown ── */}
+          <AnimatePresence>
+            {hoveredCat && CATEGORY_DROPDOWN_META[hoveredCat] && (
+              <motion.div
+                key={hoveredCat}
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.18, ease: "easeOut" }}
+                onMouseEnter={cancelClose}
+                onMouseLeave={scheduleClose}
+                className="absolute top-full left-0 right-0 z-50 bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 shadow-xl"
+              >
+                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
+                  {/* Breadcrumb */}
+                  <div className="flex items-center gap-1.5 text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3">
+                    <Link href="/" className="hover:text-zinc-700 transition-colors">Home</Link>
+                    <span>/</span>
+                    <span className="text-zinc-800 dark:text-zinc-200">
+                      {CATEGORY_DROPDOWN_META[hoveredCat].plural}
+                    </span>
+                  </div>
+
+                  <div className="flex items-end justify-between gap-8">
+                    <div className="flex-1 min-w-0">
+                      {/* Title */}
+                      <h2 className="text-2xl font-bold tracking-tight text-zinc-950 dark:text-white mb-1.5">
+                        {CATEGORY_DROPDOWN_META[hoveredCat].plural}
+                      </h2>
+                      {/* Description */}
+                      <p className="text-sm font-medium text-zinc-500 max-w-2xl leading-relaxed">
+                        {CATEGORY_DROPDOWN_META[hoveredCat].description}
+                      </p>
+
+                      {/* Brand quick-links */}
+                      <div className="flex items-center gap-2 mt-4 flex-wrap">
+                        <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest shrink-0">Shop by brand:</span>
+                        {CATEGORY_DROPDOWN_META[hoveredCat].brands.map(brand => (
+                          <Link
+                            key={brand}
+                            href={`/shop/${hoveredCat}`}
+                            className="px-3 py-1.5 rounded-full border border-zinc-200 dark:border-zinc-700 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:border-zinc-900 hover:bg-zinc-900 hover:text-white dark:hover:bg-white dark:hover:text-zinc-950 transition-all"
+                          >
+                            {brand}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* CTA */}
+                    <Link
+                      href={`/shop/${hoveredCat}`}
+                      className="shrink-0 flex items-center gap-2 h-11 px-6 rounded-full bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 text-xs font-bold hover:opacity-90 transition-opacity"
+                    >
+                      Shop all {CATEGORY_DROPDOWN_META[hoveredCat].plural}
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </Link>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Mobile drawer */}
@@ -412,7 +543,7 @@ export default function Navbar() {
                   All Products
                   <ChevronRight className={`h-4 w-4 ml-auto ${pathname === "/" ? "text-white" : "text-zinc-400"}`} />
                 </Link>
-                {SHOP_CATEGORIES.map(({ label, href, icon: Icon }) => {
+                {shopCategories.map(({ label, href, icon: Icon }) => {
                   const isActive = pathname?.startsWith(href);
                   return (
                     <Link

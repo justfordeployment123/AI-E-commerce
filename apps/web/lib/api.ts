@@ -235,6 +235,10 @@ export const bannersApi = {
     apiFetch<{ id: string; label: string | null; url: string | null }[]>(
       `/banners/random?count=${count}`
     ),
+  promoSlides: () =>
+    apiFetch<{ id: string; order: number; imgUrl: string | null; title: string; subtitle: string; btnText: string; btnLink: string }[]>(
+      `/banners/promo-slides`
+    ),
 };
 
 // ── Catalog (admin + public) ──────────────────────────────────────────────────

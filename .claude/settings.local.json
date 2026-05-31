@@ -79,7 +79,17 @@
       "PowerShell(pip install code-review-graph)",
       "Bash(code-review-graph install *)",
       "Bash(code-review-graph build *)",
-      "PowerShell($file = \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\api\\\\prisma\\\\migrations\\\\20260528172616_normalize_product_catalog\\\\migration.sql\"; $bytes = [System.IO.File]::ReadAllBytes\\($file\\); Write-Host \"First 3 bytes: $\\($bytes[0]\\) $\\($bytes[1]\\) $\\($bytes[2]\\)\")"
+      "PowerShell($file = \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\api\\\\prisma\\\\migrations\\\\20260528172616_normalize_product_catalog\\\\migration.sql\"; $bytes = [System.IO.File]::ReadAllBytes\\($file\\); Write-Host \"First 3 bytes: $\\($bytes[0]\\) $\\($bytes[1]\\) $\\($bytes[2]\\)\")",
+      "Bash(Get-ChildItem \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\api\\\\prisma\\\\seed\\\\others\" -Recurse)",
+      "Bash(Select-Object FullName, Name)",
+      "Bash(Format-Table -AutoSize)",
+      "PowerShell(New-Item -ItemType Directory -Force -Path \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\\\\app\\\\shop\\\\other\")",
+      "PowerShell(Copy-Item \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\api\\\\prisma\\\\seed\\\\others\\\\products.json\" \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\\\\lib\\\\others-data.json\" -Force)",
+      "PowerShell(cd \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\"; npx tsc --noEmit --pretty 2>&1 | Where-Object { $_ -match \"shop/other\" } | Select-Object -First 20)",
+      "PowerShell(cd \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\"; npx tsc --noEmit 2>&1 | Where-Object { $_ -match \"Navbar\" } | Select-Object -First 10)",
+      "PowerShell(cd \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\"; npx tsc --noEmit 2>&1 | Out-String | Where-Object { $_ -notmatch \"\\\\.next/\" })",
+      "PowerShell(cd \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\"; $out = npx tsc --noEmit 2>&1 | Out-String; $lines = $out -split \"`n\"; $lines | Where-Object { $_ -notmatch \"\\\\.next\" -and $_ -ne \"\" } | Select-Object -First 20)",
+      "Bash(Get-ChildItem -Path \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\admin\" -Recurse -Exclude \"node_modules\", \".next\")"
     ],
     "additionalDirectories": [
       "d:\\CODE\\Projects\\Markhor Systems Projects\\Ai-Ecommerce\\apps\\web\\app\\account\\repairs",

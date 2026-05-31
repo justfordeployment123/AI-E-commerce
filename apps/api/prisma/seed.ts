@@ -402,6 +402,100 @@ async function seedProducts(productsData: any[], catalogIdMap: Map<string, strin
     console.log(`✓ Products: ${created} created, ${skipped} skipped`);
 }
 
+// ─── Phase 7: Other products (chargers, cables, memory, etc.) ────────────────
+
+async function seedOtherProducts() {
+    const othersJsonPath = path.join(SEED_DIR, 'others', 'products.json');
+    if (!fs.existsSync(othersJsonPath)) {
+        console.log('  No others/products.json found, skipping');
+        return;
+    }
+
+    const othersData: Record<string, any[]> = JSON.parse(fs.readFileSync(othersJsonPath, 'utf8'));
+
+    // Ensure "other" category exists
+    const cat = await prisma.category.upsert({
+        where:  { slug: 'other' },
+        update: {},
+        create: { name: 'Other', slug: 'other' },
+    });
+
+    let created = 0, skipped = 0;
+
+    for (const [subcategory, products] of Object.entries(othersData)) {
+        for (const prod of products) {
+            const brandName: string = prod.brand ?? 'Generic';
+            const brandSlug = brandName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
+            const brand = await prisma.brand.upsert({
+                where:  { slug: brandSlug },
+                update: {},
+                create: { name: brandName, slug: brandSlug },
+            });
+
+            const bc = await prisma.brandCategory.upsert({
+                where:  { brandId_categoryId: { brandId: brand.id, categoryId: cat.id } },
+                update: {},
+                create: { brandId: brand.id, categoryId: cat.id },
+            });
+
+            const model: string = prod.name;
+            const entry = await prisma.deviceCatalog.upsert({
+                where:  { brandCategoryId_model: { brandCategoryId: bc.id, model } },
+                update: {},
+                create: { brandCategoryId: bc.id, model, storageOptions: [], isActive: true },
+            });
+
+            // Upload image — prod.image is like "/others/chargers/apple-20w-usb-c-power-adapter.png"
+            const s3Keys: string[] = [];
+            const imgRelative: string = (prod.image ?? '').replace(/^\/others\//, '');
+            if (imgRelative) {
+                const localPath = path.join(SEED_DIR, 'others', imgRelative);
+                if (fs.existsSync(localPath)) {
+                    const imgFile = path.basename(localPath);
+                    try {
+                        s3Keys.push(await uploadFile(
+                            localPath,
+                            `products/other/${brandSlug}/${subcategory}/${imgFile}`,
+                        ));
+                    } catch (e: any) {
+                        console.warn(`  Skipped image ${imgRelative}: ${e.message}`);
+                    }
+                }
+            }
+
+            const slug: string = prod.id;
+            const existing = await prisma.product.findUnique({ where: { slug } });
+            if (existing) { skipped++; continue; }
+
+            try {
+                await prisma.product.create({
+                    data: {
+                        catalogId:    entry.id,
+                        name:         prod.name,
+                        slug,
+                        condition:    'Good',
+                        storage:      '',
+                        price:        Number(prod.price),
+                        comparePrice: prod.comparePrice ? Number(prod.comparePrice) : null,
+                        stock:        10,
+                        images:       s3Keys,
+                        specs:        { subcategory },
+                        description:  prod.name,
+                        rating:       4.5,
+                        reviewCount:  0,
+                        isActive:     true,
+                    },
+                });
+                created++;
+            } catch (e: any) {
+                console.error(`  Failed "${prod.name}": ${e.message}`);
+            }
+        }
+    }
+    console.log(`✓ Other products: ${created} created, ${skipped} already existed`);
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -423,6 +517,7 @@ async function main() {
 
     const catalogIdMap = await seedDeviceCatalog(productsData);
     await seedProducts(productsData, catalogIdMap);
+    await seedOtherProducts();
 
     console.log('\nSeed complete.');
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "next/navigation";
-import { Search, ShoppingBag, Eye, X, Truck, Check, Clock, MapPin, Package, Mail, Phone } from "lucide-react";
+import { Search, ShoppingBag, Eye, X, Truck, Check, Clock, MapPin, Package, Mail, Phone, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ordersApi, type Order } from "../../lib/api";
 
@@ -28,6 +28,19 @@ export default function OrdersPage() {
   const [trackingInput, setTrackingInput] = useState("");
   const [saving, setSaving] = useState(false);
   const autoSelected = useRef(false);
+  const [purging, setPurging] = useState(false);
+  const [confirmPurge, setConfirmPurge] = useState(false);
+
+  async function handlePurgeAll() {
+    setPurging(true);
+    try {
+      await ordersApi.purgeAll();
+      setOrders([]);
+      setSelected(null);
+      setConfirmPurge(false);
+    } catch { /* ignore */ }
+    finally { setPurging(false); }
+  }
 
   async function load() {
     setLoading(true);
@@ -108,6 +121,34 @@ export default function OrdersPage() {
           <p className="text-sm text-zinc-500 mt-1">
             {orders.length} total · {orders.filter(o => o.status === "PENDING").length} to dispatch
           </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {confirmPurge ? (
+            <>
+              <span className="text-xs text-red-600 font-bold">Delete all {orders.length} orders?</span>
+              <button
+                onClick={handlePurgeAll}
+                disabled={purging}
+                className="h-9 px-4 rounded-xl bg-red-600 text-white text-xs font-bold hover:bg-red-700 transition-colors disabled:opacity-50"
+              >
+                {purging ? "Deleting…" : "Yes, delete all"}
+              </button>
+              <button
+                onClick={() => setConfirmPurge(false)}
+                className="h-9 px-4 rounded-xl border border-zinc-200 text-xs font-bold text-zinc-600 hover:bg-zinc-50 transition-colors"
+              >
+                Cancel
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => setConfirmPurge(true)}
+              disabled={orders.length === 0}
+              className="flex items-center gap-2 h-9 px-4 rounded-xl border border-red-200 text-red-600 text-xs font-bold hover:bg-red-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              <Trash2 className="h-3.5 w-3.5" /> Delete All Orders
+            </button>
+          )}
         </div>
       </div>
 

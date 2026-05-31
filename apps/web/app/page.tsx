@@ -52,9 +52,8 @@ import {
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import Navbar from "../components/Navbar";
-import { productsApi, reviewsApi } from "../lib/api";
+import { productsApi, reviewsApi, bannersApi } from "../lib/api";
 import { useCart } from "../context/cart-context";
-import { imageRegistry, pick } from "../lib/localImages";
 const Footer = dynamic(() => import("../components/Footer"));
 
 // ─── Promo Carousel Banner ───────────────────────────────────────────────────
@@ -62,111 +61,84 @@ function PromoCarouselBanner() {
   const [idx, setIdx] = useState(0);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
+  // Slide images keyed by order index — fetched from API (Garage/S3)
+  const [slideImgs, setSlideImgs] = useState<(string | null)[]>([]);
 
-  const slides = [
+  useEffect(() => {
+    bannersApi.promoSlides()
+      .then(apiSlides => {
+        const imgs: (string | null)[] = [];
+        apiSlides.forEach(s => { imgs[s.order] = s.imgUrl; });
+        setSlideImgs(imgs);
+      })
+      .catch(() => {});
+  }, []);
+
+  const SLIDE_META = [
     {
-      index: "01",
-      tabTitle: "Upgrade iPhone",
-      tag: "Featured Promotion",
-      titleLine1: "UPGRADE YOUR",
-      titleLine2: "IPHONE",
-      titleItalic: "for less.",
+      index: "01", tabTitle: "Upgrade iPhone", tag: "Featured Promotion",
+      titleLine1: "UPGRADE YOUR", titleLine2: "IPHONE", titleItalic: "for less.",
       desc: "Get pristine, certified refurbished iPhones with a full 12-month warranty. Rigorously tested by in-house technicians, graded honestly.",
-      img: "/homepage_top/refurbished_iphone.png",
       themeColor: "from-blue-500 to-indigo-600 dark:from-blue-400 dark:to-indigo-400",
       bgGlow: "rgba(59, 130, 246, 0.15)",
       specs: ["12-Month Warranty", "Pristine Condition", "Save up to 40%"],
-      badgeA: "Pristine Grade",
-      badgeB: "Save up to 40%",
-      btnText: "Shop Refurbished",
-      btnLink: "/shop/phones",
+      badgeA: "Pristine Grade", badgeB: "Save up to 40%",
+      btnText: "Shop Refurbished", btnLink: "/shop/phones",
     },
     {
-      index: "02",
-      tabTitle: "Sell & Trade-In",
-      tag: "Instant Valuation",
-      titleLine1: "WE BUY TECH",
-      titleLine2: "FOR CASH",
-      titleItalic: "instantly.",
+      index: "02", tabTitle: "Sell & Trade-In", tag: "Instant Valuation",
+      titleLine1: "WE BUY TECH", titleLine2: "FOR CASH", titleItalic: "instantly.",
       desc: "Trade in your old smartphones, MacBooks, or gaming consoles for instant cash. Best price match guaranteed with free insured shipping.",
-      img: "/homepage_top/sell_tech_cash.png",
       themeColor: "from-amber-500 to-orange-600 dark:from-amber-400 dark:to-orange-400",
       bgGlow: "rgba(245, 158, 11, 0.15)",
       specs: ["Instant Quote", "Free Insured Shipping", "Best Price Match"],
-      badgeA: "Instant Payout",
-      badgeB: "Best Price Match",
-      btnText: "Get Cash Quote",
-      btnLink: "/sell",
+      badgeA: "Instant Payout", badgeB: "Best Price Match",
+      btnText: "Get Cash Quote", btnLink: "/sell",
     },
     {
-      index: "03",
-      tabTitle: "Expert Repairs",
-      tag: "Certified Technicians",
-      titleLine1: "BOOK A DEVICE",
-      titleLine2: "REPAIR",
-      titleItalic: "today.",
+      index: "03", tabTitle: "Expert Repairs", tag: "Certified Technicians",
+      titleLine1: "BOOK A DEVICE", titleLine2: "REPAIR", titleItalic: "today.",
       desc: "Professional screen, battery, and diagnostic replacements. Express turnaround times using OEM-grade parts with warranty included.",
-      img: "/homepage_top/expert_repair.png",
       themeColor: "from-emerald-500 to-teal-600 dark:from-emerald-400 dark:to-teal-400",
       bgGlow: "rgba(16, 185, 129, 0.15)",
       specs: ["Express Screen Fix", "OEM Grade Parts", "Repair Warranty"],
-      badgeA: "OEM Grade Parts",
-      badgeB: "Same-Day Fix",
-      btnText: "Book Repair",
-      btnLink: "/repair",
+      badgeA: "OEM Grade Parts", badgeB: "Same-Day Fix",
+      btnText: "Book Repair", btnLink: "/repair",
     },
     {
-      index: "04",
-      tabTitle: "Sustainability",
-      tag: "Green Technology",
-      titleLine1: "HELP US SAVE",
-      titleLine2: "THE PLANET",
-      titleItalic: "together.",
+      index: "04", tabTitle: "Sustainability", tag: "Green Technology",
+      titleLine1: "HELP US SAVE", titleLine2: "THE PLANET", titleItalic: "together.",
       desc: "Refurbished tech prevents harmful electronic waste and cuts carbon footprint. Every device saved counts towards a cleaner earth.",
-      img: "/homepage_top/eco_friendly_tech.png",
       themeColor: "from-green-500 to-emerald-600 dark:from-green-400 dark:to-emerald-400",
       bgGlow: "rgba(34, 197, 94, 0.15)",
       specs: ["Carbon Neutral Shipping", "Offset E-Waste", "-14kg CO2e Avg"],
-      badgeA: "100% Carbon Offset",
-      badgeB: "-14kg CO2e Avg",
-      btnText: "Our Sustainability",
-      btnLink: "/sustainability",
+      badgeA: "100% Carbon Offset", badgeB: "-14kg CO2e Avg",
+      btnText: "Our Sustainability", btnLink: "/sustainability",
     },
     {
-      index: "05",
-      tabTitle: "Fast Shipping",
-      tag: "Express Shipping",
-      titleLine1: "FREE NEXT-DAY",
-      titleLine2: "DELIVERY",
-      titleItalic: "as standard.",
+      index: "05", tabTitle: "Fast Shipping", tag: "Express Shipping",
+      titleLine1: "FREE NEXT-DAY", titleLine2: "DELIVERY", titleItalic: "as standard.",
       desc: "Get your tech delivered straight to your door. Free next-day secure courier shipping on all orders. Dispatch before 2pm business days.",
-      img: "/homepage_top/fast_delivery.png",
       themeColor: "from-purple-500 to-fuchsia-600 dark:from-purple-400 dark:to-fuchsia-400",
       bgGlow: "rgba(168, 85, 247, 0.15)",
       specs: ["Free Secure Courier", "Next-Day Delivery", "Dispatched by 2pm"],
-      badgeA: "Free Next-Day",
-      badgeB: "Secure Dispatch",
-      btnText: "Shop All Tech",
-      btnLink: "/shop",
+      badgeA: "Free Next-Day", badgeB: "Secure Dispatch",
+      btnText: "Shop All Tech", btnLink: "/shop",
     },
     {
-      index: "06",
-      tabTitle: "Expert Support",
-      tag: "Here to Help",
-      titleLine1: "PREMIUM CUSTOMER",
-      titleLine2: "SUPPORT",
-      titleItalic: "for life.",
+      index: "06", tabTitle: "Expert Support", tag: "Here to Help",
+      titleLine1: "PREMIUM CUSTOMER", titleLine2: "SUPPORT", titleItalic: "for life.",
       desc: "Direct access to our dedicated customer support desk via live chat, email, or store visits. Your satisfaction is fully guaranteed.",
-      img: "/homepage_top/expert_support.png",
       themeColor: "from-teal-500 to-cyan-600 dark:from-teal-400 dark:to-cyan-400",
       bgGlow: "rgba(20, 184, 166, 0.15)",
       specs: ["Direct Support Desk", "12-Month Coverage", "In-Store & Online"],
-      badgeA: "Direct Call/Chat",
-      badgeB: "12-Month Covered",
-      btnText: "Help Center",
-      btnLink: "/help",
-    }
+      badgeA: "Direct Call/Chat", badgeB: "12-Month Covered",
+      btnText: "Help Center", btnLink: "/help",
+    },
   ];
+
+  // Merge API image URLs into slide metadata
+  const slides = SLIDE_META.map((meta, i) => ({ ...meta, img: slideImgs[i] ?? null }));
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -283,13 +255,15 @@ function PromoCarouselBanner() {
                 <div className="absolute bottom-6 w-[80%] h-4 bg-black/5 dark:bg-black/20 blur-lg rounded-full scale-y-20 transition-transform duration-700 group-hover:scale-95 [transform:translateZ(10px)]" />
 
                 {/* Service image with floating frame */}
-                <motion.img 
-                  src={slides[idx].img} 
-                  alt={slides[idx].tabTitle} 
-                  animate={{ y: [0, -6, 0] }}
-                  transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-                  className="max-h-[85%] max-w-[85%] object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.1)] mix-blend-multiply dark:mix-blend-normal transition-transform duration-700 group-hover:scale-103 [transform:translateZ(40px)] pointer-events-none select-none" 
-                />
+                {slides[idx].img && (
+                  <motion.img
+                    src={slides[idx].img!}
+                    alt={slides[idx].tabTitle}
+                    animate={{ y: [0, -6, 0] }}
+                    transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                    className="max-h-[85%] max-w-[85%] object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.1)] mix-blend-multiply dark:mix-blend-normal transition-transform duration-700 group-hover:scale-103 [transform:translateZ(40px)] pointer-events-none select-none"
+                  />
+                )}
 
                 {/* Floating Badge A */}
                 <div className="absolute -top-2.5 -right-2.5 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 rounded-xl px-3 py-1.5 text-[9px] font-black shadow-md [transform:translateZ(60px)] select-none pointer-events-none border border-zinc-900 dark:border-zinc-100">
@@ -768,45 +742,20 @@ function Hero() {
 
 // ─── Category Bento ───────────────────────────────────────────────────────────
 function CategoryBento() {
-  const [catImgs] = useState(() => [
-    pick(imageRegistry.bento.phones),
-    pick(imageRegistry.bento.laptops),
-    pick(imageRegistry.bento.audio),
-    pick(imageRegistry.bento.consoles),
-    pick(imageRegistry.bento.tablets),
-  ]);
+  const [catImgs, setCatImgs] = useState<(string | null)[]>([null, null, null, null, null]);
+
+  useEffect(() => {
+    bannersApi.random(5)
+      .then(banners => setCatImgs(banners.map(b => b.url ?? null)))
+      .catch(() => {});
+  }, []);
 
   const cats = [
-    {
-      name: "Smartphones", sub: "From £149", count: "12,400+ devices",
-      Icon: Smartphone, iconBg: "bg-blue-600",
-      img: catImgs[0],
-      slug: "phones",
-    },
-    {
-      name: "Laptops", sub: "From £249", count: "4,200+ devices",
-      Icon: Laptop, iconBg: "bg-violet-600",
-      img: catImgs[1],
-      slug: "laptops",
-    },
-    {
-      name: "Audio", sub: "From £39", count: "3,600+ devices",
-      Icon: Headphones, iconBg: "bg-pink-600",
-      img: catImgs[2],
-      slug: "audio",
-    },
-    {
-      name: "Gaming", sub: "From £89", count: "6,100+ devices",
-      Icon: Gamepad2, iconBg: "bg-emerald-600",
-      img: catImgs[3],
-      slug: "consoles",
-    },
-    {
-      name: "Tablets", sub: "From £129", count: "2,800+ devices",
-      Icon: Tablet, iconBg: "bg-amber-600",
-      img: catImgs[4],
-      slug: "tablets",
-    },
+    { name: "Smartphones", sub: "From £149", count: "12,400+ devices", Icon: Smartphone, iconBg: "bg-blue-600", img: catImgs[0], slug: "phones" },
+    { name: "Laptops",     sub: "From £249", count: "4,200+ devices",  Icon: Laptop,     iconBg: "bg-violet-600", img: catImgs[1], slug: "laptops" },
+    { name: "Audio",       sub: "From £39",  count: "3,600+ devices",  Icon: Headphones, iconBg: "bg-pink-600",   img: catImgs[2], slug: "audio" },
+    { name: "Gaming",      sub: "From £89",  count: "6,100+ devices",  Icon: Gamepad2,   iconBg: "bg-emerald-600",img: catImgs[3], slug: "consoles" },
+    { name: "Tablets",     sub: "From £129", count: "2,800+ devices",  Icon: Tablet,     iconBg: "bg-amber-600",  img: catImgs[4], slug: "tablets" },
   ];
 
   return (
@@ -835,12 +784,13 @@ function CategoryBento() {
               transition={{ delay: i * 0.08 }}
               className={`group relative overflow-hidden rounded-[2rem] bg-zinc-100 cursor-pointer ${i === 0 ? "col-span-2 lg:col-span-2 lg:row-span-2" : ""}`}
             >
-              <img
-                src={cat.img}
-                alt={cat.name}
-                suppressHydrationWarning
-                className="absolute inset-0 h-full w-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-out"
-              />
+              {cat.img && (
+                <img
+                  src={cat.img}
+                  alt={cat.name}
+                  className="absolute inset-0 h-full w-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-out"
+                />
+              )}
               <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/80 via-zinc-950/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
 
               {/* Category icon badge */}
@@ -1420,12 +1370,10 @@ function AppPreview() {
 
 // ─── Shop By Budget ───────────────────────────────────────────────────────────
 function ShopByBudget() {
-  const [budgetImgs] = useState(() => [
-    pick([...imageRegistry.audio.headphones, ...imageRegistry.audio.bento]),
-    pick(imageRegistry.banners.gaming),
-    pick([...imageRegistry.phones.iphone, ...imageRegistry.phones.samsung, ...imageRegistry.phones.google]),
-    pick([...imageRegistry.laptops.macbook, ...imageRegistry.laptops.generic]),
-  ]);
+  const [budgetImgs, setBudgetImgs] = useState<(string | null)[]>([null, null, null, null]);
+  useEffect(() => {
+    bannersApi.random(4).then(b => setBudgetImgs(b.map(x => x.url ?? null))).catch(() => {});
+  }, []);
   const [counts, setCounts] = useState([0, 0, 0, 0]);
   const [sectionRef, trigger] = useLazyFetchTrigger();
 
@@ -1511,12 +1459,11 @@ function ShopByBudget() {
             transition={{ delay: i * 0.08 }}
             className="group relative overflow-hidden rounded-3xl cursor-pointer h-[280px] md:h-[320px]"
           >
-            <img
+            {r.img && <img
               src={r.img}
               alt={r.label}
-              suppressHydrationWarning
               className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-            />
+            />}
             <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/95 via-zinc-950/50 to-zinc-950/10" />
 
             <div className="absolute inset-0 p-7 flex flex-col justify-between">
@@ -1586,7 +1533,10 @@ function BestDealsSplit() {
     ? allProducts.slice(0, 3)
     : allProducts.filter(p => p.category === selectedCategory).slice(0, 3);
 
-  const [WARZONE_IMG] = useState(() => pick(imageRegistry.banners.gaming));
+  const [WARZONE_IMG, setWARZONE_IMG] = useState<string | null>(null);
+  useEffect(() => {
+    bannersApi.random(1).then(b => setWARZONE_IMG(b[0]?.url ?? null)).catch(() => {});
+  }, []);
   const isAllSelected = selectedCategory === "all";
   const leftImage = isAllSelected
     ? WARZONE_IMG
@@ -1846,18 +1796,17 @@ function PhoneSketch({ level }: { level: 0 | 1 | 2 }) {
 }
 
 function GradeGuide() {
-  const [gradeImgs] = useState(() => [
-    pick([...imageRegistry.phones.iphone, ...imageRegistry.phones.samsung]),
-    pick([...imageRegistry.laptops.macbook, ...imageRegistry.laptops.generic]),
-    pick(imageRegistry.banners.gaming),
-  ]);
+  const [gradeImgs, setGradeImgs] = useState<(string | null)[]>([null, null, null]);
+  useEffect(() => {
+    bannersApi.random(3).then(b => setGradeImgs(b.map(x => x.url ?? null))).catch(() => {});
+  }, []);
 
   const grades: {
     num: string; name: string; tagline: string;
     battery: number; saving: number; fromPrice: string;
     rating: number; reviewCount: string;
     conditionLabel: string; sketchLevel: 0 | 1 | 2; featured: boolean;
-    img: string; features: string[];
+    img: string | null; features: string[];
     products: { name: string; price: string }[];
     barClass: string; textClass: string; glowColor: string;
     chipBg: string; featuredRing: string;
@@ -1927,7 +1876,7 @@ function GradeGuide() {
               {/* ── Photo panel ── */}
               <div className="relative h-[380px] overflow-hidden flex-shrink-0">
                 {/* Product photo */}
-                <img src={g.img} alt={g.name} suppressHydrationWarning className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                {g.img && <img src={g.img} alt={g.name} className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-700" />}
                 {/* Dark gradient from top + bottom */}
                 <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/70 via-transparent to-zinc-950/95" />
 
@@ -2422,7 +2371,10 @@ const CAT_SLUG: Record<string, string> = {
 };
 
 function TopBrandsSplit() {
-  const [deskImg] = useState(() => pick([...imageRegistry.banners.desk, ...imageRegistry.banners.gaming]));
+  const [deskImg, setDeskImg] = useState<string | null>(null);
+  useEffect(() => {
+    bannersApi.random(1).then(b => setDeskImg(b[0]?.url ?? null)).catch(() => {});
+  }, []);
   const [allProducts, setAllProducts] = useState<any[]>([]);
   const [sectionRef, trigger] = useLazyFetchTrigger();
 
@@ -2460,7 +2412,7 @@ function TopBrandsSplit() {
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
           {/* Left Image */}
           <div className="w-full lg:w-[40%] xl:w-[450px] flex-shrink-0 relative rounded-2xl overflow-hidden aspect-[4/5] lg:aspect-auto lg:h-[500px]">
-            <img src={deskImg} alt="Desk with tech" suppressHydrationWarning className="absolute inset-0 w-full h-full object-cover" />
+            {deskImg && <img src={deskImg} alt="Desk with tech" className="absolute inset-0 w-full h-full object-cover" />}
           </div>
 
           {/* Right Content */}

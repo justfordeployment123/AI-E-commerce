@@ -2100,52 +2100,6 @@
     ]
   },
   {
-    "name": "Apple 20W USB-C Power Adapter",
-    "slug": "accessory-20w-usb-c-power-adapter-84",
-    "category": "Accessories",
-    "brand": "Apple",
-    "model": "20W USB-C Power Adapter",
-    "condition": "Mint",
-    "price": 19,
-    "comparePrice": 22,
-    "stock": 15,
-    "specs": {
-      "Brand": "Apple",
-      "Model": "20W USB-C Power Adapter",
-      "Warranty": "12 Months"
-    },
-    "description": "Brand new or like-new premium accessory: Apple 20W USB-C Power Adapter. Fully tested and 100% compatible.",
-    "rating": 4.81,
-    "reviewCount": 122,
-    "isActive": true,
-    "images": [
-      "apple-20w-usb-c-power-adapter.png"
-    ]
-  },
-  {
-    "name": "Apple MagSafe Charger",
-    "slug": "accessory-magsafe-charger-85",
-    "category": "Accessories",
-    "brand": "Apple",
-    "model": "MagSafe Charger",
-    "condition": "Mint",
-    "price": 39,
-    "comparePrice": 45,
-    "stock": 15,
-    "specs": {
-      "Brand": "Apple",
-      "Model": "MagSafe Charger",
-      "Warranty": "12 Months"
-    },
-    "description": "Brand new or like-new premium accessory: Apple MagSafe Charger. Fully tested and 100% compatible.",
-    "rating": 4.57,
-    "reviewCount": 95,
-    "isActive": true,
-    "images": [
-      "apple-magsafe-charger.png"
-    ]
-  },
-  {
     "name": "Sony DualSense Wireless Controller (PS5)",
     "slug": "accessory-dualsense-wireless-controller-86",
     "category": "Accessories",
@@ -2192,26 +2146,328 @@
     ]
   },
   {
-    "name": "Apple Pencil (2nd Generation)",
-    "slug": "accessory-pencil-2nd-gen-88",
-    "category": "Accessories",
-    "brand": "Apple",
-    "model": "Pencil 2nd Gen",
+    "name": "Google Pixel 7 128GB (Mint)",
+    "slug": "google-pixel-7-128gb-mint-0",
+    "category": "Phones",
+    "brand": "Google",
+    "model": "Pixel 7",
     "condition": "Mint",
-    "price": 99,
-    "comparePrice": 114,
-    "stock": 15,
+    "price": 349,
+    "comparePrice": 429,
+    "stock": 5,
     "specs": {
-      "Brand": "Apple",
-      "Model": "Pencil 2nd Gen",
+      "Storage": "128GB",
+      "Brand": "Google",
+      "Model": "Pixel 7",
+      "Color": "Obsidian",
       "Warranty": "12 Months"
     },
-    "description": "Brand new or like-new premium accessory: Apple Pencil (2nd Generation). Fully tested and 100% compatible.",
-    "rating": 4.97,
-    "reviewCount": 102,
+    "description": "This professional refurbished Google Pixel 7 is graded in Mint condition. Features Google Tensor G2, amazing photo quality, and an intelligent battery. Thoroughly tested by our in-house technicians, 100% functional and comes with a 12-month warranty.",
+    "rating": 4.6,
+    "reviewCount": 12,
     "isActive": true,
     "images": [
-      "apple-pencil-2nd-gen.png"
+      "google-pixel-7.png"
+    ]
+  },
+  {
+    "name": "Google Pixel 7 128GB (Good)",
+    "slug": "google-pixel-7-128gb-good-1",
+    "category": "Phones",
+    "brand": "Google",
+    "model": "Pixel 7",
+    "condition": "Good",
+    "price": 289,
+    "comparePrice": 349,
+    "stock": 8,
+    "specs": {
+      "Storage": "128GB",
+      "Brand": "Google",
+      "Model": "Pixel 7",
+      "Color": "Lemongrass",
+      "Warranty": "12 Months"
+    },
+    "description": "This professional refurbished Google Pixel 7 is graded in Good condition. Features Google Tensor G2, amazing photo quality, and an intelligent battery. Thoroughly tested by our in-house technicians, 100% functional and comes with a 12-month warranty.",
+    "rating": 4.5,
+    "reviewCount": 8,
+    "isActive": true,
+    "images": [
+      "google-pixel-7.png"
+    ]
+  },
+  {
+    "name": "Google Pixel 8 128GB (Mint)",
+    "slug": "google-pixel-8-128gb-mint-0",
+    "category": "Phones",
+    "brand": "Google",
+    "model": "Pixel 8",
+    "condition": "Mint",
+    "price": 499,
+    "comparePrice": 599,
+    "stock": 4,
+    "specs": {
+      "Storage": "128GB",
+      "Brand": "Google",
+      "Model": "Pixel 8",
+      "Color": "Hazel",
+      "Warranty": "12 Months"
+    },
+    "description": "This professional refurbished Google Pixel 8 is graded in Mint condition. Powered by the Google Tensor G3 chip, it brings advanced AI features, a stunning 120Hz Actua display, and next-gen camera capabilities.",
+    "rating": 4.7,
+    "reviewCount": 15,
+    "isActive": true,
+    "images": [
+      "google-pixel-8.png"
+    ]
+  },
+  {
+    "name": "Google Pixel 8 Pro 256GB (Mint)",
+    "slug": "google-pixel-8-pro-256gb-mint-0",
+    "category": "Phones",
+    "brand": "Google",
+    "model": "Pixel 8 Pro",
+    "condition": "Mint",
+    "price": 699,
+    "comparePrice": 799,
+    "stock": 3,
+    "specs": {
+      "Storage": "256GB",
+      "Brand": "Google",
+      "Model": "Pixel 8 Pro",
+      "Color": "Bay Blue",
+      "Warranty": "12 Months"
+    },
+    "description": "This professional refurbished Google Pixel 8 Pro is graded in Mint condition. The ultimate Google phone with a pro camera system, Google Tensor G3, and beautiful matte finish back glass.",
+    "rating": 4.8,
+    "reviewCount": 20,
+    "isActive": true,
+    "images": [
+      "google-pixel-8-pro.png"
+    ]
+  },
+  {
+    "name": "OnePlus 11 5G 256GB (Mint)",
+    "slug": "oneplus-11-256gb-mint-0",
+    "category": "Phones",
+    "brand": "OnePlus",
+    "model": "OnePlus 11",
+    "condition": "Mint",
+    "price": 449,
+    "comparePrice": 549,
+    "stock": 6,
+    "specs": {
+      "Storage": "256GB",
+      "Brand": "OnePlus",
+      "Model": "OnePlus 11",
+      "Color": "Eternal Green",
+      "Warranty": "12 Months"
+    },
+    "description": "This professional refurbished OnePlus 11 5G features the Snapdragon 8 Gen 2 processor, a 3rd Gen Hasselblad Camera for Mobile, and 100W SUPERVOOC fast charging. Mint condition, 100% functional.",
+    "rating": 4.6,
+    "reviewCount": 11,
+    "isActive": true,
+    "images": [
+      "oneplus-11.png"
+    ]
+  },
+  {
+    "name": "OnePlus Open 512GB (Mint)",
+    "slug": "oneplus-open-512gb-mint-0",
+    "category": "Phones",
+    "brand": "OnePlus",
+    "model": "OnePlus Open",
+    "condition": "Mint",
+    "price": 999,
+    "comparePrice": 1199,
+    "stock": 2,
+    "specs": {
+      "Storage": "512GB",
+      "Brand": "OnePlus",
+      "Model": "OnePlus Open",
+      "Color": "Emerald Dusk",
+      "Warranty": "12 Months"
+    },
+    "description": "This professional refurbished OnePlus Open is the pinnacle of folding smartphones. Extremely thin design, dual ProXDR displays, and Hasselblad camera system. Graded in Mint condition.",
+    "rating": 4.8,
+    "reviewCount": 7,
+    "isActive": true,
+    "images": [
+      "oneplus-open.png"
+    ]
+  },
+  {
+    "name": "OnePlus 12R 128GB (Mint)",
+    "slug": "oneplus-12r-128gb-mint-0",
+    "category": "Phones",
+    "brand": "OnePlus",
+    "model": "OnePlus 12R",
+    "condition": "Mint",
+    "price": 389,
+    "comparePrice": 459,
+    "stock": 5,
+    "specs": {
+      "Storage": "128GB",
+      "Brand": "OnePlus",
+      "Model": "OnePlus 12R",
+      "Color": "Iron Gray",
+      "Warranty": "12 Months"
+    },
+    "description": "This professional refurbished OnePlus 12R is graded in Mint condition. Packs a Snapdragon 8 Gen 2 processor, high-performance display, and an massive battery for ultimate endurance.",
+    "rating": 4.7,
+    "reviewCount": 9,
+    "isActive": true,
+    "images": [
+      "oneplus-12r.png"
+    ]
+  },
+  {
+    "name": "OnePlus Nord 4 256GB (Mint)",
+    "slug": "oneplus-nord-4-256gb-mint-0",
+    "category": "Phones",
+    "brand": "OnePlus",
+    "model": "OnePlus Nord 4",
+    "condition": "Mint",
+    "price": 299,
+    "comparePrice": 349,
+    "stock": 4,
+    "specs": {
+      "Storage": "256GB",
+      "Brand": "OnePlus",
+      "Model": "OnePlus Nord 4",
+      "Color": "Mercurial Silver",
+      "Warranty": "12 Months"
+    },
+    "description": "This professional refurbished OnePlus Nord 4 features a full metal design, fast processing, and premium battery health. Graded in Mint condition.",
+    "rating": 4.5,
+    "reviewCount": 4,
+    "isActive": true,
+    "images": [
+      "oneplus-nord-4.png"
+    ]
+  },
+  {
+    "name": "ASUS ROG Strix G16 (Mint)",
+    "slug": "asus-rog-strix-g16-mint-0",
+    "category": "Laptops",
+    "brand": "Asus",
+    "model": "ROG Strix G16",
+    "condition": "Mint",
+    "price": 1199,
+    "comparePrice": 1399,
+    "stock": 3,
+    "specs": {
+      "Storage": "1TB SSD",
+      "RAM": "16GB",
+      "Brand": "Asus",
+      "Model": "ROG Strix G16",
+      "Warranty": "12 Months"
+    },
+    "description": "This professional refurbished ASUS ROG Strix gaming laptop is graded in Mint condition. Powered by Intel Core i7 and NVIDIA RTX 4060 graphics, it delivers desktop-class performance.",
+    "rating": 4.8,
+    "reviewCount": 14,
+    "isActive": true,
+    "images": [
+      "asus-rog-strix.png"
+    ]
+  },
+  {
+    "name": "ASUS ROG Zephyrus G16 (Mint)",
+    "slug": "asus-rog-zephyrus-g16-mint-0",
+    "category": "Laptops",
+    "brand": "Asus",
+    "model": "ROG Zephyrus G16",
+    "condition": "Mint",
+    "price": 1399,
+    "comparePrice": 1599,
+    "stock": 2,
+    "specs": {
+      "Storage": "1TB SSD",
+      "RAM": "16GB",
+      "Brand": "Asus",
+      "Model": "ROG Zephyrus G16",
+      "Warranty": "12 Months"
+    },
+    "description": "This professional refurbished ASUS ROG Zephyrus G16 features a premium thin-and-light gaming chassis, Core Ultra 7 processor, and stunning OLED display. Graded in Mint condition.",
+    "rating": 4.9,
+    "reviewCount": 8,
+    "isActive": true,
+    "images": [
+      "asus-rog-zephyrus-g16.webp"
+    ]
+  },
+  {
+    "name": "ASUS TUF Gaming A15 (Mint)",
+    "slug": "asus-tuf-gaming-a15-mint-0",
+    "category": "Laptops",
+    "brand": "Asus",
+    "model": "TUF Gaming A15",
+    "condition": "Mint",
+    "price": 799,
+    "comparePrice": 949,
+    "stock": 5,
+    "specs": {
+      "Storage": "512GB SSD",
+      "RAM": "16GB",
+      "Brand": "Asus",
+      "Model": "TUF Gaming A15",
+      "Warranty": "12 Months"
+    },
+    "description": "This professional refurbished ASUS TUF Gaming A15 laptop is built for durability and gaming value. AMD Ryzen 7, NVIDIA RTX 4050, and military-grade durability. Graded in Mint condition.",
+    "rating": 4.6,
+    "reviewCount": 16,
+    "isActive": true,
+    "images": [
+      "asus-tuf-gaming.png"
+    ]
+  },
+  {
+    "name": "ASUS Zenbook 14 OLED (Mint)",
+    "slug": "asus-zenbook-14-oled-mint-0",
+    "category": "Laptops",
+    "brand": "Asus",
+    "model": "Zenbook 14 OLED",
+    "condition": "Mint",
+    "price": 649,
+    "comparePrice": 749,
+    "stock": 4,
+    "specs": {
+      "Storage": "512GB SSD",
+      "RAM": "16GB",
+      "Brand": "Asus",
+      "Model": "Zenbook 14 OLED",
+      "Warranty": "12 Months"
+    },
+    "description": "This professional refurbished ASUS Zenbook 14 features a gorgeous OLED display, AMD Ryzen processor, and all-day battery life. Extremely light and portable, graded in Mint condition.",
+    "rating": 4.7,
+    "reviewCount": 12,
+    "isActive": true,
+    "images": [
+      "asus-zenbook-14.png"
+    ]
+  },
+  {
+    "name": "ASUS Zenbook Duo OLED (Mint)",
+    "slug": "asus-zenbook-duo-oled-mint-0",
+    "category": "Laptops",
+    "brand": "Asus",
+    "model": "Zenbook Duo OLED",
+    "condition": "Mint",
+    "price": 1499,
+    "comparePrice": 1699,
+    "stock": 2,
+    "specs": {
+      "Storage": "1TB SSD",
+      "RAM": "32GB",
+      "Brand": "Asus",
+      "Model": "Zenbook Duo OLED",
+      "Warranty": "12 Months"
+    },
+    "description": "This professional refurbished ASUS Zenbook Duo features dual 14-inch OLED touchscreens for ultimate productivity. Intel Core Ultra 9, detachable keyboard, graded in Mint condition.",
+    "rating": 4.9,
+    "reviewCount": 6,
+    "isActive": true,
+    "images": [
+      "asus-zenbook-duo.png"
     ]
   }
 ]

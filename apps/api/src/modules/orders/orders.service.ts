@@ -183,4 +183,11 @@ export class OrdersService {
             return tx.order.update({ where: { id }, data: { status: 'CANCELLED' }, include: ORDER_INCLUDE });
         });
     }
+
+    async purgeAll(): Promise<{ deleted: number }> {
+        const count = await this.prisma.order.count();
+        await this.prisma.orderItem.deleteMany({});
+        await this.prisma.order.deleteMany({});
+        return { deleted: count };
+    }
 }

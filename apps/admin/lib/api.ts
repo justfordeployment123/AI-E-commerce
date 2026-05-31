@@ -296,6 +296,9 @@ export const ordersApi = {
 
   cancel: (id: string) =>
     apiFetch<Order>(`/orders/${id}/cancel`, { method: 'POST' }),
+
+  purgeAll: () =>
+    apiFetch<{ deleted: number }>('/orders/purge', { method: 'DELETE' }),
 };
 
 // ── Trade-ins ─────────────────────────────────────────────────────────────────
@@ -321,6 +324,9 @@ export const tradeInsApi = {
 
   complete: (id: string) =>
     apiFetch<TradeIn>(`/trade-ins/${id}/complete`, { method: 'POST' }),
+
+  purgeAll: () =>
+    apiFetch<{ deleted: number }>('/trade-ins/purge', { method: 'DELETE' }),
 };
 
 // ── Repairs ───────────────────────────────────────────────────────────────────
@@ -346,6 +352,9 @@ export const repairsApi = {
 
   cancel: (id: string) =>
     apiFetch<Repair>(`/repairs/${id}/cancel`, { method: 'POST' }),
+
+  purgeAll: () =>
+    apiFetch<{ deleted: number }>('/repairs/purge', { method: 'DELETE' }),
 };
 
 // ── Types ─────────────────────────────────────────────────────────────────────

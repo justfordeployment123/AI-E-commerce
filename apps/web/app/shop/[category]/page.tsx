@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { notFound, useParams } from "next/navigation";
 import { useCart } from "../../../context/cart-context";
 import { productsApi, reviewsApi } from "../../../lib/api";
@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import Navbar from "../../../components/Navbar";
 import Footer from "../../../components/Footer";
-import { imageRegistry, pick } from "../../../lib/localImages";
 import { catalogApi } from "../../../lib/api";
 
 // ─── Category meta ──────────────────────────────────────────────────────────
@@ -256,36 +255,6 @@ const SEO_TEXT: Record<string, { title: string; content: string[] }> = {
   }
 };
 
-function getBrandFallback(brand: string, catSlug: string): string {
-  const b = brand.toLowerCase();
-  if (catSlug === "phones") {
-    if (b === "apple")   return pick(imageRegistry.showcase.iphone);
-    if (b === "samsung") return pick(imageRegistry.showcase.galaxy);
-    if (b === "google")  return pick(imageRegistry.phones.google);
-    if (b === "oneplus") return pick(imageRegistry.phones.oneplus);
-    return pick(imageRegistry.phones.generic);
-  }
-  if (catSlug === "laptops") {
-    if (b === "apple") return pick(imageRegistry.showcase.macbook);
-    return pick(imageRegistry.laptops.generic);
-  }
-  if (catSlug === "tablets") {
-    if (b === "apple") return pick(imageRegistry.showcase.ipad);
-    return pick(imageRegistry.tablets.generic);
-  }
-  if (catSlug === "consoles") {
-    if (b === "sony")      return pick(imageRegistry.showcase.ps5);
-    if (b === "microsoft") return pick(imageRegistry.consoles.xbox);
-    return pick(imageRegistry.consoles.generic);
-  }
-  if (catSlug === "audio") {
-    if (b === "apple") return pick(imageRegistry.showcase.airpods);
-    if (b === "sony")  return pick(imageRegistry.showcase.sony);
-    return pick(imageRegistry.audio.headphones);
-  }
-  return pick(imageRegistry.phones.generic);
-}
-
 export default function CategoryPage() {
   const params = useParams();
   const categorySlug = (params?.category as string)?.toLowerCase();
@@ -307,11 +276,6 @@ export default function CategoryPage() {
 
   const { addItem } = useCart();
 
-  const brandFallbacks = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const b of subBrands) map.set(b.brand, getBrandFallback(b.brand, categorySlug));
-    return map;
-  }, [subBrands, categorySlug]);
 
   useEffect(() => {
     setLoading(true);
@@ -431,12 +395,8 @@ export default function CategoryPage() {
                   >
                     <div className="w-full aspect-[3/4] rounded-[24px] overflow-hidden bg-zinc-100">
                       <img
-                        src={brandFallbacks.get(item.brand) ?? item.image ?? ""}
+                        src={item.image ?? ""}
                         alt={item.brand}
-                        onError={(e) => {
-                          const api = item.image;
-                          if (api) { e.currentTarget.src = api; e.currentTarget.onerror = null; }
-                        }}
                         className="w-full h-full object-cover group-hover:scale-[1.06] transition-transform duration-500"
                       />
                     </div>

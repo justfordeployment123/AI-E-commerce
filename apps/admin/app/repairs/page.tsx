@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Wrench, X, Check, MapPin, Truck, Eye, RefreshCw, ExternalLink } from "lucide-react";
+import { Search, Wrench, X, Check, MapPin, Truck, Eye, RefreshCw, ExternalLink, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { repairsApi, type Repair } from "../../lib/api";
 
@@ -26,6 +26,19 @@ export default function RepairsPage() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [quoteInput, setQuoteInput] = useState("");
   const [saving, setSaving] = useState(false);
+  const [purging, setPurging] = useState(false);
+  const [confirmPurge, setConfirmPurge] = useState(false);
+
+  async function handlePurgeAll() {
+    setPurging(true);
+    try {
+      await repairsApi.purgeAll();
+      setItems([]);
+      setSelected(null);
+      setConfirmPurge(false);
+    } catch { /* ignore */ }
+    finally { setPurging(false); }
+  }
 
   async function load() {
     setLoading(true);
@@ -103,12 +116,32 @@ export default function RepairsPage() {
     <div className="h-screen flex flex-col overflow-hidden bg-background p-6">
 
       {/* Header */}
-      <div className="flex items-center gap-4 mb-4 shrink-0">
+      <div className="flex items-center justify-between gap-4 mb-4 shrink-0">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Repairs</h1>
           <p className="text-xs text-zinc-500 mt-0.5">
             {items.length} total — <span className="text-amber-600 font-bold">{pending} pending review</span>
           </p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          {confirmPurge ? (
+            <>
+              <span className="text-xs text-red-600 font-bold">Delete all {items.length} repairs?</span>
+              <button onClick={handlePurgeAll} disabled={purging}
+                className="h-9 px-4 rounded-xl bg-red-600 text-white text-xs font-bold hover:bg-red-700 transition-colors disabled:opacity-50">
+                {purging ? "Deleting…" : "Yes, delete all"}
+              </button>
+              <button onClick={() => setConfirmPurge(false)}
+                className="h-9 px-4 rounded-xl border border-zinc-200 text-xs font-bold text-zinc-600 hover:bg-zinc-50 transition-colors">
+                Cancel
+              </button>
+            </>
+          ) : (
+            <button onClick={() => setConfirmPurge(true)} disabled={items.length === 0}
+              className="flex items-center gap-2 h-9 px-4 rounded-xl border border-red-200 text-red-600 text-xs font-bold hover:bg-red-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+              <Trash2 className="h-3.5 w-3.5" /> Delete All
+            </button>
+          )}
         </div>
       </div>
 

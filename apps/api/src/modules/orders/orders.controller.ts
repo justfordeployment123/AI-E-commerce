@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Request, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from '../../common/guards/optional-jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -81,5 +81,12 @@ export class OrdersController {
     @Roles('ADMIN')
     cancel(@Param('id') id: string) {
         return this.ordersService.cancel(id);
+    }
+
+    @Delete('purge')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('ADMIN')
+    purgeAll() {
+        return this.ordersService.purgeAll();
     }
 }

@@ -329,4 +329,12 @@ Respond with ONLY: {"price": <number rounded to nearest 5, minimum 10>}`;
         }
         return this.prisma.tradeIn.update({ where: { id }, data: { status: 'COMPLETED' } });
     }
+
+    async purgeAll(): Promise<{ deleted: number }> {
+        const all = await this.prisma.tradeIn.findMany({ select: { images: true } });
+        const keys = all.flatMap(t => t.images as string[]).filter(Boolean);
+        if (keys.length) await this.storage.deleteFiles(keys);
+        await this.prisma.tradeIn.deleteMany({});
+        return { deleted: keys.length };
+    }
 }

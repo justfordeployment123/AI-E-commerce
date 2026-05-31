@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { DatabaseZap, CheckCircle, AlertCircle, Loader2, TriangleAlert } from "lucide-react";
+import { DatabaseZap, CheckCircle, AlertCircle, Loader2, TriangleAlert, Trash2 } from "lucide-react";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002";
 
@@ -30,11 +30,22 @@ interface SeedResult {
   };
 }
 
+interface PurgeResult {
+  deleted: number;
+}
+
 export default function SeedPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<SeedResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [confirmed, setConfirmed] = useState(false);
+
+  // Purge state
+  const [purging, setPurging] = useState(false);
+  const [purgeResult, setPurgeResult] = useState<PurgeResult | null>(null);
+  const [purgeError, setPurgeError] = useState<string | null>(null);
+  const [purgeConfirmed, setPurgeConfirmed] = useState(false);
+  const [purgeTyped, setPurgeTyped] = useState("");
 
   async function handleSeed() {
     setLoading(true);
@@ -49,6 +60,24 @@ export default function SeedPage() {
       setLoading(false);
     }
   }
+
+  async function handlePurge() {
+    setPurging(true);
+    setPurgeError(null);
+    setPurgeResult(null);
+    try {
+      const res = await apiFetch<PurgeResult>("/admin/seed/purge", { method: "DELETE" });
+      setPurgeResult(res);
+      setPurgeConfirmed(false);
+      setPurgeTyped("");
+    } catch (e: any) {
+      setPurgeError(e.message);
+    } finally {
+      setPurging(false);
+    }
+  }
+
+  const purgeReady = purgeConfirmed && purgeTyped === "DELETE EVERYTHING";
 
   return (
     <div className="min-h-screen bg-background p-8 max-w-2xl mx-auto">
@@ -169,6 +198,106 @@ export default function SeedPage() {
             </button>
           </div>
         )}
+      </div>
+      {/* ── Danger Zone ── */}
+      <div className="mt-10">
+        <div className="flex items-center gap-2 mb-4">
+          <Trash2 className="h-4 w-4 text-red-500" />
+          <h2 className="text-lg font-bold text-red-600">Danger Zone</h2>
+        </div>
+
+        <div className="bg-white rounded-3xl border border-red-200 shadow-sm p-8 space-y-6">
+          <div className="p-4 rounded-2xl bg-red-50 border border-red-100 space-y-2">
+            <div className="flex items-center gap-2">
+              <TriangleAlert className="h-4 w-4 text-red-600 shrink-0" />
+              <p className="text-sm font-bold text-red-800">This is irreversible</p>
+            </div>
+            <ul className="text-xs text-red-700 space-y-1 list-disc list-inside">
+              <li>Deletes all products, categories, brands, brand-categories, device catalog entries.</li>
+              <li>Deletes all banners and promo slides from database and Garage (S3).</li>
+              <li>Deletes all cart items, order items, and reviews that reference products.</li>
+              <li>Removes all pricing configs.</li>
+              <li>Use this before a full re-seed to start from a clean slate.</li>
+            </ul>
+          </div>
+
+          {!purgeResult && (
+            <>
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={purgeConfirmed}
+                  onChange={e => setPurgeConfirmed(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded accent-red-600"
+                />
+                <span className="text-sm text-zinc-600">
+                  I understand this will permanently delete all catalog and product data from the database and Garage storage.
+                </span>
+              </label>
+
+              {purgeConfirmed && (
+                <div className="space-y-2">
+                  <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest">
+                    Type <span className="font-mono text-red-600">DELETE EVERYTHING</span> to confirm
+                  </p>
+                  <input
+                    type="text"
+                    value={purgeTyped}
+                    onChange={e => setPurgeTyped(e.target.value)}
+                    placeholder="DELETE EVERYTHING"
+                    className="w-full h-10 px-4 rounded-xl border border-red-200 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-red-400"
+                  />
+                </div>
+              )}
+
+              <button
+                onClick={handlePurge}
+                disabled={purging || !purgeReady}
+                className="w-full h-12 rounded-2xl bg-red-600 text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-red-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {purging ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Purging database and Garage…
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4" />
+                    Delete Everything
+                  </>
+                )}
+              </button>
+            </>
+          )}
+
+          {purgeError && (
+            <div className="flex items-start gap-3 p-4 rounded-2xl bg-red-50 border border-red-100">
+              <AlertCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
+              <p className="text-sm text-red-700 font-medium">{purgeError}</p>
+            </div>
+          )}
+
+          {purgeResult && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 p-4 rounded-2xl bg-emerald-50 border border-emerald-100">
+                <CheckCircle className="h-5 w-5 text-emerald-600 shrink-0" />
+                <p className="font-bold text-emerald-800">Purge complete — database and Garage cleared.</p>
+              </div>
+              <div className="rounded-2xl border border-zinc-100 overflow-hidden">
+                <div className="flex items-center justify-between px-5 py-3">
+                  <span className="text-sm text-zinc-500">Garage objects deleted</span>
+                  <span className="font-bold text-sm">{purgeResult.deleted}</span>
+                </div>
+              </div>
+              <button
+                onClick={() => setPurgeResult(null)}
+                className="w-full h-10 rounded-2xl border border-zinc-200 text-sm font-medium text-zinc-600 hover:bg-zinc-50 transition-colors"
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
