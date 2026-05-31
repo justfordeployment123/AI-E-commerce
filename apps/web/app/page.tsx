@@ -1,6 +1,47 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+
+// Custom hook to trigger lazy fetching and auto-refetching on browser back-button navigation (bfcache)
+function useLazyFetchTrigger() {
+  const ref = useRef<HTMLElement | null>(null);
+  const [trigger, setTrigger] = useState(0);
+  const isIntersected = useRef(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !isIntersected.current) {
+          isIntersected.current = true;
+          setTrigger(prev => prev + 1);
+        }
+      },
+      { rootMargin: "200px" }
+    );
+
+    const currentRef = ref.current;
+    if (currentRef) {
+      observer.observe(currentRef);
+    }
+
+    const handlePageShow = (e: PageTransitionEvent) => {
+      if (e.persisted && isIntersected.current) {
+        setTrigger(prev => prev + 1);
+      }
+    };
+    window.addEventListener("pageshow", handlePageShow);
+
+    return () => {
+      window.removeEventListener("pageshow", handlePageShow);
+      if (currentRef) {
+        observer.unobserve(currentRef);
+      }
+    };
+  }, []);
+
+  return [ref, trigger] as const;
+}
+
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import {
@@ -388,10 +429,12 @@ function Hero() {
   const [isHeroSearchFocused, setIsHeroSearchFocused] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showcase, setShowcase] = useState<any[]>([]);
+  const [sectionRef, trigger] = useLazyFetchTrigger();
 
   useEffect(() => {
+    if (trigger === 0) return;
     productsApi.list({ limit: 3 }).then(r => setShowcase(r.items)).catch(() => {});
-  }, []);
+  }, [trigger]);
 
   useEffect(() => {
     if (!heroSearchQuery.trim()) { setSearchResults([]); return; }
@@ -423,7 +466,7 @@ function Hero() {
   };
 
   return (
-    <section className="relative bg-white overflow-hidden">
+    <section ref={sectionRef} className="relative bg-white overflow-hidden">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-2 min-h-[85vh] items-center gap-8 py-20 lg:py-24">
 
@@ -870,9 +913,12 @@ function TrustPillars() {
 // ─── Trending Deals ───────────────────────────────────────────────────────────
 function TrendingDeals() {
   const [apiProducts, setApiProducts] = useState<any[]>([]);
+  const [sectionRef, trigger] = useLazyFetchTrigger();
+
   useEffect(() => {
+    if (trigger === 0) return;
     productsApi.list({ limit: 8 }).then(r => setApiProducts(r.items)).catch(() => {});
-  }, []);
+  }, [trigger]);
 
   const featured = apiProducts[0] ?? null;
   const secondary = apiProducts.slice(1, 5);
@@ -884,105 +930,105 @@ function TrendingDeals() {
     Good:       "bg-amber-500",
   };
 
-  if (!featured) return null;
-
   return (
-    <section className="py-24 overflow-hidden">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex items-end justify-between mb-12">
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-3">Hot right now</p>
-            <h2 className="font-serif text-5xl md:text-6xl font-medium text-zinc-950 leading-none">Trending deals</h2>
-          </div>
-          <a href="/shop/phones" className="hidden md:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-zinc-950 transition-colors border-b border-zinc-300 pb-1">
-            See all <ArrowRight className="h-3.5 w-3.5" />
-          </a>
-        </div>
-
-        {/* Asymmetric layout: large featured + right scroll-track */}
-        <div className="grid lg:grid-cols-[1fr_1fr] gap-5">
-
-          {/* Featured — large portrait card */}
-          <motion.a
-            href={`/shop/${featured.category.toLowerCase()}/${featured.slug}`}
-            initial={{ opacity: 0, x: -24 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ type: "spring", stiffness: 220, damping: 26 }}
-            className="group relative overflow-hidden rounded-[2.5rem] bg-zinc-100 cursor-pointer block"
-          >
-            <div className="aspect-4/3 lg:aspect-auto lg:h-[520px] w-full relative">
-              <img src={featured.images?.[0] || undefined} alt={featured.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-700" />
-              <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/80 via-zinc-950/20 to-transparent" />
-
-              {/* Grade badge */}
-              <div className="absolute top-6 left-6 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/90 backdrop-blur-sm text-[10px] font-bold uppercase tracking-widest shadow-sm">
-                <span className={`h-2 w-2 rounded-full ${gradeDot[featured.condition]}`} />
-                {featured.condition}
-              </div>
-
-              {/* Save pct badge */}
-              {featured.comparePrice && (
-                <div className="absolute top-6 right-6 px-3 py-1.5 rounded-full bg-accent text-[10px] font-bold shadow-sm">
-                  -{Math.round((1 - featured.price / featured.comparePrice) * 100)}%
-                </div>
-              )}
-
-              <div className="absolute bottom-0 left-0 right-0 p-8">
-                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/50 mb-2">{featured.brand}</p>
-                <h3 className="font-serif text-3xl font-medium text-white mb-1 leading-tight">{featured.name}</h3>
-                <p className="text-sm text-white/60 font-medium mb-5">{String((featured.specs as any)?.storage ?? featured.model ?? "—")}</p>
-                <div className="flex items-baseline gap-3">
-                  <span className="text-3xl font-bold text-white tracking-tighter">£{featured.price}</span>
-                  {featured.comparePrice && (
-                    <span className="text-base text-white/40 line-through">£{featured.comparePrice}</span>
-                  )}
-                </div>
-              </div>
+    <section ref={sectionRef} className="py-24 overflow-hidden min-h-[200px]">
+      {featured && (
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex items-end justify-between mb-12">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-3">Hot right now</p>
+              <h2 className="font-serif text-5xl md:text-6xl font-medium text-zinc-950 leading-none">Trending deals</h2>
             </div>
-          </motion.a>
+            <a href="/shop/phones" className="hidden md:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-zinc-950 transition-colors border-b border-zinc-300 pb-1">
+              See all <ArrowRight className="h-3.5 w-3.5" />
+            </a>
+          </div>
 
-          {/* Right: 2×2 grid */}
-          <div className="grid grid-cols-2 gap-5">
-            {secondary.map((deal, i) => (
-              <motion.a
-                key={deal.id}
-                href={`/shop/${deal.category.toLowerCase()}/${deal.slug}`}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.07, type: "spring", stiffness: 240, damping: 24 }}
-                className="group cursor-pointer block"
-              >
-                <div className="relative aspect-square overflow-hidden rounded-3xl bg-zinc-100 mb-3">
-                  <img src={deal.images?.[0] || undefined} alt={deal.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  <div className="absolute top-3 left-3 flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/90 backdrop-blur-sm text-[9px] font-bold uppercase tracking-widest shadow-sm">
-                    <span className={`h-1.5 w-1.5 rounded-full ${gradeDot[deal.condition]}`} />
-                    {deal.condition}
+          {/* Asymmetric layout: large featured + right scroll-track */}
+          <div className="grid lg:grid-cols-[1fr_1fr] gap-5">
+
+            {/* Featured — large portrait card */}
+            <motion.a
+              href={`/shop/${featured.category.toLowerCase()}/${featured.slug}`}
+              initial={{ opacity: 0, x: -24 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ type: "spring", stiffness: 220, damping: 26 }}
+              className="group relative overflow-hidden rounded-[2.5rem] bg-zinc-100 cursor-pointer block"
+            >
+              <div className="aspect-4/3 lg:aspect-auto lg:h-[520px] w-full relative">
+                <img src={featured.images?.[0] || undefined} alt={featured.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/80 via-zinc-950/20 to-transparent" />
+
+                {/* Grade badge */}
+                <div className="absolute top-6 left-6 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/90 backdrop-blur-sm text-[10px] font-bold uppercase tracking-widest shadow-sm">
+                  <span className={`h-2 w-2 rounded-full ${gradeDot[featured.condition]}`} />
+                  {featured.condition}
+                </div>
+
+                {/* Save pct badge */}
+                {featured.comparePrice && (
+                  <div className="absolute top-6 right-6 px-3 py-1.5 rounded-full bg-accent text-[10px] font-bold shadow-sm">
+                    -{Math.round((1 - featured.price / featured.comparePrice) * 100)}%
                   </div>
-                  {deal.comparePrice && (
-                    <span className="absolute top-3 right-3 px-2 py-1 rounded-full bg-accent text-[9px] font-bold shadow-sm">
-                      -{Math.round((1 - deal.price / deal.comparePrice) * 100)}%
-                    </span>
-                  )}
-                  <div className="absolute bottom-3 right-3 h-10 w-10 rounded-full bg-zinc-950 text-white flex items-center justify-center opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 shadow-lg">
-                    <ShoppingCart className="h-4 w-4" />
+                )}
+
+                <div className="absolute bottom-0 left-0 right-0 p-8">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/50 mb-2">{featured.brand}</p>
+                  <h3 className="font-serif text-3xl font-medium text-white mb-1 leading-tight">{featured.name}</h3>
+                  <p className="text-sm text-white/60 font-medium mb-5">{String((featured.specs as any)?.storage ?? featured.model ?? "—")}</p>
+                  <div className="flex items-baseline gap-3">
+                    <span className="text-3xl font-bold text-white tracking-tighter">£{featured.price}</span>
+                    {featured.comparePrice && (
+                      <span className="text-base text-white/40 line-through">£{featured.comparePrice}</span>
+                    )}
                   </div>
                 </div>
-                <p className="font-bold text-zinc-950 text-sm truncate mb-0.5">{deal.name}</p>
-                <p className="text-[11px] text-zinc-400 font-medium mb-2 truncate">{String((deal.specs as any)?.storage ?? deal.model ?? "—")}</p>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-lg font-bold text-zinc-950">£{deal.price}</span>
-                  {deal.comparePrice && (
-                    <span className="text-xs text-zinc-300 line-through">£{deal.comparePrice}</span>
-                  )}
-                </div>
-              </motion.a>
-            ))}
+              </div>
+            </motion.a>
+
+            {/* Right: 2×2 grid */}
+            <div className="grid grid-cols-2 gap-5">
+              {secondary.map((deal, i) => (
+                <motion.a
+                  key={deal.id}
+                  href={`/shop/${deal.category.toLowerCase()}/${deal.slug}`}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.07, type: "spring", stiffness: 240, damping: 24 }}
+                  className="group cursor-pointer block"
+                >
+                  <div className="relative aspect-square overflow-hidden rounded-3xl bg-zinc-100 mb-3">
+                    <img src={deal.images?.[0] || undefined} alt={deal.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="absolute top-3 left-3 flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/90 backdrop-blur-sm text-[9px] font-bold uppercase tracking-widest shadow-sm">
+                      <span className={`h-1.5 w-1.5 rounded-full ${gradeDot[deal.condition]}`} />
+                      {deal.condition}
+                    </div>
+                    {deal.comparePrice && (
+                      <span className="absolute top-3 right-3 px-2 py-1 rounded-full bg-accent text-[9px] font-bold shadow-sm">
+                        -{Math.round((1 - deal.price / deal.comparePrice) * 100)}%
+                      </span>
+                    )}
+                    <div className="absolute bottom-3 right-3 h-10 w-10 rounded-full bg-zinc-950 text-white flex items-center justify-center opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 shadow-lg">
+                      <ShoppingCart className="h-4 w-4" />
+                    </div>
+                  </div>
+                  <p className="font-bold text-zinc-950 text-sm truncate mb-0.5">{deal.name}</p>
+                  <p className="text-[11px] text-zinc-400 font-medium mb-2 truncate">{String((deal.specs as any)?.storage ?? deal.model ?? "—")}</p>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-lg font-bold text-zinc-950">£{deal.price}</span>
+                    {deal.comparePrice && (
+                      <span className="text-xs text-zinc-300 line-through">£{deal.comparePrice}</span>
+                    )}
+                  </div>
+                </motion.a>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </section>
   );
 }
@@ -1040,8 +1086,10 @@ function HowItWorks() {
 function Reviews() {
   const [reviews, setReviews] = useState<any[]>([]);
   const [avgRating, setAvgRating] = useState(0);
+  const [sectionRef, trigger] = useLazyFetchTrigger();
 
   useEffect(() => {
+    if (trigger === 0) return;
     reviewsApi.recent(8)
       .then(data => {
         setReviews(data);
@@ -1051,77 +1099,81 @@ function Reviews() {
         }
       })
       .catch(() => {});
-  }, []);
-
-  if (reviews.length === 0) return null;
+  }, [trigger]);
 
   const displayRating = avgRating || 4.8;
   const displayCount = reviews.length;
 
   return (
-    <section className="py-24 bg-zinc-50 border-y border-zinc-100 overflow-hidden">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-12">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-3">Social proof</p>
-            <h2 className="font-serif text-5xl md:text-6xl font-medium text-zinc-950 leading-none">
-              Real buyers,<br />real reviews.
-            </h2>
-          </div>
-          <div className="flex items-center gap-6 bg-white rounded-3xl px-7 py-5 border border-zinc-100 shadow-sm self-start md:self-auto">
-            <div>
-              <div className="flex gap-0.5 mb-1.5">
-                {[...Array(5)].map((_, i) => <Star key={i} className="h-5 w-5 fill-amber-400 text-amber-400" />)}
+    <section ref={sectionRef} className="py-24 bg-zinc-50 border-y border-zinc-100 overflow-hidden min-h-[200px]">
+      {reviews.length > 0 && (
+        <>
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-12">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-3">Social proof</p>
+                <h2 className="font-serif text-5xl md:text-6xl font-medium text-zinc-950 leading-none">
+                  Real buyers,<br />real reviews.
+                </h2>
               </div>
-              <p className="text-3xl font-bold text-zinc-950 leading-none">{displayRating}</p>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mt-1">out of 5</p>
-            </div>
-            <div className="h-12 w-px bg-zinc-100" />
-            <div>
-              <p className="text-2xl font-bold text-zinc-950 leading-none">{displayCount.toLocaleString()}</p>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mt-1">Verified reviews</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Horizontal scroll */}
-      <div className="flex gap-5 overflow-x-auto scrollbar-hide pl-4 sm:pl-6 lg:pl-8 pr-8 pb-2">
-        {reviews.map((r: any, i: number) => {
-          const displayName = r.user?.name ?? r.guestName ?? "Verified Buyer";
-          const initials = displayName.charAt(0).toUpperCase();
-          const productLabel = r.product ? `${r.product.name} · ${r.product.condition}` : "";
-          return (
-            <motion.div
-              key={r.id}
-              initial={{ opacity: 0, x: 20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.07 }}
-              className="flex-shrink-0 w-[320px] md:w-[360px] bg-white rounded-3xl p-7 border border-zinc-100 flex flex-col gap-5 shadow-sm hover:shadow-md transition-shadow"
-            >
-              <div className="flex gap-0.5">
-                {[...Array(r.rating)].map((_: unknown, j: number) => <Star key={j} className="h-4 w-4 fill-amber-400 text-amber-400" />)}
-              </div>
-              <p className="text-zinc-700 leading-relaxed text-[15px] flex-1">"{r.body}"</p>
-              {r.images?.length > 0 && (
-                <div className="w-full h-44 rounded-2xl overflow-hidden">
-                  <img src={r.images[0]} alt="" className="w-full h-full object-cover" />
-                </div>
-              )}
-              <div className="pt-4 border-t border-zinc-100 flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-zinc-100 flex items-center justify-center shrink-0 font-bold text-sm text-zinc-600">
-                  {initials}
-                </div>
+              <div className="flex items-center gap-6 bg-white rounded-3xl px-7 py-5 border border-zinc-100 shadow-sm self-start md:self-auto">
                 <div>
-                  <p className="text-sm font-bold text-zinc-950">{displayName}</p>
-                  <p className="text-[11px] text-zinc-400 font-medium mt-0.5">{productLabel}</p>
+                  <div className="flex gap-0.5 mb-1.5">
+                    {[...Array(5)].map((_, i) => <Star key={i} className="h-5 w-5 fill-amber-400 text-amber-400" />)}
+                  </div>
+                  <p className="text-3xl font-bold text-zinc-950 leading-none">{displayRating}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mt-1">out of 5</p>
+                </div>
+                <div className="h-12 w-px bg-zinc-100" />
+                <div>
+                  <p className="text-2xl font-bold text-zinc-950 leading-none">{displayCount.toLocaleString()}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mt-1">Verified reviews</p>
                 </div>
               </div>
-            </motion.div>
-          );
-        })}
-      </div>
+            </div>
+          </div>
+
+          {/* Horizontal scroll */}
+          <div className="flex gap-5 overflow-x-auto scrollbar-hide pl-4 sm:pl-6 lg:pl-8 pr-8 pb-2">
+            {reviews.map((r: any, i: number) => {
+              const displayName = r.user?.name ?? r.guestName ?? "Verified Buyer";
+              const initials = displayName.charAt(0).toUpperCase();
+              const productLabel = r.product ? `${r.product.name} · ${r.product.condition}` : "";
+              return (
+                <motion.div
+                  key={r.id}
+                  initial={{ opacity: 0, x: 20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{
+                    once: true
+                  }}
+                  transition={{ delay: i * 0.07 }}
+                  className="flex-shrink-0 w-[320px] md:w-[360px] bg-white rounded-3xl p-7 border border-zinc-100 flex flex-col gap-5 shadow-sm hover:shadow-md transition-shadow"
+                >
+                  <div className="flex gap-0.5">
+                    {[...Array(r.rating)].map((_: unknown, j: number) => <Star key={j} className="h-4 w-4 fill-amber-400 text-amber-400" />)}
+                  </div>
+                  <p className="text-zinc-700 leading-relaxed text-[15px] flex-1">"{r.body}"</p>
+                  {r.images?.length > 0 && (
+                    <div className="w-full h-44 rounded-2xl overflow-hidden">
+                      <img src={r.images[0]} alt="" className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                  <div className="pt-4 border-t border-zinc-100 flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-zinc-100 flex items-center justify-center shrink-0 font-bold text-sm text-zinc-600">
+                      {initials}
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-zinc-950">{displayName}</p>
+                      <p className="text-[11px] text-zinc-400 font-medium mt-0.5">{productLabel}</p>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </>
+      )}
     </section>
   );
 }
@@ -1375,8 +1427,10 @@ function ShopByBudget() {
     pick([...imageRegistry.laptops.macbook, ...imageRegistry.laptops.generic]),
   ]);
   const [counts, setCounts] = useState([0, 0, 0, 0]);
+  const [sectionRef, trigger] = useLazyFetchTrigger();
 
   useEffect(() => {
+    if (trigger === 0) return;
     const bands: [number | undefined, number | undefined][] = [
       [undefined, 100],
       [100, 300],
@@ -1388,7 +1442,7 @@ function ShopByBudget() {
         productsApi.list({ limit: 1, minPrice: min, maxPrice: max }).then(r => r.total).catch(() => 0)
       )
     ).then(setCounts);
-  }, []);
+  }, [trigger]);
 
   const fmt = (n: number) => n > 0 ? `${n.toLocaleString()}+` : "—";
 
@@ -1432,7 +1486,7 @@ function ShopByBudget() {
   ];
 
   return (
-    <section className="bg-zinc-50 border-y border-zinc-100 py-24">
+    <section ref={sectionRef} className="bg-zinc-50 border-y border-zinc-100 py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       <div className="flex items-end justify-between mb-12">
         <div>
@@ -1508,10 +1562,12 @@ function BestDealsSplit() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
   const { addItem } = useCart();
+  const [sectionRef, trigger] = useLazyFetchTrigger();
 
   useEffect(() => {
+    if (trigger === 0) return;
     productsApi.list({ limit: 24 }).then(r => setAllProducts(r.items)).catch(() => {});
-  }, []);
+  }, [trigger]);
 
   // Unique category pills from real DB products
   const categoryPills = (() => {
@@ -1545,7 +1601,7 @@ function BestDealsSplit() {
   }
 
   return (
-    <section className="bg-zinc-50 py-16 md:py-24 overflow-hidden border-t border-zinc-100">
+    <section ref={sectionRef} className="bg-zinc-50 py-16 md:py-24 overflow-hidden border-t border-zinc-100">
       <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
         <h2 className="text-3xl md:text-4xl font-normal tracking-tight text-zinc-950 mb-6">Shop our best deals</h2>
 
@@ -1652,9 +1708,12 @@ function BestDealsSplit() {
 // ─── New Arrivals ─────────────────────────────────────────────────────────────
 function NewArrivals() {
   const [items, setItems] = useState<any[]>([]);
+  const [sectionRef, trigger] = useLazyFetchTrigger();
+
   useEffect(() => {
+    if (trigger === 0) return;
     productsApi.list({ limit: 6 }).then(r => setItems(r.items)).catch(() => {});
-  }, []);
+  }, [trigger]);
 
   const gradeColor: Record<string, string> = {
     Pristine:  "bg-emerald-50 text-emerald-700",
@@ -1663,7 +1722,7 @@ function NewArrivals() {
   };
 
   return (
-    <section className="py-24 overflow-hidden">
+    <section ref={sectionRef} className="py-24 overflow-hidden">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-10">
         <div className="flex items-end justify-between">
           <div>
@@ -2070,10 +2129,12 @@ function LiveFeed() {
 // ─── Savings Comparison ───────────────────────────────────────────────────────
 function SavingsComparison() {
   const [rawProducts, setRawProducts] = useState<any[]>([]);
+  const [sectionRef, trigger] = useLazyFetchTrigger();
 
   useEffect(() => {
+    if (trigger === 0) return;
     productsApi.list({ limit: 4 }).then(r => setRawProducts(r.items)).catch(() => {});
-  }, []);
+  }, [trigger]);
 
   const items = rawProducts.map(p => ({
     device: p.name,
@@ -2092,7 +2153,7 @@ function SavingsComparison() {
   };
 
   return (
-    <section className="py-24 bg-white border-t border-zinc-100">
+    <section ref={sectionRef} className="py-24 bg-white border-t border-zinc-100 min-h-[200px]">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex items-end justify-between mb-14">
           <div>
@@ -2210,6 +2271,7 @@ function FeaturedShop() {
   const [active, setActive] = useState("Smartphones");
   const [cache, setCache] = useState<Record<string, PCard[]>>({});
   const [loading, setLoading] = useState(false);
+  const [sectionRef, trigger] = useLazyFetchTrigger();
 
   const catApiMap: Record<string, string> = {
     "Smartphones": "Phones",
@@ -2228,6 +2290,13 @@ function FeaturedShop() {
   };
 
   useEffect(() => {
+    if (trigger > 1) {
+      setCache({});
+    }
+  }, [trigger]);
+
+  useEffect(() => {
+    if (trigger === 0) return;
     if (cache[active]) return;
     setLoading(true);
     productsApi.list({ category: catApiMap[active], limit: 6 })
@@ -2246,12 +2315,12 @@ function FeaturedShop() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [active]);
+  }, [active, trigger, cache]);
 
   const filtered = cache[active] ?? [];
 
   return (
-    <section id="shop" className="py-24 border-t border-zinc-100 bg-white overflow-hidden">
+    <section ref={sectionRef} id="shop" className="py-24 border-t border-zinc-100 bg-white overflow-hidden">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-10">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
@@ -2355,10 +2424,12 @@ const CAT_SLUG: Record<string, string> = {
 function TopBrandsSplit() {
   const [deskImg] = useState(() => pick([...imageRegistry.banners.desk, ...imageRegistry.banners.gaming]));
   const [allProducts, setAllProducts] = useState<any[]>([]);
+  const [sectionRef, trigger] = useLazyFetchTrigger();
 
   useEffect(() => {
+    if (trigger === 0) return;
     productsApi.list({ limit: 30 }).then(r => setAllProducts(r.items)).catch(() => {});
-  }, []);
+  }, [trigger]);
 
   const products = allProducts.slice(0, 3);
 
@@ -2382,7 +2453,7 @@ function TopBrandsSplit() {
   })();
 
   return (
-    <section className="bg-zinc-50 py-16 md:py-24 border-t border-zinc-100 overflow-hidden">
+    <section ref={sectionRef} className="bg-zinc-50 py-16 md:py-24 border-t border-zinc-100 overflow-hidden">
       <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
         <h2 className="text-3xl md:text-4xl font-normal tracking-tight text-zinc-950 mb-6">Top brands, refurbished</h2>
         
@@ -2454,8 +2525,10 @@ function TopBrandsSplit() {
 function BudgetPicks() {
   const [under200, setUnder200] = useState<PCard[]>([]);
   const [under500, setUnder500] = useState<PCard[]>([]);
+  const [sectionRef, trigger] = useLazyFetchTrigger();
 
   useEffect(() => {
+    if (trigger === 0) return;
     productsApi.list({ limit: 60 }).then(r => {
       const toCard = (p: any): PCard => ({
         name: p.name,
@@ -2470,7 +2543,7 @@ function BudgetPicks() {
       setUnder200(r.items.filter((p: any) => p.price < 200).slice(0, 10).map(toCard));
       setUnder500(r.items.filter((p: any) => p.price >= 200 && p.price < 500).slice(0, 10).map(toCard));
     }).catch(() => {});
-  }, []);
+  }, [trigger]);
 
   function PriceRow({ title, badge, items }: { title: string; badge: string; items: PCard[] }) {
     if (items.length === 0) return null;
@@ -2516,16 +2589,20 @@ function BudgetPicks() {
     );
   }
 
-  if (under200.length === 0 && under500.length === 0) return null;
+  const hasData = under200.length > 0 || under500.length > 0;
 
   return (
-    <section className="py-20 bg-zinc-50 border-y border-zinc-100 overflow-hidden">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-14">
-        <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-3">Budget deals</p>
-        <h2 className="font-serif text-5xl md:text-6xl font-medium text-zinc-950 leading-none">More for <i>less.</i></h2>
-      </div>
-      <PriceRow title="Under £200" badge="Great value" items={under200} />
-      <PriceRow title="Under £500" badge="Most popular" items={under500} />
+    <section ref={sectionRef} className="py-20 bg-zinc-50 border-y border-zinc-100 overflow-hidden min-h-[200px]">
+      {hasData && (
+        <>
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-14">
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-3">Budget deals</p>
+            <h2 className="font-serif text-5xl md:text-6xl font-medium text-zinc-950 leading-none">More for <i>less.</i></h2>
+          </div>
+          <PriceRow title="Under £200" badge="Great value" items={under200} />
+          <PriceRow title="Under £500" badge="Most popular" items={under500} />
+        </>
+      )}
     </section>
   );
 }

@@ -386,6 +386,21 @@ model Review {
   @@map("reviews")
 }
 
+model PromoSlide {
+  id        String   @id @default(uuid())
+  imgKey    String?  // S3 key, resolved to presigned URL at runtime
+  title     String   // e.g. "UPGRADE YOUR IPHONE"
+  subtitle  String   // one-line supporting text
+  btnText   String   @default("Shop Now")
+  btnLink   String   // e.g. "/shop/phones"
+  order     Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("promo_slides")
+}
+
 model Banner {
   id        String   @id @default(uuid())
   key       String   @unique  // S3 key: "banners/gaming.jpg"

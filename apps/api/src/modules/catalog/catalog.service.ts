@@ -155,7 +155,7 @@ export class CatalogService {
         if (images.length >= MAX_BRAND_CATEGORY_IMAGES) {
             throw new BadRequestException(`Maximum ${MAX_BRAND_CATEGORY_IMAGES} images allowed per brand-category`);
         }
-        const { filePath } = await this.storage.uploadFile(file, `catalog/${bc.category.slug}/${bc.brand.slug}`);
+        const { filePath } = await this.storage.uploadFile(file, `catalog/categories/${bc.category.slug}/${bc.brand.slug}`);
         const updated = await this.prisma.brandCategory.update({
             where: { id },
             data: { images: [...images, filePath] },

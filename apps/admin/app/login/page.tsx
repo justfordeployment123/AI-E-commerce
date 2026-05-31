@@ -38,17 +38,12 @@ export default function AdminLoginPage() {
             backgroundSize: "32px 32px",
           }}
         />
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#d7ff5f]/5 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-accent/5 rounded-full blur-[120px] pointer-events-none" />
 
         <div className="relative z-10">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl overflow-hidden shrink-0 shadow-lg">
-              <img src="/icon.png" alt="TechStop" className="w-full h-full object-cover" />
-            </div>
-            <div>
-              <p className="font-bold text-white text-sm leading-tight">TechStop Leicester</p>
-              <p className="text-[10px] text-white/30 font-medium uppercase tracking-widest">Admin Panel</p>
-            </div>
+          <div className="flex flex-col gap-2">
+            <img src="/logo_white.png" alt="TechStop" className="h-8 w-auto object-contain object-left" />
+            <p className="text-[10px] text-white/30 font-bold uppercase tracking-[0.2em] pl-0.5">Admin Panel</p>
           </div>
         </div>
 
@@ -70,7 +65,7 @@ export default function AdminLoginPage() {
             ].map(({ icon: Icon, label }) => (
               <div key={label} className="flex items-center gap-3">
                 <div className="h-8 w-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
-                  <Icon className="h-3.5 w-3.5 text-[#d7ff5f]" />
+                  <Icon className="h-3.5 w-3.5 text-accent" />
                 </div>
                 <span className="text-sm font-medium text-white/50">{label}</span>
               </div>
@@ -93,14 +88,9 @@ export default function AdminLoginPage() {
           className="w-full max-w-sm"
         >
           {/* Mobile logo */}
-          <div className="flex items-center gap-3 mb-10 lg:hidden">
-            <div className="h-10 w-10 rounded-xl overflow-hidden shrink-0">
-              <img src="/icon.png" alt="TechStop" className="w-full h-full object-cover" />
-            </div>
-            <div>
-              <p className="font-bold text-white text-sm leading-tight">TechStop Leicester</p>
-              <p className="text-[10px] text-white/30 font-medium uppercase tracking-widest">Admin Panel</p>
-            </div>
+          <div className="flex flex-col gap-2 mb-10 lg:hidden">
+            <img src="/logo_white.png" alt="TechStop" className="h-8 w-auto object-contain object-left" />
+            <p className="text-[10px] text-white/30 font-bold uppercase tracking-[0.2em] pl-0.5">Admin Panel</p>
           </div>
 
           <div className="mb-8">
@@ -118,7 +108,7 @@ export default function AdminLoginPage() {
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="admin@techstop.co.uk"
-                className="w-full h-12 rounded-xl bg-white/[0.06] border border-white/10 px-4 text-sm text-white placeholder-white/20 outline-none focus:border-[#d7ff5f]/50 focus:bg-white/[0.08] transition-all"
+                className="w-full h-12 rounded-xl bg-white/[0.06] border border-white/10 px-4 text-sm text-white placeholder-white/20 outline-none focus:border-accent/50 focus:bg-white/[0.08] transition-all"
               />
             </div>
 
@@ -132,7 +122,7 @@ export default function AdminLoginPage() {
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full h-12 rounded-xl bg-white/[0.06] border border-white/10 px-4 pr-12 text-sm text-white placeholder-white/20 outline-none focus:border-[#d7ff5f]/50 focus:bg-white/[0.08] transition-all"
+                  className="w-full h-12 rounded-xl bg-white/[0.06] border border-white/10 px-4 pr-12 text-sm text-white placeholder-white/20 outline-none focus:border-accent/50 focus:bg-white/[0.08] transition-all"
                 />
                 <button
                   type="button"
@@ -157,7 +147,7 @@ export default function AdminLoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full h-12 rounded-xl bg-[#d7ff5f] text-black font-bold text-sm flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+              className="w-full h-12 rounded-xl bg-accent text-white font-bold text-sm flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed mt-2"
             >
               {loading ? (
                 <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">

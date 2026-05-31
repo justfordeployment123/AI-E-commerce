@@ -18,10 +18,8 @@ const FOLDERS = [
   'trade-in-images',
   'repair-images',
   'review-images',
-  'category-images',
-  'brand-logos',
-  'brand-category-images',
   'banners',
+  'banners/promo',
 ] as const;
 
 @Injectable()

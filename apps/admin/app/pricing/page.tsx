@@ -213,7 +213,7 @@ function SliderRow({ modifier, onChange }: { modifier: Modifier; onChange: (key:
         step={modifier.step}
         value={modifier.value}
         onChange={e => onChange(modifier.key, Number(e.target.value))}
-        className="w-full h-2 rounded-full accent-black bg-zinc-100 cursor-pointer"
+        className="w-full h-2 rounded-full accent-accent bg-zinc-100 cursor-pointer"
       />
       <p className="text-xs text-zinc-400 mt-1.5 leading-snug">{modifier.desc}</p>
     </div>

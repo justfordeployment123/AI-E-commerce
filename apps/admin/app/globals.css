@@ -1,44 +1,94 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f4f4f5;
+  /* Core Theme Colors */
+  --background: #f8fafc;
   --surface: #ffffff;
-  --foreground: #09090b;
-  --accent: #d7ff5f;
-  --accent-dark: #b8e600;
-  --muted: #f4f4f5;
-  --border: #e4e4e7;
+  --foreground: #0f172a;
+  --accent: #e30613; /* TechStop Red */
+  --accent-dark: #be123c;
+  --muted: #f1f5f9;
+  --border: #e2e8f0;
+  
+  /* Sidebar Specific Colors */
   --sidebar: #09090b;
   --sidebar-fg: #ffffff;
 
-  /* Semantic action colors */
-  --approve:        #0d9488;   /* teal-600 — modern, not traffic-light green */
-  --approve-hover:  #0f766e;   /* teal-700 */
-  --approve-fg:     #ffffff;
-  --reject:         #be123c;   /* rose-700 — warm deep red, less alarming */
-  --reject-hover:   #9f1239;   /* rose-800 */
-  --reject-fg:      #ffffff;
+  /* Semantic Action Colors */
+  --approve: #0d9488;       /* teal-600 — modern, not traffic-light green */
+  --approve-hover: #0f766e; /* teal-700 */
+  --approve-fg: #ffffff;
+  --reject: #be123c;        /* rose-700 — warm deep red, less alarming */
+  --reject-hover: #9f1239;  /* rose-800 */
+  --reject-fg: #ffffff;
+
+  /* Semantic Feedback & Status Colors */
+  --success: #059669;
+  --success-bg: #ecfdf5;
+  --success-fg: #047857;
+  
+  --warning: #d97706;
+  --warning-bg: #fffbeb;
+  --warning-fg: #b45309;
+  
+  --info: #0284c7;
+  --info-bg: #f0f9ff;
+  --info-fg: #0369a1;
+  
+  --pending: #4f46e5;
+  --pending-bg: #f5f3ff;
+  --pending-fg: #4338ca;
+
+  /* Layout, Shadows, & Spacing Tokens */
+  --radius-card: 24px;       /* Custom border radius for cards */
+  --radius-button: 16px;     /* Custom border radius for buttons/controls */
+
+  /* Global Fonts Configuration */
+  --font-sans: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-geist-mono), monospace;
 }
 
 @theme inline {
+  /* Mapping Core Tokens */
   --color-background: var(--background);
   --color-surface: var(--surface);
   --color-foreground: var(--foreground);
   --color-accent: var(--accent);
+  --color-accent-dark: var(--accent-dark);
   --color-muted: var(--muted);
   --color-border: var(--border);
   --color-sidebar: var(--sidebar);
   --color-sidebar-fg: var(--sidebar-fg);
 
-  --color-approve:       var(--approve);
+  /* Mapping Action Tokens */
+  --color-approve: var(--approve);
   --color-approve-hover: var(--approve-hover);
-  --color-approve-fg:    var(--approve-fg);
-  --color-reject:        var(--reject);
-  --color-reject-hover:  var(--reject-hover);
-  --color-reject-fg:     var(--reject-fg);
+  --color-approve-fg: var(--approve-fg);
+  --color-reject: var(--reject);
+  --color-reject-hover: var(--reject-hover);
+  --color-reject-fg: var(--reject-fg);
 
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Mapping Feedback & Status Tokens */
+  --color-success: var(--success);
+  --color-success-bg: var(--success-bg);
+  --color-success-fg: var(--success-fg);
+  --color-warning: var(--warning);
+  --color-warning-bg: var(--warning-bg);
+  --color-warning-fg: var(--warning-fg);
+  --color-info: var(--info);
+  --color-info-bg: var(--info-bg);
+  --color-info-fg: var(--info-fg);
+  --color-pending: var(--pending);
+  --color-pending-bg: var(--pending-bg);
+  --color-pending-fg: var(--pending-fg);
+
+  /* Centralizing Border Radii (Overriding Tailwind defaults dynamically) */
+  --radius-3xl: var(--radius-card);
+  --radius-2xl: var(--radius-button);
+
+  /* Centralizing Font Tokens */
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
 }
 
 body {
@@ -51,10 +101,10 @@ body {
 
 @layer utilities {
   .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
   }
   .scrollbar-hide::-webkit-scrollbar {
-    display: none;
+    display: none; /* Chrome, Safari and Opera */
   }
 }

@@ -1,0 +1,128 @@
+[
+  {
+    "index": "01",
+    "tabTitle": "Upgrade iPhone",
+    "tag": "Featured Promotion",
+    "titleLine1": "UPGRADE YOUR",
+    "titleLine2": "IPHONE",
+    "titleItalic": "for less.",
+    "desc": "Get pristine, certified refurbished iPhones with a full 12-month warranty. Rigorously tested by in-house technicians, graded honestly.",
+    "img": "/homepage_top/refurbished_iphone.png",
+    "themeColor": "from-blue-500 to-indigo-600 dark:from-blue-400 dark:to-indigo-400",
+    "bgGlow": "rgba(59, 130, 246, 0.15)",
+    "specs": [
+      "12-Month Warranty",
+      "Pristine Condition",
+      "Save up to 40%"
+    ],
+    "badgeA": "Pristine Grade",
+    "badgeB": "Save up to 40%",
+    "btnText": "Shop Refurbished",
+    "btnLink": "/shop/phones"
+  },
+  {
+    "index": "02",
+    "tabTitle": "Sell & Trade-In",
+    "tag": "Instant Valuation",
+    "titleLine1": "WE BUY TECH",
+    "titleLine2": "FOR CASH",
+    "titleItalic": "instantly.",
+    "desc": "Trade in your old smartphones, MacBooks, or gaming consoles for instant cash. Best price match guaranteed with free insured shipping.",
+    "img": "/homepage_top/sell_tech_cash.png",
+    "themeColor": "from-amber-500 to-orange-600 dark:from-amber-400 dark:to-orange-400",
+    "bgGlow": "rgba(245, 158, 11, 0.15)",
+    "specs": [
+      "Instant Quote",
+      "Free Insured Shipping",
+      "Best Price Match"
+    ],
+    "badgeA": "Instant Payout",
+    "badgeB": "Best Price Match",
+    "btnText": "Get Cash Quote",
+    "btnLink": "/sell"
+  },
+  {
+    "index": "03",
+    "tabTitle": "Expert Repairs",
+    "tag": "Certified Technicians",
+    "titleLine1": "BOOK A DEVICE",
+    "titleLine2": "REPAIR",
+    "titleItalic": "today.",
+    "desc": "Professional screen, battery, and diagnostic replacements. Express turnaround times using OEM-grade parts with warranty included.",
+    "img": "/homepage_top/expert_repair.png",
+    "themeColor": "from-emerald-500 to-teal-600 dark:from-emerald-400 dark:to-teal-400",
+    "bgGlow": "rgba(16, 185, 129, 0.15)",
+    "specs": [
+      "Express Screen Fix",
+      "OEM Grade Parts",
+      "Repair Warranty"
+    ],
+    "badgeA": "OEM Grade Parts",
+    "badgeB": "Same-Day Fix",
+    "btnText": "Book Repair",
+    "btnLink": "/repair"
+  },
+  {
+    "index": "04",
+    "tabTitle": "Sustainability",
+    "tag": "Green Technology",
+    "titleLine1": "HELP US SAVE",
+    "titleLine2": "THE PLANET",
+    "titleItalic": "together.",
+    "desc": "Refurbished tech prevents harmful electronic waste and cuts carbon footprint. Every device saved counts towards a cleaner earth.",
+    "img": "/homepage_top/eco_friendly_tech.png",
+    "themeColor": "from-green-500 to-emerald-600 dark:from-green-400 dark:to-emerald-400",
+    "bgGlow": "rgba(34, 197, 94, 0.15)",
+    "specs": [
+      "Carbon Neutral Shipping",
+      "Offset E-Waste",
+      "-14kg CO2e Avg"
+    ],
+    "badgeA": "100% Carbon Offset",
+    "badgeB": "-14kg CO2e Avg",
+    "btnText": "Our Sustainability",
+    "btnLink": "/sustainability"
+  },
+  {
+    "index": "05",
+    "tabTitle": "Fast Shipping",
+    "tag": "Express Shipping",
+    "titleLine1": "FREE NEXT-DAY",
+    "titleLine2": "DELIVERY",
+    "titleItalic": "as standard.",
+    "desc": "Get your tech delivered straight to your door. Free next-day secure courier shipping on all orders. Dispatch before 2pm business days.",
+    "img": "/homepage_top/fast_delivery.png",
+    "themeColor": "from-purple-500 to-fuchsia-600 dark:from-purple-400 dark:to-fuchsia-400",
+    "bgGlow": "rgba(168, 85, 247, 0.15)",
+    "specs": [
+      "Free Secure Courier",
+      "Next-Day Delivery",
+      "Dispatched by 2pm"
+    ],
+    "badgeA": "Free Next-Day",
+    "badgeB": "Secure Dispatch",
+    "btnText": "Shop All Tech",
+    "btnLink": "/shop"
+  },
+  {
+    "index": "06",
+    "tabTitle": "Expert Support",
+    "tag": "Here to Help",
+    "titleLine1": "PREMIUM CUSTOMER",
+    "titleLine2": "SUPPORT",
+    "titleItalic": "for life.",
+    "desc": "Direct access to our dedicated customer support desk via live chat, email, or store visits. Your satisfaction is fully guaranteed.",
+    "img": "/homepage_top/expert_support.png",
+    "themeColor": "from-teal-500 to-cyan-600 dark:from-teal-400 dark:to-cyan-400",
+    "bgGlow": "rgba(20, 184, 166, 0.15)",
+    "specs": [
+      "Direct Support Desk",
+      "12-Month Coverage",
+      "In-Store & Online"
+    ],
+    "badgeA": "Direct Call/Chat",
+    "badgeB": "12-Month Covered",
+    "btnText": "Help Center",
+    "btnLink": "/help"
+  }
+]
