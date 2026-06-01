@@ -11,8 +11,9 @@ export const metadata: Metadata = {
   title: "TechStop Admin",
   description: "TechStop admin panel — manage products, trade-ins, repairs, and orders.",
   icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon.ico",
+    icon: "/Icon/icon.png",
+    shortcut: "/Icon/icon.png",
+    apple: "/Icon/icon.png",
   },
 };
 
