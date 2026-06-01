@@ -10,6 +10,10 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 export const metadata: Metadata = {
   title: "TechStop Admin",
   description: "TechStop admin panel — manage products, trade-ins, repairs, and orders.",
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
