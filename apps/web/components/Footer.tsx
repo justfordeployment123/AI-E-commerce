@@ -61,7 +61,7 @@ export default function Footer() {
             <div>
               <h4 className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em] mb-8">Company</h4>
               <ul className="space-y-4 text-sm font-bold uppercase tracking-widest text-[10px]">
-                <li><a href="/sell" className="hover:text-accent transition-colors">Sell Your Tech</a></li>
+                <li><a href="/trade-in" className="hover:text-accent transition-colors">Sell Your Tech</a></li>
                 <li><a href="/help" className="hover:text-accent transition-colors">Help Center</a></li>
                 <li><a href="/how-it-works" className="hover:text-accent transition-colors">Our Process</a></li>
                 <li><a href="/sustainability" className="hover:text-accent transition-colors">Environment</a></li>
@@ -76,7 +76,7 @@ export default function Footer() {
                      <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
                    ))}
                 </div>
-                <p className="text-xl font-serif font-medium mb-2 text-foreground">Excellent</p>
+                <p className="text-xl font-sans font-extrabold mb-2 text-foreground">Excellent</p>
                 <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">Based on 12,400 reviews</p>
              </div>
           </div>

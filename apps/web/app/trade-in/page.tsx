@@ -283,7 +283,7 @@ function AnimatedPrice({ value }: { value: number }) {
 function StepHeader({ label, sub }: { label: string; sub?: string }) {
   return (
     <div className="space-y-1">
-      <h2 className="font-serif text-2xl md:text-3xl font-bold tracking-tight text-zinc-950">{label}</h2>
+      <h2 className="font-sans text-2xl md:text-3xl font-extrabold tracking-tight text-zinc-950">{label}</h2>
       {sub && <p className="text-xs font-semibold text-zinc-400">{sub}</p>}
     </div>
   );
@@ -465,9 +465,7 @@ export default function TradeInPage() {
   // Model search query inside Phase 1 wizard
   const [wizardModelSearch, setWizardModelSearch] = useState("");
 
-  // Sustainability impact calculator states
-  const [calcCategory, setCalcCategory] = useState("Phone");
-  const [calcQuantity, setCalcQuantity] = useState(1);
+
 
   const scrollToTop = () => {
     if (modalScrollRef.current) {
@@ -639,14 +637,7 @@ export default function TradeInPage() {
     ? []
     : ALL_MODELS.filter(m => m.name.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 5);
 
-  const CALC_STATS: Record<string, { co2: number; raw: number; water: number; name: string }> = {
-    Phone: { co2: 70, raw: 85, water: 120, name: "Smartphones" },
-    Tablet: { co2: 140, raw: 180, water: 250, name: "Tablets / iPads" },
-    Console: { co2: 180, raw: 220, water: 350, name: "Gaming Consoles" },
-    Laptop: { co2: 240, raw: 450, water: 600, name: "Laptops & MacBooks" },
-    Smartwatch: { co2: 45, raw: 50, water: 80, name: "Smartwatches" },
-    Audio: { co2: 30, raw: 30, water: 50, name: "Audio & Headphones" },
-  };
+
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground font-sans relative overflow-x-hidden selection:bg-accent selection:text-white">
@@ -696,7 +687,7 @@ export default function TradeInPage() {
               <span className="text-emerald-600 font-medium">Over 25,000+ happy sellers</span>
             </div>
 
-            <h1 className="font-serif text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight text-zinc-950 dark:text-white mb-8 max-w-4xl mx-auto leading-none">
+            <h1 className="font-sans text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tight text-zinc-950 dark:text-white mb-8 max-w-4xl mx-auto leading-none">
               Sell your tech for cash. <br />
               <span className="text-transparent bg-clip-text bg-linear-to-r from-zinc-500 via-zinc-800 to-zinc-950">Fast. Fair. Easy.</span>
             </h1>
@@ -791,7 +782,7 @@ export default function TradeInPage() {
             </div>
 
             {/* Category Cards Section with Real Beautiful Product Images */}
-            <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-zinc-950 dark:text-white mb-12 text-center">
+            <h2 className="font-sans text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-zinc-950 dark:text-white mb-12 text-center">
               Select category to get started
             </h2>
 
@@ -854,7 +845,7 @@ export default function TradeInPage() {
                     <Sparkles className="h-3.5 w-3.5 fill-sky-600 text-sky-600" />
                     High Demand Valuations
                   </div>
-                  <h2 className="font-serif text-4xl md:text-5xl font-bold tracking-tight text-zinc-950 dark:text-white leading-none">
+                  <h2 className="font-sans text-4xl md:text-5xl font-extrabold tracking-tight text-zinc-950 dark:text-white leading-none">
                     Hot trade-in prices
                   </h2>
                 </div>
@@ -910,96 +901,11 @@ export default function TradeInPage() {
               </div>
             </div>
 
-            {/* Interactive Environmental Impact Calculator */}
-            <div className="max-w-5xl mx-auto mb-32 text-left">
-              <div className="bg-zinc-950 text-white rounded-[2.5rem] p-8 md:p-12 relative overflow-hidden shadow-2xl border border-white/5">
-                <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 blur-[120px] rounded-full pointer-events-none -z-10" />
-                <div className="absolute bottom-0 left-0 w-96 h-96 bg-sky-500/5 blur-[120px] rounded-full pointer-events-none -z-10" />
 
-                <div className="grid md:grid-cols-5 gap-8 items-center">
-                  <div className="md:col-span-2 space-y-6">
-                    <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/25 px-3 py-1 text-[10px] font-black uppercase tracking-widest">
-                      <RefreshCw className="h-3.5 w-3.5 animate-spin-slow" />
-                      Green Impact Calculator
-                    </div>
-                    <h3 className="font-serif text-3xl md:text-4xl font-bold tracking-tight text-white leading-tight">
-                      Calculate your recycling impact
-                    </h3>
-                    <p className="text-zinc-400 text-xs font-semibold leading-relaxed">
-                      Every electronics device refurbished avoids intensive mining of precious raw minerals and cuts greenhouse gas emissions. See what your trade-in saves.
-                    </p>
-
-                    <div className="space-y-4 pt-4 border-t border-white/10">
-                      <div>
-                        <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-2">Device Type</label>
-                        <select
-                          value={calcCategory}
-                          onChange={(e) => setCalcCategory(e.target.value)}
-                          className="w-full h-12 bg-white/5 border border-white/10 rounded-xl px-4 text-xs font-bold text-white outline-none focus:border-accent transition-colors"
-                        >
-                          {Object.keys(CALC_STATS).map((cat) => (
-                            <option key={cat} value={cat} className="bg-zinc-900 text-white">
-                              {CALC_STATS[cat].name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div>
-                        <div className="flex justify-between items-center mb-2">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Quantity</label>
-                          <span className="text-xs font-black text-sky-400">{calcQuantity} {calcQuantity === 1 ? "device" : "devices"}</span>
-                        </div>
-                        <input
-                          type="range"
-                          min="1"
-                          max="20"
-                          value={calcQuantity}
-                          onChange={(e) => setCalcQuantity(parseInt(e.target.value))}
-                          className="w-full accent-sky-400 bg-white/10 h-1.5 rounded-lg appearance-none cursor-pointer"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="md:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-6 bg-white/5 border border-white/10 rounded-3xl p-6 sm:p-8 backdrop-blur-md">
-                    {[
-                      {
-                        label: "CO2 Emissions Saved",
-                        val: `${CALC_STATS[calcCategory].co2 * calcQuantity} kg`,
-                        desc: `Equivalent to planting ${Math.round((CALC_STATS[calcCategory].co2 * calcQuantity) / 22)} trees`,
-                        color: "text-emerald-400",
-                        glow: "shadow-emerald-500/10"
-                      },
-                      {
-                        label: "Raw Materials Conserved",
-                        val: `${CALC_STATS[calcCategory].raw * calcQuantity}g`,
-                        desc: "Precious metals and copper protected from mining",
-                        color: "text-sky-400",
-                        glow: "shadow-sky-500/10"
-                      },
-                      {
-                        label: "Pure Water Saved",
-                        val: `${CALC_STATS[calcCategory].water * calcQuantity}L`,
-                        desc: "Avoided in battery & microchip production cooling",
-                        color: "text-blue-400",
-                        glow: "shadow-blue-500/10"
-                      }
-                    ].map((stat, i) => (
-                      <div key={i} className={`flex flex-col justify-between p-5 bg-white/5 rounded-2xl border border-white/5 ${stat.glow} hover:bg-white/10 transition-all`}>
-                        <p className="text-[9px] font-black uppercase tracking-widest text-zinc-400 leading-none">{stat.label}</p>
-                        <p className={`text-3xl font-black font-mono my-4 ${stat.color}`}>{stat.val}</p>
-                        <p className="text-[10px] font-bold text-zinc-400 leading-normal">{stat.desc}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
 
             {/* "3 Easy Steps" component */}
             <div className="max-w-5xl mx-auto mb-32">
-              <h2 className="font-serif text-4xl md:text-5xl font-medium tracking-tight text-zinc-950 dark:text-white mb-14 text-center">
+              <h2 className="font-sans text-4xl md:text-5xl font-extrabold tracking-tight text-zinc-950 dark:text-white mb-14 text-center">
                 Just 3 easy steps
               </h2>
               <div className="grid md:grid-cols-3 gap-8 text-left">
@@ -1019,58 +925,7 @@ export default function TradeInPage() {
               </div>
             </div>
 
-            {/* Verified Customer Reviews Section */}
-            <div className="max-w-5xl mx-auto mb-32 text-left">
-              <h2 className="font-serif text-4xl md:text-5xl font-bold tracking-tight text-zinc-950 dark:text-white mb-12 text-center">
-                Loved by 25,000+ happy sellers
-              </h2>
-              <div className="grid md:grid-cols-3 gap-8">
-                {[
-                  {
-                    name: "Sarah Jenkins",
-                    loc: "London",
-                    rating: 5,
-                    title: "Paid within 24 hours!",
-                    review: "Traded in my cracked iPhone 14 Pro expecting a low offer, but got £430! Sent it off Monday morning, they checked it Tuesday, and cash hit my account Wednesday. Incredibly smooth."
-                  },
-                  {
-                    name: "Michael Chen",
-                    loc: "Manchester",
-                    rating: 5,
-                    title: "Better price than anywhere else",
-                    review: "Compared trade-in prices on three other major platforms and TechStop was offering £60 more for my MacBook Air. The prepaid Royal Mail drop-off was simple and safe."
-                  },
-                  {
-                    name: "David O'Connor",
-                    loc: "Leicester",
-                    rating: 5,
-                    title: "Fantastic in-store experience",
-                    review: "I decided to do the in-store drop off at Leicester center rather than shipping. Technicians tested my PS5 and had cash in my hand in less than 10 minutes. Extremely polite staff!"
-                  }
-                ].map((rev, idx) => (
-                  <div key={idx} className="flex flex-col justify-between p-8 rounded-3xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 relative hover:shadow-md transition-all shadow-sm">
-                    <div>
-                      <div className="flex gap-0.5 text-zinc-900 mb-4">
-                        {Array.from({ length: rev.rating }).map((_, i) => (
-                          <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400 border-none" />
-                        ))}
-                      </div>
-                      <h4 className="font-extrabold text-sm text-zinc-950 dark:text-white mb-2">"{rev.title}"</h4>
-                      <p className="text-zinc-500 dark:text-zinc-400 text-xs font-semibold leading-relaxed mb-6">"{rev.review}"</p>
-                    </div>
-                    <div className="flex items-center gap-3 pt-4 border-t border-zinc-200/50 dark:border-zinc-800/50">
-                      <div className="h-8 w-8 bg-zinc-200/60 dark:bg-zinc-800 rounded-full flex items-center justify-center font-black text-xs text-zinc-700 dark:text-zinc-300">
-                        {rev.name[0]}
-                      </div>
-                      <div>
-                        <p className="text-xs font-black text-zinc-950 dark:text-white">{rev.name}</p>
-                        <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider mt-0.5">{rev.loc} · Verified Seller</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+
 
             {/* Impact section */}
             <div className="max-w-5xl mx-auto mb-32 text-left">
@@ -1082,7 +937,7 @@ export default function TradeInPage() {
                   { num: "5 Billion", title: "Idle Electronics", desc: "Global statistics show 5 billion mobile devices are sitting unused in cupboards. Let's recycle yours for cash." }
                 ].map((stat, i) => (
                   <div key={i} className="space-y-3 relative">
-                    <p className="font-serif text-5xl md:text-6xl font-black text-sky-400 tracking-tighter leading-none">{stat.num}</p>
+                    <p className="font-sans text-5xl md:text-6xl font-extrabold text-sky-400 tracking-tighter leading-none">{stat.num}</p>
                     <h4 className="font-extrabold text-sm text-white">{stat.title}</h4>
                     <p className="text-zinc-400 text-xs font-semibold leading-relaxed">{stat.desc}</p>
                   </div>
@@ -1092,7 +947,7 @@ export default function TradeInPage() {
 
             {/* FAQs Accordion */}
             <div className="max-w-3xl mx-auto mb-20 text-left">
-              <h2 className="font-serif text-4xl md:text-5xl font-medium tracking-tight text-center text-zinc-950 dark:text-white mb-14">
+              <h2 className="font-sans text-4xl md:text-5xl font-extrabold tracking-tight text-center text-zinc-950 dark:text-white mb-14">
                 Frequently asked questions
               </h2>
               <div className="space-y-4">
@@ -2113,7 +1968,7 @@ export default function TradeInPage() {
                           </motion.div>
 
                           <div className="space-y-2">
-                            <h2 className="font-serif text-3xl font-bold tracking-tight text-zinc-950">Valuation Confirmed!</h2>
+                            <h2 className="font-sans text-3xl font-extrabold tracking-tight text-zinc-950">Valuation Confirmed!</h2>
                             <p className="text-xs font-semibold text-zinc-400 uppercase tracking-widest">
                               Reference ID: <strong className="text-zinc-800 font-mono font-black">{submitRef}</strong>
                             </p>

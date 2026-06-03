@@ -378,7 +378,7 @@ export default function HelpPage() {
         <section className="bg-zinc-50 dark:bg-zinc-950/50 py-20 border-b border-zinc-200/80 dark:border-zinc-800/80">
           <div className="mx-auto max-w-4xl px-4 text-center">
             
-            <h1 className="font-serif text-4xl md:text-5xl font-bold tracking-tight text-zinc-900 dark:text-white mb-6">
+            <h1 className="font-sans text-4xl md:text-5xl font-extrabold tracking-tight text-zinc-900 dark:text-white mb-6">
               How can we help?
             </h1>
             
@@ -499,7 +499,7 @@ export default function HelpPage() {
 
         {/* Minimalist Categories Grid (No Colored Cards) */}
         <section ref={categoriesRef} className="py-28 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <h2 className="font-serif text-3xl md:text-4xl font-bold tracking-tight text-center text-zinc-900 dark:text-white mb-14">
+          <h2 className="font-sans text-3xl md:text-4xl font-extrabold tracking-tight text-center text-zinc-900 dark:text-white mb-14">
             Browse all topics
           </h2>
           
@@ -544,7 +544,7 @@ export default function HelpPage() {
         {/* Popular Answers Accordion */}
         <section className="py-28 bg-zinc-50 dark:bg-zinc-950/50 border-y border-zinc-200/80 dark:border-zinc-800/80">
           <div className="mx-auto max-w-4xl px-4">
-            <h2 className="font-serif text-3xl md:text-4xl font-bold mb-12 text-center text-zinc-900 dark:text-white">
+            <h2 className="font-sans text-3xl md:text-4xl font-extrabold tracking-tight mb-12 text-center text-zinc-900 dark:text-white">
               Popular Questions
             </h2>
             <div className="space-y-4">
@@ -596,7 +596,7 @@ export default function HelpPage() {
         {/* Support Call-to-Action Section */}
         <section className="py-28 bg-background">
           <div className="mx-auto max-w-4xl px-4 text-center">
-            <h2 className="font-serif text-3xl md:text-4xl font-bold text-zinc-950 dark:text-white mb-4">Still need help?</h2>
+            <h2 className="font-sans text-3xl md:text-4xl font-extrabold tracking-tight text-zinc-950 dark:text-white mb-4">Still need help?</h2>
             <p className="text-zinc-500 dark:text-zinc-400 text-xs font-semibold leading-relaxed mb-10 max-w-md mx-auto">
               Reach out to our team in Leicester for fast live help.
             </p>
@@ -789,7 +789,7 @@ export default function HelpPage() {
                 {/* 1. Article View */}
                 {drawerType === "article" && selectedArticle && (
                   <div className="prose prose-zinc max-w-none">
-                    <h2 className="font-serif text-3xl font-bold tracking-tight text-zinc-950 dark:text-white mb-6">
+                    <h2 className="font-sans text-3xl font-extrabold tracking-tight text-zinc-950 dark:text-white mb-6">
                       {selectedArticle.title}
                     </h2>
                     <div className="text-zinc-650 dark:text-zinc-300 text-xs md:text-sm font-semibold leading-relaxed space-y-4 whitespace-pre-line border-t border-zinc-100 dark:border-zinc-800 pt-6">

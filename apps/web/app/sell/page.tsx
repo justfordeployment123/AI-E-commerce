@@ -42,10 +42,10 @@ export default function SellPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 }}
-                  className="font-serif text-5xl md:text-8xl font-medium mb-8 leading-[0.9] tracking-tighter"
+                  className="font-sans text-5xl md:text-8xl font-extrabold mb-8 leading-[0.9] tracking-tighter"
                 >
                   Old tech? <br/>
-                  <span className="italic">New money.</span>
+                  <span>New money.</span>
                 </motion.h1>
                 <motion.p 
                   initial={{ opacity: 0, y: 20 }}
@@ -88,7 +88,7 @@ export default function SellPage() {
                        <div className="h-24 w-24 bg-accent text-white rounded-3xl flex items-center justify-center mb-8 rotate-12 shadow-lg shadow-accent/20">
                          <DollarSign className="h-12 w-12" />
                        </div>
-                       <h4 className="text-2xl font-serif font-medium mb-4 text-foreground">Paid to sellers</h4>
+                       <h4 className="text-2xl font-sans font-extrabold mb-4 text-foreground">Paid to sellers</h4>
                        <p className="text-5xl font-bold tracking-tighter text-foreground">£1.2M+</p>
                        <p className="mt-4 text-xs font-bold uppercase tracking-widest text-zinc-400">This month alone</p>
                     </div>
@@ -102,7 +102,7 @@ export default function SellPage() {
         <section className="py-32 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-end justify-between mb-24 gap-8">
             <div className="max-w-xl">
-              <h2 className="font-serif text-5xl md:text-7xl font-medium leading-tight">Three steps. <br/>That's it.</h2>
+              <h2 className="font-sans text-5xl md:text-7xl font-extrabold leading-tight">Three steps. <br/>That's it.</h2>
             </div>
             <p className="text-xl text-zinc-400 font-medium">No hidden fees. No stress.</p>
           </div>
@@ -141,8 +141,8 @@ export default function SellPage() {
                      <item.icon className="h-8 w-8 text-zinc-950 dark:text-white" strokeWidth={1.5} />
                    </div>
                    <div>
-                     <span className="text-6xl font-serif text-black/10 dark:text-white/10 block mb-4">0{index + 1}</span>
-                     <h3 className="text-3xl font-serif font-medium mb-4">{item.title}</h3>
+                     <span className="text-6xl font-sans font-black text-black/10 dark:text-white/10 block mb-4">0{index + 1}</span>
+                     <h3 className="text-3xl font-sans font-extrabold mb-4">{item.title}</h3>
                      <p className="text-zinc-700 dark:text-zinc-300 leading-relaxed font-semibold">{item.text}</p>
                    </div>
                 </div>
@@ -156,7 +156,7 @@ export default function SellPage() {
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="grid lg:grid-cols-2 gap-24 items-center">
                <div>
-                  <h2 className="font-serif text-5xl md:text-7xl font-medium mb-12">Better for you. <br/><span className="text-accent">Better for Earth.</span></h2>
+                  <h2 className="font-sans text-5xl md:text-7xl font-extrabold mb-12">Better for you. <br/><span className="text-accent">Better for Earth.</span></h2>
                   <div className="space-y-8">
                      {[
                        { title: "Top Dollar Guaranteed", text: "We compare prices so you don't have to.", icon: ShieldCheck },
@@ -186,7 +186,7 @@ export default function SellPage() {
                               </div>
                               <span className="font-bold uppercase tracking-widest text-[10px] text-zinc-400 font-sans">Payment Confirmed</span>
                            </div>
-                           <p className="text-4xl font-serif font-medium mb-2 text-foreground">£429.00</p>
+                           <p className="text-4xl font-sans font-extrabold mb-2 text-foreground">£429.00</p>
                            <p className="text-sm font-medium text-zinc-500">Sent to bank account ****4242</p>
                         </div>
                      </div>
@@ -199,7 +199,7 @@ export default function SellPage() {
         {/* CTA */}
         <section className="py-32 bg-background text-center">
            <div className="mx-auto max-w-4xl px-4">
-              <h2 className="font-serif text-5xl md:text-8xl font-medium mb-12">Ready to cash in?</h2>
+              <h2 className="font-sans text-5xl md:text-8xl font-extrabold mb-12">Ready to cash in?</h2>
               <a href="/trade-in" className="inline-flex items-center h-20 px-16 bg-accent text-white rounded-[2rem] font-bold text-lg transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-accent/20">
                  Start Trade-In Now
               </a>

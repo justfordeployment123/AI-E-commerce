@@ -63,7 +63,7 @@ export default function SignupPage() {
                 className="h-7 w-auto object-contain hidden dark:block"
               />
             </a>
-            <h1 className="font-serif text-4xl md:text-5xl font-medium leading-[1.1] mb-2 text-zinc-950 dark:text-white">Start your <i>journey</i>.</h1>
+            <h1 className="font-sans text-4xl md:text-5xl font-extrabold leading-[1.1] mb-2 text-zinc-950 dark:text-white">Start your journey.</h1>
             <p className="text-zinc-500 font-medium text-sm">Join 2M+ users saving the planet with premium tech.</p>
           </div>
         </div>

@@ -97,12 +97,7 @@ interface RepairState {
 const STEP_LABELS = ["Brand & Model", "Issue", "Delivery", "Contact", "Done"];
 const TOTAL_STEPS = 5;
 
-const ESTIMATED_PRICES: Record<string, Record<string, string>> = {
-  Phone: { screen: "£69 - £149", battery: "£39 - £69", charging: "£39 - £59", camera: "£49 - £89", software: "£29 - £49", water: "£59 - £129", other: "Quote on inspection" },
-  Tablet: { screen: "£89 - £189", battery: "£49 - £79", charging: "£49 - £79", software: "£39 - £59", other: "Quote on inspection" },
-  Console: { disc: "£49 - £89", hdmi: "£69 - £99", controller: "£25 - £45", overheating: "£39 - £69", power: "£59 - £99", other: "Quote on inspection" },
-  Laptop: { screen: "£119 - £249", keyboard: "£69 - £129", battery: "£59 - £109", charging: "£49 - £99", software: "£39 - £69", overheating: "£39 - £59", other: "Quote on inspection" }
-};
+
 
 export default function RepairPage() {
   const [isWizardActive, setIsWizardActive] = useState(false);
@@ -137,9 +132,7 @@ export default function RepairPage() {
   const [submitRef, setSubmitRef] = useState("");
   const [submitError, setSubmitError] = useState("");
 
-  const [calcCategory, setCalcCategory] = useState("Phone");
-  const [calcBrand, setCalcBrand] = useState("Apple");
-  const [calcIssue, setCalcIssue] = useState("screen");
+
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   const [images, setImages] = useState<{ filePath: string; previewUrl: string }[]>([]);
@@ -281,22 +274,7 @@ export default function RepairPage() {
 
   const progress = Math.round(((step - 1) / (TOTAL_STEPS - 1)) * 100);
 
-  function handleEstimatorBook() {
-    setState({
-      deviceType: calcCategory,
-      brand: calcBrand,
-      model: `${calcBrand} ${calcCategory} (Est. Repair)`,
-      issue: [calcIssue],
-      issueNotes: "Booked via interactive estimator.",
-      fulfillment: "",
-      contact: { name: "", email: "", phone: "", address: "", postcode: "" }
-    });
-    setStep(3);
-    setIsWizardActive(true);
-  }
 
-  const estimatorBrands = BRANDS[calcCategory] ?? [];
-  const estimatorIssues = ISSUES[calcCategory] ?? [];
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground font-sans relative overflow-x-hidden selection:bg-accent selection:text-white">
@@ -325,7 +303,7 @@ export default function RepairPage() {
               <span className="text-emerald-600 font-medium">Over 10,000+ repairs completed</span>
             </div>
 
-            <h1 className="font-serif text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight text-zinc-950 mb-8 max-w-4xl mx-auto leading-none">
+            <h1 className="font-sans text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tight text-zinc-950 mb-8 max-w-4xl mx-auto leading-none">
               Professional device repairs. <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-zinc-500 via-zinc-800 to-zinc-950">Done fast &amp; right.</span>
             </h1>
@@ -371,7 +349,7 @@ export default function RepairPage() {
 
             {/* Device Type Cards — outside modal, on landing page */}
             <div id="device-types" className="max-w-5xl mx-auto mb-28 text-left">
-              <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-zinc-950 mb-12 text-center">
+              <h2 className="font-sans text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight text-zinc-950 mb-12 text-center">
                 Select your device type
               </h2>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
@@ -437,70 +415,11 @@ export default function RepairPage() {
               ))}
             </div>
 
-            {/* Interactive Cost Estimator */}
-            <div className="max-w-5xl mx-auto mb-32 text-left">
-              <div className="bg-zinc-950 text-white rounded-[2.5rem] p-8 md:p-12 relative overflow-hidden shadow-2xl border border-white/5">
-                <div className="absolute top-0 right-0 w-96 h-96 bg-violet-500/10 blur-[120px] rounded-full pointer-events-none -z-10" />
-                <div className="absolute bottom-0 left-0 w-96 h-96 bg-accent/5 blur-[120px] rounded-full pointer-events-none -z-10" />
-                <div className="grid md:grid-cols-5 gap-8 items-center">
-                  <div className="md:col-span-2 space-y-6">
-                    <div className="inline-flex items-center gap-1.5 rounded-full bg-violet-500/20 text-violet-400 border border-violet-500/25 px-3 py-1 text-[10px] font-black uppercase tracking-widest">
-                      <Sparkles className="h-3.5 w-3.5" />
-                      Live Repair Cost Estimator
-                    </div>
-                    <h3 className="font-serif text-3xl md:text-4xl font-bold tracking-tight text-white leading-tight">
-                      Check your repair price range
-                    </h3>
-                    <p className="text-zinc-400 text-xs font-semibold leading-relaxed">
-                      Select your device specifics and view standard starting ranges immediately. Zero obligations, transparent flat rates.
-                    </p>
-                    <div className="space-y-4 pt-4 border-t border-white/10">
-                      <div>
-                        <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-2">Device Type</label>
-                        <select value={calcCategory} onChange={(e) => { const c = e.target.value; setCalcCategory(c); setCalcBrand(BRANDS[c]?.[0] ?? ""); setCalcIssue(ISSUES[c]?.[0]?.id ?? ""); }} className="w-full h-12 bg-white/5 border border-white/10 rounded-xl px-4 text-xs font-bold text-white outline-none focus:border-accent transition-colors">
-                          {Object.keys(ISSUES).map(c => <option key={c} value={c} className="bg-zinc-900 text-white">{c === "Laptop" ? "Laptop / MacBook" : c}</option>)}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-2">Brand</label>
-                        <select value={calcBrand} onChange={(e) => setCalcBrand(e.target.value)} className="w-full h-12 bg-white/5 border border-white/10 rounded-xl px-4 text-xs font-bold text-white outline-none focus:border-accent transition-colors">
-                          {estimatorBrands.map(b => <option key={b} value={b} className="bg-zinc-900 text-white">{b}</option>)}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-2">Issue / Fault</label>
-                        <select value={calcIssue} onChange={(e) => setCalcIssue(e.target.value)} className="w-full h-12 bg-white/5 border border-white/10 rounded-xl px-4 text-xs font-bold text-white outline-none focus:border-accent transition-colors">
-                          {estimatorIssues.map(issue => <option key={issue.id} value={issue.id} className="bg-zinc-900 text-white">{issue.label}</option>)}
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="md:col-span-3 flex flex-col justify-between h-full bg-white/5 border border-white/10 rounded-3xl p-8 backdrop-blur-md min-h-[300px]">
-                    <div>
-                      <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Estimated Payout Range</span>
-                      <p className="text-sm font-bold text-zinc-300 mt-2">
-                        {calcBrand} {calcCategory} · {estimatorIssues.find(i => i.id === calcIssue)?.label}
-                      </p>
-                    </div>
-                    <div className="my-8">
-                      <p className="text-5xl font-black text-accent font-mono tracking-tight">
-                        {ESTIMATED_PRICES[calcCategory]?.[calcIssue] ?? "Quote on inspection"}
-                      </p>
-                      <p className="text-[10px] text-zinc-400 mt-2 font-semibold">
-                        * Diagnostics run on receipt. Quote fixed and sent for your confirmation before work.
-                      </p>
-                    </div>
-                    <button onClick={() => guardedOpen(handleEstimatorBook)} className="w-full h-14 bg-white hover:bg-accent text-zinc-950 hover:text-white font-black text-xs uppercase tracking-wider rounded-xl transition-colors flex items-center justify-center gap-2">
-                      Book this repair <ArrowRight className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
+
 
             {/* How it works */}
             <div className="max-w-5xl mx-auto mb-32">
-              <h2 className="font-serif text-4xl md:text-5xl font-medium tracking-tight text-zinc-950 mb-14 text-center">
+              <h2 className="font-sans text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight text-zinc-950 mb-14 text-center">
                 How our repair service works
               </h2>
               <div className="grid md:grid-cols-4 gap-8 text-left">
@@ -519,40 +438,11 @@ export default function RepairPage() {
               </div>
             </div>
 
-            {/* Reviews */}
-            <div className="max-w-5xl mx-auto mb-32 text-left">
-              <h2 className="font-serif text-4xl md:text-5xl font-bold tracking-tight text-zinc-950 mb-12 text-center">
-                Loved by 10,000+ happy clients
-              </h2>
-              <div className="grid md:grid-cols-3 gap-8">
-                {[
-                  { name: "Sarah K.", loc: "Leicester", rating: 5, title: "Fixed iPad screen in 40 mins!", review: "I walked in with a cracked screen. Techs were polite, verified the parts, and replaced the assembly inside 40 minutes. Truly express repair work!" },
-                  { name: "James M.", loc: "Nottingham", rating: 5, title: "Simple postal service", review: "Prepaid postal label arrived instantly. Dispatched my HDMI broken PS5 on Monday and it was safely returned fully functional on Thursday morning. Incredible." },
-                  { name: "Elena R.", loc: "Loughborough", rating: 5, title: "Honest diagnostics", review: "My MacBook would not charge. Fearing a motherboard issue, they inspected it and found a simple port connection fault. Charged me just £49. Very honest company." }
-                ].map((rev, idx) => (
-                  <div key={idx} className="flex flex-col justify-between p-8 rounded-3xl bg-zinc-50 border border-zinc-150/40 relative hover:shadow-md transition-all shadow-sm">
-                    <div>
-                      <div className="flex gap-0.5 mb-4">
-                        {[...Array(rev.rating)].map((_, i) => <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />)}
-                      </div>
-                      <h4 className="font-extrabold text-sm text-zinc-950 mb-2">&ldquo;{rev.title}&rdquo;</h4>
-                      <p className="text-zinc-500 text-xs font-semibold leading-relaxed mb-6">&ldquo;{rev.review}&rdquo;</p>
-                    </div>
-                    <div className="flex items-center gap-3 pt-4 border-t border-zinc-200/50">
-                      <div className="h-8 w-8 bg-zinc-200/60 rounded-full flex items-center justify-center font-black text-xs text-zinc-700">{rev.name[0]}</div>
-                      <div>
-                        <p className="text-xs font-black text-zinc-950">{rev.name}</p>
-                        <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider mt-0.5">{rev.loc} · Verified Repair</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+
 
             {/* FAQs */}
             <div className="max-w-3xl mx-auto mb-20 text-left">
-              <h2 className="font-serif text-4xl md:text-5xl font-medium tracking-tight text-center text-zinc-950 mb-14">
+              <h2 className="font-sans text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight text-center text-zinc-950 mb-14">
                 Repair Frequently Asked Questions
               </h2>
               <div className="space-y-4">
@@ -681,7 +571,7 @@ export default function RepairPage() {
                             <div className="flex-1 flex flex-col justify-between">
                               <div className="space-y-6">
                                 <div>
-                                  <h2 className="font-serif text-3xl md:text-4xl font-medium mb-2">Brand &amp; model</h2>
+                                  <h2 className="font-sans text-3xl md:text-4xl font-extrabold tracking-tight mb-2">Brand &amp; model</h2>
                                   <p className="text-zinc-400 font-medium text-sm">Tell us exactly what device you have.</p>
                                 </div>
                                 <div className="space-y-3">
@@ -726,7 +616,7 @@ export default function RepairPage() {
                             <div className="flex-1 flex flex-col justify-between">
                               <div className="space-y-6">
                                 <div>
-                                  <h2 className="font-serif text-3xl md:text-4xl font-medium mb-2">What&apos;s the problem?</h2>
+                                  <h2 className="font-sans text-3xl md:text-4xl font-extrabold tracking-tight mb-2">What&apos;s the problem?</h2>
                                   <p className="text-zinc-400 font-medium text-sm">Select the closest description — don&apos;t worry if you&apos;re not sure.</p>
                                 </div>
                                 <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Select all that apply</p>
@@ -843,7 +733,7 @@ export default function RepairPage() {
                           {/* STEP 3 – Fulfillment */}
                           {step === 3 && (
                             <div className="flex-1">
-                              <h2 className="font-serif text-3xl md:text-4xl font-medium mb-2">How will you get it to us?</h2>
+                              <h2 className="font-sans text-3xl md:text-4xl font-extrabold tracking-tight mb-2">How will you get it to us?</h2>
                               <p className="text-zinc-400 font-medium text-sm mb-8">Choose the most convenient option.</p>
                               <div className="space-y-4">
                                 {[
@@ -919,7 +809,7 @@ export default function RepairPage() {
                             >
                               <div className="space-y-4">
                                 <div>
-                                  <h2 className="font-serif text-3xl md:text-4xl font-medium mb-2">Your contact details</h2>
+                                  <h2 className="font-sans text-3xl md:text-4xl font-extrabold tracking-tight mb-2">Your contact details</h2>
                                   <p className="text-zinc-400 font-medium text-sm">Our technician will reach out to confirm the booking and pricing.</p>
                                 </div>
 
@@ -1009,7 +899,7 @@ export default function RepairPage() {
                               >
                                 <Wrench className="h-12 w-12 text-black" strokeWidth={1.5} />
                               </motion.div>
-                              <h2 className="font-serif text-3xl md:text-4xl font-medium mb-4">Booking received!</h2>
+                              <h2 className="font-sans text-3xl md:text-4xl font-extrabold tracking-tight mb-4">Booking received!</h2>
                               <p className="text-zinc-400 font-medium text-base mb-8 max-w-sm mx-auto leading-relaxed">
                                 Your repair request for <strong className="text-black">{state.brand} {state.model}</strong> is logged. Expect a call or email within <strong className="text-black">2 hours</strong>.
                               </p>

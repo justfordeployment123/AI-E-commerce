@@ -41,10 +41,10 @@ export default function HowItWorksPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 }}
-                  className="font-serif text-5xl md:text-8xl font-medium mb-8 leading-[0.9] tracking-tighter"
+                  className="font-sans text-5xl md:text-8xl font-extrabold mb-8 leading-[0.9] tracking-tighter"
                 >
                   Tech done <br/>
-                  <span className="italic">the right way.</span>
+                  <span>the right way.</span>
                 </motion.h1>
                 <motion.p 
                   initial={{ opacity: 0, y: 20 }}
@@ -78,7 +78,7 @@ export default function HowItWorksPage() {
                     <div className="h-20 w-20 rounded-3xl bg-mood-sky dark:bg-sky-950/40 flex items-center justify-center mx-auto mb-8 -rotate-12">
                        <Zap className="h-10 w-10 text-black dark:text-white" />
                     </div>
-                    <h3 className="text-3xl font-serif font-medium mb-2 text-zinc-950 dark:text-white">25 checkpoints</h3>
+                    <h3 className="text-3xl font-sans font-extrabold mb-2 text-zinc-950 dark:text-white">25 checkpoints</h3>
                     <p className="text-sm font-bold uppercase tracking-widest text-zinc-450">Every device, every time.</p>
                  </div>
               </motion.div>
@@ -122,8 +122,8 @@ export default function HowItWorksPage() {
                      <item.icon className="h-8 w-8 text-black dark:text-white" strokeWidth={1.5} />
                    </div>
                    <div>
-                     <span className="text-6xl font-serif text-black/10 dark:text-white/10 block mb-4">0{index + 1}</span>
-                     <h3 className="text-3xl font-serif font-medium mb-4 text-zinc-950 dark:text-white">{item.title}</h3>
+                     <span className="text-6xl font-sans font-black text-black/10 dark:text-white/10 block mb-4">0{index + 1}</span>
+                     <h3 className="text-3xl font-sans font-extrabold mb-4 text-zinc-950 dark:text-white">{item.title}</h3>
                      <p className="text-black/60 dark:text-zinc-400 leading-relaxed font-medium">{item.text}</p>
                    </div>
                 </div>
@@ -137,7 +137,7 @@ export default function HowItWorksPage() {
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col md:flex-row items-end justify-between mb-24 gap-8">
               <div className="max-w-2xl">
-                 <h2 className="font-serif text-5xl md:text-8xl font-medium leading-[0.9] tracking-tighter mb-8">What's in <br/><span className="text-accent">the grade?</span></h2>
+                 <h2 className="font-sans text-5xl md:text-8xl font-extrabold leading-[0.9] tracking-tighter mb-8">What's in <br/><span className="text-accent">the grade?</span></h2>
                  <p className="text-xl text-zinc-500 font-medium leading-relaxed">Regardless of grade, every device is 100% functional, data-wiped, and comes with a 12-month warranty.</p>
               </div>
             </div>
@@ -153,7 +153,7 @@ export default function HowItWorksPage() {
                        {item.grade[0]}
                     </div>
                     <div>
-                       <h3 className="text-3xl font-serif font-medium mb-2">{item.grade}</h3>
+                       <h3 className="text-3xl font-sans font-extrabold mb-2">{item.grade}</h3>
                        <p className="text-accent font-bold uppercase tracking-widest text-[10px] mb-4">{item.desc}</p>
                        <p className="text-zinc-500 font-medium leading-relaxed">{item.details}</p>
                     </div>
@@ -170,7 +170,7 @@ export default function HowItWorksPage() {
               <div className="h-20 w-20 rounded-[2.5rem] bg-white dark:bg-zinc-900 flex items-center justify-center mx-auto mb-10 rotate-12 shadow-xl border border-transparent dark:border-zinc-800">
                  <Leaf className="h-10 w-10 text-emerald-600 dark:text-emerald-450" />
               </div>
-              <h2 className="font-serif text-5xl md:text-8xl font-medium mb-12 tracking-tighter leading-[0.9]">Save cash. <br/>Save the Earth.</h2>
+              <h2 className="font-sans text-5xl md:text-8xl font-extrabold mb-12 tracking-tighter leading-[0.9]">Save cash. <br/>Save the Earth.</h2>
               <a href="/shop/phones" className="h-20 px-12 bg-black dark:bg-accent text-white rounded-[2rem] font-bold text-lg transition-transform hover:scale-105 active:scale-95 shadow-2xl hover:bg-zinc-850 dark:hover:bg-accent-dark inline-flex items-center justify-center">
                  Shop with Impact
               </a>

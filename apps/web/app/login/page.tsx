@@ -70,7 +70,7 @@ function LoginForm() {
                 className="h-7 w-auto object-contain hidden dark:block"
               />
             </a>
-            <h1 className="font-serif text-4xl md:text-5xl font-medium leading-[1.1] mb-2 text-zinc-950 dark:text-white">Welcome <i>back</i>.</h1>
+            <h1 className="font-sans text-4xl md:text-5xl font-extrabold tracking-tight leading-[1.1] mb-2 text-zinc-950 dark:text-white">Welcome back.</h1>
             <p className="text-zinc-500 font-medium text-sm">Log in to track your tech and manage your sell-ins.</p>
           </div>
         </div>

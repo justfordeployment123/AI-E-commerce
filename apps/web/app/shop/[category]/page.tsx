@@ -810,7 +810,7 @@ export default function CategoryPage() {
                            <div className="absolute top-0 right-0 w-64 h-64 bg-accent/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
                            <h3 className="font-bold text-2xl mb-3 relative z-10">Got an old device?</h3>
                            <p className="text-zinc-400 font-medium mb-8 relative z-10">Trade it in and get extra cash towards your new refurbished tech.</p>
-                           <Link href="/sell" className="h-12 px-6 rounded-full bg-accent text-white font-bold flex items-center gap-2 hover:scale-105 transition-transform relative z-10">
+                           <Link href="/trade-in" className="h-12 px-6 rounded-full bg-accent text-white font-bold flex items-center gap-2 hover:scale-105 transition-transform relative z-10">
                              Get an offer <ArrowRight className="h-4 w-4" />
                            </Link>
                         </div>
@@ -1058,7 +1058,7 @@ export default function CategoryPage() {
                   Get a trade-in offer instantly online or drop by our Leicester store to cash out your pre-loved phone or laptop.
                 </p>
               </div>
-              <Link href="/sell" className="h-12 px-6 rounded-full bg-black text-white font-bold flex items-center gap-2 hover:scale-105 transition-transform relative z-10 text-sm">
+              <Link href="/trade-in" className="h-12 px-6 rounded-full bg-black text-white font-bold flex items-center gap-2 hover:scale-105 transition-transform relative z-10 text-sm">
                 Get an offer <ArrowRight className="h-4 w-4" />
               </Link>
             </div>

@@ -436,7 +436,7 @@ function Hero() {
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.55, delay: 0.05 }}
-              className="font-serif text-[clamp(3rem,7vw,5.5rem)] font-medium leading-[0.92] tracking-tight text-zinc-950 mb-8"
+              className="font-sans text-[clamp(3rem,7vw,5.5rem)] font-extrabold leading-[0.92] tracking-tight text-zinc-950 mb-8"
             >
               Tech worth<br />
               having.<br />
@@ -448,7 +448,7 @@ function Hero() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -12 }}
                     transition={{ duration: 0.3 }}
-                    className="italic text-zinc-400"
+                    className="text-zinc-400"
                   >
                     {grades[gradeIdx]}.
                   </motion.span>
@@ -774,9 +774,9 @@ function CategoryBento() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex items-end justify-between mb-8">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-2">Browse by tech</p>
-            <h2 className="font-serif text-5xl md:text-6xl font-medium text-zinc-950 leading-none">
-              Pick your <i>category.</i>
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-2.5">Browse by tech</p>
+            <h2 className="font-sans text-3xl md:text-4xl lg:text-5xl font-extrabold text-zinc-950 tracking-tight leading-none">
+              Pick your category
             </h2>
           </div>
           <a href={`/shop/${firstSlug}`} className="hidden md:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-zinc-950 transition-colors border-b border-zinc-300 pb-1">
@@ -853,9 +853,9 @@ function TrustPillars() {
     <section className="bg-zinc-950 py-12 md:py-16 overflow-hidden">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-8 md:mb-10 max-w-xl">
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-500 mb-1.5">Our promise</p>
-          <h2 className="font-serif text-3xl md:text-4xl font-medium text-white leading-tight">
-            Built on trust,<br /><i>backed by proof.</i>
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-2.5">Our promise</p>
+          <h2 className="font-sans text-3xl md:text-4xl lg:text-5xl font-extrabold text-white leading-tight tracking-tight">
+            Built on trust, backed by proof
           </h2>
         </div>
 
@@ -906,10 +906,12 @@ function TrendingDeals() {
     <section ref={sectionRef} className="py-24 overflow-hidden min-h-[200px]">
       {featured && (
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex items-end justify-between mb-12">
+          <div className="flex items-end justify-between mb-8">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-3">Hot right now</p>
-              <h2 className="font-serif text-5xl md:text-6xl font-medium text-zinc-950 leading-none">Trending deals</h2>
+              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-2.5">Hot right now</p>
+              <h2 className="font-sans text-3xl md:text-4xl lg:text-5xl font-extrabold text-zinc-950 tracking-tight leading-none">
+                Trending deals
+              </h2>
             </div>
             <a href="/shop/phones" className="hidden md:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-zinc-950 transition-colors border-b border-zinc-300 pb-1">
               See all <ArrowRight className="h-3.5 w-3.5" />
@@ -947,7 +949,7 @@ function TrendingDeals() {
 
                 <div className="absolute bottom-0 left-0 right-0 p-8">
                   <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/50 mb-2">{featured.brand}</p>
-                  <h3 className="font-serif text-3xl font-medium text-white mb-1 leading-tight">{featured.name}</h3>
+                  <h3 className="font-sans text-2xl md:text-3xl font-extrabold text-white mb-1 leading-tight tracking-tight">{featured.name}</h3>
                   <p className="text-sm text-white/60 font-medium mb-5">{String((featured.specs as any)?.storage ?? featured.model ?? "—")}</p>
                   <div className="flex items-baseline gap-3">
                     <span className="text-3xl font-bold text-white tracking-tighter">£{featured.price}</span>
@@ -1022,9 +1024,9 @@ function HowItWorks() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-4">The process</p>
-            <h2 className="font-serif text-5xl md:text-6xl font-medium text-zinc-950 leading-tight mb-6">
-              Simple as it<br /><i>should be.</i>
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-2.5">The process</p>
+            <h2 className="font-sans text-3xl md:text-4xl lg:text-5xl font-extrabold text-zinc-950 leading-tight tracking-tight mb-6">
+              Simple as it should be
             </h2>
             <p className="text-zinc-500 text-lg leading-relaxed max-w-[45ch]">
               We handle all the hard work so you don't have to. From quality checks to doorstep delivery — it's effortless.
@@ -1081,15 +1083,15 @@ function Reviews() {
   const displayCount = reviews.length;
 
   return (
-    <section ref={sectionRef} className="py-24 bg-zinc-50 border-y border-zinc-100 overflow-hidden min-h-[200px]">
+    <section ref={sectionRef} className={reviews.length > 0 ? "py-24 bg-zinc-50 border-y border-zinc-100 overflow-hidden min-h-[200px]" : ""}>
       {reviews.length > 0 && (
         <>
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-12">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-3">Social proof</p>
-                <h2 className="font-serif text-5xl md:text-6xl font-medium text-zinc-950 leading-none">
-                  Real buyers,<br />real reviews.
+                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-2.5">Social proof</p>
+                <h2 className="font-sans text-3xl md:text-4xl lg:text-5xl font-extrabold text-zinc-950 leading-none tracking-tight">
+                  Real buyers, real reviews
                 </h2>
               </div>
               <div className="flex items-center gap-6 bg-white rounded-3xl px-7 py-5 border border-zinc-100 shadow-sm self-start md:self-auto">
@@ -1156,59 +1158,7 @@ function Reviews() {
   );
 }
 
-// ─── Sustainability Impact ────────────────────────────────────────────────────
-function SustainabilityBanner() {
-  const stats = [
-    { val: "2.4M", label: "Devices diverted from landfill", icon: Recycle },
-    { val: "89K", label: "Tonnes of CO2 saved", icon: Leaf },
-    { val: "£47M", label: "Saved collectively by buyers", icon: TrendingUp },
-  ];
 
-  return (
-    <section className="relative overflow-hidden bg-zinc-950 text-white py-24 border-y border-zinc-900">
-      <div className="absolute inset-0 opacity-[0.03]"
-        style={{ backgroundImage: "radial-gradient(circle, #fff 1px, transparent 1px)", backgroundSize: "28px 28px" }}
-      />
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-accent mb-4">Our impact</p>
-            <h2 className="font-serif text-5xl md:text-6xl font-medium text-white leading-tight mb-6">
-              Good for your wallet.<br /><i>Great for the planet.</i>
-            </h2>
-            <p className="text-zinc-400 text-lg leading-relaxed max-w-[44ch] mb-8 font-semibold">
-              Every refurbished device sold is one less product in a landfill. Together, our customers have made a measurable difference.
-            </p>
-            <a href="/sustainability" className="inline-flex items-center gap-2 h-12 px-6 bg-accent hover:bg-accent-dark text-white rounded-2xl font-bold text-sm transition-colors shadow-lg shadow-accent/20">
-              See our full impact report <ArrowRight className="h-4 w-4" />
-            </a>
-          </div>
-
-          <div className="flex flex-col gap-px bg-zinc-900 rounded-3xl overflow-hidden border border-zinc-900">
-            {stats.map((s, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, x: 20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="bg-zinc-950/60 backdrop-blur-sm px-8 py-7 flex items-center gap-6"
-              >
-                <div className="h-12 w-12 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center flex-shrink-0">
-                  <s.icon className="h-6 w-6 text-accent" />
-                </div>
-                <div>
-                  <p className="text-3xl font-bold text-white tracking-tight">{s.val}</p>
-                  <p className="text-sm font-medium text-zinc-400">{s.label}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
 
 // ─── App Preview ──────────────────────────────────────────────────────────────
 function AppPreview() {
@@ -1352,9 +1302,9 @@ function AppPreview() {
 
           {/* ── Right: feature list ── */}
           <div className="order-1 lg:order-2">
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-3">The TechStop experience</p>
-            <h2 className="font-serif text-5xl md:text-6xl font-medium text-zinc-950 leading-tight tracking-tight mb-6">
-              Better in every<br /><i>single way.</i>
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-2.5">The TechStop experience</p>
+            <h2 className="font-sans text-3xl md:text-4xl lg:text-5xl font-extrabold text-zinc-950 leading-tight tracking-tight mb-6">
+              Better in every single way
             </h2>
             <p className="text-lg text-zinc-500 leading-relaxed mb-12 max-w-[44ch]">
               We rethought what buying refurbished should feel like — transparent, fast, and genuinely enjoyable from first click to delivery.
@@ -1444,9 +1394,9 @@ function ShopByBudget() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-8">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-3">Budget friendly</p>
-            <h2 className="font-serif text-5xl md:text-6xl font-medium text-zinc-950 leading-none">
-              Shop by <i>price.</i>
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-2.5">Budget friendly</p>
+            <h2 className="font-sans text-3xl md:text-4xl lg:text-5xl font-extrabold text-zinc-950 leading-none tracking-tight">
+              Shop by price
             </h2>
           </div>
           <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide py-1">
@@ -1569,9 +1519,9 @@ function BestDealsSplit() {
     <section ref={sectionRef} className="bg-zinc-50 py-5 md:py-7 overflow-hidden border-t border-zinc-100">
       <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
         <div className="mb-6">
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-2">Explore & discover</p>
-          <h2 className="font-serif text-4xl md:text-5xl font-medium text-zinc-950 leading-none">
-            You might <i>love these.</i>
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-2.5">Explore & discover</p>
+          <h2 className="font-sans text-3xl md:text-4xl lg:text-5xl font-extrabold text-zinc-950 leading-none tracking-tight">
+            You might love these
           </h2>
         </div>
 
@@ -1702,11 +1652,10 @@ function NewArrivals() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-6">
         <div className="flex items-end justify-between">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full bg-accent/20 px-3 py-1 mb-3">
-              <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
-              <span className="text-[10px] font-bold uppercase tracking-widest">Just added</span>
-            </div>
-            <h2 className="text-3xl md:text-4xl font-normal tracking-tight text-zinc-950">New arrivals</h2>
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-2.5">Just added</p>
+            <h2 className="font-sans text-3xl md:text-4xl lg:text-5xl font-extrabold text-zinc-950 leading-none tracking-tight">
+              New arrivals
+            </h2>
           </div>
           <a href="/shop/phones" className="hidden md:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-zinc-950 transition-colors border-b border-zinc-300 pb-1">
             See all <ArrowRight className="h-3.5 w-3.5" />
@@ -1881,9 +1830,9 @@ function GradeGuide() {
         {/* Section header */}
         <div className="mb-16 flex flex-col lg:flex-row lg:items-end justify-between gap-6">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-500 mb-3">How grading works</p>
-            <h2 className="font-serif text-5xl md:text-6xl font-medium text-white leading-none">
-              What does each <i>grade mean?</i>
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-550 mb-2.5">How grading works</p>
+            <h2 className="font-sans text-3xl md:text-4xl lg:text-5xl font-extrabold text-white leading-none tracking-tight">
+              What does each grade mean?
             </h2>
           </div>
           <p className="text-zinc-500 text-base max-w-[42ch] leading-relaxed">
@@ -1958,7 +1907,7 @@ function GradeGuide() {
                 <div className="absolute bottom-0 left-0 right-0 p-6">
                   <div className="flex items-end justify-between">
                     <div>
-                      <p className="font-serif text-4xl font-medium text-white leading-none">{g.name}</p>
+                      <p className="font-sans text-3xl font-extrabold text-white leading-none tracking-tight">{g.name}</p>
                       <p className="text-white/50 text-xs font-medium mt-1.5">{g.tagline}</p>
                     </div>
                     <div className="text-right">
@@ -2138,11 +2087,11 @@ function SavingsComparison() {
   return (
     <section ref={sectionRef} className="py-24 bg-white border-t border-zinc-100 min-h-[200px]">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex items-end justify-between mb-14">
+        <div className="flex items-end justify-between mb-8">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-3">Why refurbished?</p>
-            <h2 className="font-serif text-5xl md:text-6xl font-medium text-zinc-950 leading-none">
-              Refurbished vs <i>retail.</i>
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-2.5">Why refurbished?</p>
+            <h2 className="font-sans text-3xl md:text-4xl lg:text-5xl font-extrabold text-zinc-950 leading-none tracking-tight">
+              Refurbished vs retail
             </h2>
           </div>
           <div className="hidden md:flex items-center gap-10 text-sm font-bold text-zinc-400">
@@ -2305,10 +2254,13 @@ function FeaturedShop() {
 
   return (
     <section ref={sectionRef} id="shop" className="py-16 border-t border-zinc-100 bg-white overflow-hidden">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-6">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-8">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
-            <h2 className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400">Shop our most wanted</h2>
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-2.5">Trending favorites</p>
+            <h2 className="font-sans text-3xl md:text-4xl lg:text-5xl font-extrabold text-zinc-950 leading-none tracking-tight">
+              Shop our most wanted
+            </h2>
           </div>
           
           {/* Tabs */}
@@ -2458,7 +2410,12 @@ function TopBrandsSplit() {
   return (
     <section className="bg-zinc-50 py-8 md:py-12 border-t border-zinc-100 overflow-hidden">
       <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
-        <h2 className="text-3xl md:text-4xl font-normal tracking-tight text-zinc-950 mb-6">Top brands, refurbished</h2>
+        <div className="mb-8">
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-2.5">Direct to consumer</p>
+          <h2 className="font-sans text-3xl md:text-4xl lg:text-5xl font-extrabold text-zinc-950 leading-none tracking-tight">
+            Top brands, refurbished
+          </h2>
+        </div>
 
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 lg:items-start">
           {/* Left Image */}
@@ -2606,9 +2563,9 @@ function DiscoverMore() {
           <div key={i} className="mb-14 last:mb-0">
             <div className="flex items-end justify-between mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-6">
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-2">{row.eyebrow}</p>
-                <h2 className="font-serif text-3xl md:text-4xl font-medium text-zinc-950 leading-none">
-                  {row.title} <i>{row.italic}</i>
+                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-2.5">{row.eyebrow}</p>
+                <h2 className="font-sans text-3xl md:text-4xl font-extrabold text-zinc-950 leading-none tracking-tight">
+                  {row.title} {row.italic}
                 </h2>
               </div>
               <a href="/shop/phones" className="hidden sm:flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-zinc-950 transition-colors">
@@ -2740,8 +2697,11 @@ function BudgetPicks() {
     <section ref={sectionRef} className="py-20 bg-zinc-50 border-y border-zinc-100 overflow-hidden min-h-[200px]">
       {hasData && (
         <>
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-10">
-            <h2 className="text-3xl md:text-4xl font-normal tracking-tight text-zinc-950">Budget deals</h2>
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-8">
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-2.5">Pocket friendly</p>
+            <h2 className="font-sans text-3xl md:text-4xl lg:text-5xl font-extrabold text-zinc-950 leading-none tracking-tight">
+              Budget deals
+            </h2>
           </div>
           {BUDGET_ROWS.map((r, i) => (
             <PriceRow key={i} title={r.title} badge={r.badge} items={rows[i]} />
@@ -2765,16 +2725,16 @@ function SellCTA() {
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-accent/10 rounded-full blur-[100px] translate-x-1/3 -translate-y-1/3 pointer-events-none" />
         <div className="relative z-10 grid lg:grid-cols-2 gap-10 items-center">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-500 mb-4">Sell with TechStop</p>
-            <h2 className="font-serif text-5xl font-medium text-white leading-tight mb-4">
-              Your old tech is<br />worth more than <i>you think.</i>
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-2.5">Sell with TechStop</p>
+            <h2 className="font-sans text-3xl md:text-4xl lg:text-5xl font-extrabold text-white leading-tight tracking-tight mb-4">
+              Your old tech is worth more than you think
             </h2>
             <p className="text-zinc-400 text-lg leading-relaxed">
               Get an instant quote, free collection, and same-week payment. No hassle, no lowball offers.
             </p>
           </div>
           <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row gap-4 lg:justify-end">
-            <a href="/sell" className="h-14 px-8 bg-accent text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-accent-dark transition-colors">
+            <a href="/trade-in" className="h-14 px-8 bg-accent text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-accent-dark transition-colors">
               Get instant quote <ArrowRight className="h-4 w-4" />
             </a>
             <a href="/how-it-works" className="h-14 px-8 border border-zinc-700 text-white rounded-2xl font-bold text-sm flex items-center justify-center hover:border-zinc-400 transition-colors">
@@ -2796,9 +2756,9 @@ function Newsletter() {
     <section className="border-t border-zinc-100 bg-zinc-50 py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-4">Stay in the loop</p>
-          <h2 className="font-serif text-4xl md:text-5xl font-medium text-zinc-950 mb-4">
-            Deals before they<br /><i>sell out.</i>
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-2.5">Stay in the loop</p>
+          <h2 className="font-sans text-3xl md:text-4xl lg:text-5xl font-extrabold text-zinc-950 leading-tight tracking-tight mb-4">
+            Deals before they sell out
           </h2>
           <p className="text-zinc-500 mb-10">Weekly drops, exclusive discounts, and e-waste reports. No spam.</p>
           {mounted ? (
@@ -2832,7 +2792,7 @@ function AsSeenIn() {
         <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 text-center mb-10">As seen in</p>
         <div className="flex gap-10 md:gap-16 items-center justify-center flex-wrap opacity-40 grayscale">
           {logos.map((logo, i) => (
-            <span key={i} className="text-xl md:text-2xl font-serif font-bold text-zinc-950 tracking-tight">
+            <span key={i} className="text-xl md:text-2xl font-sans font-extrabold text-zinc-950 tracking-tight">
               {logo}
             </span>
           ))}
@@ -2873,7 +2833,7 @@ export default function HomePage() {
       <GradeGuide />
       <AppPreview />
       <Reviews />
-      <SustainabilityBanner />
+
       <SellCTA />
       <AsSeenIn />
       <Newsletter />

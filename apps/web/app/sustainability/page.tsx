@@ -41,10 +41,10 @@ export default function SustainabilityPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 }}
-                  className="font-serif text-5xl md:text-8xl font-medium mb-8 leading-[0.9] tracking-tighter"
+                  className="font-sans text-5xl md:text-8xl font-extrabold mb-8 leading-[0.9] tracking-tighter"
                 >
                   Tech that <br/>
-                  <span className="italic text-emerald-950 dark:text-emerald-450">loves Earth.</span>
+                  <span className="text-emerald-950 dark:text-emerald-450">loves Earth.</span>
                 </motion.h1>
                 <motion.p 
                   initial={{ opacity: 0, y: 20 }}
@@ -80,7 +80,7 @@ export default function SustainabilityPage() {
                        <div className="h-24 w-24 rounded-3xl bg-mood-emerald dark:bg-emerald-950/40 flex items-center justify-center mx-auto mb-8 rotate-12 transition-transform group-hover:scale-110 border border-transparent dark:border-emerald-800">
                           <TreeDeciduous className="h-12 w-12 text-black dark:text-white" />
                        </div>
-                       <h3 className="text-4xl font-serif font-medium mb-2 text-zinc-950 dark:text-white">12,000+</h3>
+                       <h3 className="text-4xl font-sans font-extrabold mb-2 text-zinc-950 dark:text-white">12,000+</h3>
                        <p className="text-sm font-bold uppercase tracking-widest text-zinc-450">Trees saved this year</p>
                     </div>
                  </div>
@@ -93,7 +93,7 @@ export default function SustainabilityPage() {
         <section className="py-32 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
            <div className="flex flex-col md:flex-row items-end justify-between mb-24 gap-8">
               <div className="max-w-xl">
-                 <h2 className="font-serif text-5xl md:text-7xl font-medium leading-tight">Every device <br/>counts.</h2>
+                 <h2 className="font-sans text-5xl md:text-7xl font-extrabold leading-tight">Every device <br/>counts.</h2>
               </div>
               <p className="text-xl text-zinc-400 font-medium">Why buy new? Seriously.</p>
            </div>
@@ -132,7 +132,7 @@ export default function SustainabilityPage() {
                      <item.icon className="h-8 w-8 text-black dark:text-white" strokeWidth={1.5} />
                    </div>
                    <div>
-                     <h3 className="text-3xl font-serif font-medium mb-4 text-zinc-950 dark:text-white">{item.title}</h3>
+                     <h3 className="text-3xl font-sans font-extrabold mb-4 text-zinc-950 dark:text-white">{item.title}</h3>
                      <p className="text-black/60 dark:text-zinc-400 leading-relaxed font-medium">{item.text}</p>
                    </div>
                 </div>
@@ -157,14 +157,14 @@ export default function SustainabilityPage() {
                              <div className="h-12 w-12 rounded-2xl bg-emerald-500 flex items-center justify-center text-white mb-6">
                                 <Globe className="h-6 w-6 text-white" />
                              </div>
-                             <p className="text-2xl font-serif font-medium mb-4 text-zinc-950 dark:text-zinc-100">"Buying refurbished is the most impactful thing you can do for the planet."</p>
+                             <p className="text-2xl font-sans font-extrabold mb-4 text-zinc-950 dark:text-zinc-100">"Buying refurbished is the most impactful thing you can do for the planet."</p>
                              <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">— TechStop Ethics Board</p>
                           </div>
                        </div>
                     </div>
                  </div>
                  <div>
-                    <h2 className="font-serif text-5xl md:text-7xl font-medium mb-12">The circular <br/><span className="text-accent">revolution.</span></h2>
+                    <h2 className="font-sans text-5xl md:text-7xl font-extrabold mb-12">The circular <br/><span className="text-accent">revolution.</span></h2>
                     <div className="space-y-10">
                        {[
                          { title: "No New Mining", text: "New tech requires destructive mining for rare minerals. Refurbished uses what's already here." },
@@ -188,12 +188,12 @@ export default function SustainabilityPage() {
         {/* CTA */}
         <section className="py-32 bg-background text-center">
            <div className="mx-auto max-w-4xl px-4">
-              <h2 className="font-serif text-5xl md:text-8xl font-medium mb-12 text-zinc-950 dark:text-white">Join the movement.</h2>
+              <h2 className="font-sans text-5xl md:text-8xl font-extrabold mb-12 text-zinc-950 dark:text-white">Join the movement.</h2>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <a href="/shop/phones" className="h-20 px-16 bg-black dark:bg-accent text-white rounded-[2rem] font-bold text-lg transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-accent/10 inline-flex items-center justify-center hover:bg-zinc-850 dark:hover:bg-accent-dark">
                      Browse All Tech
                   </a>
-                  <a href="/sell" className="h-20 px-16 border-2 border-zinc-150 dark:border-zinc-850 text-black dark:text-white bg-transparent rounded-[2rem] font-bold text-lg hover:bg-zinc-50 dark:hover:bg-zinc-850 transition-all inline-flex items-center justify-center">
+                  <a href="/trade-in" className="h-20 px-16 border-2 border-zinc-150 dark:border-zinc-850 text-black dark:text-white bg-transparent rounded-[2rem] font-bold text-lg hover:bg-zinc-50 dark:hover:bg-zinc-850 transition-all inline-flex items-center justify-center">
                      Sell Your Device
                   </a>
               </div>

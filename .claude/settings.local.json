@@ -103,7 +103,9 @@
       "Read(//c/Users/HP/.claude/plugins/cache/claude-plugins-official/superpowers/5.1.0/skills/brainstorming/**)",
       "Bash(scripts/start-server.sh --project-dir \"d:/CODE/Projects/Markhor Systems Projects/Ai-Ecommerce\")",
       "Read(//c/Users/HP/.claude/plugins/cache/claude-plugins-official/superpowers/5.1.0/**)",
-      "Bash(\"C:/Users/HP/.claude/plugins/cache/claude-plugins-official/superpowers/5.1.0/skills/brainstorming/scripts/start-server.sh\" --project-dir \"d:/CODE/Projects/Markhor Systems Projects/Ai-Ecommerce\")"
+      "Bash(\"C:/Users/HP/.claude/plugins/cache/claude-plugins-official/superpowers/5.1.0/skills/brainstorming/scripts/start-server.sh\" --project-dir \"d:/CODE/Projects/Markhor Systems Projects/Ai-Ecommerce\")",
+      "Bash(Sort-Object -Descending)",
+      "Bash(Select-Object -First 3)"
     ],
     "additionalDirectories": [
       "d:\\CODE\\Projects\\Markhor Systems Projects\\Ai-Ecommerce\\apps\\web\\app\\account\\repairs",

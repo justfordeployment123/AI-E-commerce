@@ -39,7 +39,7 @@ function OrderConfirmationContent() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15 }}
-              className="font-serif text-5xl md:text-7xl font-medium mb-4 leading-tight text-foreground"
+              className="font-sans text-5xl md:text-7xl font-extrabold mb-4 leading-tight text-foreground tracking-tight"
             >
               Order confirmed!
             </motion.h1>
