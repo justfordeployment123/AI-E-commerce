@@ -14,4 +14,12 @@ export class CreateCategoryDto {
     @IsBoolean()
     @IsOptional()
     isActive?: boolean;
+
+    @IsBoolean()
+    @IsOptional()
+    isSellable?: boolean;
+
+    @IsBoolean()
+    @IsOptional()
+    isRepairable?: boolean;
 }

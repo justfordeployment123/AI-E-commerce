@@ -12,7 +12,7 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "../context/auth-context";
 import { useCart } from "../context/cart-context";
 import { NotificationBell } from "./NotificationBell";
-import { catalogApi } from "../lib/api";
+import { catalogApi, productsApi } from "../lib/api";
 
 const SLUG_ICON_MAP: Record<string, React.ElementType> = {
   phones:   Smartphone,
@@ -75,6 +75,8 @@ export default function Navbar() {
   const [hoveredCat, setHoveredCat] = useState<string | null>(null);
   const closeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [shopCategories, setShopCategories] = useState<{ label: string; href: string; slug: string; icon: React.ElementType }[]>([]);
+  const [categoryBrands, setCategoryBrands] = useState<Record<string, string[]>>({});
+  const [otherSubcats, setOtherSubcats] = useState<{ label: string; slug: string }[]>([]);
 
   function openDropdown(slug: string) {
     if (closeTimeout.current) clearTimeout(closeTimeout.current);
@@ -95,13 +97,55 @@ export default function Navbar() {
     setTheme(currentTheme);
     setMounted(true);
 
+    // Slugs grouped under a single "Others" tab — always rendered last
+    const OTHERS_SLUGS = new Set([
+      'accessories', 'cables', 'chargers', 'memory', 'storage',
+      'mouse', 'pen', 'graphics', 'lens',
+      'smartwatches', 'games', 'films',
+      'other', 'others',
+    ]);
+
     catalogApi.listCategories().then(cats => {
-      setShopCategories(cats.map(c => ({
-        label: c.name,
-        href: `/shop/${c.slug}`,
-        slug: c.slug,
-        icon: SLUG_ICON_MAP[c.slug] ?? MoreHorizontal,
-      })));
+      const mainCats = cats
+        .filter(c => !OTHERS_SLUGS.has(c.slug))
+        .map(c => ({
+          label: c.name,
+          href: `/shop/${c.slug}`,
+          slug: c.slug,
+          icon: SLUG_ICON_MAP[c.slug] ?? MoreHorizontal,
+        }));
+
+      // Add the "Others" tab only when at least one grouped category has products
+      const othersWithProducts = cats.filter(c => OTHERS_SLUGS.has(c.slug) && c.productCount > 0);
+      if (othersWithProducts.length > 0) {
+        mainCats.push({
+          label: "Others",
+          href: `/shop/others`,
+          slug: "other",
+          icon: MoreHorizontal,
+        });
+      }
+
+      setShopCategories(mainCats);
+
+      // Store the others subcategories for the dropdown
+      setOtherSubcats(
+        othersWithProducts.map(c => ({ label: c.name, slug: c.slug }))
+      );
+
+      // Pre-fetch brands for each main category
+      cats
+        .filter(c => !OTHERS_SLUGS.has(c.slug))
+        .forEach(c => {
+          productsApi.brands(c.name)
+            .then(brands => {
+              setCategoryBrands(prev => ({
+                ...prev,
+                [c.slug]: brands.map(b => b.brand),
+              }));
+            })
+            .catch(() => {});
+        });
     }).catch(() => {});
   }, []);
 
@@ -394,7 +438,7 @@ export default function Navbar() {
             >
               {[
                 { label: "All Products", href: "/", slug: "" },
-                ...shopCategories.map(c => ({ ...c, slug: c.href.replace("/shop/", "") }))
+                ...shopCategories
               ].map(({ label, href, slug }) => {
                 const isActive = href === "/" ? pathname === "/" : pathname?.startsWith(href);
                 return (
@@ -479,24 +523,43 @@ export default function Navbar() {
                         {CATEGORY_DROPDOWN_META[hoveredCat].description}
                       </p>
 
-                      {/* Brand quick-links */}
-                      <div className="flex items-center gap-2 mt-4 flex-wrap">
-                        <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest shrink-0">Shop by brand:</span>
-                        {CATEGORY_DROPDOWN_META[hoveredCat].brands.map(brand => (
-                          <Link
-                            key={brand}
-                            href={`/shop/${hoveredCat}`}
-                            className="px-3 py-1.5 rounded-full border border-zinc-200 dark:border-zinc-700 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:border-zinc-900 hover:bg-zinc-900 hover:text-white dark:hover:bg-white dark:hover:text-zinc-950 transition-all"
-                          >
-                            {brand}
-                          </Link>
-                        ))}
-                      </div>
+                      {/* For "other": show subcategory chips; for main cats: show brand chips */}
+                      {hoveredCat === "other" ? (
+                        otherSubcats.length > 0 && (
+                          <div className="flex items-center gap-2 mt-4 flex-wrap">
+                            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest shrink-0">Browse by type:</span>
+                            {otherSubcats.map(sub => (
+                              <Link
+                                key={sub.slug}
+                                href={`/shop/${sub.slug}`}
+                                className="px-3 py-1.5 rounded-full border border-zinc-200 dark:border-zinc-700 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:border-zinc-900 hover:bg-zinc-900 hover:text-white dark:hover:bg-white dark:hover:text-zinc-950 transition-all"
+                              >
+                                {sub.label}
+                              </Link>
+                            ))}
+                          </div>
+                        )
+                      ) : (
+                        (categoryBrands[hoveredCat]?.length ?? 0) > 0 && (
+                          <div className="flex items-center gap-2 mt-4 flex-wrap">
+                            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest shrink-0">Shop by brand:</span>
+                            {categoryBrands[hoveredCat].map(brand => (
+                              <Link
+                                key={brand}
+                                href={`/shop/${hoveredCat}`}
+                                className="px-3 py-1.5 rounded-full border border-zinc-200 dark:border-zinc-700 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:border-zinc-900 hover:bg-zinc-900 hover:text-white dark:hover:bg-white dark:hover:text-zinc-950 transition-all"
+                              >
+                                {brand}
+                              </Link>
+                            ))}
+                          </div>
+                        )
+                      )}
                     </div>
 
                     {/* CTA */}
                     <Link
-                      href={`/shop/${hoveredCat}`}
+                      href={hoveredCat === "other" ? "/shop/others" : `/shop/${hoveredCat}`}
                       className="shrink-0 flex items-center gap-2 h-11 px-6 rounded-full bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 text-xs font-bold hover:opacity-90 transition-opacity"
                     >
                       Shop all {CATEGORY_DROPDOWN_META[hoveredCat].plural}

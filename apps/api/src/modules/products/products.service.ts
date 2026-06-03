@@ -130,18 +130,32 @@ export class ProductsService {
             orderBy: { brand: { name: 'asc' } },
         });
 
-        const result: { brand: string; image: string | null }[] = [];
+        const result: { brand: string; slug: string; logo: string | null; image: string | null }[] = [];
         for (const bc of brandCategories) {
-            const product = await this.prisma.product.findFirst({
-                where: {
-                    catalog: { is: { brandCategory: { is: { brandId: bc.brandId } } } },
-                    isActive: true,
-                },
-                select: { images: true },
-            });
-            const images = product?.images as string[] | null;
-            const resolved = images?.[0] ? await this.storage.resolveImageUrl(images[0]) : null;
-            result.push({ brand: bc.brand.name, image: resolved });
+            // Brand logo from catalog/brands/{slug}/logo.png
+            const logo = bc.brand.logo
+                ? await this.storage.resolveImageUrl(bc.brand.logo)
+                : null;
+
+            // BrandCategory showcase image from catalog/categories/{cat}/{brand}/
+            const bcImages = bc.images as string[];
+            let image: string | null = null;
+
+            if (bcImages.length > 0) {
+                image = await this.storage.resolveImageUrl(bcImages[0]);
+            } else {
+                const product = await this.prisma.product.findFirst({
+                    where: {
+                        catalog: { is: { brandCategory: { is: { id: bc.id } } } },
+                        isActive: true,
+                    },
+                    select: { images: true },
+                });
+                const imgs = product?.images as string[] | null;
+                image = imgs?.[0] ? await this.storage.resolveImageUrl(imgs[0]) : null;
+            }
+
+            result.push({ brand: bc.brand.name, slug: bc.brand.slug, logo, image });
         }
         return result;
     }

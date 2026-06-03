@@ -2,16 +2,25 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Plus, Edit2, Trash2, X, Check, Package, Image as ImageIcon, ChevronDown, ExternalLink, AlertTriangle } from "lucide-react";
 import { productsApi, deviceCatalogApi, type Product, type CreateProductPayload, type DeviceCatalogItem } from "../../lib/api";
 
 const CONDITIONS = ["Pristine", "Excellent", "Very Good", "Good", "Fair"];
-const CATEGORIES = ["Phones", "Tablets", "Consoles", "Laptops", "Accessories"];
-const CAT_MAP: Record<string, string> = {
-  phones: "Phones", tablets: "Tablets", consoles: "Consoles",
-  laptops: "Laptops", accessories: "Accessories",
-};
+
+// These categories belong to Other Products page — excluded from main Products
+// Includes both slugs AND display names (p.category returns the name from the API)
+const OTHERS_SLUGS = new Set([
+  // slugs
+  "accessories", "cables", "chargers", "memory", "storage",
+  "mouse", "pen", "graphics", "lens",
+  "smartwatches", "games", "films",
+  "other", "others",
+  // display names (as returned by productsApi)
+  "camera lenses", "graphics cards", "mouse & peripherals", "stylus & pens",
+  "chargers", "cables", "memory", "storage",
+]);
 
 const EMPTY_FORM: CreateProductPayload = {
   catalogId: "", name: "", condition: "Excellent",
@@ -54,8 +63,8 @@ export default function ProductsPage() {
   async function load() {
     setLoading(true);
     try {
-      const res = await productsApi.list({ limit: 200 });
-      setProducts(res.items);
+      const res = await productsApi.list({ limit: 500 });
+      setProducts(res.items.filter(p => !OTHERS_SLUGS.has(p.category.toLowerCase())));
     } catch { /* ignore */ }
     finally { setLoading(false); }
   }
@@ -75,6 +84,7 @@ export default function ProductsPage() {
     return !q || d.brandCategory.brand.name.toLowerCase().includes(q) || d.model.toLowerCase().includes(q);
   });
 
+  // Filter device picker in Add mode to exclude OTHERS categories
   function openAdd() {
     setEditProduct(null);
     setFormData(EMPTY_FORM);
@@ -84,7 +94,9 @@ export default function ProductsPage() {
     setError("");
     setShowModal(true);
     if (catalogDevices.length === 0) {
-      deviceCatalogApi.list().then(setCatalogDevices).catch(() => {});
+      deviceCatalogApi.list()
+        .then(items => setCatalogDevices(items.filter(d => !OTHERS_SLUGS.has(d.brandCategory.category.slug.toLowerCase()))))
+        .catch(() => {});
     }
   }
 
@@ -172,6 +184,12 @@ export default function ProductsPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <Link
+            href="/products/others"
+            className="flex items-center gap-2 h-11 px-4 border border-zinc-200 rounded-2xl text-sm font-bold text-zinc-600 hover:border-zinc-400 hover:text-black transition-colors bg-white"
+          >
+            View Others
+          </Link>
           <button
             onClick={() => { setShowDeleteAll(true); setDeleteAllInput(""); }}
             className="flex items-center gap-2 h-11 px-4 bg-red-50 text-red-600 border border-red-200 rounded-2xl text-sm font-bold hover:bg-red-100 transition-colors"
@@ -189,8 +207,10 @@ export default function ProductsPage() {
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3 mb-6">
-        <div className="relative flex-1 min-w-55">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+        <div className="relative flex-1 min-w-[260px]">
+          <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-zinc-400">
+            <Search className="h-4 w-4" />
+          </div>
           <input
             type="text"
             placeholder="Search by name or brand..."
@@ -200,7 +220,7 @@ export default function ProductsPage() {
           />
         </div>
         <div className="flex gap-2 flex-wrap">
-          {["All", ...CATEGORIES].map(cat => (
+          {["All", ...Array.from(new Set(products.map(p => p.category))).sort()].map(cat => (
             <button
               key={cat}
               onClick={() => setFilterCategory(cat)}
@@ -402,7 +422,7 @@ export default function ProductsPage() {
                       <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 border border-emerald-100 rounded-xl text-xs">
                         <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
                         <span className="font-bold text-emerald-800">{selectedDevice.brandCategory.brand.name} {selectedDevice.model}</span>
-                        <span className="text-emerald-600">· {CAT_MAP[selectedDevice.brandCategory.category.slug] ?? selectedDevice.brandCategory.category.slug}</span>
+                        <span className="text-emerald-600">· {selectedDevice.brandCategory.category.name}</span>
                         <span className="text-emerald-500 ml-auto">{selectedDevice.storageOptions.length} storage option{selectedDevice.storageOptions.length !== 1 ? "s" : ""}</span>
                       </div>
                     ) : (

@@ -64,7 +64,9 @@ export const deviceCatalogApi = {
 // ── Catalog management (categories, brands, brand-categories) ─────────────────
 export interface CatalogCategoryItem {
   id: string; name: string; slug: string; description?: string;
-  image?: string; isActive: boolean; createdAt: string; updatedAt: string;
+  image?: string; isActive: boolean;
+  isSellable: boolean; isRepairable: boolean;
+  createdAt: string; updatedAt: string;
 }
 export interface CatalogBrandItem {
   id: string; name: string; slug: string; logo?: string;
@@ -76,7 +78,7 @@ export const catalogCategoriesApi = {
     apiFetch<CatalogCategoryItem[]>(`/catalog/categories${includeInactive ? '?includeInactive=true' : ''}`),
   create: (data: { name: string; slug: string; description?: string; isActive?: boolean }) =>
     apiFetch<CatalogCategoryItem>('/catalog/categories', { method: 'POST', body: JSON.stringify(data) }),
-  update: (id: string, data: Partial<{ name: string; slug: string; description: string; isActive: boolean }>) =>
+  update: (id: string, data: Partial<{ name: string; slug: string; description: string; isActive: boolean; isSellable: boolean; isRepairable: boolean }>) =>
     apiFetch<CatalogCategoryItem>(`/catalog/categories/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   delete: (id: string) => apiFetch<void>(`/catalog/categories/${id}`, { method: 'DELETE' }),
   uploadImage: async (id: string, file: File) => {
@@ -522,3 +524,87 @@ export interface DashboardData {
     repairs: { status: string; count: number }[];
   };
 }
+
+// ── Banners ───────────────────────────────────────────────────────────────────
+
+export interface BannerItem {
+  id: string;
+  key: string;
+  label: string | null;
+  isActive: boolean;
+  order: number;
+  url: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PromoSlideItem {
+  id: string;
+  order: number;
+  isActive: boolean;
+  imgUrl: string | null;
+  tabTitle: string;
+  tag: string;
+  titleLine1: string;
+  titleLine2: string;
+  titleItalic: string;
+  title: string;
+  subtitle: string;
+  badgeA: string;
+  badgeB: string;
+  specs: string[];
+  themeColor: string;
+  bgGlow: string;
+  btnText: string;
+  btnLink: string;
+}
+
+export const THEME_PRESETS = [
+  { label: 'Blue',    swatch: 'from-blue-500 to-indigo-600',    themeColor: 'from-blue-500 to-indigo-600 dark:from-blue-400 dark:to-indigo-400',     bgGlow: 'rgba(59,130,246,0.15)' },
+  { label: 'Amber',   swatch: 'from-amber-500 to-orange-600',   themeColor: 'from-amber-500 to-orange-600 dark:from-amber-400 dark:to-orange-400',   bgGlow: 'rgba(245,158,11,0.15)' },
+  { label: 'Emerald', swatch: 'from-emerald-500 to-teal-600',   themeColor: 'from-emerald-500 to-teal-600 dark:from-emerald-400 dark:to-teal-400',   bgGlow: 'rgba(16,185,129,0.15)' },
+  { label: 'Green',   swatch: 'from-green-500 to-emerald-600',  themeColor: 'from-green-500 to-emerald-600 dark:from-green-400 dark:to-emerald-400', bgGlow: 'rgba(34,197,94,0.15)' },
+  { label: 'Purple',  swatch: 'from-purple-500 to-fuchsia-600', themeColor: 'from-purple-500 to-fuchsia-600 dark:from-purple-400 dark:to-fuchsia-400', bgGlow: 'rgba(168,85,247,0.15)' },
+  { label: 'Teal',    swatch: 'from-teal-500 to-cyan-600',      themeColor: 'from-teal-500 to-cyan-600 dark:from-teal-400 dark:to-cyan-400',         bgGlow: 'rgba(20,184,166,0.15)' },
+] as const;
+
+export const bannerImagesApi = {
+  list: () => apiFetch<BannerItem[]>('/banners'),
+  toggle: (id: string) => apiFetch<BannerItem>(`/banners/${id}/toggle`, { method: 'PATCH' }),
+  delete: (id: string) => apiFetch<void>(`/banners/${id}`, { method: 'DELETE' }),
+  upload: async (file: File, label?: string) => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('ts_admin_token') : null;
+    const fd = new FormData();
+    fd.append('file', file);
+    if (label) fd.append('label', label);
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const res = await fetch(`${API_BASE}/banners`, { method: 'POST', headers, body: fd });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message ?? res.statusText);
+    return res.json() as Promise<BannerItem>;
+  },
+};
+
+export const promoSlidesApi = {
+  list: () => apiFetch<PromoSlideItem[]>('/banners/promo-slides/all'),
+  create: (data: Omit<PromoSlideItem, 'id' | 'imgUrl'> & { imageUrl?: string }) =>
+    apiFetch<PromoSlideItem>('/banners/promo-slides', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: Partial<Omit<PromoSlideItem, 'id' | 'imgUrl'> & { imageUrl?: string }>) =>
+    apiFetch<PromoSlideItem>(`/banners/promo-slides/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  delete: (id: string) => apiFetch<void>(`/banners/promo-slides/${id}`, { method: 'DELETE' }),
+  toggle: (id: string) => apiFetch<PromoSlideItem>(`/banners/promo-slides/${id}/toggle`, { method: 'PATCH' }),
+  reorder: (items: { id: string; order: number }[]) =>
+    apiFetch<void>('/banners/promo-slides/reorder', { method: 'PATCH', body: JSON.stringify({ items }) }),
+  uploadImage: async (id: string, file: File) => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('ts_admin_token') : null;
+    const fd = new FormData();
+    fd.append('file', file);
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const res = await fetch(`${API_BASE}/banners/promo-slides/${id}/image`, { method: 'POST', headers, body: fd });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message ?? res.statusText);
+    return res.json() as Promise<PromoSlideItem>;
+  },
+  deleteImage: (id: string) =>
+    apiFetch<PromoSlideItem>(`/banners/promo-slides/${id}/image`, { method: 'DELETE' }),
+};

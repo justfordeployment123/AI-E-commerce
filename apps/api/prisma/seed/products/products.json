@@ -1927,7 +1927,7 @@
   {
     "name": "Apple MacBook Air M1 (2020) 256GB (Good)",
     "slug": "apple-macbook-air-m1-2020--256gb-good-77",
-    "category": "Laptops / MacBooks",
+    "category": "Laptops",
     "brand": "Apple",
     "model": "MacBook Air M1 (2020)",
     "condition": "Good",
@@ -1952,7 +1952,7 @@
   {
     "name": "Apple MacBook Air M2 (2022) 256GB (Mint)",
     "slug": "apple-macbook-air-m2-2022--256gb-mint-78",
-    "category": "Laptops / MacBooks",
+    "category": "Laptops",
     "brand": "Apple",
     "model": "MacBook Air M2 (2022)",
     "condition": "Mint",
@@ -1977,7 +1977,7 @@
   {
     "name": "Apple MacBook Air M2 (2022) 256GB (Refurbished)",
     "slug": "apple-macbook-air-m2-2022--256gb-refurbished-79",
-    "category": "Laptops / MacBooks",
+    "category": "Laptops",
     "brand": "Apple",
     "model": "MacBook Air M2 (2022)",
     "condition": "Refurbished",
@@ -2002,7 +2002,7 @@
   {
     "name": "Apple MacBook Pro 13-inch M1 (2020) 512GB (Good)",
     "slug": "apple-macbook-pro-13-inch-m1-2020--512gb-good-80",
-    "category": "Laptops / MacBooks",
+    "category": "Laptops",
     "brand": "Apple",
     "model": "MacBook Pro 13-inch M1 (2020)",
     "condition": "Good",
@@ -2027,7 +2027,7 @@
   {
     "name": "Apple MacBook Pro 14-inch M2 Pro (2023) 512GB (Mint)",
     "slug": "apple-macbook-pro-14-inch-m2-pro-2023--512gb-mint-81",
-    "category": "Laptops / MacBooks",
+    "category": "Laptops",
     "brand": "Apple",
     "model": "MacBook Pro 14-inch M2 Pro (2023)",
     "condition": "Mint",
@@ -2052,7 +2052,7 @@
   {
     "name": "Apple MacBook Pro 14-inch M2 Pro (2023) 512GB (Refurbished)",
     "slug": "apple-macbook-pro-14-inch-m2-pro-2023--512gb-refurbished-82",
-    "category": "Laptops / MacBooks",
+    "category": "Laptops",
     "brand": "Apple",
     "model": "MacBook Pro 14-inch M2 Pro (2023)",
     "condition": "Refurbished",
@@ -2077,7 +2077,7 @@
   {
     "name": "Apple MacBook Pro 16-inch M3 Max (2023) 2TB (Good)",
     "slug": "apple-macbook-pro-16-inch-m3-max-2023--2tb-good-83",
-    "category": "Laptops / MacBooks",
+    "category": "Laptops",
     "brand": "Apple",
     "model": "MacBook Pro 16-inch M3 Max (2023)",
     "condition": "Good",
@@ -2102,7 +2102,7 @@
   {
     "name": "Sony DualSense Wireless Controller (PS5)",
     "slug": "accessory-dualsense-wireless-controller-86",
-    "category": "Accessories",
+    "category": "Consoles",
     "brand": "Sony",
     "model": "DualSense Wireless Controller",
     "condition": "Mint",
@@ -2125,7 +2125,7 @@
   {
     "name": "Microsoft Xbox Wireless Controller",
     "slug": "accessory-xbox-wireless-controller-87",
-    "category": "Accessories",
+    "category": "Consoles",
     "brand": "Microsoft",
     "model": "Xbox Wireless Controller",
     "condition": "Mint",
@@ -2392,7 +2392,7 @@
     "reviewCount": 8,
     "isActive": true,
     "images": [
-      "asus-rog-zephyrus-g16.webp"
+      "asus-rog-zephyrus-g16.png"
     ]
   },
   {
@@ -2468,6 +2468,131 @@
     "isActive": true,
     "images": [
       "asus-zenbook-duo.png"
+    ]
+  },
+  {
+    "name": "Apple AirPods Pro 2 (Mint)",
+    "slug": "apple-airpods-pro-2-mint-0",
+    "category": "Audio",
+    "brand": "Apple",
+    "model": "AirPods Pro 2",
+    "condition": "Mint",
+    "price": 199,
+    "comparePrice": 229,
+    "stock": 5,
+    "specs": {
+      "Type": "In-Ear Wireless",
+      "Colorway": "Signature White",
+      "Brand": "Apple",
+      "Model": "AirPods Pro 2",
+      "Warranty": "12 Months"
+    },
+    "description": "This professional refurbished Apple AirPods Pro 2 is graded in Mint condition. Rigorously tested, it delivers active noise cancellation, adaptive audio, and outstanding sound quality. Comes with a 12-month warranty.",
+    "rating": 4.8,
+    "reviewCount": 12,
+    "isActive": true,
+    "images": [
+      "airpods-pro.png"
+    ]
+  },
+  {
+    "name": "Apple AirPods Max (Mint)",
+    "slug": "apple-airpods-max-mint-0",
+    "category": "Audio",
+    "brand": "Apple",
+    "model": "AirPods Max",
+    "condition": "Mint",
+    "price": 399,
+    "comparePrice": 499,
+    "stock": 3,
+    "specs": {
+      "Type": "Over-Ear",
+      "Colorway": "Space Grey",
+      "Brand": "Apple",
+      "Model": "AirPods Max",
+      "Warranty": "12 Months"
+    },
+    "description": "This professional refurbished Apple AirPods Max features high-fidelity audio, active noise cancellation, transparency mode, and spatial audio. Graded in Mint condition.",
+    "rating": 4.9,
+    "reviewCount": 8,
+    "isActive": true,
+    "images": [
+      "airpods-max.png"
+    ]
+  },
+  {
+    "name": "Sony WH-1000XM5 Wireless Headphones (Mint)",
+    "slug": "sony-wh-1000xm5-mint-0",
+    "category": "Audio",
+    "brand": "Sony",
+    "model": "WH-1000XM5",
+    "condition": "Mint",
+    "price": 269,
+    "comparePrice": 319,
+    "stock": 4,
+    "specs": {
+      "Type": "Over-Ear",
+      "Colorway": "Signature Black",
+      "Brand": "Sony",
+      "Model": "WH-1000XM5",
+      "Warranty": "12 Months"
+    },
+    "description": "This professional refurbished Sony WH-1000XM5 headphone delivers industry-leading noise cancellation, exceptional sound clarity, and clear hands-free calling. Graded in Mint condition.",
+    "rating": 4.7,
+    "reviewCount": 14,
+    "isActive": true,
+    "images": [
+      "sony-wh1000xm5.png"
+    ]
+  },
+  {
+    "name": "Sony WH-1000XM4 Wireless Headphones (Mint)",
+    "slug": "sony-wh-1000xm4-mint-0",
+    "category": "Audio",
+    "brand": "Sony",
+    "model": "WH-1000XM4",
+    "condition": "Mint",
+    "price": 199,
+    "comparePrice": 249,
+    "stock": 6,
+    "specs": {
+      "Type": "Over-Ear",
+      "Colorway": "Signature Black",
+      "Brand": "Sony",
+      "Model": "WH-1000XM4",
+      "Warranty": "12 Months"
+    },
+    "description": "This professional refurbished Sony WH-1000XM4 features dual noise sensor technology, high-resolution audio, and speak-to-chat function. Graded in Mint condition.",
+    "rating": 4.8,
+    "reviewCount": 25,
+    "isActive": true,
+    "images": [
+      "sony-headphones-1.png"
+    ]
+  },
+  {
+    "name": "Sony WF-1000XM5 Wireless Earbuds (Mint)",
+    "slug": "sony-wf-1000xm5-mint-0",
+    "category": "Audio",
+    "brand": "Sony",
+    "model": "WF-1000XM5",
+    "condition": "Mint",
+    "price": 179,
+    "comparePrice": 219,
+    "stock": 5,
+    "specs": {
+      "Type": "In-Ear Wireless",
+      "Colorway": "Signature Black",
+      "Brand": "Sony",
+      "Model": "WF-1000XM5",
+      "Warranty": "12 Months"
+    },
+    "description": "This professional refurbished Sony WF-1000XM5 earbud features the best noise cancelling performance, high-res audio quality, and our best ever call quality. Graded in Mint condition.",
+    "rating": 4.6,
+    "reviewCount": 10,
+    "isActive": true,
+    "images": [
+      "sony-headphones-2.png"
     ]
   }
 ]

@@ -89,7 +89,21 @@
       "PowerShell(cd \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\"; npx tsc --noEmit 2>&1 | Where-Object { $_ -match \"Navbar\" } | Select-Object -First 10)",
       "PowerShell(cd \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\"; npx tsc --noEmit 2>&1 | Out-String | Where-Object { $_ -notmatch \"\\\\.next/\" })",
       "PowerShell(cd \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\"; $out = npx tsc --noEmit 2>&1 | Out-String; $lines = $out -split \"`n\"; $lines | Where-Object { $_ -notmatch \"\\\\.next\" -and $_ -ne \"\" } | Select-Object -First 20)",
-      "Bash(Get-ChildItem -Path \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\admin\" -Recurse -Exclude \"node_modules\", \".next\")"
+      "Bash(Get-ChildItem -Path \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\admin\" -Recurse -Exclude \"node_modules\", \".next\")",
+      "Read(//c/Users/HP/.claude/plugins/cache/claude-plugins-official/superpowers/5.1.0/skills/subagent-driven-development/**)",
+      "Bash(certutil -hashfile apps/admin/app/icon.png MD5)",
+      "Bash(ls apps/web/app/icon.* apps/web/public/favicon*)",
+      "Bash(ls apps/admin/public/favicon*)",
+      "PowerShell(Copy-Item \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\admin\\\\app\\\\icon.png\" \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\admin\\\\public\\\\favicon.ico\")",
+      "Bash(git push *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "PowerShell(New-Item -ItemType Directory -Force \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\admin\\\\public\\\\Icon\")",
+      "PowerShell(Copy-Item \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\\\\public\\\\Icon\\\\icon.png\" \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\admin\\\\public\\\\Icon\\\\icon.png\")",
+      "Read(//c/Users/HP/.claude/plugins/cache/claude-plugins-official/superpowers/5.1.0/skills/brainstorming/**)",
+      "Bash(scripts/start-server.sh --project-dir \"d:/CODE/Projects/Markhor Systems Projects/Ai-Ecommerce\")",
+      "Read(//c/Users/HP/.claude/plugins/cache/claude-plugins-official/superpowers/5.1.0/**)",
+      "Bash(\"C:/Users/HP/.claude/plugins/cache/claude-plugins-official/superpowers/5.1.0/skills/brainstorming/scripts/start-server.sh\" --project-dir \"d:/CODE/Projects/Markhor Systems Projects/Ai-Ecommerce\")"
     ],
     "additionalDirectories": [
       "d:\\CODE\\Projects\\Markhor Systems Projects\\Ai-Ecommerce\\apps\\web\\app\\account\\repairs",

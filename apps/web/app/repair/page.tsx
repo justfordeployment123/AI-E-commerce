@@ -3,9 +3,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { repairsApi, uploadsApi } from "../../lib/api";
+import { repairsApi, uploadsApi, catalogApi, productsApi, type CatalogCategory } from "../../lib/api";
 import {
-  Smartphone, Tablet, Gamepad2, Laptop, ArrowLeft, ArrowRight,
+  Smartphone, Tablet, Gamepad2, Laptop, Package, ArrowLeft, ArrowRight,
   Check, MapPin, Truck, Wrench, Clock, Shield, X,
   Monitor, Zap, Battery, Wifi, HardDrive, CircleAlert,
   Star, HelpCircle, ChevronDown, Sparkles, ChevronRight, Upload, Plus
@@ -27,12 +27,13 @@ function GoogleIcon() {
   );
 }
 
-const DEVICE_TYPES = [
-  { id: "Phone", label: "Phone", icon: Smartphone, img: "/bento_smartphones.png", mood: "bg-sky-500/10 border-sky-500/20", glow: "hover:shadow-sky-500/10", count: "60+ models" },
-  { id: "Tablet", label: "Tablet", icon: Tablet, img: "/bento_tablets.png", mood: "bg-rose-500/10 border-rose-500/20", glow: "hover:shadow-rose-500/10", count: "20+ models" },
-  { id: "Console", label: "Console", icon: Gamepad2, img: "/bento_gaming.png", mood: "bg-violet-500/10 border-violet-500/20", glow: "hover:shadow-violet-500/10", count: "17 models" },
-  { id: "Laptop", label: "Laptop / MacBook", icon: Laptop, img: "/bento_laptops.png", mood: "bg-amber-500/10 border-amber-500/20", glow: "hover:shadow-amber-500/10", count: "25+ models" },
-];
+// Visual metadata keyed by category slug — the list itself comes from the API
+const DEVICE_TYPE_META: Record<string, { oldId: string; Icon: React.ElementType; img: string; mood: string; glow: string }> = {
+  phones:   { oldId: "Phone",   Icon: Smartphone, img: "/bento_smartphones.png", mood: "bg-sky-500/10 border-sky-500/20",    glow: "hover:shadow-sky-500/10"    },
+  tablets:  { oldId: "Tablet",  Icon: Tablet,     img: "/bento_tablets.png",     mood: "bg-rose-500/10 border-rose-500/20",  glow: "hover:shadow-rose-500/10"   },
+  consoles: { oldId: "Console", Icon: Gamepad2,   img: "/bento_gaming.png",      mood: "bg-violet-500/10 border-violet-500/20",glow: "hover:shadow-violet-500/10"},
+  laptops:  { oldId: "Laptop",  Icon: Laptop,     img: "/bento_laptops.png",     mood: "bg-amber-500/10 border-amber-500/20", glow: "hover:shadow-amber-500/10"  },
+};
 
 const BRANDS: Record<string, string[]> = {
   Phone: ["Apple", "Samsung", "Google", "OnePlus", "Nothing", "Other"],
@@ -112,6 +113,25 @@ export default function RepairPage() {
     fulfillment: "",
     contact: { name: "", email: "", phone: "", address: "", postcode: "" },
   });
+
+  const [catalogCats, setCatalogCats] = useState<CatalogCategory[]>([]);
+  const [catFallbackImages, setCatFallbackImages] = useState<Record<string, string>>({});
+  useEffect(() => {
+    catalogApi.listCategories()
+      .then(cats => {
+        const repairable = cats.filter(c => c.isRepairable);
+        setCatalogCats(repairable);
+        repairable.filter(c => !c.image).forEach(c => {
+          productsApi.list({ category: c.name, limit: 1 })
+            .then(r => {
+              const img = r.items[0]?.images?.[0];
+              if (img) setCatFallbackImages(prev => ({ ...prev, [c.slug]: img }));
+            })
+            .catch(() => {});
+        });
+      })
+      .catch(() => {});
+  }, []);
 
   const [submitting, setSubmitting] = useState(false);
   const [submitRef, setSubmitRef] = useState("");
@@ -242,6 +262,15 @@ export default function RepairPage() {
     }
   }
 
+  const guardedOpen = (action: () => void) => {
+    if (!user) {
+      sessionStorage.setItem("ts_login_redirect", "/repair");
+      router.push("/login?redirect=%2Frepair");
+      return;
+    }
+    action();
+  };
+
   const openWizardWithDevice = (deviceId: string) => {
     setState({ deviceType: deviceId, brand: "", model: "", issue: [], issueNotes: "", fulfillment: "", contact: { name: "", email: "", phone: "", address: "", postcode: "" } });
     setImages([]);
@@ -323,7 +352,7 @@ export default function RepairPage() {
               ].map((item, i) => (
                 <button
                   key={i}
-                  onClick={() => {
+                  onClick={() => guardedOpen(() => {
                     setState({
                       deviceType: item.category, brand: item.brand,
                       model: `${item.brand} ${item.category} (Est. Repair)`,
@@ -332,7 +361,7 @@ export default function RepairPage() {
                     });
                     setStep(3);
                     setIsWizardActive(true);
-                  }}
+                  })}
                   className="px-3.5 py-1.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 rounded-full transition-colors font-bold shadow-sm"
                 >
                   {item.name}
@@ -346,32 +375,48 @@ export default function RepairPage() {
                 Select your device type
               </h2>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-                {DEVICE_TYPES.map((d) => (
-                  <motion.button
-                    key={d.id}
-                    whileHover={{ y: -6, scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => openWizardWithDevice(d.id)}
-                    className={`flex flex-col rounded-3xl border border-zinc-200 bg-white shadow-sm hover:shadow-xl hover:border-zinc-950 transition-all group overflow-hidden w-full ${d.glow}`}
-                  >
-                    <div className="w-full aspect-[4/3] bg-gradient-to-b from-zinc-50 to-white border-b border-zinc-100 flex items-center justify-center p-4 relative overflow-hidden">
-                      <img
-                        src={d.img}
-                        alt={d.label}
-                        className="h-full w-full object-contain filter drop-shadow-md transition-transform duration-500 group-hover:scale-105"
-                      />
-                    </div>
-                    <div className="p-5 flex-1 flex flex-col justify-between text-left">
-                      <div>
-                        <h3 className="font-extrabold text-lg text-zinc-950 mb-1 leading-tight">{d.label}</h3>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">{d.count}</p>
+                {catalogCats.map((cat) => {
+                  const meta = DEVICE_TYPE_META[cat.slug] ?? {
+                    oldId: cat.slug,
+                    Icon: Package,
+                    img: "",
+                    mood: "bg-zinc-500/10 border-zinc-500/20",
+                    glow: "hover:shadow-zinc-500/10",
+                  };
+                  const img = cat.image ?? catFallbackImages[cat.slug] ?? meta.img;
+                  const isProductFallback = !cat.image && !!catFallbackImages[cat.slug];
+                  const modelCount = cat.modelCount > 0 ? `${cat.modelCount}+ models` : null;
+                  return (
+                    <motion.button
+                      key={cat.id}
+                      whileHover={{ y: -6, scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => guardedOpen(() => openWizardWithDevice(meta.oldId))}
+                      className={`flex flex-col rounded-3xl border border-zinc-200 bg-white shadow-sm hover:shadow-xl hover:border-zinc-950 transition-all group overflow-hidden w-full ${meta.glow}`}
+                    >
+                      <div className="w-full aspect-[4/3] bg-gradient-to-b from-zinc-50 to-white border-b border-zinc-100 flex items-center justify-center p-4 relative overflow-hidden">
+                        {img && (
+                          <img
+                            src={img}
+                            alt={cat.name}
+                            className={`object-contain drop-shadow-md transition-transform duration-500 group-hover:scale-105 ${
+                              isProductFallback ? "h-[70%] w-[70%]" : "h-full w-full"
+                            }`}
+                          />
+                        )}
                       </div>
-                      <div className="mt-4 flex items-center gap-1.5 text-xs font-bold text-zinc-500 group-hover:text-black transition-colors">
-                        Start Repair <ChevronRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
+                      <div className="p-5 flex-1 flex flex-col justify-between text-left">
+                        <div>
+                          <h3 className="font-extrabold text-lg text-zinc-950 mb-1 leading-tight">{cat.name}</h3>
+                          {modelCount && <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">{modelCount}</p>}
+                        </div>
+                        <div className="mt-4 flex items-center gap-1.5 text-xs font-bold text-zinc-500 group-hover:text-black transition-colors">
+                          Start Repair <ChevronRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
+                        </div>
                       </div>
-                    </div>
-                  </motion.button>
-                ))}
+                    </motion.button>
+                  );
+                })}
               </div>
             </div>
 
@@ -445,7 +490,7 @@ export default function RepairPage() {
                         * Diagnostics run on receipt. Quote fixed and sent for your confirmation before work.
                       </p>
                     </div>
-                    <button onClick={handleEstimatorBook} className="w-full h-14 bg-white hover:bg-accent text-zinc-950 hover:text-white font-black text-xs uppercase tracking-wider rounded-xl transition-colors flex items-center justify-center gap-2">
+                    <button onClick={() => guardedOpen(handleEstimatorBook)} className="w-full h-14 bg-white hover:bg-accent text-zinc-950 hover:text-white font-black text-xs uppercase tracking-wider rounded-xl transition-colors flex items-center justify-center gap-2">
                       Book this repair <ArrowRight className="h-4 w-4" />
                     </button>
                   </div>

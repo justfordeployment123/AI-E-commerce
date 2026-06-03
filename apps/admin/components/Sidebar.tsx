@@ -4,7 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   LayoutDashboard, Package, RefreshCw, Wrench, ShoppingBag,
-  SlidersHorizontal, BarChart3, LogOut, ChevronRight, ListPlus, MapPin, TrendingUp, HeadphonesIcon, Star, Phone, DatabaseZap, Layers
+  SlidersHorizontal, BarChart3, LogOut, ChevronRight, ListPlus, MapPin, TrendingUp, HeadphonesIcon, Star, Phone, DatabaseZap, Layers, Image, Boxes
 } from "lucide-react";
 import { useAdminAuth } from "../context/auth-context";
 
@@ -15,13 +15,14 @@ const NAV = [
   { href: "/products", label: "Products", icon: Package, section: "Catalog" },
   { href: "/catalog", label: "Device Catalog", icon: ListPlus },
   { href: "/catalog-mgmt", label: "Categories & Brands", icon: Layers },
+  { href: "/banners", label: "Banners", icon: Image },
   { href: "/seed", label: "Seed Database", icon: DatabaseZap },
   { href: "/trade-ins", label: "Trade-Ins", icon: RefreshCw, section: "Operations" },
   { href: "/repairs", label: "Repairs", icon: Wrench },
   { href: "/orders", label: "Orders", icon: ShoppingBag },
   { href: "/pricing", label: "Pricing Rules", icon: SlidersHorizontal, section: "Settings" },
   ...(SCRAPER_ENABLED ? [{ href: "/scraper", label: "Competitor Prices", icon: TrendingUp }] : []),
-  { href: "/stores", label: "Store Locations", icon: MapPin },
+  { href: "/stores", label: "Store Locations", icon: MapPin, section: "Other" },
   { href: "/helplines", label: "Helplines", icon: Phone },
   { href: "/support", label: "Support & Chat", icon: HeadphonesIcon },
   { href: "/reviews", label: "Reviews", icon: Star },
@@ -40,7 +41,7 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="w-55 shrink-0 bg-sidebar text-sidebar-fg flex flex-col h-screen sticky top-0 overflow-y-auto scrollbar-hide">
+    <aside className="w-60 shrink-0 bg-sidebar text-sidebar-fg flex flex-col h-screen sticky top-0 overflow-y-auto scrollbar-hide">
       {/* Logo */}
       <div className="px-5 py-5 border-b border-white/10">
         <div className="flex flex-col gap-1.5">
@@ -52,7 +53,7 @@ export default function Sidebar() {
       {/* Nav */}
       <nav className="flex-1 px-3 py-5 space-y-0.5">
         {NAV.map(({ href, label, icon: Icon, section }) => {
-          const active = pathname === href;
+          const active = href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(href + "/");
           const showSection = section && section !== lastSection;
           if (section) lastSection = section;
 
@@ -70,8 +71,8 @@ export default function Sidebar() {
                 }`}
               >
                 <Icon className="h-4 w-4 shrink-0" />
-                <span className="flex-1">{label}</span>
-                {active && <ChevronRight className="h-3.5 w-3.5 text-white/50" />}
+                <span className="flex-1 whitespace-nowrap">{label}</span>
+                {active && <ChevronRight className="h-3.5 w-3.5 text-white/50 shrink-0" />}
               </Link>
             </div>
           );

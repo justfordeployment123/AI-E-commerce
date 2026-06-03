@@ -9,6 +9,14 @@ type Form = { name: string; slug: string; description: string; isActive: boolean
 const empty: Form = { name: "", slug: "", description: "", isActive: true };
 const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
+// Slugs that belong to the "Others" group — mirrors the Navbar grouping
+const OTHERS_SLUGS = new Set([
+  "accessories", "cables", "chargers", "memory", "storage",
+  "mouse", "pen", "graphics", "lens",
+  "smartwatches", "games", "films",
+  "other", "others",
+]);
+
 export default function CategoriesPage() {
   const [cats, setCats] = useState<CatalogCategoryItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -117,54 +125,117 @@ export default function CategoriesPage() {
         <div className="flex items-center justify-center py-16">
           <div className="h-6 w-6 border-4 border-zinc-200 border-t-black rounded-full animate-spin" />
         </div>
-      ) : (
-        <div className="bg-white border border-zinc-100 rounded-2xl overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="border-b border-zinc-100 bg-zinc-50">
-              <tr className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
-                <th className="text-left px-5 py-3">Name</th>
-                <th className="text-left px-5 py-3">Slug</th>
-                <th className="text-left px-5 py-3">Image</th>
-                <th className="text-left px-5 py-3">Status</th>
-                <th className="px-5 py-3" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-50">
-              {cats.map(cat => (
-                <tr key={cat.id} className="hover:bg-zinc-50/50">
-                  <td className="px-5 py-3 font-semibold text-zinc-900">{cat.name}</td>
-                  <td className="px-5 py-3 text-zinc-400 font-mono text-xs">{cat.slug}</td>
-                  <td className="px-5 py-3">
-                    {cat.image
-                      ? <img src={cat.image} alt="" className="h-8 w-8 rounded-lg object-cover" />
-                      : <button onClick={() => { pendingUploadId.current = cat.id; fileRef.current?.click(); }}
-                          disabled={uploadingId === cat.id}
-                          className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700">
-                          <Upload className="h-3 w-3" />{uploadingId === cat.id ? "…" : "Upload"}
-                        </button>}
-                  </td>
-                  <td className="px-5 py-3">
-                    <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${cat.isActive ? "bg-emerald-50 text-emerald-700" : "bg-zinc-100 text-zinc-400"}`}>
-                      {cat.isActive ? <Check className="h-2.5 w-2.5" /> : <X className="h-2.5 w-2.5" />}
-                      {cat.isActive ? "Active" : "Inactive"}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3">
-                    <div className="flex items-center gap-2 justify-end">
-                      {cat.image && <button onClick={() => { pendingUploadId.current = cat.id; fileRef.current?.click(); }} className="text-zinc-300 hover:text-zinc-600"><Upload className="h-3.5 w-3.5" /></button>}
-                      <button onClick={() => startEdit(cat)} className="text-zinc-300 hover:text-zinc-700"><Pencil className="h-3.5 w-3.5" /></button>
-                      <button onClick={() => remove(cat.id)} className="text-zinc-300 hover:text-red-500"><Trash2 className="h-3.5 w-3.5" /></button>
-                    </div>
-                  </td>
+      ) : (() => {
+        const mainCats   = cats.filter(c => !OTHERS_SLUGS.has(c.slug));
+        const othersCats = cats.filter(c =>  OTHERS_SLUGS.has(c.slug));
+
+        const renderTable = (rows: CatalogCategoryItem[]) => (
+          <div className="bg-white border border-zinc-100 rounded-2xl overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="border-b border-zinc-100 bg-zinc-50">
+                <tr className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                  <th className="text-left px-5 py-3">Name</th>
+                  <th className="text-left px-5 py-3">Slug</th>
+                  <th className="text-left px-5 py-3">Image</th>
+                  <th className="text-left px-5 py-3">Status</th>
+                  <th className="text-center px-3 py-3">Sellable</th>
+                  <th className="text-center px-3 py-3">Repairable</th>
+                  <th className="px-5 py-3" />
                 </tr>
-              ))}
-              {cats.length === 0 && (
-                <tr><td colSpan={5} className="px-5 py-10 text-center text-sm text-zinc-400">No categories yet.</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
+              </thead>
+              <tbody className="divide-y divide-zinc-50">
+                {rows.map(cat => (
+                  <tr key={cat.id} className="hover:bg-zinc-50/50">
+                    <td className="px-5 py-3 font-semibold text-zinc-900">{cat.name}</td>
+                    <td className="px-5 py-3 text-zinc-400 font-mono text-xs">{cat.slug}</td>
+                    <td className="px-5 py-3">
+                      {cat.image
+                        ? <img src={cat.image} alt="" className="h-8 w-8 rounded-lg object-cover" />
+                        : <button onClick={() => { pendingUploadId.current = cat.id; fileRef.current?.click(); }}
+                            disabled={uploadingId === cat.id}
+                            className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700">
+                            <Upload className="h-3 w-3" />{uploadingId === cat.id ? "…" : "Upload"}
+                          </button>}
+                    </td>
+                    <td className="px-5 py-3">
+                      <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${cat.isActive ? "bg-emerald-50 text-emerald-700" : "bg-zinc-100 text-zinc-400"}`}>
+                        {cat.isActive ? <Check className="h-2.5 w-2.5" /> : <X className="h-2.5 w-2.5" />}
+                        {cat.isActive ? "Active" : "Inactive"}
+                      </span>
+                    </td>
+                    {/* Sellable toggle */}
+                    <td className="px-3 py-3 text-center">
+                      <button
+                        onClick={() => {
+                          const next = !cat.isSellable;
+                          setCats(prev => prev.map(c => c.id === cat.id ? { ...c, isSellable: next } : c));
+                          catalogCategoriesApi.update(cat.id, { isSellable: next }).catch(() =>
+                            setCats(prev => prev.map(c => c.id === cat.id ? { ...c, isSellable: !next } : c))
+                          );
+                        }}
+                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 focus:outline-none ${cat.isSellable ? "bg-emerald-500" : "bg-zinc-300"}`}
+                      >
+                        <span className={`inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${cat.isSellable ? "translate-x-4.5" : "translate-x-0.5"}`} />
+                      </button>
+                    </td>
+                    {/* Repairable toggle */}
+                    <td className="px-3 py-3 text-center">
+                      <button
+                        onClick={() => {
+                          const next = !cat.isRepairable;
+                          setCats(prev => prev.map(c => c.id === cat.id ? { ...c, isRepairable: next } : c));
+                          catalogCategoriesApi.update(cat.id, { isRepairable: next }).catch(() =>
+                            setCats(prev => prev.map(c => c.id === cat.id ? { ...c, isRepairable: !next } : c))
+                          );
+                        }}
+                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 focus:outline-none ${cat.isRepairable ? "bg-blue-500" : "bg-zinc-300"}`}
+                      >
+                        <span className={`inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${cat.isRepairable ? "translate-x-4.5" : "translate-x-0.5"}`} />
+                      </button>
+                    </td>
+                    <td className="px-5 py-3">
+                      <div className="flex items-center gap-2 justify-end">
+                        {cat.image && <button onClick={() => { pendingUploadId.current = cat.id; fileRef.current?.click(); }} className="text-zinc-300 hover:text-zinc-600"><Upload className="h-3.5 w-3.5" /></button>}
+                        <button onClick={() => startEdit(cat)} className="text-zinc-300 hover:text-zinc-700"><Pencil className="h-3.5 w-3.5" /></button>
+                        <button onClick={() => remove(cat.id)} className="text-zinc-300 hover:text-red-500"><Trash2 className="h-3.5 w-3.5" /></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {rows.length === 0 && (
+                  <tr><td colSpan={5} className="px-5 py-10 text-center text-sm text-zinc-400">None.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        );
+
+        return (
+          <div className="space-y-8">
+            {/* Main device categories */}
+            <div>
+              <div className="flex items-center gap-3 mb-3">
+                <h2 className="text-xs font-bold uppercase tracking-widest text-zinc-500">Main Categories</h2>
+                <div className="flex-1 h-px bg-zinc-100" />
+                <span className="text-[10px] font-bold text-zinc-300">{mainCats.length}</span>
+              </div>
+              {renderTable(mainCats)}
+            </div>
+
+            {/* Others (accessories, games, films, smartwatches…) */}
+            {othersCats.length > 0 && (
+              <div>
+                <div className="flex items-center gap-3 mb-3">
+                  <h2 className="text-xs font-bold uppercase tracking-widest text-zinc-500">Other Categories</h2>
+                  <div className="flex-1 h-px bg-zinc-100" />
+                  <span className="text-[10px] font-bold text-zinc-300">{othersCats.length}</span>
+                </div>
+                {renderTable(othersCats)}
+              </div>
+            )}
+          </div>
+        );
+      })()}
     </div>
   );
 }

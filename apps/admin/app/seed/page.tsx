@@ -22,6 +22,12 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
 interface SeedResult {
   pricingConfigs: number;
   deviceCatalog: number;
+  banners: number;
+  promoSlides: number;
+  others: number;
+  categories: number;
+  brands: number;
+  brandCategories: number;
   products: {
     created: number;
     updated: number;
@@ -32,6 +38,19 @@ interface SeedResult {
 
 interface PurgeResult {
   deleted: number;
+  counts: {
+    orderItems: number;
+    reviews: number;
+    scrapedPrices: number;
+    products: number;
+    deviceCatalog: number;
+    brandCategories: number;
+    categories: number;
+    brands: number;
+    banners: number;
+    promoSlides: number;
+    pricingConfigs: number;
+  };
 }
 
 export default function SeedPage() {
@@ -84,7 +103,7 @@ export default function SeedPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight">Database Seed</h1>
         <p className="text-sm text-zinc-500 mt-1">
-          Seeds the production database from bundled files inside the container.
+          Seeds the production database from files in the <code className="text-xs font-mono bg-zinc-100 px-1 rounded">prisma/seed/</code> folder.
           Uploads all product images to S3 and upserts products, pricing configs, and the device trade-in catalog.
         </p>
       </div>
@@ -96,8 +115,8 @@ export default function SeedPage() {
             <p className="text-sm font-bold text-amber-800">Before you run</p>
           </div>
           <ul className="text-xs text-amber-700 space-y-1 list-disc list-inside">
-            <li>Reads <code className="bg-amber-100 px-1 rounded font-mono">prisma/downloads/products.json</code> bundled in this container.</li>
-            <li>Uploads <code className="bg-amber-100 px-1 rounded font-mono">.jpg</code> images from that folder to S3.</li>
+            <li>Reads <code className="bg-amber-100 px-1 rounded font-mono">prisma/seed/products.json</code> and images from the <code className="bg-amber-100 px-1 rounded font-mono">prisma/seed/</code> folder.</li>
+            <li>Uploads images from that folder to S3.</li>
             <li>Upserts products by slug — existing products are updated, new ones created.</li>
             <li>Replaces the entire device trade-in catalog and upserts pricing configs.</li>
             <li>This can take <strong>1–3 minutes</strong> depending on image count — don't close the tab.</li>
@@ -153,25 +172,49 @@ export default function SeedPage() {
             </div>
 
             <div className="rounded-2xl border border-zinc-100 overflow-hidden divide-y divide-zinc-100">
-              <div className="flex items-center justify-between px-5 py-3">
+              <div className="flex items-center justify-between px-5 py-2.5">
                 <span className="text-sm text-zinc-500">Pricing configs seeded</span>
                 <span className="font-bold text-sm">{result.pricingConfigs}</span>
               </div>
-              <div className="flex items-center justify-between px-5 py-3">
+              <div className="flex items-center justify-between px-5 py-2.5">
+                <span className="text-sm text-zinc-500">Categories seeded</span>
+                <span className="font-bold text-sm">{result.categories}</span>
+              </div>
+              <div className="flex items-center justify-between px-5 py-2.5">
+                <span className="text-sm text-zinc-500">Brands seeded</span>
+                <span className="font-bold text-sm">{result.brands}</span>
+              </div>
+              <div className="flex items-center justify-between px-5 py-2.5">
+                <span className="text-sm text-zinc-500">Brand–Category links</span>
+                <span className="font-bold text-sm">{result.brandCategories}</span>
+              </div>
+              <div className="flex items-center justify-between px-5 py-2.5">
                 <span className="text-sm text-zinc-500">Trade-in catalog entries</span>
                 <span className="font-bold text-sm">{result.deviceCatalog}</span>
               </div>
-              <div className="flex items-center justify-between px-5 py-3">
+              <div className="flex items-center justify-between px-5 py-2.5">
+                <span className="text-sm text-zinc-500">Promo slides seeded</span>
+                <span className="font-bold text-sm">{result.promoSlides}</span>
+              </div>
+              <div className="flex items-center justify-between px-5 py-2.5">
+                <span className="text-sm text-zinc-500">Background banners seeded</span>
+                <span className="font-bold text-sm">{result.banners}</span>
+              </div>
+              <div className="flex items-center justify-between px-5 py-2.5">
                 <span className="text-sm text-zinc-500">Products created</span>
                 <span className="font-bold text-sm text-emerald-600">{result.products.created}</span>
               </div>
-              <div className="flex items-center justify-between px-5 py-3">
+              <div className="flex items-center justify-between px-5 py-2.5">
                 <span className="text-sm text-zinc-500">Products updated</span>
                 <span className="font-bold text-sm text-sky-600">{result.products.updated}</span>
               </div>
-              <div className="flex items-center justify-between px-5 py-3">
-                <span className="text-sm text-zinc-500">Total processed</span>
-                <span className="font-bold text-sm">{result.products.total}</span>
+              <div className="flex items-center justify-between px-5 py-2.5">
+                <span className="text-sm text-zinc-500">Other items seeded</span>
+                <span className="font-bold text-sm text-teal-600">{result.others}</span>
+              </div>
+              <div className="flex items-center justify-between px-5 py-3 bg-zinc-50/50">
+                <span className="text-sm font-semibold text-zinc-700">Total products processed</span>
+                <span className="font-bold text-sm">{result.products.total + result.others}</span>
               </div>
             </div>
 
@@ -283,10 +326,54 @@ export default function SeedPage() {
                 <CheckCircle className="h-5 w-5 text-emerald-600 shrink-0" />
                 <p className="font-bold text-emerald-800">Purge complete — database and Garage cleared.</p>
               </div>
-              <div className="rounded-2xl border border-zinc-100 overflow-hidden">
-                <div className="flex items-center justify-between px-5 py-3">
-                  <span className="text-sm text-zinc-500">Garage objects deleted</span>
-                  <span className="font-bold text-sm">{purgeResult.deleted}</span>
+              <div className="rounded-2xl border border-zinc-100 overflow-hidden divide-y divide-zinc-100">
+                <div className="flex items-center justify-between px-5 py-2">
+                  <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Entity type</span>
+                  <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Deleted</span>
+                </div>
+                <div className="flex items-center justify-between px-5 py-2.5">
+                  <span className="text-sm text-zinc-500">Products</span>
+                  <span className="font-bold text-sm text-red-600">{purgeResult.counts.products}</span>
+                </div>
+                <div className="flex items-center justify-between px-5 py-2.5">
+                  <span className="text-sm text-zinc-500">Device Catalog Entries</span>
+                  <span className="font-bold text-sm text-red-600">{purgeResult.counts.deviceCatalog}</span>
+                </div>
+                <div className="flex items-center justify-between px-5 py-2.5">
+                  <span className="text-sm text-zinc-500">Brand-Category Links</span>
+                  <span className="font-bold text-sm text-red-600">{purgeResult.counts.brandCategories}</span>
+                </div>
+                <div className="flex items-center justify-between px-5 py-2.5">
+                  <span className="text-sm text-zinc-500">Categories</span>
+                  <span className="font-bold text-sm text-red-600">{purgeResult.counts.categories}</span>
+                </div>
+                <div className="flex items-center justify-between px-5 py-2.5">
+                  <span className="text-sm text-zinc-500">Brands</span>
+                  <span className="font-bold text-sm text-red-600">{purgeResult.counts.brands}</span>
+                </div>
+                <div className="flex items-center justify-between px-5 py-2.5">
+                  <span className="text-sm text-zinc-500">Promo Slides</span>
+                  <span className="font-bold text-sm text-red-600">{purgeResult.counts.promoSlides}</span>
+                </div>
+                <div className="flex items-center justify-between px-5 py-2.5">
+                  <span className="text-sm text-zinc-500">Banners</span>
+                  <span className="font-bold text-sm text-red-600">{purgeResult.counts.banners}</span>
+                </div>
+                <div className="flex items-center justify-between px-5 py-2.5">
+                  <span className="text-sm text-zinc-500">Pricing Configs</span>
+                  <span className="font-bold text-sm text-red-600">{purgeResult.counts.pricingConfigs}</span>
+                </div>
+                <div className="flex items-center justify-between px-5 py-2.5">
+                  <span className="text-sm text-zinc-500">Cart & Order Items</span>
+                  <span className="font-bold text-sm text-red-600">{purgeResult.counts.orderItems}</span>
+                </div>
+                <div className="flex items-center justify-between px-5 py-2.5">
+                  <span className="text-sm text-zinc-500">Reviews</span>
+                  <span className="font-bold text-sm text-red-600">{purgeResult.counts.reviews}</span>
+                </div>
+                <div className="flex items-center justify-between px-5 py-3 bg-zinc-50/50">
+                  <span className="text-sm font-semibold text-zinc-700">Garage S3 Assets Deleted</span>
+                  <span className="font-black text-sm text-zinc-900">{purgeResult.deleted}</span>
                 </div>
               </div>
               <button

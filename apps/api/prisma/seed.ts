@@ -145,7 +145,7 @@ async function seedCategories() {
             const bc = await prisma.brandCategory.upsert({
                 where:  { brandId_categoryId: { brandId: brand.id, categoryId: cat.id } },
                 update: { alias },
-                create: { brandId: brand.id, categoryId: cat.id, alias },
+                create: { brandId: brand.id, categoryId: cat.id, alias, images: [] },
             });
 
             if (((bc.images as string[]) ?? []).length === 0) {
@@ -315,7 +315,7 @@ async function seedDeviceCatalog(productsData: any[]) {
         const bc = await prisma.brandCategory.upsert({
             where:  { brandId_categoryId: { brandId: brand.id, categoryId: cat.id } },
             update: {},
-            create: { brandId: brand.id, categoryId: cat.id },
+            create: { brandId: brand.id, categoryId: cat.id, images: [] },
         });
         // Create device catalog entry
         const entry = await prisma.deviceCatalog.upsert({
@@ -436,7 +436,7 @@ async function seedOtherProducts() {
             const bc = await prisma.brandCategory.upsert({
                 where:  { brandId_categoryId: { brandId: brand.id, categoryId: cat.id } },
                 update: {},
-                create: { brandId: brand.id, categoryId: cat.id },
+                create: { brandId: brand.id, categoryId: cat.id, images: [] },
             });
 
             const model: string = prod.name;

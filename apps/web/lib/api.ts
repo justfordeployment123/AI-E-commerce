@@ -84,7 +84,7 @@ export const productsApi = {
   bySlug: (slug: string) => apiFetch<Product>(`/products/${slug}`),
 
   brands: (category: string) =>
-    apiFetch<{ brand: string; image: string | null }[]>(`/products/brands?category=${encodeURIComponent(category)}`),
+    apiFetch<{ brand: string; slug: string; logo: string | null; image: string | null }[]>(`/products/brands?category=${encodeURIComponent(category)}`),
 };
 
 // ── Cart ─────────────────────────────────────────────────────────────────────
@@ -230,15 +230,34 @@ export const repairsApi = {
 };
 
 // ── Banners ───────────────────────────────────────────────────────────────────
+export interface PromoSlide {
+  id: string;
+  order: number;
+  isActive: boolean;
+  imgUrl: string | null;
+  tabTitle: string;
+  tag: string;
+  titleLine1: string;
+  titleLine2: string;
+  titleItalic: string;
+  title: string;
+  subtitle: string;
+  badgeA: string;
+  badgeB: string;
+  specs: string[];
+  themeColor: string;
+  bgGlow: string;
+  btnText: string;
+  btnLink: string;
+}
+
 export const bannersApi = {
   random: (count = 4) =>
     apiFetch<{ id: string; label: string | null; url: string | null }[]>(
       `/banners/random?count=${count}`
     ),
   promoSlides: () =>
-    apiFetch<{ id: string; order: number; imgUrl: string | null; title: string; subtitle: string; btnText: string; btnLink: string }[]>(
-      `/banners/promo-slides`
-    ),
+    apiFetch<PromoSlide[]>(`/banners/promo-slides`),
 };
 
 // ── Catalog (admin + public) ──────────────────────────────────────────────────
@@ -470,6 +489,11 @@ export interface CatalogCategory {
   description?: string;
   image?: string;
   isActive: boolean;
+  productCount: number;
+  minPrice: number | null;
+  modelCount: number;
+  isSellable: boolean;
+  isRepairable: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -480,6 +504,7 @@ export interface CatalogBrand {
   slug: string;
   logo?: string;
   isActive: boolean;
+  productCount: number;
   createdAt: string;
   updatedAt: string;
 }

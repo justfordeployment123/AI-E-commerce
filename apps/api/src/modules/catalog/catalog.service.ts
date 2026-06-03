@@ -22,11 +22,54 @@ export class CatalogService {
 
     async listCategories(includeInactive = false) {
         const where = includeInactive ? {} : { isActive: true };
-        return this.prisma.category.findMany({
+        const categories = await this.prisma.category.findMany({
             where,
             orderBy: { name: 'asc' },
             include: { _count: { select: { brandCategories: true } } },
         });
+
+        const [productCounts, minPrices, modelCounts] = await Promise.all([
+            Promise.all(
+                categories.map(c =>
+                    this.prisma.product
+                        .count({ where: { catalog: { brandCategory: { categoryId: c.id } } } })
+                        .then(count => ({ id: c.id, productCount: count })),
+                ),
+            ),
+            Promise.all(
+                categories.map(c =>
+                    this.prisma.product
+                        .findFirst({
+                            where: {
+                                catalog: { brandCategory: { categoryId: c.id } },
+                                stock: { gt: 0 },
+                            },
+                            orderBy: { price: 'asc' },
+                            select: { price: true },
+                        })
+                        .then(p => ({ id: c.id, minPrice: p?.price ?? null })),
+                ),
+            ),
+            Promise.all(
+                categories.map(c =>
+                    this.prisma.deviceCatalog
+                        .count({ where: { brandCategory: { categoryId: c.id }, isActive: true } })
+                        .then(count => ({ id: c.id, modelCount: count })),
+                ),
+            ),
+        ]);
+
+        const countMap = new Map(productCounts.map(c => [c.id, c.productCount]));
+        const priceMap = new Map(minPrices.map(c => [c.id, c.minPrice]));
+        const modelCountMap = new Map(modelCounts.map(c => [c.id, c.modelCount]));
+
+        return Promise.all(categories.map(async c => ({
+            ...c,
+            image: c.image ? await this.storage.resolveImageUrl(c.image) : null,
+            productCount: countMap.get(c.id) ?? 0,
+            minPrice: priceMap.get(c.id) ?? null,
+            modelCount: modelCountMap.get(c.id) ?? 0,
+        })));
     }
 
     async getCategory(id: string) {
@@ -62,11 +105,27 @@ export class CatalogService {
 
     async listBrands(includeInactive = false) {
         const where = includeInactive ? {} : { isActive: true };
-        return this.prisma.brand.findMany({
+        const brands = await this.prisma.brand.findMany({
             where,
             orderBy: { name: 'asc' },
             include: { _count: { select: { brandCategories: true } } },
         });
+
+        const productCounts = await Promise.all(
+            brands.map(b =>
+                this.prisma.product
+                    .count({ where: { catalog: { brandCategory: { brandId: b.id } } } })
+                    .then(count => ({ id: b.id, productCount: count })),
+            ),
+        );
+        const countMap = new Map(productCounts.map(c => [c.id, c.productCount]));
+        return Promise.all(
+            brands.map(async b => ({
+                ...b,
+                logo: b.logo ? await this.storage.resolveImageUrl(b.logo) : null,
+                productCount: countMap.get(b.id) ?? 0,
+            })),
+        );
     }
 
     async getBrand(id: string) {
@@ -89,7 +148,22 @@ export class CatalogService {
             },
         });
         if (!brand) throw new NotFoundException('Brand not found');
-        return brand;
+        return {
+            ...brand,
+            logo: brand.logo ? await this.storage.resolveImageUrl(brand.logo) : null,
+            brandCategories: await Promise.all(
+                (brand.brandCategories ?? []).map(async bc => ({
+                    ...bc,
+                    category: {
+                        ...bc.category,
+                        image: bc.category.image ? await this.storage.resolveImageUrl(bc.category.image) : null,
+                    },
+                    images: await Promise.all(
+                        ((bc.images as string[]) ?? []).map(img => this.storage.resolveImageUrl(img)),
+                    ),
+                })),
+            ),
+        };
     }
 
     async createBrand(dto: CreateBrandDto) {
@@ -117,11 +191,27 @@ export class CatalogService {
     async listBrandCategories(includeInactive = false, brandId?: string) {
         const where: Record<string, unknown> = includeInactive ? {} : { isActive: true };
         if (brandId) where.brandId = brandId;
-        return this.prisma.brandCategory.findMany({
+        const bcs = await this.prisma.brandCategory.findMany({
             where,
             include: { brand: true, category: true },
             orderBy: [{ category: { name: 'asc' } }, { brand: { name: 'asc' } }],
         });
+        return Promise.all(
+            bcs.map(async bc => ({
+                ...bc,
+                brand: {
+                    ...bc.brand,
+                    logo: bc.brand.logo ? await this.storage.resolveImageUrl(bc.brand.logo) : null,
+                },
+                category: {
+                    ...bc.category,
+                    image: bc.category.image ? await this.storage.resolveImageUrl(bc.category.image) : null,
+                },
+                images: await Promise.all(
+                    ((bc.images as string[]) ?? []).map(img => this.storage.resolveImageUrl(img)),
+                ),
+            })),
+        );
     }
 
     async getBrandCategory(id: string) {
@@ -211,6 +301,44 @@ export class CatalogService {
             },
         });
         if (!brand) throw new NotFoundException('Brand not found');
-        return brand;
+
+        const resolvedBrandCategories = await Promise.all(
+            (brand.brandCategories ?? []).map(async bc => {
+                const resolvedDeviceCatalogs = await Promise.all(
+                    (bc.deviceCatalogs ?? []).map(async dc => {
+                        const resolvedProducts = await Promise.all(
+                            (dc.products ?? []).map(async p => ({
+                                ...p,
+                                images: await Promise.all(
+                                    ((p.images as string[]) ?? []).map(img => this.storage.resolveImageUrl(img)),
+                                ),
+                            })),
+                        );
+                        return {
+                            ...dc,
+                            products: resolvedProducts,
+                        };
+                    }),
+                );
+
+                return {
+                    ...bc,
+                    category: {
+                        ...bc.category,
+                        image: bc.category.image ? await this.storage.resolveImageUrl(bc.category.image) : null,
+                    },
+                    images: await Promise.all(
+                        ((bc.images as string[]) ?? []).map(img => this.storage.resolveImageUrl(img)),
+                    ),
+                    deviceCatalogs: resolvedDeviceCatalogs,
+                };
+            }),
+        );
+
+        return {
+            ...brand,
+            logo: brand.logo ? await this.storage.resolveImageUrl(brand.logo) : null,
+            brandCategories: resolvedBrandCategories,
+        };
     }
 }

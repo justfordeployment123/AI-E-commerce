@@ -27,6 +27,19 @@ function capitalize(s: string): string {
     return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
+// Per-slug flags: which categories support trade-in selling and/or repair
+const CATEGORY_FLAGS: Record<string, { isSellable: boolean; isRepairable: boolean }> = {
+    phones:      { isSellable: true,  isRepairable: true  },
+    tablets:     { isSellable: true,  isRepairable: true  },
+    consoles:    { isSellable: true,  isRepairable: true  },
+    laptops:     { isSellable: true,  isRepairable: true  },
+    audio:       { isSellable: true,  isRepairable: false },
+    smartwatches:{ isSellable: true,  isRepairable: false },
+};
+function categoryFlags(slug: string) {
+    return CATEGORY_FLAGS[slug] ?? { isSellable: false, isRepairable: false };
+}
+
 const PRICING_DEFAULTS = [
     { key: 'margin_pct', value: 30.0, label: 'Default Profit Margin (%)' },
     { key: 'multiplier_mint', value: 1.0, label: 'Mint Condition Multiplier' },
@@ -99,6 +112,10 @@ export interface SeedResult {
     banners: number;
     promoSlides: number;
     deviceCatalog: number;
+    others: number;
+    categories: number;
+    brands: number;
+    brandCategories: number;
     products: {
         created: number;
         updated: number;
@@ -162,12 +179,42 @@ export class SeedService {
         const slideCount     = await this.seedPromoSlides();
         const deviceCount    = await this.seedCatalogFromFolder();
         const productsResult = await this.seedProducts(productsData);
+        const othersCount    = await this.seedOthers();
 
-        return { pricingConfigs: pricingCount, banners: bannerCount, promoSlides: slideCount, deviceCatalog: deviceCount, products: productsResult };
+        const categoryCount      = await this.prisma.category.count();
+        const brandCount         = await this.prisma.brand.count();
+        const brandCategoryCount = await this.prisma.brandCategory.count();
+
+        return { 
+            pricingConfigs: pricingCount, 
+            banners: bannerCount, 
+            promoSlides: slideCount, 
+            deviceCatalog: deviceCount, 
+            others: othersCount, 
+            products: productsResult,
+            categories: categoryCount,
+            brands: brandCount,
+            brandCategories: brandCategoryCount,
+        };
     }
 
     // ─── Purge: wipe all catalog + product data from DB and Garage ───────────
-    async purgeAll(): Promise<{ deleted: number }> {
+    async purgeAll(): Promise<{ 
+        deleted: number; 
+        counts: {
+            orderItems: number;
+            reviews: number;
+            scrapedPrices: number;
+            products: number;
+            deviceCatalog: number;
+            brandCategories: number;
+            categories: number;
+            brands: number;
+            banners: number;
+            promoSlides: number;
+            pricingConfigs: number;
+        }
+    }> {
         // 1. Collect all S3 keys stored in the DB
         const [products, brandCats, categories, brands, banners, promoSlides] = await Promise.all([
             this.prisma.product.findMany({ select: { images: true } }),
@@ -204,21 +251,36 @@ export class SeedService {
             this.logger.log(`Deleted ${s3Keys.length} S3 objects`);
         }
 
-        // 3. Wipe DB in FK-safe order
-        await this.prisma.orderItem.deleteMany({});
-        await this.prisma.review.deleteMany({});
-        await this.prisma.scrapedPrice.deleteMany({});
-        await this.prisma.product.deleteMany({});
-        await this.prisma.deviceCatalog.deleteMany({});
-        await this.prisma.brandCategory.deleteMany({});
-        await this.prisma.category.deleteMany({});
-        await this.prisma.brand.deleteMany({});
-        await this.prisma.banner.deleteMany({});
-        await this.prisma.promoSlide.deleteMany({});
-        await this.prisma.pricingConfig.deleteMany({});
+        // 3. Wipe DB in FK-safe order and track counts
+        const orderItems = await this.prisma.orderItem.deleteMany({});
+        const reviews = await this.prisma.review.deleteMany({});
+        const scrapedPrices = await this.prisma.scrapedPrice.deleteMany({});
+        const productsDeleted = await this.prisma.product.deleteMany({});
+        const deviceCatalogDeleted = await this.prisma.deviceCatalog.deleteMany({});
+        const brandCategoriesDeleted = await this.prisma.brandCategory.deleteMany({});
+        const categoriesDeleted = await this.prisma.category.deleteMany({});
+        const brandsDeleted = await this.prisma.brand.deleteMany({});
+        const bannersDeleted = await this.prisma.banner.deleteMany({});
+        const promoSlidesDeleted = await this.prisma.promoSlide.deleteMany({});
+        const pricingConfigsDeleted = await this.prisma.pricingConfig.deleteMany({});
 
         this.logger.log('Database purged — catalog, products, banners, pricing all cleared');
-        return { deleted: s3Keys.length };
+        return { 
+            deleted: s3Keys.length,
+            counts: {
+                orderItems: orderItems.count,
+                reviews: reviews.count,
+                scrapedPrices: scrapedPrices.count,
+                products: productsDeleted.count,
+                deviceCatalog: deviceCatalogDeleted.count,
+                brandCategories: brandCategoriesDeleted.count,
+                categories: categoriesDeleted.count,
+                brands: brandsDeleted.count,
+                banners: bannersDeleted.count,
+                promoSlides: promoSlidesDeleted.count,
+                pricingConfigs: pricingConfigsDeleted.count,
+            }
+        };
     }
 
     private async seedPricingConfigs(): Promise<number> {
@@ -263,8 +325,8 @@ export class SeedService {
             });
             const cat = await this.prisma.category.upsert({
                 where: { slug: categorySlug },
-                update: {},
-                create: { name: capitalize(categorySlug), slug: categorySlug },
+                update: { ...categoryFlags(categorySlug) },
+                create: { name: capitalize(categorySlug), slug: categorySlug, ...categoryFlags(categorySlug) },
             });
 
             const bcKey = `${brand.id}::${cat.id}`;
@@ -272,7 +334,7 @@ export class SeedService {
                 const bc = await this.prisma.brandCategory.upsert({
                     where: { brandId_categoryId: { brandId: brand.id, categoryId: cat.id } },
                     update: {},
-                    create: { brandId: brand.id, categoryId: cat.id },
+                    create: { brandId: brand.id, categoryId: cat.id, images: [] },
                 });
                 bcCache.set(bcKey, bc.id);
             }
@@ -297,8 +359,8 @@ export class SeedService {
             // Upsert category
             let cat = await this.prisma.category.upsert({
                 where: { slug: categorySlug },
-                update: {},
-                create: { name: capitalize(categorySlug), slug: categorySlug },
+                update: { ...categoryFlags(categorySlug) },
+                create: { name: capitalize(categorySlug), slug: categorySlug, ...categoryFlags(categorySlug) },
             });
 
             // Root-level images → category hero (first one wins)
@@ -335,7 +397,7 @@ export class SeedService {
                 const bc = await this.prisma.brandCategory.upsert({
                     where: { brandId_categoryId: { brandId: brand.id, categoryId: cat.id } },
                     update: { alias },
-                    create: { brandId: brand.id, categoryId: cat.id, alias },
+                    create: { brandId: brand.id, categoryId: cat.id, alias, images: [] },
                 });
 
                 const existingImages = (bc.images as string[]) ?? [];
@@ -439,22 +501,36 @@ export class SeedService {
                 if (imgKey) this.logger.log(`  Promo image: ${imgFilename}`);
             }
 
-            // Derive clean title + subtitle from slides.json fields
-            const title    = [slide.titleLine1, slide.titleLine2].filter(Boolean).join(' ');
-            const subtitle = slide.desc ?? '';
-            const btnText  = slide.btnText ?? 'Shop Now';
-            const btnLink  = slide.btnLink ?? '/';
+            // Map all fields from slides.json to the DB model
+            const slideData = {
+                imgKey:      imgKey ?? null,
+                tabTitle:    slide.tabTitle    ?? '',
+                tag:         slide.tag         ?? '',
+                titleLine1:  slide.titleLine1  ?? '',
+                titleLine2:  slide.titleLine2  ?? '',
+                titleItalic: slide.titleItalic ?? '',
+                title:       [slide.titleLine1, slide.titleLine2].filter(Boolean).join(' '),
+                subtitle:    slide.desc        ?? '',
+                badgeA:      slide.badgeA      ?? '',
+                badgeB:      slide.badgeB      ?? '',
+                specs:       Array.isArray(slide.specs) ? slide.specs.join(',') : (slide.specs ?? ''),
+                themeColor:  slide.themeColor  ?? 'from-blue-500 to-indigo-600',
+                bgGlow:      slide.bgGlow      ?? 'rgba(59,130,246,0.15)',
+                btnText:     slide.btnText     ?? 'Shop Now',
+                btnLink:     slide.btnLink     ?? '/',
+                isActive:    true,
+            };
 
             // Upsert by order so re-seeding is idempotent
             const existing = await this.prisma.promoSlide.findFirst({ where: { order: i } });
             if (existing) {
                 await this.prisma.promoSlide.update({
                     where: { id: existing.id },
-                    data: { imgKey: imgKey ?? existing.imgKey, title, subtitle, btnText, btnLink, isActive: true },
+                    data: { ...slideData, imgKey: imgKey ?? existing.imgKey },
                 });
             } else {
                 await this.prisma.promoSlide.create({
-                    data: { imgKey, title, subtitle, btnText, btnLink, order: i, isActive: true },
+                    data: { ...slideData, order: i },
                 });
                 count++;
             }
@@ -485,11 +561,116 @@ export class SeedService {
         return s3Key;
     }
 
+    // ─── Others (accessories, smartwatches, games, etc.) ─────────────────────
+
+    private async seedOthers(): Promise<number> {
+        const othersJsonPath = path.join(this.seedDir, 'others', 'products.json');
+        if (!fs.existsSync(othersJsonPath)) {
+            this.logger.warn('others/products.json not found — skipping');
+            return 0;
+        }
+
+        const data: Record<string, any[]> = JSON.parse(fs.readFileSync(othersJsonPath, 'utf8'));
+
+        // Each subfolder key maps to its own category (snake_case → kebab-case slug)
+        // Only exception: smart_watches → smartwatches
+        const CAT_SLUG: Record<string, string> = { smart_watches: 'smartwatches' };
+        const CAT_NAME: Record<string, string> = {
+            cables:       'Cables',
+            chargers:     'Chargers',
+            films:        'Films',
+            games:        'Games',
+            graphics:     'Graphics Cards',
+            lens:         'Camera Lenses',
+            memory:       'Memory',
+            mouse:        'Mouse & Peripherals',
+            pen:          'Stylus & Pens',
+            smartwatches: 'Smartwatches',
+            storage:      'Storage',
+        };
+
+        let total = 0;
+
+        for (const [subcatKey, items] of Object.entries(data)) {
+            const categorySlug = CAT_SLUG[subcatKey] ?? subcatKey.replace(/_/g, '-');
+            const categoryName = CAT_NAME[categorySlug] ?? capitalize(categorySlug);
+
+            for (const item of items) {
+                try {
+                    const brandSlug = (item.brand as string).toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
+                    const brand = await this.prisma.brand.upsert({
+                        where: { slug: brandSlug },
+                        update: {},
+                        create: { name: item.brand, slug: brandSlug },
+                    });
+                    const cat = await this.prisma.category.upsert({
+                        where: { slug: categorySlug },
+                        update: { ...categoryFlags(categorySlug) },
+                        create: { name: categoryName, slug: categorySlug, ...categoryFlags(categorySlug) },
+                    });
+                    const bc = await this.prisma.brandCategory.upsert({
+                        where: { brandId_categoryId: { brandId: brand.id, categoryId: cat.id } },
+                        update: {},
+                        create: { brandId: brand.id, categoryId: cat.id, images: [] },
+                    });
+                    const deviceEntry = await this.prisma.deviceCatalog.upsert({
+                        where: { brandCategoryId_model: { brandCategoryId: bc.id, model: item.name } },
+                        update: {},
+                        create: { brandCategoryId: bc.id, model: item.name, storageOptions: [], isActive: true },
+                    });
+
+                    // Upload image: "/others/chargers/filename.png" → seed/others/chargers/filename.png
+                    const imgPath: string = item.image ?? '';
+                    const parts = imgPath.replace(/^\//, '').split('/'); // ["others","chargers","file.png"]
+                    const localImgPath = path.join(this.seedDir, ...parts);
+                    let s3ImageKey: string | null = null;
+                    if (fs.existsSync(localImgPath)) {
+                        const s3Key = `products/${parts.slice(0, -1).join('/')}/${parts[parts.length - 1]}`;
+                        s3ImageKey = await this.uploadLocalFile(localImgPath, s3Key);
+                    }
+
+                    const productData = {
+                        catalogId: deviceEntry.id,
+                        name: item.name,
+                        slug: item.id,
+                        condition: 'Pristine',
+                        storage: '',
+                        price: Number(item.price),
+                        comparePrice: item.comparePrice ? Number(item.comparePrice) : null,
+                        stock: 10,
+                        images: s3ImageKey ? [s3ImageKey] : [],
+                        specs: {},
+                        description: '',
+                        rating: 0,
+                        reviewCount: 0,
+                        isActive: true,
+                    };
+
+                    const existing = await this.prisma.product.findUnique({ where: { slug: item.id } });
+                    if (existing) {
+                        await this.prisma.product.update({ where: { slug: item.id }, data: productData as never });
+                    } else {
+                        await this.prisma.product.create({ data: productData as never });
+                        total++;
+                    }
+                } catch (e: any) {
+                    this.logger.error(`Failed to seed others/${subcatKey}/${item.id}: ${e.message}`);
+                }
+            }
+            this.logger.log(`  Others seeded: ${subcatKey} (${items.length} items)`);
+        }
+
+        this.logger.log(`Seeded ${total} others products`);
+        return total;
+    }
+
     private normalizeCategory(raw: string): string {
         const map: Record<string, string> = {
             'phones': 'phones', 'tablets': 'tablets',
             'consoles': 'consoles', 'laptops': 'laptops',
-            'accessories': 'accessories',
+            'audio': 'audio', 'accessories': 'accessories',
+            'smartwatches': 'smartwatches', 'games': 'games', 'films': 'films',
             'laptops / macbooks': 'laptops',
         };
         return map[raw.toLowerCase()] ?? raw.toLowerCase();
@@ -528,13 +709,13 @@ export class SeedService {
                     const catName = categorySlug.charAt(0).toUpperCase() + categorySlug.slice(1);
                     const catRecord = await this.prisma.category.upsert({
                         where: { slug: categorySlug },
-                        update: {},
-                        create: { name: catName, slug: categorySlug },
+                        update: { ...categoryFlags(categorySlug) },
+                        create: { name: catName, slug: categorySlug, ...categoryFlags(categorySlug) },
                     });
                     const bc = await this.prisma.brandCategory.upsert({
                         where: { brandId_categoryId: { brandId: brandRecord.id, categoryId: catRecord.id } },
                         update: {},
-                        create: { brandId: brandRecord.id, categoryId: catRecord.id },
+                        create: { brandId: brandRecord.id, categoryId: catRecord.id, images: [] },
                     });
 
                     const entry = await this.prisma.deviceCatalog.upsert({

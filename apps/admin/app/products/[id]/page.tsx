@@ -4,12 +4,31 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft, Check, X, Trash2, Upload, Image as ImageIcon,
-  Package, Tag, Layers, ToggleLeft, ToggleRight,
+  Package, Tag, Layers, ToggleLeft, ToggleRight, ExternalLink
 } from "lucide-react";
-import { productsApi, type Product } from "../../../lib/api";
+import { productsApi, ordersApi, catalogCategoriesApi, type Product } from "../../../lib/api";
 
 const CONDITIONS = ["Pristine", "Excellent", "Very Good", "Good", "Fair"];
-const CATEGORIES = ["Phones", "Tablets", "Consoles", "Laptops", "Accessories"];
+const CATEGORIES = ["Phones", "Tablets", "Consoles", "Laptops", "Audio", "Accessories"];
+
+const STATUS_STYLES: Record<string, string> = {
+  PENDING: "bg-blue-50 text-blue-700 border-blue-100",
+  CONFIRMED: "bg-purple-50 text-purple-700 border-purple-100",
+  SHIPPED: "bg-indigo-50 text-indigo-700 border-indigo-100",
+  DELIVERED: "bg-emerald-50 text-emerald-700 border-emerald-100",
+  CANCELLED: "bg-red-50 text-red-600 border-red-100",
+};
+
+const getStatusLabel = (status: string) => {
+  switch (status) {
+    case "PENDING": return "Processing";
+    case "CONFIRMED": return "Confirmed";
+    case "SHIPPED": return "Dispatched";
+    case "DELIVERED": return "Delivered";
+    case "CANCELLED": return "Cancelled";
+    default: return status;
+  }
+};
 
 const fmtDate = (s: string) =>
   new Date(s).toLocaleString("en-GB", { day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
@@ -28,6 +47,17 @@ export default function ProductDetailPage() {
   const [uploadingImg, setUploadingImg] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
+  const [buyers, setBuyers] = useState<{
+    orderId: string;
+    date: string;
+    status: string;
+    quantity: number;
+    price: number;
+    user: { name: string; email: string } | null;
+  }[]>([]);
+  const [loadingBuyers, setLoadingBuyers] = useState(true);
+  const [categories, setCategories] = useState<string[]>(CATEGORIES);
+
   // form state mirrors product fields
   const [form, setForm] = useState({
     name: "", brand: "", model: "", category: "Phones", condition: "Excellent",
@@ -37,6 +67,8 @@ export default function ProductDetailPage() {
   });
 
   useEffect(() => {
+    setLoading(true);
+    setLoadingBuyers(true);
     productsApi.getById(id)
       .then(p => {
         setProduct(p);
@@ -49,6 +81,41 @@ export default function ProductDetailPage() {
           isActive: p.isActive,
           storage: p.storage ?? "",
         });
+
+        // Fetch category options dynamically
+        catalogCategoriesApi.list(true)
+          .then(cats => {
+            const names = cats.map(c => c.name);
+            setCategories(Array.from(new Set([...CATEGORIES, ...names])));
+          })
+          .catch(err => console.error("Failed to load catalog categories", err));
+
+        // Fetch purchase history
+        ordersApi.list({ limit: 500 })
+          .then(res => {
+            const list = res.items.filter(o => o.items.some(i => i.product?.id === p.id));
+            setBuyers(
+              list.map(o => {
+                const item = o.items.find(i => i.product?.id === p.id)!;
+                const customerName = o.user?.name ?? o.shippingAddress?.name ?? "Guest";
+                const customerEmail = o.user?.email ?? o.shippingAddress?.email ?? "—";
+                return {
+                  orderId: o.id,
+                  date: o.createdAt,
+                  status: o.status,
+                  quantity: item.quantity,
+                  price: item.price,
+                  user: { name: customerName, email: customerEmail },
+                };
+              })
+            );
+          })
+          .catch(err => {
+            console.error("Failed to load buyers list", err);
+          })
+          .finally(() => {
+            setLoadingBuyers(false);
+          });
       })
       .catch(() => router.replace("/products"))
       .finally(() => setLoading(false));
@@ -248,7 +315,8 @@ export default function ProductDetailPage() {
                       placeholder={placeholder}
                       value={(form as any)[key]}
                       onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
-                      className="h-11 rounded-2xl border-2 border-zinc-200 px-4 text-sm font-medium outline-none focus:border-black transition-colors"
+                      disabled={key === "brand" || key === "model"}
+                      className="h-11 rounded-2xl border-2 border-zinc-200 px-4 text-sm font-medium outline-none focus:border-black transition-colors disabled:bg-zinc-50 disabled:text-zinc-400 disabled:cursor-not-allowed"
                     />
                   </div>
                 ))}
@@ -258,9 +326,10 @@ export default function ProductDetailPage() {
                   <select
                     value={form.category}
                     onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
-                    className="h-11 rounded-2xl border-2 border-zinc-200 px-4 text-sm font-medium outline-none focus:border-black transition-colors bg-white"
+                    disabled
+                    className="h-11 rounded-2xl border-2 border-zinc-200 px-4 text-sm font-medium outline-none focus:border-black transition-colors bg-white disabled:bg-zinc-50 disabled:text-zinc-400 disabled:cursor-not-allowed"
                   >
-                    {CATEGORIES.map(c => <option key={c}>{c}</option>)}
+                    {categories.map(c => <option key={c}>{c}</option>)}
                   </select>
                 </div>
 
@@ -286,6 +355,68 @@ export default function ProductDetailPage() {
                   />
                 </div>
               </div>
+            </div>
+
+            {/* Purchase History */}
+            <div className="bg-white rounded-3xl border border-zinc-100 shadow-sm p-6">
+              <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-400 mb-5">Purchase History</h2>
+              {loadingBuyers ? (
+                <div className="py-8 flex items-center justify-center">
+                  <div className="h-6 w-6 border-2 border-zinc-200 border-t-black rounded-full animate-spin" />
+                </div>
+              ) : buyers.length > 0 ? (
+                <div className="overflow-x-auto -mx-6">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-zinc-100 text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                        <th className="py-3 px-6">Customer</th>
+                        <th className="py-3 px-6">Date</th>
+                        <th className="py-3 px-6 text-center">Qty</th>
+                        <th className="py-3 px-6 text-right">Price Paid</th>
+                        <th className="py-3 px-6">Status</th>
+                        <th className="py-3 px-6 text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-50 text-sm">
+                      {buyers.map((buyer, idx) => (
+                        <tr key={idx} className="hover:bg-zinc-50/50 transition-colors">
+                          <td className="py-4 px-6">
+                            <div className="font-bold text-zinc-800">{buyer.user?.name}</div>
+                            <div className="text-xs text-zinc-400 font-medium mt-0.5">{buyer.user?.email}</div>
+                          </td>
+                          <td className="py-4 px-6 text-zinc-500 font-medium">
+                            {fmtDate(buyer.date)}
+                          </td>
+                          <td className="py-4 px-6 text-center text-zinc-600 font-bold">
+                            {buyer.quantity}
+                          </td>
+                          <td className="py-4 px-6 text-right font-bold text-zinc-800">
+                            £{buyer.price.toFixed(2)}
+                          </td>
+                          <td className="py-4 px-6">
+                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${STATUS_STYLES[buyer.status] || "bg-zinc-100 text-zinc-800 border-zinc-200"}`}>
+                              {getStatusLabel(buyer.status)}
+                            </span>
+                          </td>
+                          <td className="py-4 px-6 text-right">
+                            <button
+                              onClick={() => router.push(`/orders?q=${buyer.orderId}`)}
+                              className="h-8 w-8 inline-flex items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-600 hover:border-zinc-400 hover:text-black transition-colors"
+                              title="View Order"
+                            >
+                              <ExternalLink className="h-3.5 w-3.5" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="py-12 text-center text-zinc-400 font-medium">
+                  No purchase records found for this product.
+                </div>
+              )}
             </div>
           </div>
 

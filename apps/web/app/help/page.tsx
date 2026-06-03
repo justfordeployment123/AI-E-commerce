@@ -7,11 +7,13 @@ import {
   ChevronDown, Phone, Circle, CreditCard
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { io, Socket } from "socket.io-client";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import { authApi, ordersApi, type Order } from "../../lib/api";
+import { useAuth } from "../../context/auth-context";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002";
 const WS_URL  = API_URL.replace(/^http/, "ws");
@@ -116,6 +118,8 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 export default function HelpPage() {
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
@@ -124,6 +128,8 @@ export default function HelpPage() {
   // Modals / Dropdown States
   const [isOrdersModalOpen, setIsOrdersModalOpen] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [missingDetailsOpen, setMissingDetailsOpen] = useState(false);
+  const [missingFields, setMissingFields] = useState<string[]>([]);
 
   // Real orders
   const [userOrders, setUserOrders] = useState<Order[]>([]);
@@ -147,20 +153,39 @@ export default function HelpPage() {
 
   const categoriesRef = useRef<HTMLDivElement>(null);
 
-  // Load helplines + resolve logged-in user on mount
+  const guardedOpen = (action: () => void) => {
+    if (authLoading) return;
+    if (!user) {
+      sessionStorage.setItem("ts_login_redirect", "/help");
+      router.push("/login?redirect=%2Fhelp");
+      return;
+    }
+    const missing: string[] = [];
+    if (!user.phone)    missing.push("Phone number");
+    if (!user.address)  missing.push("Street address");
+    if (!user.city)     missing.push("City");
+    if (!user.postcode) missing.push("Postcode");
+    if (missing.length > 0) {
+      setMissingFields(missing);
+      setMissingDetailsOpen(true);
+      return;
+    }
+    action();
+  };
+
+  // Load helplines on mount
   useEffect(() => {
     fetch(`${API_URL}/support/helplines`)
       .then(r => r.json()).then(setHelplines).catch(() => {});
-
-    if (typeof window !== "undefined" && localStorage.getItem("ts_token")) {
-      authApi.me()
-        .then(user => {
-          setChatName(user.name ?? "");
-          setChatEmail(user.email ?? "");
-        })
-        .catch(() => {});
-    }
   }, []);
+
+  // Sync user profile name/email when user is loaded
+  useEffect(() => {
+    if (user) {
+      setChatName(user.name ?? "");
+      setChatEmail(user.email ?? "");
+    }
+  }, [user]);
 
   // Auto-scroll chat
   useEffect(() => {
@@ -245,36 +270,40 @@ export default function HelpPage() {
   };
 
   const handleOpenChat = () => {
-    setChatMessages([]);
-    setChatId(null);
-    setChatOrderRef(undefined);
-    socketRef.current?.disconnect();
-    if (chatName.trim()) {
-      setChatStep("chat");
-      setDrawerType("chat");
-      startChatSession(chatName, chatEmail, undefined);
-    } else {
-      setChatStep("form");
-      setDrawerType("chat");
-    }
+    guardedOpen(() => {
+      setChatMessages([]);
+      setChatId(null);
+      setChatOrderRef(undefined);
+      socketRef.current?.disconnect();
+      if (chatName.trim()) {
+        setChatStep("chat");
+        setDrawerType("chat");
+        startChatSession(chatName, chatEmail, undefined);
+      } else {
+        setChatStep("form");
+        setDrawerType("chat");
+      }
+    });
   };
 
   // Trigger Chat with prefilled Order ID context
   const handleSelectOrderForHelp = (order: Order) => {
-    const ref = `#${order.id.slice(0, 8).toUpperCase()}`;
-    setIsOrdersModalOpen(false);
-    setChatMessages([]);
-    setChatId(null);
-    setChatOrderRef(ref);
-    socketRef.current?.disconnect();
-    if (chatName.trim()) {
-      setChatStep("chat");
-      setDrawerType("chat");
-      startChatSession(chatName, chatEmail, ref);
-    } else {
-      setChatStep("form");
-      setDrawerType("chat");
-    }
+    guardedOpen(() => {
+      const ref = `#${order.id.slice(0, 8).toUpperCase()}`;
+      setIsOrdersModalOpen(false);
+      setChatMessages([]);
+      setChatId(null);
+      setChatOrderRef(ref);
+      socketRef.current?.disconnect();
+      if (chatName.trim()) {
+        setChatStep("chat");
+        setDrawerType("chat");
+        startChatSession(chatName, chatEmail, ref);
+      } else {
+        setChatStep("form");
+        setDrawerType("chat");
+      }
+    });
   };
 
   const scrollToCategories = () => {
@@ -902,6 +931,41 @@ export default function HelpPage() {
         )}
       </AnimatePresence>
       
+      {/* Missing profile details modal */}
+      {missingDetailsOpen && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setMissingDetailsOpen(false)} />
+          <div className="relative bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl p-6 max-w-sm w-full space-y-4 text-left">
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="text-base font-black text-zinc-950 dark:text-white">Complete your profile first</h3>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-1">We need a few more details before you can start a chat.</p>
+              </div>
+              <button onClick={() => setMissingDetailsOpen(false)} className="text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors ml-4 mt-0.5">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <ul className="space-y-2">
+              {missingFields.map(f => (
+                <li key={f} className="flex items-center gap-2 text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                  <span className="h-1.5 w-1.5 rounded-full bg-red-500 shrink-0" />
+                  {f} is missing
+                </li>
+              ))}
+            </ul>
+            <button
+              onClick={() => {
+                setMissingDetailsOpen(false);
+                router.push("/account/settings");
+              }}
+              className="w-full h-11 bg-black dark:bg-accent text-white rounded-xl text-sm font-black hover:bg-zinc-800 dark:hover:bg-accent-dark transition-colors"
+            >
+              Go to Account Settings →
+            </button>
+          </div>
+        </div>
+      )}
+
       <Footer />
     </div>
   );

@@ -3,7 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { tradeInsApi, storesApi, uploadsApi, catalogApi, type Store } from "../../lib/api";
+import { tradeInsApi, storesApi, uploadsApi, catalogApi, productsApi, type Store, type CatalogCategory, type Product } from "../../lib/api";
 import {
   Smartphone, Tablet, Gamepad2, Laptop, ArrowLeft, ArrowRight,
   Check, ChevronRight, MapPin, Zap, Shield, Clock,
@@ -30,14 +30,29 @@ function GoogleIcon() {
 
 // ─── Data ──────────────────────────────────────────────────────────────────
 
-const CATEGORIES = [
-  { id: "Phone", label: "Smartphone", icon: Smartphone, img: "/phones/samsung/bento_smartphones.png", mood: "bg-sky-500/10 border-sky-500/20", moodIcon: "text-sky-500", glow: "hover:shadow-sky-500/10", sub: "iPhone, Galaxy, Pixel, OnePlus", count: "60+ models" },
-  { id: "Tablet", label: "Tablet / iPad", icon: Tablet, img: "/tablets/ipad/showcase_ipad_pro.png", mood: "bg-rose-500/10 border-rose-500/20", moodIcon: "text-rose-500", glow: "hover:shadow-rose-500/10", sub: "iPad, Galaxy Tab, Surface Pro", count: "20+ models" },
-  { id: "Console", label: "Gaming Console", icon: Gamepad2, img: "/consoles/showcase_ps5.png", mood: "bg-violet-500/10 border-violet-500/20", moodIcon: "text-violet-500", glow: "hover:shadow-violet-500/10", sub: "PS5, Xbox Series, Switch", count: "17 models" },
-  { id: "Laptop", label: "Laptop & MacBook", icon: Laptop, img: "/laptops/MacBook/showcase_macbook.png", mood: "bg-amber-500/10 border-amber-500/20", moodIcon: "text-amber-600", glow: "hover:shadow-amber-500/10", sub: "MacBook, XPS, ThinkPad", count: "25+ models" },
-  { id: "Smartwatch", label: "Smartwatch", icon: Watch, img: "/Other/watch/galaxy_watch_promo_1778927696615.png", mood: "bg-emerald-500/10 border-emerald-500/20", moodIcon: "text-emerald-500", glow: "hover:shadow-emerald-500/10", sub: "Apple Watch, Galaxy Watch, Fitbit", count: "30+ models" },
-  { id: "Audio", label: "Audio & Headphones", icon: Headphones, img: "/audio/bento_audio.png", mood: "bg-indigo-500/10 border-indigo-500/20", moodIcon: "text-indigo-500", glow: "hover:shadow-indigo-500/10", sub: "AirPods, Sony, Bose", count: "25+ models" },
-];
+// Visual metadata keyed by category slug — the list itself comes from the API
+const CAT_METADATA: Record<string, {
+  oldId: string; Icon: React.ElementType;
+  img: string; mood: string; moodIcon: string; glow: string; sub: string;
+}> = {
+  phones:      { oldId: "Phone",      Icon: Smartphone, img: "/phones/samsung/bento_smartphones.png",             mood: "bg-sky-500/10 border-sky-500/20",     moodIcon: "text-sky-500",     glow: "hover:shadow-sky-500/10",     sub: "iPhone, Galaxy, Pixel, OnePlus"         },
+  tablets:     { oldId: "Tablet",     Icon: Tablet,     img: "/tablets/ipad/showcase_ipad_pro.png",               mood: "bg-rose-500/10 border-rose-500/20",   moodIcon: "text-rose-500",    glow: "hover:shadow-rose-500/10",    sub: "iPad, Galaxy Tab, Surface Pro"          },
+  consoles:    { oldId: "Console",    Icon: Gamepad2,   img: "/consoles/showcase_ps5.png",                        mood: "bg-violet-500/10 border-violet-500/20",moodIcon: "text-violet-500",  glow: "hover:shadow-violet-500/10",  sub: "PS5, Xbox Series, Switch"               },
+  laptops:     { oldId: "Laptop",     Icon: Laptop,     img: "/laptops/MacBook/showcase_macbook.png",             mood: "bg-amber-500/10 border-amber-500/20",  moodIcon: "text-amber-600",   glow: "hover:shadow-amber-500/10",   sub: "MacBook, XPS, ThinkPad"                 },
+  audio:       { oldId: "Audio",      Icon: Headphones, img: "/audio/bento_audio.png",                            mood: "bg-indigo-500/10 border-indigo-500/20",moodIcon: "text-indigo-500",  glow: "hover:shadow-indigo-500/10",  sub: "AirPods, Sony, Bose"                    },
+  smartwatches:{ oldId: "Smartwatch", Icon: Watch,      img: "/Other/watch/galaxy_watch_promo_1778927696615.png", mood: "bg-emerald-500/10 border-emerald-500/20",moodIcon:"text-emerald-500", glow: "hover:shadow-emerald-500/10", sub: "Apple Watch, Galaxy Watch, Fitbit"       },
+};
+
+// Maps product.category (DB name) → wizard category ID used by SPECS / CONDITION_QUESTIONS
+const CAT_NAME_TO_WIZARD_ID: Record<string, string> = {
+  Phones: "Phone", Tablets: "Tablet", Consoles: "Console",
+  Laptops: "Laptop", Audio: "Audio", Smartwatches: "Smartwatch",
+};
+const CAT_NAME_MOOD: Record<string, string> = {
+  Phones: "bg-sky-500/10", Tablets: "bg-rose-500/10",
+  Consoles: "bg-violet-500/10", Laptops: "bg-amber-500/10",
+  Audio: "bg-indigo-500/10", Smartwatches: "bg-emerald-500/10",
+};
 
 const BRANDS: Record<string, string[]> = {
   Phone: ["Apple", "Samsung", "Google", "OnePlus", "Nothing", "Motorola"],
@@ -352,6 +367,42 @@ export default function TradeInPage() {
       .then((entries: { model: string }[]) => setDynamicModels(entries.map(e => e.model)))
       .catch(() => {});
   }, [state.category, state.brand]);
+
+  const [catalogCats, setCatalogCats] = useState<CatalogCategory[]>([]);
+  const [catFallbackImages, setCatFallbackImages] = useState<Record<string, string>>({});
+  useEffect(() => {
+    catalogApi.listCategories()
+      .then(cats => {
+        const sellable = cats.filter(c => c.isSellable);
+        setCatalogCats(sellable);
+        // For categories with no DB image, fetch a product image as fallback
+        sellable.filter(c => !c.image).forEach(c => {
+          productsApi.list({ category: c.name, limit: 1 })
+            .then(r => {
+              const img = r.items[0]?.images?.[0];
+              if (img) setCatFallbackImages(prev => ({ ...prev, [c.slug]: img }));
+            })
+            .catch(() => {});
+        });
+      })
+      .catch(() => {});
+  }, []);
+
+  const [hotItems, setHotItems] = useState<Product[]>([]);
+  useEffect(() => {
+    productsApi.list({ limit: 20, condition: "Pristine" }).then(r => {
+      // pick the most expensive product from each category, up to 4
+      const seen = new Set<string>();
+      const picks: Product[] = [];
+      for (const p of [...r.items].sort((a, b) => b.price - a.price)) {
+        if (!seen.has(p.category) && picks.length < 4) {
+          seen.add(p.category);
+          picks.push(p);
+        }
+      }
+      setHotItems(picks.length > 0 ? picks : r.items.slice(0, 4));
+    }).catch(() => {});
+  }, []);
 
   const [submitting, setSubmitting] = useState(false);
   const [submitRef, setSubmitRef] = useState("");
@@ -745,38 +796,49 @@ export default function TradeInPage() {
             </h2>
 
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto mb-32 text-left">
-              {CATEGORIES.map((cat) => {
+              {catalogCats.map((cat) => {
+                const meta = CAT_METADATA[cat.slug];
+                const mood = meta?.mood ?? "bg-zinc-500/10 border-zinc-500/20";
+                const moodIcon = meta?.moodIcon ?? "text-zinc-500";
+                const img = cat.image ?? catFallbackImages[cat.slug] ?? "";
+                const isProductFallback = !cat.image && !!catFallbackImages[cat.slug];
+                const sub = cat.description ?? meta?.sub ?? "";
+                const catId = meta?.oldId ?? cat.slug;
+                const modelCount = cat.modelCount > 0 ? `${cat.modelCount}+ models` : null;
                 return (
                   <motion.button
                     key={cat.id}
                     whileHover={{ y: -6, scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={() => startWizard(cat.id)}
+                    onClick={() => startWizard(catId)}
                     className="flex flex-col rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm hover:shadow-2xl hover:border-zinc-300 dark:hover:border-zinc-600 transition-all duration-300 group overflow-hidden w-full text-left"
                   >
-                    {/* Image area */}
-                    <div className={`w-full aspect-[4/3] ${cat.mood} relative overflow-hidden`}>
-                      <img
-                        src={cat.img}
-                        alt={cat.label}
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.06]"
-                      />
-                      {/* Bottom fade into card */}
+                    <div className={`w-full aspect-[4/3] ${mood} relative overflow-hidden flex items-center justify-center`}>
+                      {img && (
+                        <img
+                          src={img}
+                          alt={cat.name}
+                          className={`transition-transform duration-500 group-hover:scale-[1.04] ${
+                            isProductFallback
+                              ? "h-[75%] w-[75%] object-contain drop-shadow-xl"
+                              : "h-full w-full object-cover group-hover:scale-[1.06]"
+                          }`}
+                        />
+                      )}
                       <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-white/60 to-transparent dark:from-zinc-900/60 pointer-events-none" />
-                      {/* Model count badge */}
-                      <div className="absolute top-3 right-3 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-300 border border-zinc-200/60 dark:border-zinc-700/60">
-                        {cat.count}
-                      </div>
+                      {modelCount && (
+                        <div className="absolute top-3 right-3 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-300 border border-zinc-200/60 dark:border-zinc-700/60">
+                          {modelCount}
+                        </div>
+                      )}
                     </div>
-
-                    {/* Details */}
                     <div className="px-5 py-4 flex items-center justify-between">
                       <div>
-                        <h3 className="font-extrabold text-base text-zinc-950 dark:text-white leading-tight">{cat.label}</h3>
-                        <p className="text-xs text-zinc-400 mt-0.5">{cat.sub}</p>
+                        <h3 className="font-extrabold text-base text-zinc-950 dark:text-white leading-tight">{cat.name}</h3>
+                        {sub && <p className="text-xs text-zinc-400 mt-0.5">{sub}</p>}
                       </div>
-                      <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${cat.mood} group-hover:scale-110 transition-transform duration-200`}>
-                        <ChevronRight className={`h-4 w-4 ${cat.moodIcon} group-hover:translate-x-0.5 transition-transform`} />
+                      <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${mood} group-hover:scale-110 transition-transform duration-200`}>
+                        <ChevronRight className={`h-4 w-4 ${moodIcon} group-hover:translate-x-0.5 transition-transform`} />
                       </div>
                     </div>
                   </motion.button>
@@ -802,39 +864,49 @@ export default function TradeInPage() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {[
-                  { name: "iPhone 15 Pro Max", val: "£780", img: "/phones/iphone/showcase_iphone.png", category: "Phone", brand: "Apple", mood: "bg-sky-500/10" },
-                  { name: "MacBook Pro 16\" M3 Max", val: "£1,800", img: "/laptops/MacBook/showcase_macbook.png", category: "Laptop", brand: "Apple", mood: "bg-amber-500/10" },
-                  { name: "PS5 Disc Edition", val: "£340", img: "/consoles/showcase_ps5.png", category: "Console", brand: "Sony PlayStation", mood: "bg-violet-500/10" },
-                  { name: "AirPods Max", val: "£260", img: "/audio/showcase_airpods_max.png", category: "Audio", brand: "Apple", mood: "bg-indigo-500/10" }
-                ].map((item, i) => (
-                  <motion.div
-                    key={i}
-                    whileHover={{ y: -6 }}
-                    className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl flex flex-col overflow-hidden hover:shadow-xl hover:border-zinc-300 dark:hover:border-zinc-600 transition-all duration-300 group shadow-sm"
-                  >
-                    <div className={`w-full aspect-[4/3] ${item.mood} relative overflow-hidden`}>
-                      <img src={item.img} alt={item.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                      <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-white/50 to-transparent dark:from-zinc-900/50 pointer-events-none" />
-                    </div>
-                    <div className="p-5">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">{item.brand}</span>
-                      <h4 className="font-extrabold text-base text-zinc-900 dark:text-white leading-tight mt-0.5 truncate">{item.name}</h4>
-                      <div className="flex items-center justify-between mt-4">
-                        <div>
-                          <p className="text-[9px] font-black uppercase tracking-widest text-zinc-400 leading-none">Up to</p>
-                          <p className="text-2xl font-black text-zinc-950 dark:text-white mt-0.5">{item.val}</p>
-                        </div>
-                        <button
-                          onClick={() => handleSelectSuggestion({ name: item.name, category: item.category, brand: item.brand })}
-                          className="px-4 py-2.5 bg-zinc-950 dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-100 text-white dark:text-zinc-950 rounded-xl text-xs font-black transition-colors"
-                        >
-                          Sell Now
-                        </button>
+                {hotItems.map((p) => {
+                  const tradeInVal = p.comparePrice ?? Math.round(p.price * 1.35);
+                  const mood = CAT_NAME_MOOD[p.category] ?? "bg-zinc-500/10";
+                  const wizardId = CAT_NAME_TO_WIZARD_ID[p.category] ?? p.category;
+                  // Device categories have lifestyle photos → cover; accessories/others have product shots → contain
+                  const isDeviceCat = ["Phones","Tablets","Consoles","Laptops","Audio"].includes(p.category);
+                  return (
+                    <motion.div
+                      key={p.id}
+                      whileHover={{ y: -6 }}
+                      className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl flex flex-col overflow-hidden hover:shadow-xl hover:border-zinc-300 dark:hover:border-zinc-600 transition-all duration-300 group shadow-sm"
+                    >
+                      <div className={`w-full aspect-[4/3] ${mood} relative overflow-hidden ${isDeviceCat ? "" : "p-6"}`}>
+                        {p.images?.[0] && (
+                          <img
+                            src={p.images[0]}
+                            alt={p.name}
+                            className={`h-full w-full transition-transform duration-500 group-hover:scale-105 ${
+                              isDeviceCat ? "object-cover" : "object-contain drop-shadow-xl"
+                            }`}
+                          />
+                        )}
+                        {isDeviceCat && <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-white/50 to-transparent dark:from-zinc-900/50 pointer-events-none" />}
                       </div>
-                    </div>
-                  </motion.div>
-                ))}
+                      <div className="p-5">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">{p.brand}</span>
+                        <h4 className="font-extrabold text-base text-zinc-900 dark:text-white leading-tight mt-0.5 truncate">{p.name}</h4>
+                        <div className="flex items-center justify-between mt-4">
+                          <div>
+                            <p className="text-[9px] font-black uppercase tracking-widest text-zinc-400 leading-none">Up to</p>
+                            <p className="text-2xl font-black text-zinc-950 dark:text-white mt-0.5">£{tradeInVal}</p>
+                          </div>
+                          <button
+                            onClick={() => handleSelectSuggestion({ name: p.name, category: wizardId, brand: p.brand })}
+                            className="px-4 py-2.5 bg-zinc-950 dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-100 text-white dark:text-zinc-950 rounded-xl text-xs font-black transition-colors"
+                          >
+                            Sell Now
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
               </div>
             </div>
 
@@ -1220,22 +1292,28 @@ export default function TradeInPage() {
                             >
                               <StepHeader label="What device are we trading in?" sub="Select a category from our supported devices list." />
                               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                {CATEGORIES.map((cat) => {
-                                  const Icon = cat.icon;
+                                {catalogCats.map((cat) => {
+                                  const meta = CAT_METADATA[cat.slug];
+                                  const Icon = meta?.Icon ?? Smartphone;
+                                  const glow = meta?.glow ?? "hover:shadow-zinc-500/10";
+                                  const mood = meta?.mood ?? "bg-zinc-500/10 border-zinc-500/20";
+                                  const moodIcon = meta?.moodIcon ?? "text-zinc-500";
+                                  const catId = meta?.oldId ?? cat.slug;
+                                  const count = cat.modelCount > 0 ? `${cat.modelCount}+ models` : "";
                                   return (
                                     <motion.button
                                       key={cat.id}
                                       whileHover={{ y: -4, scale: 1.02 }}
                                       whileTap={{ scale: 0.98 }}
-                                      onClick={() => handleCategorySelect(cat.id)}
-                                      className={`flex flex-col items-center gap-4 p-6 rounded-2xl border border-zinc-200 hover:border-zinc-950 transition-all text-center group bg-zinc-50 hover:bg-white hover:shadow-lg ${cat.glow}`}
+                                      onClick={() => handleCategorySelect(catId)}
+                                      className={`flex flex-col items-center gap-4 p-6 rounded-2xl border border-zinc-200 hover:border-zinc-950 transition-all text-center group bg-zinc-50 hover:bg-white hover:shadow-lg ${glow}`}
                                     >
-                                      <div className={`h-14 w-14 rounded-2xl bg-white border border-zinc-100 flex items-center justify-center shadow-sm group-hover:${cat.mood} group-hover:border-transparent transition-all`}>
-                                        <Icon className={`h-6 w-6 text-zinc-500 group-hover:${cat.moodIcon} transition-colors`} strokeWidth={1.5} />
+                                      <div className={`h-14 w-14 rounded-2xl bg-white border border-zinc-100 flex items-center justify-center shadow-sm group-hover:${mood} group-hover:border-transparent transition-all`}>
+                                        <Icon className={`h-6 w-6 text-zinc-500 group-hover:${moodIcon} transition-colors`} strokeWidth={1.5} />
                                       </div>
                                       <div>
-                                        <p className="text-sm font-extrabold text-zinc-900">{cat.label}</p>
-                                        <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider mt-0.5">{cat.count}</p>
+                                        <p className="text-sm font-extrabold text-zinc-900">{cat.name}</p>
+                                        <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider mt-0.5">{count}</p>
                                       </div>
                                     </motion.button>
                                   );

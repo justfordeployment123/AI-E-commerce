@@ -2,14 +2,24 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
 import { catalogBrandsApi, type CatalogBrandItem } from "../../../lib/api";
-import { Plus, Pencil, Trash2, Upload, Check, X, ArrowLeft, ExternalLink } from "lucide-react";
+import { Plus, Pencil, Trash2, Upload, Check, X, ArrowLeft } from "lucide-react";
 
 type Form = { name: string; slug: string; isActive: boolean };
 const empty: Form = { name: "", slug: "", isActive: true };
 const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
+// Slugs that belong to the "Main Brands" group
+const MAIN_BRANDS_SLUGS = new Set([
+  "apple", "samsung", "google", "oneplus", "asus", "sony", "microsoft"
+]);
+
 export default function BrandsPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const shouldCreate = searchParams?.get("create") === "true";
+
   const [brands, setBrands] = useState<CatalogBrandItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<string | null>(null);
@@ -24,7 +34,13 @@ export default function BrandsPage() {
     setLoading(true);
     catalogBrandsApi.list(true).then(setBrands).finally(() => setLoading(false));
   };
-  useEffect(load, []);
+
+  useEffect(() => {
+    load();
+    if (shouldCreate) {
+      startCreate();
+    }
+  }, [shouldCreate]);
 
   function startEdit(b: CatalogBrandItem) {
     setEditing(b.id); setError("");
@@ -112,56 +128,83 @@ export default function BrandsPage() {
         <div className="flex items-center justify-center py-16">
           <div className="h-6 w-6 border-4 border-zinc-200 border-t-black rounded-full animate-spin" />
         </div>
-      ) : (
-        <div className="bg-white border border-zinc-100 rounded-2xl overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="border-b border-zinc-100 bg-zinc-50">
-              <tr className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
-                <th className="text-left px-5 py-3">Brand</th>
-                <th className="text-left px-5 py-3">Slug</th>
-                <th className="text-left px-5 py-3">Logo</th>
-                <th className="text-left px-5 py-3">Status</th>
-                <th className="px-5 py-3" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-50">
-              {brands.map(brand => (
-                <tr key={brand.id} className="hover:bg-zinc-50/50">
-                  <td className="px-5 py-3 font-semibold text-zinc-900">{brand.name}</td>
-                  <td className="px-5 py-3 text-zinc-400 font-mono text-xs">{brand.slug}</td>
-                  <td className="px-5 py-3">
-                    {brand.logo
-                      ? <img src={brand.logo} alt="" className="h-8 w-8 rounded-lg object-contain bg-zinc-100 p-1" />
-                      : <button onClick={() => { pendingUploadId.current = brand.id; fileRef.current?.click(); }}
-                          disabled={uploadingId === brand.id}
-                          className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700">
-                          <Upload className="h-3 w-3" />{uploadingId === brand.id ? "…" : "Upload"}
-                        </button>}
-                  </td>
-                  <td className="px-5 py-3">
-                    <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${brand.isActive ? "bg-emerald-50 text-emerald-700" : "bg-zinc-100 text-zinc-400"}`}>
-                      {brand.isActive ? <Check className="h-2.5 w-2.5" /> : <X className="h-2.5 w-2.5" />}
-                      {brand.isActive ? "Active" : "Inactive"}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3">
-                    <div className="flex items-center gap-2 justify-end">
-                      <Link href={`/catalog-mgmt/brands/${brand.id}`} title="Manage category images"
-                        className="text-zinc-300 hover:text-zinc-700"><ExternalLink className="h-3.5 w-3.5" /></Link>
-                      {brand.logo && <button onClick={() => { pendingUploadId.current = brand.id; fileRef.current?.click(); }} className="text-zinc-300 hover:text-zinc-600"><Upload className="h-3.5 w-3.5" /></button>}
-                      <button onClick={() => startEdit(brand)} className="text-zinc-300 hover:text-zinc-700"><Pencil className="h-3.5 w-3.5" /></button>
-                      <button onClick={() => remove(brand.id)} className="text-zinc-300 hover:text-red-500"><Trash2 className="h-3.5 w-3.5" /></button>
-                    </div>
-                  </td>
+      ) : (() => {
+        const mainBrands   = brands.filter(b =>  MAIN_BRANDS_SLUGS.has(b.slug));
+        const othersBrands = brands.filter(b => !MAIN_BRANDS_SLUGS.has(b.slug));
+
+        const renderTable = (rows: CatalogBrandItem[]) => (
+          <div className="bg-white border border-zinc-100 rounded-2xl overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="border-b border-zinc-100 bg-zinc-50">
+                <tr className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                  <th className="text-left px-5 py-3">Brand</th>
+                  <th className="text-left px-5 py-3">Slug</th>
+                  <th className="text-left px-5 py-3">Logo</th>
+                  <th className="text-left px-5 py-3">Status</th>
+                  <th className="px-5 py-3" />
                 </tr>
-              ))}
-              {brands.length === 0 && (
-                <tr><td colSpan={5} className="px-5 py-10 text-center text-sm text-zinc-400">No brands yet.</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
+              </thead>
+              <tbody className="divide-y divide-zinc-50">
+                {rows.map(brand => (
+                  <tr key={brand.id} className="hover:bg-zinc-50/50 cursor-pointer" onClick={() => router.push(`/catalog-mgmt/brands/${brand.id}`)}>
+                    <td className="px-5 py-3 font-semibold text-zinc-900">{brand.name}</td>
+                    <td className="px-5 py-3 text-zinc-400 font-mono text-xs">{brand.slug}</td>
+                    <td className="px-5 py-3" onClick={e => e.stopPropagation()}>
+                      {brand.logo
+                        ? <img src={brand.logo} alt="" className="h-8 w-8 rounded-lg object-contain bg-zinc-100 p-1" />
+                        : <button onClick={(e) => { e.stopPropagation(); pendingUploadId.current = brand.id; fileRef.current?.click(); }}
+                            disabled={uploadingId === brand.id}
+                            className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700">
+                            <Upload className="h-3 w-3" />{uploadingId === brand.id ? "…" : "Upload"}
+                          </button>}
+                    </td>
+                    <td className="px-5 py-3">
+                      <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${brand.isActive ? "bg-emerald-50 text-emerald-700" : "bg-zinc-100 text-zinc-400"}`}>
+                        {brand.isActive ? <Check className="h-2.5 w-2.5" /> : <X className="h-2.5 w-2.5" />}
+                        {brand.isActive ? "Active" : "Inactive"}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3" onClick={e => e.stopPropagation()}>
+                      <div className="flex items-center gap-2 justify-end">
+                        <button onClick={(e) => { e.stopPropagation(); remove(brand.id); }} className="text-zinc-300 hover:text-red-500"><Trash2 className="h-3.5 w-3.5" /></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {rows.length === 0 && (
+                  <tr><td colSpan={5} className="px-5 py-10 text-center text-sm text-zinc-400">None.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        );
+
+        return (
+          <div className="space-y-8">
+            {/* Main Brands */}
+            <div>
+              <div className="flex items-center gap-3 mb-3">
+                <h2 className="text-xs font-bold uppercase tracking-widest text-zinc-500">Main Brands</h2>
+                <div className="flex-1 h-px bg-zinc-100" />
+                <span className="text-[10px] font-bold text-zinc-300">{mainBrands.length}</span>
+              </div>
+              {renderTable(mainBrands)}
+            </div>
+
+            {/* Other Brands */}
+            {othersBrands.length > 0 && (
+              <div>
+                <div className="flex items-center gap-3 mb-3">
+                  <h2 className="text-xs font-bold uppercase tracking-widest text-zinc-500">Other Brands</h2>
+                  <div className="flex-1 h-px bg-zinc-100" />
+                  <span className="text-[10px] font-bold text-zinc-300">{othersBrands.length}</span>
+                </div>
+                {renderTable(othersBrands)}
+              </div>
+            )}
+          </div>
+        );
+      })()}
     </div>
   );
 }

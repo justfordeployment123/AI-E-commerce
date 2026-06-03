@@ -7,7 +7,7 @@ import { productsApi, reviewsApi } from "../../../lib/api";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import {
-  Smartphone, Laptop, Tablet, Gamepad2, Headphones,
+  Smartphone, Laptop, Tablet, Gamepad2, Headphones, Package, Watch,
   ChevronDown, ShoppingCart, Star, Check,
   ArrowLeft, ArrowRight, ShieldCheck, Zap, RefreshCw, X, SlidersHorizontal,
   Battery, Camera, Monitor, Wifi, Cpu
@@ -71,6 +71,42 @@ const CATEGORY_META: Record<string, {
     description: "Genuine refurbished accessories including headphones, chargers, cases and cables. Tested and quality-checked.",
     filters: ["Sony", "Apple", "Bose"],
     brands: ["Sony", "Apple", "Bose", "Samsung"],
+  },
+  accessories: {
+    label: "Accessories",
+    plural: "Accessories",
+    icon: Package,
+    mood: "bg-zinc-50 text-zinc-900 border-zinc-200",
+    description: "Chargers, cables, memory, storage, mice, graphics cards and more — quality accessories at great prices.",
+    filters: [],
+    brands: [],
+  },
+  smartwatches: {
+    label: "Smartwatches",
+    plural: "Smartwatches",
+    icon: Watch,
+    mood: "bg-teal-50 text-teal-900 border-teal-200",
+    description: "Certified refurbished smartwatches from Apple, Samsung and more. Battery-tested and quality-graded.",
+    filters: ["Apple", "Samsung"],
+    brands: ["Apple", "Samsung"],
+  },
+  games: {
+    label: "Games",
+    plural: "Video Games",
+    icon: Gamepad2,
+    mood: "bg-indigo-50 text-indigo-900 border-indigo-200",
+    description: "Pre-owned video games at great prices. Fully tested and ready to play.",
+    filters: [],
+    brands: [],
+  },
+  films: {
+    label: "Films",
+    plural: "Films & Blu-rays",
+    icon: Monitor,
+    mood: "bg-sky-50 text-sky-900 border-sky-200",
+    description: "Pre-owned Blu-rays and DVDs at brilliant prices.",
+    filters: [],
+    brands: [],
   },
 };
 
@@ -255,10 +291,38 @@ const SEO_TEXT: Record<string, { title: string; content: string[] }> = {
   }
 };
 
+const DEFAULT_META = {
+  icon: Package,
+  mood: "bg-zinc-50 text-zinc-900 border-zinc-200",
+  filters: [] as string[],
+  brands: [] as string[],
+};
+
 export default function CategoryPage() {
   const params = useParams();
   const categorySlug = (params?.category as string)?.toLowerCase();
-  const meta = CATEGORY_META[categorySlug];
+  const staticMeta = CATEGORY_META[categorySlug];
+
+  // For unknown slugs, fetch the category from the API and build a fallback
+  const [dynamicCatName, setDynamicCatName] = useState<string | null>(null);
+  const [catNotFound, setCatNotFound] = useState(false);
+  useEffect(() => {
+    if (staticMeta) return;
+    catalogApi.listCategories({ includeInactive: false } as any)
+      .then(cats => {
+        const found = cats.find(c => c.slug === categorySlug);
+        if (found) setDynamicCatName(found.name);
+        else setCatNotFound(true);
+      })
+      .catch(() => setCatNotFound(true));
+  }, [categorySlug, staticMeta]);
+
+  const meta = staticMeta ?? (dynamicCatName ? {
+    ...DEFAULT_META,
+    label: dynamicCatName,
+    plural: dynamicCatName,
+    description: `Browse all ${dynamicCatName} products.`,
+  } : null);
 
   const [activeBrands, setActiveBrands] = useState<string[]>([]);
   const [activeGrades, setActiveGrades] = useState<string[]>([]);
@@ -271,7 +335,7 @@ export default function CategoryPage() {
   const [selectedDiagnostic, setSelectedDiagnostic] = useState<string>("battery");
   const [displayProducts, setDisplayProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [subBrands, setSubBrands] = useState<{ brand: string; image: string | null }[]>([]);
+  const [subBrands, setSubBrands] = useState<{ brand: string; slug: string; logo: string | null; image: string | null }[]>([]);
   const [liveReviews, setLiveReviews] = useState<typeof MOCK_REVIEWS | null>(null);
 
   const { addItem } = useCart();
@@ -297,20 +361,20 @@ export default function CategoryPage() {
         }).catch(() => {});
         try {
           const res = await productsApi.list({ category: apiCategory, limit: 100 });
-          setDisplayProducts(res.items.map(p => ({
+          const mapped = res.items.map(p => ({
             id: p.slug, title: p.name, brand: p.brand, grade: p.condition,
             storage: String((p.specs as Record<string, unknown>)?.storage ?? "—"),
             price: p.price, originalPrice: p.comparePrice ?? p.price,
             rating: p.rating, reviews: p.reviewCount, image: p.images[0] ?? "", stock: p.stock,
-          })));
+          }));
+          const shuffled = mapped.sort(() => Math.random() - 0.5);
+          setDisplayProducts(shuffled);
         } catch { /* ignore */ } finally { setLoading(false); }
       });
   }, [categorySlug]);
 
-  if (!meta) {
-    notFound();
-    return null;
-  }
+  if (catNotFound) { notFound(); return null; }
+  if (!meta) return null; // still loading dynamic meta
 
   async function handleAdd(id: string) {
     const product = displayProducts.find(p => p.id === id);
@@ -355,23 +419,6 @@ export default function CategoryPage() {
     <div className="min-h-screen bg-background text-foreground font-sans selection:bg-accent selection:text-white">
       <Navbar />
 
-      {/* ── Header ─────────────────────────────────────────────────── */}
-      <section className="bg-white border-b border-zinc-200">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-5">
-          <div className="mb-4 flex items-center gap-2 text-[10px] md:text-xs font-bold text-zinc-500 uppercase tracking-wide">
-            <Link href="/" className="hover:text-black flex items-center gap-1">
-              <ArrowLeft className="h-3 w-3" /> Home
-            </Link>
-            <span>/</span>
-            <span className="text-black">{meta.plural}</span>
-          </div>
-
-          <div className="py-2">
-            <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-black mb-2">{meta.plural}</h1>
-            <p className="text-zinc-500 font-medium max-w-2xl text-sm md:text-base leading-relaxed">{meta.description}</p>
-          </div>
-        </div>
-      </section>
 
       {/* ── Most Wanted Sub-brands & Accessories ────────────────────────── */}
       <section className="bg-white border-b border-zinc-100 py-8">
@@ -514,20 +561,22 @@ export default function CategoryPage() {
                   >
                     All Brands
                   </button>
-                  {dynamicBrands.map((b) => (
+                  {subBrands.map((b) => (
                     <button
-                      key={b}
-                      onClick={() => setActiveTabBrand(b)}
-                      className={`h-11 px-5 rounded-2xl transition-all border flex items-center justify-center bg-white ${
-                        activeTabBrand === b ? "border-black shadow-sm" : "border-zinc-200 hover:border-zinc-400"
+                      key={b.brand}
+                      onClick={() => setActiveTabBrand(b.brand)}
+                      className={`h-14 px-5 min-w-[72px] rounded-2xl transition-all border flex items-center justify-center bg-white ${
+                        activeTabBrand === b.brand ? "border-black shadow-sm" : "border-zinc-200 hover:border-zinc-400"
                       }`}
                     >
-                      {BRAND_LOGOS[b] ? (
-                        <div className="flex items-center text-zinc-950 font-extrabold">
-                          {BRAND_LOGOS[b]}
-                        </div>
+                      {b.logo ? (
+                        <img
+                          src={b.logo}
+                          alt={b.brand}
+                          className="h-9 w-auto max-w-[100px] object-contain"
+                        />
                       ) : (
-                        <span className="font-extrabold text-[10px] uppercase tracking-wider text-zinc-950">{b}</span>
+                        <span className="font-extrabold text-[10px] uppercase tracking-wider text-zinc-950">{b.brand}</span>
                       )}
                     </button>
                   ))}

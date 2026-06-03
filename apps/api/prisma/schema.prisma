@@ -245,6 +245,8 @@ model Category {
   description     String?
   image           String?
   isActive        Boolean         @default(true)
+  isSellable      Boolean         @default(false)
+  isRepairable    Boolean         @default(false)
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
   brandCategories BrandCategory[]
@@ -388,16 +390,26 @@ model Review {
 }
 
 model PromoSlide {
-  id        String   @id @default(uuid())
-  imgKey    String?  // S3 key, resolved to presigned URL at runtime
-  title     String   // e.g. "UPGRADE YOUR IPHONE"
-  subtitle  String   // one-line supporting text
-  btnText   String   @default("Shop Now")
-  btnLink   String   // e.g. "/shop/phones"
-  order     Int      @default(0)
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(uuid())
+  imgKey      String?
+  tabTitle    String   @default("")
+  tag         String   @default("")
+  titleLine1  String   @default("")
+  titleLine2  String   @default("")
+  titleItalic String   @default("")
+  title       String   @default("")
+  subtitle    String   @default("")
+  badgeA      String   @default("")
+  badgeB      String   @default("")
+  specs       String   @default("")
+  themeColor  String   @default("from-blue-500 to-indigo-600 dark:from-blue-400 dark:to-indigo-400")
+  bgGlow      String   @default("rgba(59,130,246,0.15)")
+  btnText     String   @default("Shop Now")
+  btnLink     String   @default("/")
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@map("promo_slides")
 }

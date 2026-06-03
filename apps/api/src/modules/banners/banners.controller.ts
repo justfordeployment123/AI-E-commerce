@@ -1,4 +1,8 @@
-import { Controller, Get, Param, Patch, Query, UseGuards } from '@nestjs/common';
+import {
+    Body, Controller, Delete, Get, Param, Patch, Post,
+    Query, UploadedFile, UseGuards, UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { BannersService } from './banners.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -8,31 +12,104 @@ import { Roles } from '../../common/decorators/roles.decorator';
 export class BannersController {
     constructor(private readonly banners: BannersService) {}
 
-    // Public — web frontend fetches random banners
+    // ── Banner Images ────────────────────────────────────────────────────────
+
     @Get('random')
     getRandom(@Query('count') count?: string) {
         return this.banners.getRandom(count ? Math.min(Number(count), 10) : 4);
     }
 
-    // Admin — list all banners with status
     @Get()
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles('ADMIN')
-    listAll() {
-        return this.banners.listAll();
+    listAllBanners() {
+        return this.banners.listAllBanners();
     }
 
-    // Public — promo carousel slides with resolved image URLs
+    @Post()
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('ADMIN')
+    @UseInterceptors(FileInterceptor('file'))
+    uploadBanner(@UploadedFile() file: any, @Body('label') label?: string) {
+        return this.banners.uploadBanner(file, label);
+    }
+
+    @Patch(':id/toggle')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('ADMIN')
+    toggleBanner(@Param('id') id: string) {
+        return this.banners.toggleBanner(id);
+    }
+
+    @Delete(':id')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('ADMIN')
+    deleteBanner(@Param('id') id: string) {
+        return this.banners.deleteBanner(id);
+    }
+
+    // ── Promo Slides ─────────────────────────────────────────────────────────
+    // Static sub-paths declared BEFORE parameterised :id paths.
+
     @Get('promo-slides')
     getPromoSlides() {
         return this.banners.getPromoSlides();
     }
 
-    // Admin — toggle active state
-    @Patch(':id/toggle')
+    @Get('promo-slides/all')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles('ADMIN')
-    toggle(@Param('id') id: string) {
-        return this.banners.toggleActive(id);
+    listAllPromoSlides() {
+        return this.banners.listAllPromoSlides();
+    }
+
+    @Post('promo-slides')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('ADMIN')
+    createPromoSlide(@Body() body: any) {
+        return this.banners.createPromoSlide(body);
+    }
+
+    @Patch('promo-slides/reorder')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('ADMIN')
+    reorderPromoSlides(@Body() body: { items: { id: string; order: number }[] }) {
+        return this.banners.reorderPromoSlides(body.items);
+    }
+
+    @Patch('promo-slides/:id')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('ADMIN')
+    updatePromoSlide(@Param('id') id: string, @Body() body: any) {
+        return this.banners.updatePromoSlide(id, body);
+    }
+
+    @Delete('promo-slides/:id')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('ADMIN')
+    deletePromoSlide(@Param('id') id: string) {
+        return this.banners.deletePromoSlide(id);
+    }
+
+    @Patch('promo-slides/:id/toggle')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('ADMIN')
+    togglePromoSlide(@Param('id') id: string) {
+        return this.banners.togglePromoSlide(id);
+    }
+
+    @Post('promo-slides/:id/image')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('ADMIN')
+    @UseInterceptors(FileInterceptor('file'))
+    uploadPromoSlideImage(@Param('id') id: string, @UploadedFile() file: any) {
+        return this.banners.uploadPromoSlideImage(id, file);
+    }
+
+    @Delete('promo-slides/:id/image')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('ADMIN')
+    deletePromoSlideImage(@Param('id') id: string) {
+        return this.banners.deletePromoSlideImage(id);
     }
 }

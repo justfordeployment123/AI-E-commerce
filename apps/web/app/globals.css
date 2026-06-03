@@ -34,7 +34,7 @@
   --color-mood-violet: var(--mood-violet);
   
   --font-sans: var(--font-plus-jakarta), var(--font-inter), sans-serif;
-  --font-serif: var(--font-lora), var(--font-playfair), serif;
+  --font-serif: var(--font-playfair), var(--font-lora), serif;
   
   --animate-marquee: marquee 30s linear infinite;
   @keyframes marquee {

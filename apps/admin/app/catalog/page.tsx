@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus, Search, Trash2, Pencil, X, Check,
@@ -11,6 +12,8 @@ import {
 import { deviceCatalogApi, catalogBrandCategoryApi, scraperApi, type DeviceCatalogItem, type BrandCategoryOption, type ScrapedPriceRow } from "../../lib/api";
 
 const SCRAPER_ENABLED = process.env.NEXT_PUBLIC_SCRAPER_ENABLED === "true";
+
+const MAIN_CAT_SLUGS = ["phones", "laptops", "audio", "consoles", "tablets"];
 
 const CATEGORY_META: Record<string, { label: string; icon: React.ElementType; color: string }> = {
   phones:      { label: "Phones",      icon: Smartphone, color: "bg-blue-500/10 text-blue-400" },
@@ -75,8 +78,10 @@ export default function CatalogPage() {
         deviceCatalogApi.list(),
         catalogBrandCategoryApi.list().catch(() => [] as BrandCategoryOption[]),
       ]);
-      setDevices(items);
-      setBrandCategories(bcs);
+      const mainItems = items.filter(d => MAIN_CAT_SLUGS.includes(categorySlug(d).toLowerCase()));
+      const mainBcs = bcs.filter(bc => MAIN_CAT_SLUGS.includes(bc.category.slug.toLowerCase()));
+      setDevices(mainItems);
+      setBrandCategories(mainBcs);
     } catch { /* ignore */ }
     finally { setLoading(false); }
   }
@@ -189,6 +194,10 @@ export default function CatalogPage() {
               {scraping ? <><RefreshCw className="h-3.5 w-3.5 animate-spin" /> Scraping…</> : <><TrendingUp className="h-3.5 w-3.5" /> Scrape Prices</>}
             </button>
           )}
+          <Link href="/catalog/others"
+            className="flex items-center gap-2 h-10 px-4 rounded-xl border-2 border-zinc-200 text-xs font-bold text-zinc-600 hover:border-zinc-400 hover:text-black transition-colors">
+            View Others
+          </Link>
           <button onClick={() => { setShowDeleteAll(true); setDeleteAllInput(""); }}
             className="flex items-center gap-2 h-10 px-4 rounded-xl bg-red-50 text-red-600 border border-red-200 text-xs font-bold uppercase tracking-widest hover:bg-red-100 transition-colors">
             <Trash2 className="h-3.5 w-3.5" /> Delete All
@@ -214,8 +223,10 @@ export default function CatalogPage() {
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+        <div className="relative flex-1 min-w-[260px]">
+          <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-zinc-400">
+            <Search className="h-4 w-4" />
+          </div>
           <input type="text" placeholder="Search brand or model..." value={search}
             onChange={e => setSearch(e.target.value)}
             className="h-10 w-full rounded-xl bg-white border border-zinc-200 pl-9 pr-4 text-sm outline-none focus:border-black transition-colors" />
