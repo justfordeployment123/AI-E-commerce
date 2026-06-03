@@ -77,7 +77,16 @@ function PromoCarouselBanner() {
 
   useEffect(() => {
     bannersApi.promoSlides()
-      .then(setSlides)
+      .then((data) => {
+        setSlides(data);
+        // Preload images to browser cache immediately
+        data.forEach((s) => {
+          if (s.imgUrl) {
+            const img = new Image();
+            img.src = s.imgUrl;
+          }
+        });
+      })
       .catch(() => {})
       .finally(() => setLoadingSlides(false));
   }, []);
@@ -187,50 +196,108 @@ function PromoCarouselBanner() {
           <div className="lg:col-span-6 flex justify-center items-center relative min-h-[300px] lg:min-h-[400px]">
             
             {/* Dynamic Card Glow mesh behind Card */}
-            <div className={`absolute w-72 h-72 rounded-full blur-[80px] bg-gradient-to-tr ${slide.themeColor} opacity-20`} />
+            {slides.map((s, i) => {
+              const isActive = safeIdx === i;
+              return (
+                <div
+                  key={`glow-${s.id}`}
+                  className={`absolute w-72 h-72 rounded-full blur-[80px] bg-gradient-to-tr ${s.themeColor} transition-opacity duration-500`}
+                  style={{ opacity: isActive ? 0.2 : 0 }}
+                />
+              );
+            })}
 
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={safeIdx}
-                initial={{ opacity: 0, scale: 0.96, rotateY: 10 }}
-                animate={{ opacity: 1, scale: 1, rotateY: 0 }}
-                exit={{ opacity: 0, scale: 0.96, rotateY: -10 }}
-                transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                className="relative w-[260px] h-[260px] sm:w-[340px] sm:h-[340px] lg:w-[380px] lg:h-[380px] rounded-[2.5rem] bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border border-white/85 dark:border-zinc-800/85 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.08)] dark:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.3)] flex items-center justify-center p-6 group duration-200 ease-out cursor-grab active:cursor-grabbing"
-                style={{ 
-                  transformStyle: "preserve-3d", 
-                  transform: `perspective(1000px) rotateY(${tilt.x}deg) rotateX(${tilt.y}deg)` 
-                }}
-              >
-                {/* Surface Reflection layer */}
-                <div className="absolute inset-0 rounded-[2.5rem] bg-gradient-to-tr from-white/0 via-white/5 to-white/10 dark:from-white/0 dark:via-white/2 dark:to-white/5 pointer-events-none" />
+            <div
+              className="relative w-[260px] h-[260px] sm:w-[340px] sm:h-[340px] lg:w-[380px] lg:h-[380px] rounded-[2.5rem] bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border border-white/85 dark:border-zinc-800/85 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.08)] dark:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.3)] flex items-center justify-center p-6 group duration-200 ease-out cursor-grab active:cursor-grabbing"
+              style={{
+                transformStyle: "preserve-3d",
+                transform: `perspective(1000px) rotateY(${tilt.x}deg) rotateX(${tilt.y}deg)`
+              }}
+            >
+              {/* Surface Reflection layer */}
+              <div className="absolute inset-0 rounded-[2.5rem] bg-gradient-to-tr from-white/0 via-white/5 to-white/10 dark:from-white/0 dark:via-white/2 dark:to-white/5 pointer-events-none" />
 
-                {/* Floating Shadow Under Image */}
-                <div className="absolute bottom-6 w-[80%] h-4 bg-black/5 dark:bg-black/20 blur-lg rounded-full scale-y-20 transition-transform duration-700 group-hover:scale-95 [transform:translateZ(10px)]" />
+              {/* Floating Shadow Under Image */}
+              <div className="absolute bottom-6 w-[80%] h-4 bg-black/5 dark:bg-black/20 blur-lg rounded-full scale-y-20 transition-transform duration-700 group-hover:scale-95 [transform:translateZ(10px)]" />
 
-                {/* Service image with floating frame */}
-                {slide.imgUrl && (
+              {/* Service images with floating frame */}
+              {slides.map((s, i) => {
+                const isActive = safeIdx === i;
+                return s.imgUrl ? (
                   <motion.img
-                    src={slide.imgUrl}
-                    alt={slide.tabTitle}
-                    animate={{ y: [0, -6, 0] }}
-                    transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-                    className="max-h-[85%] max-w-[85%] object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.1)] mix-blend-multiply dark:mix-blend-normal transition-transform duration-700 group-hover:scale-103 [transform:translateZ(40px)] pointer-events-none select-none"
+                    key={s.id}
+                    src={s.imgUrl}
+                    alt={s.tabTitle}
+                    aria-hidden={!isActive}
+                    initial={false}
+                    animate={isActive ? {
+                      opacity: 1,
+                      scale: 1,
+                      rotateY: 0,
+                      y: [0, -6, 0]
+                    } : {
+                      opacity: 0,
+                      scale: 0.9,
+                      rotateY: -15
+                    }}
+                    transition={isActive ? {
+                      opacity: { duration: 0.4 },
+                      scale: { duration: 0.4 },
+                      rotateY: { duration: 0.4 },
+                      y: { duration: 5, repeat: Infinity, ease: "easeInOut" }
+                    } : {
+                      opacity: { duration: 0.3 },
+                      scale: { duration: 0.3 },
+                      rotateY: { duration: 0.3 }
+                    }}
+                    className="absolute max-h-[85%] max-w-[85%] object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.1)] mix-blend-multiply dark:mix-blend-normal transition-transform duration-700 group-hover:scale-103 [transform:translateZ(40px)] pointer-events-none select-none"
+                    style={{
+                      display: isActive ? "block" : "none"
+                    }}
                   />
-                )}
+                ) : null;
+              })}
 
-                {/* Floating Badge A */}
-                <div className="absolute -top-2.5 -right-2.5 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 rounded-xl px-3 py-1.5 text-[9px] font-black shadow-md [transform:translateZ(60px)] select-none pointer-events-none border border-zinc-900 dark:border-zinc-100">
-                  {slide.badgeA}
-                </div>
+              {/* Floating Badge A */}
+              {slides.map((s, i) => {
+                const isActive = safeIdx === i;
+                return (
+                  <motion.div
+                    key={`badgeA-${s.id}`}
+                    aria-hidden={!isActive}
+                    initial={false}
+                    animate={isActive ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
+                    transition={{ duration: 0.3 }}
+                    className="absolute -top-2.5 -right-2.5 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 rounded-xl px-3 py-1.5 text-[9px] font-black shadow-md [transform:translateZ(60px)] select-none pointer-events-none border border-zinc-900 dark:border-zinc-100"
+                    style={{
+                      display: isActive ? "block" : "none"
+                    }}
+                  >
+                    {s.badgeA}
+                  </motion.div>
+                );
+              })}
 
-                {/* Floating Badge B */}
-                <div className="absolute -bottom-2.5 -left-2.5 bg-emerald-500 text-white rounded-xl px-3 py-1.5 text-[9px] font-black shadow-md [transform:translateZ(60px)] select-none pointer-events-none">
-                  {slide.badgeB}
-                </div>
-
-              </motion.div>
-            </AnimatePresence>
+              {/* Floating Badge B */}
+              {slides.map((s, i) => {
+                const isActive = safeIdx === i;
+                return (
+                  <motion.div
+                    key={`badgeB-${s.id}`}
+                    aria-hidden={!isActive}
+                    initial={false}
+                    animate={isActive ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
+                    transition={{ duration: 0.3 }}
+                    className="absolute -bottom-2.5 -left-2.5 bg-emerald-500 text-white rounded-xl px-3 py-1.5 text-[9px] font-black shadow-md [transform:translateZ(60px)] select-none pointer-events-none"
+                    style={{
+                      display: isActive ? "block" : "none"
+                    }}
+                  >
+                    {s.badgeB}
+                  </motion.div>
+                );
+              })}
+            </div>
           </div>
 
         </div>
