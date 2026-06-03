@@ -70,8 +70,7 @@ export default function RootLayout({
               (function() {
                 try {
                   var theme = localStorage.getItem('ts-theme');
-                  var systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                  if (theme === 'dark' || (!theme && systemDark)) {
+                  if (theme === 'dark') {
                     document.documentElement.setAttribute('data-theme', 'dark');
                     document.documentElement.classList.add('dark');
                   } else {

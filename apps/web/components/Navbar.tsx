@@ -92,8 +92,7 @@ export default function Navbar() {
   }
 
   useEffect(() => {
-    const currentTheme = document.documentElement.getAttribute("data-theme") ||
-      (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    const currentTheme = document.documentElement.getAttribute("data-theme") || "light";
     setTheme(currentTheme);
     setMounted(true);
 
