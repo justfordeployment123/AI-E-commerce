@@ -68,8 +68,8 @@ export default function SellPage() {
                       placeholder="Search your device..."
                       className="w-full h-20 rounded-[1.5rem] bg-white border-2 border-transparent focus:border-accent px-8 text-lg outline-none transition-all shadow-xl"
                     />
-                    <button className="absolute right-3 top-3 bottom-3 bg-accent text-white rounded-[1.25rem] px-8 font-bold flex items-center gap-2 transition-all hover:scale-[1.02] hover:bg-accent-dark active:scale-[0.98]">
-                      Search
+                    <button className="absolute right-3 top-3 bottom-3 bg-accent text-white rounded-[1.25rem] px-4 sm:px-8 font-bold flex items-center gap-2 transition-all hover:scale-[1.02] hover:bg-accent-dark active:scale-[0.98]">
+                      <span className="hidden sm:inline">Search</span>
                       <ArrowRight className="h-5 w-5 text-white" />
                     </button>
                   </div>
@@ -136,8 +136,8 @@ export default function SellPage() {
                 transition={{ delay: index * 0.1 }}
                 className="group relative"
               >
-                <div className={`aspect-[4/5] rounded-[3rem] ${item.mood} text-zinc-950 dark:text-white dark:bg-zinc-900/40 p-10 flex flex-col justify-between transition-transform group-hover:-translate-y-2 border border-transparent dark:border-border/30`}>
-                   <div className="h-16 w-16 rounded-2xl bg-white dark:bg-zinc-800 flex items-center justify-center shadow-sm">
+                <div className={`aspect-auto h-auto sm:aspect-[4/5] rounded-[3rem] ${item.mood} text-zinc-950 dark:text-white dark:bg-zinc-900/40 p-10 flex flex-col justify-between transition-transform group-hover:-translate-y-2 border border-transparent dark:border-border/30`}>
+                   <div className="h-16 w-16 rounded-2xl bg-white dark:bg-zinc-800 flex items-center justify-center shadow-sm mb-8 sm:mb-0">
                      <item.icon className="h-8 w-8 text-zinc-950 dark:text-white" strokeWidth={1.5} />
                    </div>
                    <div>

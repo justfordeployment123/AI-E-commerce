@@ -428,15 +428,22 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Mobile trust signals */}
-            <div className="lg:hidden grid grid-cols-3 gap-3">
+            <div className="lg:hidden grid grid-cols-1 sm:grid-cols-3 gap-3">
               {[
                 { icon: Shield, title: "2-Year Warranty" },
                 { icon: RefreshCw, title: "30-Day Returns" },
                 { icon: Truck, title: "Free Delivery" },
               ].map(({ icon: Icon, title }) => (
-                <div key={title} className="bg-white rounded-[1.5rem] border border-zinc-200 p-4 flex flex-col items-center gap-2 text-center">
-                  <Icon className="h-5 w-5 text-black" strokeWidth={1.5} />
-                  <p className="text-[10px] font-bold leading-tight">{title}</p>
+                <div key={title} className="bg-white rounded-[1.5rem] border border-zinc-200 p-4 flex flex-row sm:flex-col items-center sm:justify-center gap-3.5 sm:gap-2 text-left sm:text-center">
+                  <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-zinc-100 flex items-center justify-center shrink-0">
+                    <Icon className="h-5 w-5 text-black" strokeWidth={1.5} />
+                  </div>
+                  <div>
+                    <p className="text-xs sm:text-[10px] font-bold leading-tight text-zinc-950">{title}</p>
+                    <p className="text-[10px] text-zinc-400 font-semibold sm:hidden mt-0.5">
+                      {title === "2-Year Warranty" ? "For peace of mind" : title === "30-Day Returns" ? "Hassle-free process" : "Carbon neutral shipping"}
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>

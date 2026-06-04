@@ -162,7 +162,7 @@ function PromoCarouselBanner() {
                   {slide.tag}
                 </span>
 
-                <h1 className="font-sans text-[clamp(2.2rem,5vw,3.8rem)] font-black leading-[0.9] tracking-tighter text-zinc-950 dark:text-white uppercase">
+                <h1 className="font-sans text-[clamp(1.75rem,5vw,3.8rem)] font-black leading-[0.9] tracking-tighter text-zinc-950 dark:text-white uppercase">
                   {slide.titleLine1} <br />
                   {slide.titleLine2}{" "}
                   <span className={`font-serif italic font-light lowercase tracking-normal bg-clip-text text-transparent bg-gradient-to-r ${slide.themeColor}`}>
@@ -552,8 +552,9 @@ function Hero() {
                   placeholder='Try "iPhone 15 Pro" or "MacBook Air"'
                   className="flex-1 bg-transparent text-sm font-medium outline-none placeholder:text-zinc-400"
                 />
-                <a href={getSearchLink()} className="h-9 px-5 bg-zinc-950 text-white rounded-xl font-bold text-xs flex-shrink-0 flex items-center">
-                  Search
+                <a href={getSearchLink()} className="h-9 px-3 sm:px-5 bg-zinc-950 text-white rounded-xl font-bold text-xs flex-shrink-0 flex items-center justify-center gap-1">
+                  <span className="hidden sm:inline">Search</span>
+                  <ArrowRight className="h-3.5 w-3.5 sm:hidden" />
                 </a>
               </div>
 
@@ -650,12 +651,11 @@ function Hero() {
               </a>
             </motion.div>
 
-            {/* Stats row */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.35 }}
-              className="grid grid-cols-3 gap-6 border-t border-zinc-100 pt-10"
+              className="grid grid-cols-3 gap-4 sm:gap-6 border-t border-zinc-100 pt-10"
             >
               {[
                 { val: "47K+", label: "Devices in stock" },
@@ -663,8 +663,8 @@ function Hero() {
                 { val: "£30M+", label: "Saved by buyers" },
               ].map((s, i) => (
                 <div key={i}>
-                  <p className="text-2xl font-bold tracking-tight text-zinc-950">{s.val}</p>
-                  <p className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 mt-1">{s.label}</p>
+                  <p className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-950">{s.val}</p>
+                  <p className="text-[9px] sm:text-[11px] font-bold uppercase tracking-widest text-zinc-400 mt-1">{s.label}</p>
                 </div>
               ))}
             </motion.div>
@@ -997,7 +997,7 @@ function TrendingDeals() {
               transition={{ type: "spring", stiffness: 220, damping: 26 }}
               className="group relative overflow-hidden rounded-[2.5rem] bg-zinc-100 cursor-pointer block lg:h-full"
             >
-              <div className="aspect-4/3 lg:aspect-auto lg:h-full w-full relative">
+              <div className="aspect-[4/3] lg:aspect-auto lg:h-full w-full relative">
                 <img src={featured.images?.[0] || undefined} alt={featured.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-700" />
                 <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/80 via-zinc-950/20 to-transparent" />
 
@@ -1047,12 +1047,12 @@ function TrendingDeals() {
                       className={`h-full w-full ${isOtherProduct(deal.category, deal.images?.[0]) ? 'object-contain mix-blend-multiply' : 'object-cover'} group-hover:scale-105 transition-transform duration-700`}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    <div className="absolute top-3 left-3 flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/90 backdrop-blur-sm text-[9px] font-bold uppercase tracking-widest shadow-sm">
-                      <span className={`h-1.5 w-1.5 rounded-full ${gradeDot[deal.condition]}`} />
+                    <div className="absolute top-2 left-2 sm:top-3 sm:left-3 flex items-center gap-1 px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-white/90 backdrop-blur-sm text-[8px] sm:text-[9px] font-bold uppercase tracking-widest shadow-sm">
+                      <span className={`h-1 sm:h-1.5 w-1 sm:w-1.5 rounded-full ${gradeDot[deal.condition]}`} />
                       {deal.condition}
                     </div>
                     {deal.comparePrice && (
-                      <span className="absolute top-3 right-3 px-2 py-1 rounded-full bg-accent text-[9px] font-bold shadow-sm">
+                      <span className="absolute top-2 right-2 sm:top-3 sm:right-3 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full bg-accent text-[8px] sm:text-[9px] font-bold shadow-sm">
                         -{Math.round((1 - deal.price / deal.comparePrice) * 100)}%
                       </span>
                     )}
@@ -2847,7 +2847,7 @@ function Newsletter() {
                 placeholder="you@example.com"
                 className="h-14 flex-1 px-6 rounded-2xl bg-white border border-zinc-200 text-sm font-medium outline-none focus:ring-2 focus:ring-accent transition-shadow"
               />
-              <button className="h-14 px-7 bg-zinc-950 text-white rounded-2xl font-bold text-sm hover:bg-zinc-800 transition-colors flex-shrink-0">
+              <button className="h-14 px-7 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 rounded-2xl font-bold text-sm hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors flex-shrink-0">
                 Subscribe
               </button>
             </div>

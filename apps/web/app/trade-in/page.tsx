@@ -880,12 +880,12 @@ export default function TradeInPage() {
                         </div>
                       )}
                     </div>
-                    <div className="px-5 py-4 flex items-center justify-between">
+                    <div className="px-3 py-3 sm:px-5 sm:py-4 flex items-center justify-between">
                       <div>
-                        <h3 className="font-extrabold text-base text-zinc-950 dark:text-white leading-tight">{cat.name}</h3>
-                        {sub && <p className="text-xs text-zinc-400 mt-0.5">{sub}</p>}
+                        <h3 className="font-extrabold text-sm sm:text-base text-zinc-950 dark:text-white leading-tight">{cat.name}</h3>
+                        {sub && <p className="text-[10px] sm:text-xs text-zinc-400 mt-0.5">{sub}</p>}
                       </div>
-                      <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${mood} group-hover:scale-110 transition-transform duration-200`}>
+                      <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${mood} group-hover:scale-110 transition-transform duration-200 hidden sm:flex`}>
                         <ChevronRight className={`h-4 w-4 ${moodIcon} group-hover:translate-x-0.5 transition-transform`} />
                       </div>
                     </div>

@@ -582,15 +582,88 @@ export default function Navbar() {
             >
               <div className="px-4 py-6 space-y-1">
                 {/* Search bar inside mobile drawer */}
-                <div className="mb-4">
+                <div className="mb-4 relative">
                   <div className="relative">
                     <input
                       type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onFocus={() => setIsSearchFocused(true)}
+                      onBlur={() => {
+                        setTimeout(() => setIsSearchFocused(false), 200);
+                      }}
                       placeholder="Search products..."
                       className="h-11 w-full rounded-xl bg-muted pl-10 pr-4 text-sm font-bold outline-none text-foreground border border-border/40"
                     />
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
                   </div>
+
+                  {/* Mobile Search Results Dropdown */}
+                  <AnimatePresence>
+                    {isSearchFocused && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 8 }}
+                        className="absolute left-0 right-0 top-full mt-2 bg-background border border-border rounded-[24px] shadow-2xl overflow-hidden z-50 p-5 text-foreground max-h-[350px] overflow-y-auto"
+                      >
+                        {searchQuery === "" ? (
+                          <div className="space-y-4">
+                            <div>
+                              <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2.5">Popular Searches</p>
+                              <div className="flex flex-wrap gap-2">
+                                {POPULAR_SEARCHES.map((term) => (
+                                  <button
+                                    key={term}
+                                    type="button"
+                                    onClick={() => setSearchQuery(term)}
+                                    className="px-3.5 py-1.5 rounded-xl bg-muted border border-border text-xs font-bold hover:border-accent hover:bg-background transition-colors text-foreground"
+                                  >
+                                    {term}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-3">Matching Products</p>
+                            <div className="space-y-2">
+                              {MOCK_SEARCH_ITEMS.filter((item) =>
+                                item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                item.brand.toLowerCase().includes(searchQuery.toLowerCase())
+                              ).map((item) => (
+                                <Link
+                                  key={item.id}
+                                  href={`/shop/${item.category}`}
+                                  onClick={() => {
+                                    setIsOpen(false);
+                                    setIsSearchFocused(false);
+                                  }}
+                                  className="flex items-center gap-4 p-2 rounded-xl hover:bg-muted transition-colors group text-foreground"
+                                >
+                                  <div className="h-10 w-10 bg-image-light rounded-lg p-1.5 flex items-center justify-center shrink-0">
+                                    <img src={item.image} alt={item.title} className="h-full w-full object-contain mix-blend-multiply dark:brightness-95" />
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <p className="text-xs font-bold text-foreground group-hover:text-accent truncate">{item.title}</p>
+                                    <p className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider mt-0.5">{item.brand} • {item.category}</p>
+                                  </div>
+                                  <span className="text-xs font-extrabold text-foreground">£{item.price}</span>
+                                </Link>
+                              ))}
+                              {MOCK_SEARCH_ITEMS.filter((item) =>
+                                item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                item.brand.toLowerCase().includes(searchQuery.toLowerCase())
+                              ).length === 0 && (
+                                <p className="text-xs font-bold text-zinc-400 py-4 text-center">No matching refurbished items found.</p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
 
                  {/* Category links */}

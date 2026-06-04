@@ -100,8 +100,83 @@ html body .border-zinc-200 {
   border-color: var(--border);
 }
 
-.bg-image-light {
+.bg-image-light,
+[class*="bg-[#f5f5f7]"],
+div[class*="bg-zinc-100"]:has(img) {
+  isolation: isolate !important;
   background-color: #f5f5f7 !important;
+}
+
+/* Dark theme style overrides */
+html[data-theme="dark"] body {
+  /* Hover colors in dark mode: highlight to white instead of turning black/invisible */
+  .hover\:text-black:hover,
+  .hover\:text-zinc-950:hover,
+  .group:hover .group-hover\:text-black,
+  .group:hover .group-hover\:text-zinc-950 {
+    color: #ffffff !important;
+  }
+
+  /* Hover borders in dark mode */
+  .hover\:border-black:hover,
+  .group:hover .group-hover\:border-black {
+    border-color: #ffffff !important;
+  }
+
+  /* Hover backgrounds in dark mode */
+  .hover\:bg-black:hover,
+  .group:hover .group-hover\:bg-black {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  /* Hardcoded layout background and text colors */
+  .text-black {
+    color: var(--foreground) !important;
+  }
+  
+  .bg-\[\#f8f8f8\] {
+    background-color: var(--page-bg) !important;
+  }
+
+  [class*="bg-[#f0f2f5]/40"] {
+    background-color: rgba(26, 28, 40, 0.4) !important;
+  }
+
+  [class*="bg-[#e4ecf9]"] {
+    background-color: #1e293b !important;
+    color: #f1f5f9 !important;
+    
+    span, p {
+      color: #cbd5e1 !important;
+    }
+  }
+
+  [class*="bg-[#fcf3dc]"] {
+    background-color: #3f2d12 !important;
+    color: #fef3c7 !important;
+    
+    span, p {
+      color: #fde68a !important;
+    }
+  }
+
+  [class*="bg-[#eef8f3]"] {
+    background-color: #0b2512 !important;
+    border-color: rgba(195, 235, 78, 0.15) !important;
+    
+    .text-emerald-900 {
+      color: #a7f3d0 !important;
+    }
+    
+    .text-emerald-700\/70 {
+      color: #34d399 !important;
+    }
+    
+    .bg-white\/50 {
+      background-color: rgba(255, 255, 255, 0.05) !important;
+    }
+  }
 }
 
 @layer utilities {
@@ -120,4 +195,21 @@ body {
   font-family: var(--font-sans), system-ui, sans-serif;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Ensure form controls are legible in dark mode */
+html body input,
+html body textarea,
+html body select {
+  color: var(--foreground) !important;
+}
+
+html body input::placeholder,
+html body textarea::placeholder {
+  color: #94a3b8 !important; /* light slate-400 */
+}
+
+html[data-theme="dark"] body input::placeholder,
+html[data-theme="dark"] body textarea::placeholder {
+  color: #64748b !important; /* dark slate-500 */
 }

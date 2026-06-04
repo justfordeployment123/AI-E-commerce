@@ -73,15 +73,15 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
 
             {/* Sidebar — sticky below the full navbar (tier1 64px + tier2 ~44px = ~108px) */}
             <aside className="w-full lg:w-[240px] shrink-0 lg:sticky lg:top-36">
-              <nav className="bg-white rounded-[1.5rem] border border-zinc-100 p-3 shadow-sm">
-                <ul className="space-y-0.5">
+              <nav className="bg-white rounded-[1.5rem] border border-zinc-100 p-2 sm:p-3 shadow-sm">
+                <ul className="flex lg:flex-col gap-1 overflow-x-auto scrollbar-hide">
                   {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
                     const active = pathname === href;
                     return (
-                      <li key={href}>
+                      <li key={href} className="shrink-0 flex-1 lg:flex-initial">
                         <Link
                           href={href}
-                          className={`flex items-center gap-3 px-4 py-3 rounded-[1rem] text-sm font-bold transition-all ${
+                          className={`flex items-center justify-center lg:justify-start gap-2.5 px-4 py-3 rounded-[1rem] text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
                             active
                               ? "bg-black text-white"
                               : "text-zinc-500 hover:bg-zinc-50 hover:text-black"
@@ -93,8 +93,17 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
                       </li>
                     );
                   })}
+                  <li className="shrink-0 lg:hidden flex items-center">
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center gap-2.5 px-4 py-3 rounded-[1rem] text-xs sm:text-sm font-bold text-red-500 hover:bg-red-50 transition-all whitespace-nowrap"
+                    >
+                      <LogOut className="h-4 w-4 shrink-0" />
+                      Sign out
+                    </button>
+                  </li>
                 </ul>
-                <div className="mt-2 pt-2 border-t border-zinc-100">
+                <div className="hidden lg:block mt-2 pt-2 border-t border-zinc-100">
                   <button
                     onClick={handleLogout}
                     className="w-full flex items-center gap-3 px-4 py-3 rounded-[1rem] text-sm font-bold text-red-500 hover:bg-red-50 transition-all text-left"

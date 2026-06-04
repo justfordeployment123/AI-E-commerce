@@ -106,11 +106,11 @@ function CartPageContent() {
 
                       {/* Details */}
                       <div className="flex-1 flex flex-col">
-                        <div className="flex justify-between items-start gap-4 mb-2">
+                        <div className="flex flex-col sm:flex-row sm:justify-between items-start gap-2 sm:gap-4 mb-2">
                           <div>
-                            <h3 className="text-xl font-bold mb-2">{item.name}</h3>
+                            <h3 className="text-xl font-bold mb-1 sm:mb-2">{item.name}</h3>
                           </div>
-                          <div className="text-right shrink-0">
+                          <div className="text-left sm:text-right shrink-0">
                             <div className="text-2xl font-bold tracking-tight">£{(item.price * item.quantity).toFixed(2)}</div>
                             <div className="text-sm font-medium text-zinc-400">£{item.price.toFixed(2)} each</div>
                           </div>
