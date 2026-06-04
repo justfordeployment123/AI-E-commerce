@@ -75,29 +75,39 @@ model User {
 }
 
 model Product {
-  id           String        @id @default(uuid())
-  catalogId    String
-  catalog      DeviceCatalog @relation(fields: [catalogId], references: [id])
+  id                 String            @id @default(uuid())
+
+  catalogId          String?
+  catalog            DeviceCatalog?    @relation(fields: [catalogId], references: [id])
+
+  otherBrandId       String?
+  otherBrand         OtherBrand?       @relation(fields: [otherBrandId], references: [id])
+
+  otherSubcategoryId String?
+  otherSubcategory   OtherSubcategory? @relation(fields: [otherSubcategoryId], references: [id])
+
   name         String
-  slug         String        @unique
+  slug         String    @unique
   condition    String
-  storage      String        @default("")
+  storage      String    @default("")
   price        Float
   comparePrice Float?
-  stock        Int           @default(0)
+  stock        Int       @default(0)
   images       String[]
-  specs        Json          @default("{}")
+  specs        Json      @default("{}")
   description  String?
-  rating       Float         @default(0)
-  reviewCount  Int           @default(0)
-  isActive     Boolean       @default(true)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  rating       Float     @default(0)
+  reviewCount  Int       @default(0)
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   orderItems OrderItem[]
   reviews    Review[]
 
   @@index([catalogId])
+  @@index([otherBrandId])
+  @@index([otherSubcategoryId])
   @@index([condition])
   @@index([isActive, createdAt])
   @@map("products")
@@ -424,4 +434,24 @@ model Banner {
   updatedAt DateTime @updatedAt
 
   @@map("banners")
+}
+
+model OtherBrand {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  products  Product[]
+
+  @@map("other_brands")
+}
+
+model OtherSubcategory {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  products  Product[]
+
+  @@map("other_subcategories")
 }
