@@ -134,6 +134,39 @@ export const catalogBrandCategoryApi = {
   },
 };
 
+// ── Other Catalog (OtherBrand + OtherSubcategory) ─────────────────────────────
+export interface OtherBrand {
+  id: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OtherSubcategory {
+  id: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const otherBrandsApi = {
+  list: () => apiFetch<OtherBrand[]>('/other-brands'),
+  create: (name: string) =>
+    apiFetch<OtherBrand>('/other-brands', { method: 'POST', body: JSON.stringify({ name }) }),
+  update: (id: string, name: string) =>
+    apiFetch<OtherBrand>(`/other-brands/${id}`, { method: 'PATCH', body: JSON.stringify({ name }) }),
+  remove: (id: string) => apiFetch<void>(`/other-brands/${id}`, { method: 'DELETE' }),
+};
+
+export const otherSubcategoriesApi = {
+  list: () => apiFetch<OtherSubcategory[]>('/other-subcategories'),
+  create: (name: string) =>
+    apiFetch<OtherSubcategory>('/other-subcategories', { method: 'POST', body: JSON.stringify({ name }) }),
+  update: (id: string, name: string) =>
+    apiFetch<OtherSubcategory>(`/other-subcategories/${id}`, { method: 'PATCH', body: JSON.stringify({ name }) }),
+  remove: (id: string) => apiFetch<void>(`/other-subcategories/${id}`, { method: 'DELETE' }),
+};
+
 // ── Stores ────────────────────────────────────────────────────────────────────
 export interface Store {
   id: string;
@@ -369,13 +402,14 @@ export interface AdminUser {
 
 export interface Product {
   id: string;
-  catalogId: string;
+  catalogId?: string;           // null for other products
+  otherBrandId?: string;
+  otherSubcategoryId?: string;
   name: string;
   slug: string;
-  // Flattened from DeviceCatalog on every response
-  brand: string;
-  model: string;
-  category: string;
+  brand: string;                // flattened from either track
+  model: string;                // empty string for other products
+  category: string;             // flattened from either track
   condition: string;
   storage: string;
   price: number;
@@ -390,7 +424,12 @@ export interface Product {
 }
 
 export interface CreateProductPayload {
-  catalogId: string;
+  // Main product track
+  catalogId?: string;
+  // Other product track
+  otherBrandId?: string;
+  otherSubcategoryId?: string;
+  // Shared
   name: string;
   condition: string;
   storage?: string;
