@@ -11,10 +11,21 @@ import {
 } from 'class-validator';
 
 export class CreateProductDto {
+    // ── Main product track ──────────────────────────────────────────────────────
     @IsString()
-    @IsNotEmpty()
-    catalogId!: string;
+    @IsOptional()
+    catalogId?: string;
 
+    // ── Other product track ─────────────────────────────────────────────────────
+    @IsString()
+    @IsOptional()
+    otherBrandId?: string;
+
+    @IsString()
+    @IsOptional()
+    otherSubcategoryId?: string;
+
+    // ── Shared fields ───────────────────────────────────────────────────────────
     @IsString()
     @IsNotEmpty()
     name!: string;

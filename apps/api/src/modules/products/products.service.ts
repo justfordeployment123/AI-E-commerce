@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { StorageService } from '../../common/services/storage.service';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -19,6 +19,8 @@ const CATALOG_INCLUDE = {
             },
         },
     },
+    otherBrand: true,
+    otherSubcategory: true,
 } as const;
 
 @Injectable()
@@ -32,42 +34,82 @@ export class ProductsService {
         const images = await Promise.all(
             (product.images as string[]).map((img: string) => this.storage.resolveImageUrl(img)),
         );
-        const { catalog, ...rest } = product;
+        const { catalog, otherBrand, otherSubcategory, ...rest } = product;
+
         return {
             ...rest,
             images: images.filter(Boolean) as string[],
-            brand: catalog?.brandCategory?.brand?.name ?? '',
-            model: catalog?.model ?? '',
-            category: catalog?.brandCategory?.category?.name ?? '',
+            brand:    catalog?.brandCategory?.brand?.name    ?? otherBrand?.name       ?? '',
+            model:    catalog?.model                          ?? '',
+            category: catalog?.brandCategory?.category?.name ?? otherSubcategory?.name ?? '',
         };
     }
 
     async create(dto: CreateProductDto) {
-        const catalog = await this.prisma.deviceCatalog.findUnique({
-            where: { id: dto.catalogId },
-            include: { brandCategory: { include: { brand: true } } },
-        });
-        if (!catalog) throw new NotFoundException('Device catalog entry not found');
+        const isMain  = !!dto.catalogId;
+        const isOther = !!dto.otherBrandId && !!dto.otherSubcategoryId;
 
-        const brandName = catalog.brandCategory.brand.name;
-        const storage = dto.storage ?? '';
-        const baseSlug = slugify(`${brandName}-${catalog.model}-${dto.condition}${storage ? `-${storage}` : ''}`);
-        let slug = baseSlug;
-        let counter = 1;
-        while (await this.prisma.product.findUnique({ where: { slug } })) {
-            slug = `${baseSlug}-${counter++}`;
+        if (!isMain && !isOther) {
+            throw new BadRequestException(
+                'Provide either catalogId (main product) or otherBrandId + otherSubcategoryId (other product)',
+            );
+        }
+        if (isMain && isOther) {
+            throw new BadRequestException('Cannot set both catalogId and otherBrandId/otherSubcategoryId');
         }
 
-        if (storage && !(catalog.storageOptions as string[]).includes(storage)) {
-            await this.prisma.deviceCatalog.update({
+        let slug: string;
+
+        if (isMain) {
+            const catalog = await this.prisma.deviceCatalog.findUnique({
                 where: { id: dto.catalogId },
-                data: { storageOptions: { push: storage } },
+                include: { brandCategory: { include: { brand: true } } },
             });
+            if (!catalog) throw new NotFoundException('Device catalog entry not found');
+
+            const brandName = catalog.brandCategory.brand.name;
+            const storage   = dto.storage ?? '';
+            const baseSlug  = slugify(`${brandName}-${catalog.model}-${dto.condition}${storage ? `-${storage}` : ''}`);
+            slug = baseSlug;
+            let counter = 1;
+            while (await this.prisma.product.findUnique({ where: { slug } })) {
+                slug = `${baseSlug}-${counter++}`;
+            }
+
+            if (storage && !(catalog.storageOptions as string[]).includes(storage)) {
+                await this.prisma.deviceCatalog.update({
+                    where: { id: dto.catalogId },
+                    data: { storageOptions: { push: storage } },
+                });
+            }
+        } else {
+            const [brand, subcat] = await Promise.all([
+                this.prisma.otherBrand.findUnique({ where: { id: dto.otherBrandId } }),
+                this.prisma.otherSubcategory.findUnique({ where: { id: dto.otherSubcategoryId } }),
+            ]);
+            if (!brand)  throw new NotFoundException('OtherBrand not found');
+            if (!subcat) throw new NotFoundException('OtherSubcategory not found');
+
+            const baseSlug = slugify(`${brand.name}-${dto.name}-${dto.condition}`);
+            slug = baseSlug;
+            let counter = 1;
+            while (await this.prisma.product.findUnique({ where: { slug } })) {
+                slug = `${baseSlug}-${counter++}`;
+            }
         }
 
-        const { catalogId, storage: _s, ...rest } = dto;
+        const { catalogId, otherBrandId, otherSubcategoryId, storage: _s, ...rest } = dto;
         const product = await this.prisma.product.create({
-            data: { ...rest, catalogId, storage, slug, images: dto.images ?? [], specs: (dto.specs ?? {}) as never },
+            data: {
+                ...rest,
+                catalogId:          isMain  ? catalogId          : null,
+                otherBrandId:       isOther ? otherBrandId       : null,
+                otherSubcategoryId: isOther ? otherSubcategoryId : null,
+                storage: dto.storage ?? '',
+                slug,
+                images: dto.images ?? [],
+                specs:  (dto.specs ?? {}) as never,
+            },
             include: CATALOG_INCLUDE,
         });
         return this.presignAndFlatten(product);
@@ -95,18 +137,29 @@ export class ProductsService {
             where.price = { gte: minPrice, lte: maxPrice };
         }
 
-        const catalogWhere: Record<string, unknown> = {};
-        const brandCategoryWhere: Record<string, unknown> = {};
-        if (category) brandCategoryWhere.category = { name: { equals: category, mode: 'insensitive' } };
-        if (brand) brandCategoryWhere.brand = { name: { equals: brand, mode: 'insensitive' } };
-        if (Object.keys(brandCategoryWhere).length > 0) catalogWhere.brandCategory = brandCategoryWhere;
-        if (Object.keys(catalogWhere).length > 0) where.catalog = { is: catalogWhere };
+        if (category || brand) {
+            const mainClause: Record<string, unknown> = {};
+            const brandCategoryWhere: Record<string, unknown> = {};
+            if (category) brandCategoryWhere.category = { name: { equals: category, mode: 'insensitive' } };
+            if (brand)    brandCategoryWhere.brand     = { name: { equals: brand,    mode: 'insensitive' } };
+            if (Object.keys(brandCategoryWhere).length > 0) {
+                mainClause.catalog = { is: { brandCategory: brandCategoryWhere } };
+            }
+
+            const otherClause: Record<string, unknown> = { catalogId: null };
+            if (category) otherClause.otherSubcategory = { name: { equals: category, mode: 'insensitive' } };
+            if (brand)    otherClause.otherBrand        = { name: { equals: brand,    mode: 'insensitive' } };
+
+            where.OR = [mainClause, otherClause];
+        }
 
         if (search) {
             where.OR = [
                 { name: { contains: search, mode: 'insensitive' } },
                 { catalog: { is: { model: { contains: search, mode: 'insensitive' } } } },
                 { catalog: { is: { brandCategory: { is: { brand: { is: { name: { contains: search, mode: 'insensitive' } } } } } } } },
+                { otherBrand: { name: { contains: search, mode: 'insensitive' } } },
+                { otherSubcategory: { name: { contains: search, mode: 'insensitive' } } },
             ];
         }
 
@@ -132,15 +185,12 @@ export class ProductsService {
 
         const result: { brand: string; slug: string; logo: string | null; image: string | null }[] = [];
         for (const bc of brandCategories) {
-            // Brand logo from catalog/brands/{slug}/logo.png
             const logo = bc.brand.logo
                 ? await this.storage.resolveImageUrl(bc.brand.logo)
                 : null;
 
-            // BrandCategory showcase image from catalog/categories/{cat}/{brand}/
             const bcImages = bc.images as string[];
             let image: string | null = null;
-
             if (bcImages.length > 0) {
                 image = await this.storage.resolveImageUrl(bcImages[0]);
             } else {
@@ -154,7 +204,6 @@ export class ProductsService {
                 const imgs = product?.images as string[] | null;
                 image = imgs?.[0] ? await this.storage.resolveImageUrl(imgs[0]) : null;
             }
-
             result.push({ brand: bc.brand.name, slug: bc.brand.slug, logo, image });
         }
         return result;
