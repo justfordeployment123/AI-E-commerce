@@ -215,7 +215,7 @@ export default function ProductDetailPage() {
               >
                 <Heart className={`h-5 w-5 transition-colors ${wishlisted ? "fill-red-500 text-red-500" : "text-black"}`} />
               </button>
-              <div className="w-full max-w-[400px] aspect-square relative flex items-center justify-center">
+              <div className="w-full max-w-[400px] aspect-square relative flex items-center justify-center bg-image-light rounded-[24px] p-6">
                 <AnimatePresence mode="wait">
                   <motion.img
                     key={activeImage}
@@ -237,8 +237,8 @@ export default function ProductDetailPage() {
                   <button
                     key={i}
                     onClick={() => setActiveImage(i)}
-                    className={`relative shrink-0 snap-center h-24 w-24 rounded-[20px] overflow-hidden bg-white border-2 flex items-center justify-center p-2 transition-all ${
-                      activeImage === i ? "border-black shadow-md" : "border-zinc-200 opacity-60 hover:opacity-100 hover:border-zinc-400"
+                    className={`relative shrink-0 snap-center h-24 w-24 rounded-[20px] overflow-hidden bg-image-light border-2 flex items-center justify-center p-2 transition-all ${
+                      activeImage === i ? "border-black dark:border-white shadow-md" : "border-zinc-200 dark:border-zinc-800 opacity-60 hover:opacity-100 hover:border-zinc-400"
                     }`}
                   >
                     <img src={img} alt="" className="h-full w-full object-contain mix-blend-multiply" />

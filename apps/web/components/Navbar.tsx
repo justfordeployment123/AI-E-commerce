@@ -290,7 +290,7 @@ export default function Navbar() {
                               href={`/shop/${item.category}`}
                               className="flex items-center gap-4 p-2 rounded-xl hover:bg-muted transition-colors group text-foreground"
                             >
-                              <div className="h-10 w-10 bg-muted rounded-lg p-1.5 flex items-center justify-center shrink-0">
+                              <div className="h-10 w-10 bg-image-light rounded-lg p-1.5 flex items-center justify-center shrink-0">
                                 <img src={item.image} alt={item.title} className="h-full w-full object-contain mix-blend-multiply dark:brightness-95" />
                               </div>
                               <div className="min-w-0 flex-1">

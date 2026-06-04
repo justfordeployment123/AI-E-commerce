@@ -45,4 +45,10 @@ export class ScraperDataController {
     runs(@Query('limit') limit?: string) {
         return this.service.getRuns(limit ? Number(limit) : 20);
     }
+
+    @Post('cleanup')
+    @HttpCode(HttpStatus.OK)
+    cleanup() {
+        return this.service.cleanupStuckRuns();
+    }
 }

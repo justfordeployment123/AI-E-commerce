@@ -30,15 +30,26 @@ export class ScraperDataService {
     }
 
     async getStats() {
-        const [total, withMarketPrice, withCex, withBM, withMM, latest] = await Promise.all([
+        const [total, withMarketPrice, withCex, withBM, withMM, withEF, latest] = await Promise.all([
             this.prisma.scrapedPrice.count(),
             this.prisma.scrapedPrice.count({ where: { marketPrice:      { not: null } } }),
             this.prisma.scrapedPrice.count({ where: { cexSellPrice:     { not: null } } }),
             this.prisma.scrapedPrice.count({ where: { backMarketPrice:  { not: null } } }),
             this.prisma.scrapedPrice.count({ where: { musicMagpiePrice: { not: null } } }),
+            this.prisma.scrapedPrice.count({ where: { envirofonePrice:  { not: null } } }),
             this.prisma.scrapedPrice.findFirst({ orderBy: { scrapedAt: 'desc' }, select: { scrapedAt: true } }),
         ]);
-        return { total, withMarketPrice, withCex, withBM, withMM, lastScrapedAt: latest?.scrapedAt ?? null };
+        return { total, withMarketPrice, withCex, withBM, withMM, withEnvirofone: withEF, lastScrapedAt: latest?.scrapedAt ?? null };
+    }
+
+    async cleanupStuckRuns(): Promise<{ cleaned: number }> {
+        const twoHoursAgo = new Date(Date.now() - 1 * 60 * 60 * 1000);
+        const result = await this.prisma.scraperRun.updateMany({
+            where: { status: 'RUNNING', startedAt: { lt: twoHoursAgo } },
+            data:  { status: 'FAILED', finishedAt: new Date(), errorMessage: 'Marked failed manually via admin cleanup' },
+        });
+        this.logger.log(`Cleaned up ${result.count} stuck run(s).`);
+        return { cleaned: result.count };
     }
 
     async getRuns(limit = 20) {

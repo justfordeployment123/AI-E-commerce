@@ -464,7 +464,7 @@ export default function CategoryPage() {
                 <Link
                   key={acc}
                   href="/shop/phones"
-                  className="shrink-0 h-9 px-4 rounded-full border border-zinc-200 text-xs font-bold hover:border-black transition-colors flex items-center bg-white text-zinc-700"
+                  className="shrink-0 h-9 px-4 rounded-full border border-zinc-200 dark:border-zinc-850 text-xs font-bold hover:border-black dark:hover:border-white transition-colors flex items-center bg-white text-zinc-700 dark:text-zinc-300"
                 >
                   {acc}
                 </Link>
@@ -509,7 +509,7 @@ export default function CategoryPage() {
               {allProducts.slice(0, 8).map(product => (
                 <Link href={`/shop/${categorySlug}/${product.id}`} key={`top-${product.id}`} className="shrink-0 w-[240px] md:w-[280px] group block">
                   <div className="bg-white rounded-[32px] p-3 border border-zinc-200 hover:border-black hover:shadow-xl transition-all duration-300 h-full flex flex-col">
-                    <div className="relative aspect-square rounded-[24px] bg-muted mb-5 overflow-hidden flex items-center justify-center p-5">
+                    <div className="relative aspect-square rounded-[24px] bg-image-light mb-5 overflow-hidden flex items-center justify-center p-5">
                       <span className="absolute top-4 left-4 inline-flex px-2.5 py-1 rounded-full bg-accent text-[10px] font-bold text-white border border-accent shadow-sm uppercase tracking-wider z-10">
                         Best Seller
                       </span>
@@ -555,8 +555,10 @@ export default function CategoryPage() {
                 <div className="flex flex-wrap items-center gap-3 mb-6">
                   <button
                     onClick={() => setActiveTabBrand("all")}
-                    className={`h-11 px-5 rounded-2xl text-xs font-bold transition-all border flex items-center justify-center bg-white ${
-                      activeTabBrand === "all" ? "border-black shadow-sm" : "border-zinc-200 text-zinc-500 hover:border-zinc-400"
+                    className={`h-14 px-5 rounded-2xl text-xs font-bold transition-all border flex items-center justify-center bg-white ${
+                      activeTabBrand === "all"
+                        ? "border-black dark:border-white shadow-sm text-zinc-950 dark:text-white"
+                        : "border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:border-zinc-400 dark:hover:border-zinc-500"
                     }`}
                   >
                     All Brands
@@ -566,17 +568,21 @@ export default function CategoryPage() {
                       key={b.brand}
                       onClick={() => setActiveTabBrand(b.brand)}
                       className={`h-14 px-5 min-w-[72px] rounded-2xl transition-all border flex items-center justify-center bg-white ${
-                        activeTabBrand === b.brand ? "border-black shadow-sm" : "border-zinc-200 hover:border-zinc-400"
+                        activeTabBrand === b.brand
+                          ? "border-black dark:border-white shadow-sm"
+                          : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-500"
                       }`}
                     >
                       {b.logo ? (
                         <img
                           src={b.logo}
                           alt={b.brand}
-                          className="h-9 w-auto max-w-[100px] object-contain"
+                          className="h-9 w-auto max-w-[100px] object-contain dark:brightness-0 dark:invert"
                         />
                       ) : (
-                        <span className="font-extrabold text-[10px] uppercase tracking-wider text-zinc-950">{b.brand}</span>
+                        <span className={`font-extrabold text-[10px] uppercase tracking-wider ${
+                          activeTabBrand === b.brand ? "text-zinc-950 dark:text-white" : "text-zinc-500 dark:text-zinc-450"
+                        }`}>{b.brand}</span>
                       )}
                     </button>
                   ))}
@@ -712,7 +718,9 @@ export default function CategoryPage() {
                           key={brand}
                           onClick={() => toggleFilter(brand, activeBrands, setActiveBrands)}
                           className={`px-3 py-1.5 rounded-full text-sm font-bold transition-all border ${
-                            isActive ? "bg-black text-white border-black" : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-400"
+                            isActive
+                              ? "bg-black text-white border-black dark:bg-white dark:text-zinc-950 dark:border-white"
+                              : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-400 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-zinc-600"
                           }`}
                         >
                           {brand}
@@ -734,7 +742,9 @@ export default function CategoryPage() {
                           key={g}
                           onClick={() => toggleFilter(g, activeGrades, setActiveGrades)}
                           className={`px-3 py-1.5 rounded-full text-sm font-bold transition-all border ${
-                            isActive ? "bg-black text-white border-black" : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-400"
+                            isActive
+                              ? "bg-black text-white border-black dark:bg-white dark:text-zinc-950 dark:border-white"
+                              : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-400 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-zinc-600"
                           }`}
                         >
                           {g}

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { scraperApi, type ScrapedPriceRow, type ScraperStats, type ScraperRun } from "../../lib/api";
+import { scraperApi, healthApi, type ScrapedPriceRow, type ScraperStats, type ScraperRun } from "../../lib/api";
 import { Play, RefreshCw, Search, TrendingUp, CheckCircle2, AlertCircle, Clock, XCircle, Loader2 } from "lucide-react";
 
 function fmt(v: number | null) {
@@ -65,9 +65,18 @@ export default function ScraperPage() {
   const [loadingTable, setLoadingTable] = useState(false);
   const [running, setRunning] = useState(false);
   const [runMsg, setRunMsg] = useState("");
+  const [cleaning, setCleaning] = useState(false);
+  const [cleanMsg, setCleanMsg] = useState("");
+  const [serviceOnline, setServiceOnline] = useState<boolean | null>(null);
 
   const loadStats = useCallback(() => {
     scraperApi.stats().then(setStats).catch(() => {});
+  }, []);
+
+  const checkServiceHealth = useCallback(() => {
+    healthApi.check()
+      .then(h => setServiceOnline(h.scraper))
+      .catch(() => setServiceOnline(false));
   }, []);
 
   const loadRuns = useCallback(() => {
@@ -86,12 +95,27 @@ export default function ScraperPage() {
     if (!SCRAPER_ENABLED) { router.replace("/"); return; }
     loadStats();
     loadRuns();
-  }, [loadStats, loadRuns, router]);
+    checkServiceHealth();
+  }, [loadStats, loadRuns, checkServiceHealth, router]);
 
   useEffect(() => {
     if (!SCRAPER_ENABLED) return;
     loadPrices();
   }, [loadPrices]);
+
+  // Auto-poll: 8s while a run is active, 30s when idle
+  useEffect(() => {
+    if (!SCRAPER_ENABLED) return;
+    const isRunning = runs.some(r => r.status === "RUNNING");
+    const tick = () => {
+      loadStats();
+      loadRuns();
+      checkServiceHealth();
+      if (isRunning) loadPrices();
+    };
+    const id = setInterval(tick, isRunning ? 8_000 : 30_000);
+    return () => clearInterval(id);
+  }, [runs, loadStats, loadRuns, loadPrices, checkServiceHealth]);
 
   if (!SCRAPER_ENABLED) return null;
 
@@ -111,6 +135,20 @@ export default function ScraperPage() {
     }
   }
 
+  async function handleCleanup() {
+    setCleaning(true);
+    setCleanMsg("");
+    try {
+      const res = await scraperApi.cleanup();
+      setCleanMsg(`Cleaned ${res.cleaned} stuck run${res.cleaned !== 1 ? "s" : ""}.`);
+      loadRuns();
+    } catch (e: any) {
+      setCleanMsg(e.message ?? "Cleanup failed");
+    } finally {
+      setCleaning(false);
+    }
+  }
+
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
     setSearch(searchInput);
@@ -127,9 +165,27 @@ export default function ScraperPage() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Competitor Prices</h1>
-          <p className="text-sm text-zinc-500 mt-1">
-            Scraped from CeX, Back Market, and Music Magpie. Runs automatically every hour.
-          </p>
+          <div className="flex items-center gap-3 mt-1">
+            <p className="text-sm text-zinc-500">
+              Scraped from CeX, Back Market, Music Magpie &amp; Envirofone. Runs automatically every hour.
+            </p>
+            <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg border shrink-0 ${
+              serviceOnline === true
+                ? "text-emerald-700 bg-emerald-50 border-emerald-200"
+                : serviceOnline === false
+                  ? "text-red-700 bg-red-50 border-red-200"
+                  : "text-zinc-500 bg-zinc-50 border-zinc-200"
+            }`}>
+              <span className={`h-1.5 w-1.5 rounded-full ${
+                serviceOnline === true ? "bg-emerald-500"
+                : serviceOnline === false ? "bg-red-500 animate-pulse"
+                : "bg-zinc-400"
+              }`} />
+              {serviceOnline === true ? "Scraper online"
+                : serviceOnline === false ? "Scraper offline"
+                : "Checking…"}
+            </span>
+          </div>
         </div>
         <button
           onClick={handleRunScraper}
@@ -157,11 +213,13 @@ export default function ScraperPage() {
 
       {/* Stats */}
       {stats && (
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
           <StatCard label="Total devices" value={stats.total} />
           <StatCard label="With market price" value={stats.withMarketPrice} sub={`${coverage}% coverage`} />
-          <StatCard label="CeX data" value={stats.withCex} sub={`${stats.total ? Math.round(stats.withCex / stats.total * 100) : 0}%`} />
+          <StatCard label="CeX" value={stats.withCex} sub={`${stats.total ? Math.round(stats.withCex / stats.total * 100) : 0}%`} />
           <StatCard label="Back Market" value={stats.withBM} sub={`${stats.total ? Math.round(stats.withBM / stats.total * 100) : 0}%`} />
+          <StatCard label="Music Magpie" value={stats.withMM} sub={`${stats.total ? Math.round(stats.withMM / stats.total * 100) : 0}%`} />
+          <StatCard label="Envirofone" value={stats.withEnvirofone ?? 0} sub={`${stats.total ? Math.round((stats.withEnvirofone ?? 0) / stats.total * 100) : 0}%`} />
           <StatCard
             label="Last scraped"
             value={stats.lastScrapedAt ? new Date(stats.lastScrapedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "Never"}
@@ -177,9 +235,23 @@ export default function ScraperPage() {
             <h2 className="font-bold text-base">Run History</h2>
             <p className="text-xs text-zinc-400 mt-0.5">Last 20 scraper executions</p>
           </div>
-          <button onClick={() => { loadRuns(); loadStats(); }} className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-black transition-colors">
-            <RefreshCw className="h-3.5 w-3.5" /> Refresh
-          </button>
+          <div className="flex items-center gap-3">
+            {(() => {
+              const twoHoursAgo = Date.now() - 2 * 60 * 60 * 1000;
+              const stuckCount = runs.filter(r => r.status === "RUNNING" && new Date(r.startedAt).getTime() < twoHoursAgo).length;
+              return stuckCount > 0 ? (
+                <button onClick={handleCleanup} disabled={cleaning}
+                  className="flex items-center gap-1.5 text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-xl hover:bg-amber-100 transition-colors disabled:opacity-50">
+                  <AlertCircle className="h-3.5 w-3.5" />
+                  {cleaning ? "Cleaning…" : `${stuckCount} stuck — fix`}
+                </button>
+              ) : null;
+            })()}
+            {cleanMsg && <span className="text-xs font-bold text-emerald-600">{cleanMsg}</span>}
+            <button onClick={() => { loadRuns(); loadStats(); }} className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-black transition-colors">
+              <RefreshCw className="h-3.5 w-3.5" /> Refresh
+            </button>
+          </div>
         </div>
 
         {runs.length === 0 ? (
@@ -257,7 +329,7 @@ export default function ScraperPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-zinc-100">
-                    {["Device", "Storage", "CeX Sell", "CeX Cash", "CeX Exchange", "Back Market", "Music Magpie", "Market Price", "Last Updated"].map(h => (
+                    {["Device", "Storage", "CeX Sell", "CeX Cash", "CeX Exchange", "Back Market", "Music Magpie", "Envirofone", "Market Price", "Last Updated"].map(h => (
                       <th key={h} className="text-left text-[10px] font-bold uppercase tracking-widest text-zinc-400 px-6 py-3 whitespace-nowrap">{h}</th>
                     ))}
                   </tr>
@@ -272,6 +344,7 @@ export default function ScraperPage() {
                       <td className="px-6 py-3.5 font-mono text-zinc-500">{fmt(row.cexExchangePrice)}</td>
                       <td className="px-6 py-3.5 font-mono text-zinc-700">{fmt(row.backMarketPrice)}</td>
                       <td className="px-6 py-3.5 font-mono text-zinc-700">{fmt(row.musicMagpiePrice)}</td>
+                      <td className="px-6 py-3.5 font-mono text-zinc-700">{fmt(row.envirofonePrice)}</td>
                       <td className="px-6 py-3.5">
                         {row.marketPrice !== null ? (
                           <span className="inline-flex items-center gap-1.5 font-bold font-mono text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg text-xs">

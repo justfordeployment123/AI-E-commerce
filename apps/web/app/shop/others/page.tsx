@@ -9,18 +9,12 @@ import Footer from "../../../components/Footer";
 import { productsApi } from "../../../lib/api";
 import { useCart } from "../../../context/cart-context";
 
-const OTHERS_SLUGS = new Set([
-  "accessories", "cables", "chargers", "memory", "storage",
-  "mouse", "pen", "graphics", "lens",
-  "smartwatches", "games", "films",
-  "other", "others",
-  "camera lenses", "graphics cards", "mouse & peripherals", "stylus & pens",
-]);
 
 interface Product {
   id: string; name: string; slug: string; brand: string;
   category: string; price: number; comparePrice?: number;
   images: string[]; condition: string; stock: number;
+  otherBrandId?: string;
 }
 
 export default function OthersPage() {
@@ -36,9 +30,7 @@ export default function OthersPage() {
     setLoading(true);
     productsApi.list({ limit: 500 })
       .then(res => {
-        const others = res.items.filter(p =>
-          OTHERS_SLUGS.has(p.category.toLowerCase())
-        ) as Product[];
+        const others = res.items.filter(p => !!p.otherBrandId) as Product[];
         setProducts(others);
         
         // Count products per category
@@ -177,7 +169,7 @@ function ProductGridCard({ p, i, handleAddToCart, addedIds }: { p: Product; i: n
       className="group bg-white rounded-3xl border border-zinc-100 hover:border-zinc-300 hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col w-[210px] md:w-[230px] flex-shrink-0"
     >
       <Link href={`/shop/${p.category.toLowerCase()}/${p.slug}`} className="block">
-        <div className="aspect-square bg-zinc-50 flex items-center justify-center p-4 relative overflow-hidden">
+        <div className="aspect-square bg-image-light flex items-center justify-center p-4 relative overflow-hidden">
           {p.images?.[0] ? (
             <img
               src={p.images[0]}

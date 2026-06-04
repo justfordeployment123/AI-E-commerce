@@ -144,7 +144,7 @@ function PromoCarouselBanner() {
           <div className="lg:col-span-6 flex flex-col gap-4 items-start text-left relative">
             
             {/* Giant outlined index number in the background */}
-            <div className="absolute -top-16 lg:-top-20 -left-10 text-[12rem] lg:text-[18rem] font-serif font-black select-none pointer-events-none leading-none tracking-tighter text-zinc-300/30 dark:text-zinc-800/15">
+            <div className="absolute -top-8 sm:-top-16 lg:-top-20 -left-4 sm:-left-10 text-[6rem] sm:text-[12rem] lg:text-[18rem] font-serif font-black select-none pointer-events-none leading-none tracking-tighter text-zinc-300/30 dark:text-zinc-800/15">
               {displayIndex}
             </div>
 
@@ -691,7 +691,7 @@ function Hero() {
                   <Link href={`/shop/${p.category.toLowerCase()}/${p.slug}`} className="block">
                     <div className="bg-white rounded-[2.5rem] p-6 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.08)] mb-4 ring-1 ring-zinc-100 group cursor-pointer hover:shadow-[0_48px_80px_-16px_rgba(0,0,0,0.12)] transition-all duration-500">
                       <div className="flex items-center gap-6">
-                        <div className={`h-32 w-32 rounded-3xl overflow-hidden bg-zinc-50 flex-shrink-0 flex items-center justify-center ${isOtherProduct(p.category, p.images?.[0]) ? 'p-3' : ''}`}>
+                        <div className={`h-32 w-32 rounded-3xl overflow-hidden bg-image-light flex-shrink-0 flex items-center justify-center ${isOtherProduct(p.category, p.images?.[0]) ? 'p-3' : ''}`}>
                           <img
                             src={p.images?.[0]}
                             alt={p.name}
@@ -725,7 +725,7 @@ function Hero() {
                   return (
                     <Link key={i} href={`/shop/${p.category.toLowerCase()}/${p.slug}`} className="block">
                       <div className="bg-white rounded-[2rem] p-5 shadow-[0_20px_40px_-12px_rgba(0,0,0,0.06)] ring-1 ring-zinc-100 group cursor-pointer hover:shadow-[0_32px_50px_-12px_rgba(0,0,0,0.1)] transition-all duration-500">
-                        <div className={`h-28 w-full rounded-2xl overflow-hidden bg-zinc-50 mb-4 flex items-center justify-center ${isOtherProduct(p.category, p.images?.[0]) ? 'p-3.5' : ''}`}>
+                        <div className={`h-28 w-full rounded-2xl overflow-hidden bg-image-light mb-4 flex items-center justify-center ${isOtherProduct(p.category, p.images?.[0]) ? 'p-3.5' : ''}`}>
                           <img
                             src={p.images?.[0]}
                             alt={p.name}
@@ -865,7 +865,7 @@ function CategoryBento() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.08 }}
-                className={`group relative overflow-hidden rounded-[2rem] bg-zinc-100 cursor-pointer border border-zinc-200/50 hover:border-zinc-300 hover:shadow-2xl transition-all duration-500 ${i === 0 ? "col-span-2 lg:col-span-2 lg:row-span-2" : ""}`}
+                className={`group relative overflow-hidden rounded-[2rem] bg-zinc-100 cursor-pointer border border-zinc-200/50 hover:border-zinc-300 hover:shadow-2xl transition-all duration-500 ${i === 0 ? "col-span-2 lg:col-span-2 lg:row-span-2 h-[260px] sm:h-[320px] lg:h-auto" : "h-[180px] sm:h-[220px] lg:h-auto"}`}
               >
                 {cat.image && (
                   <img
@@ -1194,7 +1194,7 @@ function Reviews() {
                     once: true
                   }}
                   transition={{ delay: i * 0.07 }}
-                  className="flex-shrink-0 w-[320px] md:w-[360px] bg-white rounded-3xl p-7 border border-zinc-100 flex flex-col gap-5 shadow-sm hover:shadow-md transition-shadow"
+                  className="flex-shrink-0 w-[280px] sm:w-[320px] md:w-[360px] bg-white rounded-3xl p-5 sm:p-7 border border-zinc-100 flex flex-col gap-5 shadow-sm hover:shadow-md transition-shadow"
                 >
                   <div className="flex gap-0.5">
                     {[...Array(r.rating)].map((_: unknown, j: number) => <Star key={j} className="h-4 w-4 fill-amber-400 text-amber-400" />)}
@@ -1323,7 +1323,7 @@ function AppPreview() {
               <motion.div
                 animate={{ y: [0, -10, 0] }}
                 transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute -right-6 top-16 bg-white rounded-2xl p-3.5 shadow-2xl border border-zinc-100 z-20 w-[168px]"
+                className="absolute hidden sm:block -right-6 top-16 bg-white rounded-2xl p-3.5 shadow-2xl border border-zinc-100 z-20 w-[168px]"
               >
                 <div className="flex items-center gap-2.5 mb-2.5">
                   <div className="h-8 w-8 rounded-xl bg-emerald-500 flex items-center justify-center flex-shrink-0">
@@ -1344,7 +1344,7 @@ function AppPreview() {
               <motion.div
                 animate={{ y: [0, 9, 0] }}
                 transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}
-                className="absolute -left-8 bottom-28 bg-zinc-950 rounded-2xl px-4 py-3 shadow-2xl z-20"
+                className="absolute hidden sm:block -left-8 bottom-28 bg-zinc-950 rounded-2xl px-4 py-3 shadow-2xl z-20"
               >
                 <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest mb-1">You saved</p>
                 <div className="flex items-center gap-2">
@@ -1357,7 +1357,7 @@ function AppPreview() {
               <motion.div
                 animate={{ y: [0, -7, 0] }}
                 transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
-                className="absolute -right-4 bottom-20 bg-accent text-white rounded-2xl px-3.5 py-2.5 shadow-xl z-20"
+                className="absolute hidden sm:block -right-4 bottom-20 bg-accent text-white rounded-2xl px-3.5 py-2.5 shadow-xl z-20"
               >
                 <div className="flex gap-0.5 mb-0.5">
                   {[...Array(5)].map((_, k) => <Star key={k} className="h-3 w-3 fill-white text-white" />)}
@@ -1614,10 +1614,14 @@ function BestDealsSplit() {
                 onClick={() => setSelectedCategory("all")}
                 className="flex flex-col items-center gap-1.5 flex-shrink-0 w-[64px] group"
               >
-                <div className={`h-12 w-[64px] rounded-xl border flex items-center justify-center transition-colors ${selectedCategory === "all" ? "bg-zinc-950 border-zinc-950" : "bg-zinc-50 border-transparent hover:bg-white hover:border-zinc-200"}`}>
-                  <Zap className={`h-4 w-4 ${selectedCategory === "all" ? "text-accent" : "text-emerald-600"}`} />
+                <div className={`h-12 w-[64px] rounded-xl border flex items-center justify-center transition-colors ${
+                  selectedCategory === "all"
+                    ? "bg-zinc-950 border-zinc-950 dark:bg-white dark:border-white"
+                    : "bg-image-light border-transparent hover:border-zinc-200 dark:hover:border-zinc-700"
+                }`}>
+                  <Zap className={`h-4 w-4 ${selectedCategory === "all" ? "text-accent dark:text-zinc-950" : "text-emerald-600"}`} />
                 </div>
-                <span className="text-[10px] font-medium text-zinc-600 text-center leading-tight">All Deals</span>
+                <span className="text-[10px] font-medium text-zinc-600 dark:text-zinc-400 text-center leading-tight">All Deals</span>
               </button>
 
               {categoryPills.map((pill) => (
@@ -1626,13 +1630,17 @@ function BestDealsSplit() {
                   onClick={() => setSelectedCategory(pill.category)}
                   className="flex flex-col items-center gap-1.5 flex-shrink-0 w-[64px] group"
                 >
-                  <div className={`h-12 w-[64px] rounded-xl border overflow-hidden flex items-center justify-center transition-colors ${selectedCategory === pill.category ? "border-zinc-950 bg-white shadow-sm" : "bg-zinc-50 border-transparent hover:bg-white hover:border-zinc-200"}`}>
+                  <div className={`h-12 w-[64px] rounded-xl border overflow-hidden flex items-center justify-center transition-colors ${
+                    selectedCategory === pill.category
+                      ? "border-zinc-950 dark:border-white bg-image-light shadow-sm"
+                      : "bg-image-light border-transparent hover:border-zinc-200 dark:hover:border-zinc-700"
+                  }`}>
                     {pill.img
                       ? <img src={pill.img} alt={pill.name} className="h-9 w-9 object-contain mix-blend-multiply" />
                       : <span className="text-[9px] font-bold text-zinc-500 uppercase">{pill.name.slice(0, 3)}</span>
                     }
                   </div>
-                  <span className="text-[10px] font-medium text-zinc-600 text-center leading-tight truncate w-full">{pill.name}</span>
+                  <span className="text-[10px] font-medium text-zinc-600 dark:text-zinc-400 text-center leading-tight truncate w-full">{pill.name}</span>
                 </button>
               ))}
             </div>
@@ -1734,7 +1742,7 @@ function NewArrivals() {
         <div className="w-4 sm:w-6 lg:w-8 flex-shrink-0" />
         {items.map((item, i) => (
           <Link href={`/shop/${item.category.toLowerCase()}/${item.slug}`} key={i} className="block group flex-shrink-0 w-[220px] md:w-[240px] cursor-pointer">
-            <div className={`relative aspect-square rounded-3xl bg-zinc-50 overflow-hidden mb-4 flex items-center justify-center ${isOtherProduct(item.category, item.images?.[0]) ? 'p-4' : ''}`}>
+            <div className={`relative aspect-square rounded-3xl bg-image-light overflow-hidden mb-4 flex items-center justify-center ${isOtherProduct(item.category, item.images?.[0]) ? 'p-4' : ''}`}>
               <img
                 src={item.images?.[0] || undefined}
                 alt={item.name}
@@ -1965,7 +1973,7 @@ function GradeGuide() {
 
                 {/* Phone sketch — centred */}
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="opacity-90 group-hover:opacity-100 transition-opacity mt-6">
+                  <div className="opacity-90 group-hover:opacity-100 transition-opacity mt-6 hidden lg:block">
                     <PhoneSketch level={g.sketchLevel} />
                   </div>
                 </div>
@@ -2185,26 +2193,26 @@ function SavingsComparison() {
                   >
                     <Link
                       href={`/shop/${item.category?.toLowerCase() ?? "phones"}/${item.slug}`}
-                      className="group flex items-center gap-4 md:gap-6 p-4 md:p-5 rounded-2xl border border-zinc-100 hover:shadow-md hover:border-zinc-200 transition-all cursor-pointer"
+                      className="group flex items-center gap-3 md:gap-6 p-3 md:p-5 rounded-2xl border border-zinc-100 hover:shadow-md hover:border-zinc-200 transition-all cursor-pointer"
                     >
-                      <div className="h-14 w-14 md:h-16 md:w-16 rounded-2xl bg-zinc-50 flex-shrink-0 overflow-hidden">
+                      <div className="h-12 w-12 md:h-16 md:w-16 rounded-2xl bg-image-light flex-shrink-0 overflow-hidden">
                         <img src={item.img} alt={item.device} className="h-full w-full object-contain mix-blend-multiply" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-bold text-zinc-950 text-sm truncate">{item.device}</p>
-                        <p className={`text-[10px] font-bold uppercase tracking-widest mt-0.5 ${gradeClr[item.grade] ?? "text-zinc-500"}`}>{item.grade} · Certified</p>
+                        <p className="font-bold text-zinc-950 text-xs sm:text-sm truncate">{item.device}</p>
+                        <p className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mt-0.5 ${gradeClr[item.grade] ?? "text-zinc-500"}`}>{item.grade} · Certified</p>
                       </div>
                       <div className="hidden sm:block text-right flex-shrink-0 min-w-[80px]">
                         <p className="text-zinc-300 line-through text-sm font-bold">£{item.newPrice.toLocaleString()}</p>
                         <p className="text-[10px] font-bold uppercase text-zinc-400 mt-0.5">Retail</p>
                       </div>
-                      <div className="text-right flex-shrink-0 min-w-[80px]">
-                        <p className="text-xl md:text-2xl font-bold text-zinc-950">£{item.ourPrice.toLocaleString()}</p>
-                        <p className="text-[10px] font-bold uppercase text-zinc-400 mt-0.5">TechStop</p>
+                      <div className="text-right flex-shrink-0 min-w-[64px] sm:min-w-[80px]">
+                        <p className="text-sm sm:text-xl md:text-2xl font-bold text-zinc-950">£{item.ourPrice.toLocaleString()}</p>
+                        <p className="text-[9px] sm:text-[10px] font-bold uppercase text-zinc-400 mt-0.5">TechStop</p>
                       </div>
-                      <div className="flex-shrink-0 h-14 w-[90px] bg-accent rounded-2xl flex flex-col items-center justify-center text-white">
-                        <p className="text-base font-bold leading-none">-{pct}%</p>
-                        <p className="text-[9px] font-bold text-white/90 mt-0.5">Save £{saving}</p>
+                      <div className="flex-shrink-0 h-12 w-[72px] sm:h-14 sm:w-[90px] bg-accent rounded-2xl flex flex-col items-center justify-center text-white">
+                        <p className="text-xs sm:text-base font-bold leading-none">-{pct}%</p>
+                        <p className="text-[7px] sm:text-[9px] font-bold text-white/90 mt-0.5">Save £{saving}</p>
                       </div>
                     </Link>
                   </motion.div>
@@ -2243,7 +2251,7 @@ function ProductCard({ name, type, spec, price, was, grade, img, index = 0, link
         transition={{ delay: index * 0.04, duration: 0.3 }}
         className="cursor-pointer"
       >
-        <div className="relative aspect-square rounded-2xl bg-zinc-50 overflow-hidden mb-3 ring-1 ring-zinc-100 group-hover:ring-transparent group-hover:shadow-xl transition-all duration-300">
+        <div className="relative aspect-square rounded-2xl bg-image-light overflow-hidden mb-3 ring-1 ring-zinc-200/10 group-hover:ring-transparent group-hover:shadow-xl transition-all duration-300">
           <img src={img} alt={name} className="h-full w-full object-contain p-4 mix-blend-multiply group-hover:scale-105 transition-transform duration-500" />
           <div className={`absolute top-3 left-3 px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest ${GRADE_STYLE[grade] ?? "bg-zinc-100 text-zinc-600"}`}>{grade}</div>
           <div className="absolute top-3 right-3 px-2 py-1 rounded-full bg-accent text-white text-[9px] font-bold">-{pct}%</div>
@@ -2338,8 +2346,8 @@ function FeaturedShop() {
                 onClick={() => setActive(cat.slug)}
                 className={`flex-shrink-0 h-10 px-5 rounded-full font-bold text-sm transition-all duration-200 border ${
                   active === cat.slug
-                    ? "bg-zinc-950 text-white border-zinc-950"
-                    : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-950 hover:text-zinc-950"
+                    ? "bg-zinc-950 text-white border-zinc-950 dark:bg-white dark:text-zinc-950 dark:border-white"
+                    : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-950 hover:text-zinc-950 dark:bg-zinc-900/40 dark:text-zinc-400 dark:border-zinc-800 dark:hover:text-white dark:hover:border-zinc-400"
                 }`}
               >
                 {cat.name}
@@ -2500,8 +2508,8 @@ function TopBrandsSplit() {
                 onClick={() => setActiveBrand("all")}
                 className={`flex-shrink-0 h-10 px-5 rounded-full font-bold text-sm transition-all duration-200 border ${
                   activeBrand === "all"
-                    ? "bg-zinc-950 text-white border-zinc-950"
-                    : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-950 hover:text-zinc-950"
+                    ? "bg-zinc-950 text-white border-zinc-950 dark:bg-white dark:text-zinc-950 dark:border-white"
+                    : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-950 hover:text-zinc-950 dark:bg-zinc-900/40 dark:text-zinc-400 dark:border-zinc-800 dark:hover:text-white dark:hover:border-zinc-400"
                 }`}
               >
                 All
@@ -2513,15 +2521,19 @@ function TopBrandsSplit() {
                   onClick={() => setActiveBrand(brand.name)}
                   className={`flex-shrink-0 h-10 px-4 rounded-full font-bold text-sm transition-all duration-200 border flex items-center gap-2 ${
                     activeBrand === brand.name
-                      ? "bg-zinc-950 text-white border-zinc-950"
-                      : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-950 hover:text-zinc-950"
+                      ? "bg-zinc-950 text-white border-zinc-950 dark:bg-white dark:text-zinc-950 dark:border-white"
+                      : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-950 hover:text-zinc-950 dark:bg-zinc-900/40 dark:text-zinc-400 dark:border-zinc-800 dark:hover:text-white dark:hover:border-zinc-400"
                   }`}
                 >
                   {brand.logo && (
                     <img
                       src={brand.logo}
                       alt={brand.name}
-                      className={`h-5 w-5 object-contain flex-shrink-0 ${activeBrand === brand.name ? "brightness-0 invert" : ""}`}
+                      className={`h-5 w-5 object-contain flex-shrink-0 ${
+                        activeBrand === brand.name
+                          ? "brightness-0 invert dark:brightness-100 dark:invert-0"
+                          : "dark:brightness-0 dark:invert"
+                      }`}
                     />
                   )}
                   {brand.name}
@@ -2557,7 +2569,7 @@ function TopBrandsSplit() {
                       href={`/shop/${CAT_SLUG[p.category] ?? p.category.toLowerCase()}/${p.slug}`}
                       className="w-[220px] flex-shrink-0 bg-white rounded-xl p-4 border border-zinc-200/60 shadow-sm hover:shadow-md transition-shadow flex flex-col group cursor-pointer"
                     >
-                      <div className="h-40 w-full rounded-xl mb-3 overflow-hidden flex items-center justify-center bg-zinc-50 p-2">
+                      <div className="h-40 w-full rounded-xl mb-3 overflow-hidden flex items-center justify-center bg-image-light p-2">
                         <img src={p.images?.[0]} alt={p.name} className="h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-500" />
                       </div>
                       <p className="font-semibold text-zinc-950 text-[13px] leading-snug mb-2 line-clamp-2">{p.name}</p>
@@ -2848,27 +2860,6 @@ function Newsletter() {
   );
 }
 
-// ─── As Seen In ───────────────────────────────────────────────────────────────
-function AsSeenIn() {
-  const logos = [
-    "The Guardian", "TechRadar", "WIRED", "BBC", "The Telegraph", "Forbes", "The Verge", "CNET"
-  ];
-  return (
-    <section className="border-t border-zinc-100 bg-white py-14 overflow-hidden">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 text-center mb-10">As seen in</p>
-        <div className="flex gap-10 md:gap-16 items-center justify-center flex-wrap opacity-40 grayscale">
-          {logos.map((logo, i) => (
-            <span key={i} className="text-xl md:text-2xl font-sans font-extrabold text-zinc-950 tracking-tight">
-              {logo}
-            </span>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function HomePage() {
   useEffect(() => {
@@ -2902,7 +2893,6 @@ export default function HomePage() {
       <Reviews />
 
       <SellCTA />
-      <AsSeenIn />
       <Newsletter />
       <Footer />
     </main>

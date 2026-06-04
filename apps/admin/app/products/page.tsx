@@ -64,7 +64,7 @@ export default function ProductsPage() {
     setLoading(true);
     try {
       const res = await productsApi.list({ limit: 500 });
-      setProducts(res.items.filter(p => !OTHERS_SLUGS.has(p.category.toLowerCase())));
+      setProducts(res.items.filter(p => !p.otherBrandId));
     } catch { /* ignore */ }
     finally { setLoading(false); }
   }

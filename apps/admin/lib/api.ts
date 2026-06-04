@@ -201,6 +201,7 @@ export interface ScrapedPriceRow {
   cexExchangePrice: number | null;
   backMarketPrice: number | null;
   musicMagpiePrice: number | null;
+  envirofonePrice: number | null;
   marketPrice: number | null;
   scrapedAt: string;
 }
@@ -211,6 +212,7 @@ export interface ScraperStats {
   withCex: number;
   withBM: number;
   withMM: number;
+  withEnvirofone: number;
   lastScrapedAt: string | null;
 }
 
@@ -248,6 +250,18 @@ export const scraperApi = {
   stats: () => apiFetch<ScraperStats>('/scraper/stats'),
 
   runs: (limit = 20) => apiFetch<ScraperRun[]>(`/scraper/runs?limit=${limit}`),
+
+  cleanup: () => apiFetch<{ cleaned: number }>('/scraper/cleanup', { method: 'POST' }),
+};
+
+// ── Health ────────────────────────────────────────────────────────────────────
+export interface HealthStatus {
+  status: string;
+  scraper: boolean;
+  scraperError?: string;
+}
+export const healthApi = {
+  check: () => apiFetch<HealthStatus>('/health', { auth: false }),
 };
 
 // ── Pricing Config ────────────────────────────────────────────────────────────

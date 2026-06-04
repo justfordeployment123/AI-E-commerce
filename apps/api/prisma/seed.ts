@@ -248,20 +248,34 @@ async function seedPromoSlides() {
             }
         }
 
-        const title    = [slide.titleLine1, slide.titleLine2].filter(Boolean).join(' ');
-        const subtitle = slide.desc ?? '';
-        const btnText  = slide.btnText ?? 'Shop Now';
-        const btnLink  = slide.btnLink ?? '/';
+        const slideData = {
+            imgKey:      imgKey ?? null,
+            tabTitle:    slide.tabTitle    ?? '',
+            tag:         slide.tag         ?? '',
+            titleLine1:  slide.titleLine1  ?? '',
+            titleLine2:  slide.titleLine2  ?? '',
+            titleItalic: slide.titleItalic ?? '',
+            title:       [slide.titleLine1, slide.titleLine2].filter(Boolean).join(' '),
+            subtitle:    slide.desc        ?? '',
+            badgeA:      slide.badgeA      ?? '',
+            badgeB:      slide.badgeB      ?? '',
+            specs:       Array.isArray(slide.specs) ? slide.specs.join(',') : (slide.specs ?? ''),
+            themeColor:  slide.themeColor  ?? 'from-blue-500 to-indigo-600',
+            bgGlow:      slide.bgGlow      ?? 'rgba(59,130,246,0.15)',
+            btnText:     slide.btnText     ?? 'Shop Now',
+            btnLink:     slide.btnLink     ?? '/',
+            isActive:    true,
+        };
 
         const existing = await prisma.promoSlide.findFirst({ where: { order: i } });
         if (existing) {
             await prisma.promoSlide.update({
                 where: { id: existing.id },
-                data: { imgKey: imgKey ?? existing.imgKey, title, subtitle, btnText, btnLink },
+                data: { ...slideData, imgKey: imgKey ?? existing.imgKey },
             });
         } else {
             await prisma.promoSlide.create({
-                data: { imgKey, title, subtitle, btnText, btnLink, order: i, isActive: true },
+                data: { ...slideData, order: i },
             });
         }
     }
@@ -404,6 +418,20 @@ async function seedProducts(productsData: any[], catalogIdMap: Map<string, strin
 
 // ─── Phase 7: Other products (chargers, cables, memory, etc.) ────────────────
 
+const SUBCAT_DISPLAY: Record<string, string> = {
+    chargers:     'Chargers',
+    cables:       'Cables',
+    memory:       'Memory',
+    storage:      'Storage',
+    mouse:        'Mouse',
+    pen:          'Pen',
+    graphics:     'Graphics',
+    lens:         'Lens',
+    smart_watches:'Smart Watches',
+    games:        'Games',
+    films:        'Films',
+};
+
 async function seedOtherProducts() {
     const othersJsonPath = path.join(SEED_DIR, 'others', 'products.json');
     if (!fs.existsSync(othersJsonPath)) {
@@ -412,38 +440,25 @@ async function seedOtherProducts() {
     }
 
     const othersData: Record<string, any[]> = JSON.parse(fs.readFileSync(othersJsonPath, 'utf8'));
-
-    // Ensure "other" category exists
-    const cat = await prisma.category.upsert({
-        where:  { slug: 'other' },
-        update: {},
-        create: { name: 'Other', slug: 'other' },
-    });
-
     let created = 0, skipped = 0;
 
     for (const [subcategory, products] of Object.entries(othersData)) {
+        const subcatName = SUBCAT_DISPLAY[subcategory] ?? subcategory;
+
+        const subcat = await prisma.otherSubcategory.upsert({
+            where:  { name: subcatName },
+            update: {},
+            create: { name: subcatName },
+        });
+
         for (const prod of products) {
             const brandName: string = prod.brand ?? 'Generic';
             const brandSlug = brandName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
-            const brand = await prisma.brand.upsert({
-                where:  { slug: brandSlug },
+            const brand = await prisma.otherBrand.upsert({
+                where:  { name: brandName },
                 update: {},
-                create: { name: brandName, slug: brandSlug },
-            });
-
-            const bc = await prisma.brandCategory.upsert({
-                where:  { brandId_categoryId: { brandId: brand.id, categoryId: cat.id } },
-                update: {},
-                create: { brandId: brand.id, categoryId: cat.id, images: [] },
-            });
-
-            const model: string = prod.name;
-            const entry = await prisma.deviceCatalog.upsert({
-                where:  { brandCategoryId_model: { brandCategoryId: bc.id, model } },
-                update: {},
-                create: { brandCategoryId: bc.id, model, storageOptions: [], isActive: true },
+                create: { name: brandName },
             });
 
             // Upload image — prod.image is like "/others/chargers/apple-20w-usb-c-power-adapter.png"
@@ -471,20 +486,21 @@ async function seedOtherProducts() {
             try {
                 await prisma.product.create({
                     data: {
-                        catalogId:    entry.id,
-                        name:         prod.name,
+                        otherBrandId:       brand.id,
+                        otherSubcategoryId: subcat.id,
+                        name:               prod.name,
                         slug,
-                        condition:    'Good',
-                        storage:      '',
-                        price:        Number(prod.price),
-                        comparePrice: prod.comparePrice ? Number(prod.comparePrice) : null,
-                        stock:        10,
-                        images:       s3Keys,
-                        specs:        { subcategory },
-                        description:  prod.name,
-                        rating:       4.5,
-                        reviewCount:  0,
-                        isActive:     true,
+                        condition:          'Good',
+                        storage:            '',
+                        price:              Number(prod.price),
+                        comparePrice:       prod.comparePrice ? Number(prod.comparePrice) : null,
+                        stock:              10,
+                        images:             s3Keys,
+                        specs:              {},
+                        description:        prod.name,
+                        rating:             4.5,
+                        reviewCount:        0,
+                        isActive:           true,
                     },
                 });
                 created++;

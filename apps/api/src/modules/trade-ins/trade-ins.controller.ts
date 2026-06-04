@@ -71,6 +71,12 @@ export class TradeInsController {
         return this.tradeInsService.findByReference(reference);
     }
 
+    // Public statistics for trade-in page
+    @Get('stats')
+    getPublicStats() {
+        return this.tradeInsService.getPublicStats();
+    }
+
     // Admin routes
     @Get()
     @UseGuards(JwtAuthGuard, RolesGuard)

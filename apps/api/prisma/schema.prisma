@@ -321,6 +321,7 @@ model ScrapedPrice {
   cexExchangePrice   Float?
   backMarketPrice    Float?
   musicMagpiePrice   Float?
+  envirofonePrice    Float?
   marketPrice        Float?   // best available price computed from all sources
   scrapedAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt

@@ -2,41 +2,52 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { 
-  catalogCategoriesApi, 
-  catalogBrandsApi, 
+import {
+  catalogCategoriesApi,
+  catalogBrandsApi,
   catalogBrandCategoryApi,
+  otherSubcategoriesApi,
+  otherBrandsApi,
   type CatalogCategoryItem,
   type CatalogBrandItem,
-  type BrandCategoryOption
+  type BrandCategoryOption,
+  type OtherSubcategory,
+  type OtherBrand,
 } from "../../lib/api";
-import { 
-  Tag, 
-  Layers, 
-  Grid3X3, 
-  Plus, 
-  AlertTriangle, 
-  CheckCircle2, 
+import {
+  Tag,
+  Layers,
+  Grid3X3,
+  Plus,
+  AlertTriangle,
+  CheckCircle2,
   ArrowRight,
-  Sparkles
+  Sparkles,
+  Package,
 } from "lucide-react";
 
 export default function CatalogMgmtPage() {
-  const [categories, setCategories] = useState<CatalogCategoryItem[]>([]);
-  const [brands, setBrands] = useState<CatalogBrandItem[]>([]);
-  const [bcs, setBcs] = useState<BrandCategoryOption[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [categories, setCategories]       = useState<CatalogCategoryItem[]>([]);
+  const [brands, setBrands]               = useState<CatalogBrandItem[]>([]);
+  const [bcs, setBcs]                     = useState<BrandCategoryOption[]>([]);
+  const [otherSubcats, setOtherSubcats]   = useState<OtherSubcategory[]>([]);
+  const [otherBrandList, setOtherBrandList] = useState<OtherBrand[]>([]);
+  const [loading, setLoading]             = useState(true);
 
   useEffect(() => {
     Promise.all([
       catalogCategoriesApi.list(true),
       catalogBrandsApi.list(true),
       catalogBrandCategoryApi.list({ includeInactive: true }),
+      otherSubcategoriesApi.list(),
+      otherBrandsApi.list(),
     ])
-      .then(([cats, brandList, bcList]) => {
+      .then(([cats, brandList, bcList, subcats, oBrands]) => {
         setCategories(cats);
         setBrands(brandList);
         setBcs(bcList);
+        setOtherSubcats(subcats);
+        setOtherBrandList(oBrands);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -79,7 +90,7 @@ export default function CatalogMgmtPage() {
       </div>
 
       {/* Main Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Categories Card */}
         <Link 
           href="/catalog-mgmt/categories"
@@ -202,6 +213,44 @@ export default function CatalogMgmtPage() {
               </span>
             )}
             <span className="text-[10px] text-zinc-400 font-medium">Images per link</span>
+          </div>
+        </Link>
+
+        {/* Other Products Card */}
+        <Link
+          href="/catalog-mgmt/links/others"
+          className="group relative bg-white border border-zinc-100 rounded-3xl p-6 shadow-sm hover:border-zinc-300 hover:shadow-md transition-all duration-300 flex flex-col justify-between min-h-[200px]"
+        >
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="p-3 bg-zinc-50 rounded-2xl group-hover:bg-accent/10 transition-colors">
+                <Package className="h-5 w-5 text-zinc-400 group-hover:text-accent transition-colors" />
+              </div>
+              <ArrowRight className="h-4 w-4 text-zinc-300 group-hover:text-zinc-900 group-hover:translate-x-1 transition-all" />
+            </div>
+            <div>
+              <div className="text-4xl font-black text-zinc-900">{otherSubcats.length}</div>
+              <div className="font-bold text-zinc-700 text-sm mt-1">Other Products</div>
+              <p className="text-xs text-zinc-400 mt-1 font-medium">
+                {otherBrandList.length} brand{otherBrandList.length !== 1 ? "s" : ""} across {otherSubcats.length} subcategor{otherSubcats.length !== 1 ? "ies" : "y"}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-1 mt-4 pt-4 border-t border-zinc-50">
+            {otherSubcats.slice(0, 4).map(s => (
+              <span
+                key={s.id}
+                className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-zinc-50 text-zinc-600 border border-zinc-100 group-hover:border-zinc-200 transition-colors"
+              >
+                {s.name}
+              </span>
+            ))}
+            {otherSubcats.length > 4 && (
+              <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-accent/5 text-accent border border-accent/10">
+                +{otherSubcats.length - 4} more
+              </span>
+            )}
           </div>
         </Link>
       </div>

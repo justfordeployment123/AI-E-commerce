@@ -2,11 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { chromium } from 'playwright';
 import type { BrowserContext } from 'playwright';
-import * as fs from 'fs';
-import * as path from 'path';
 
 // These are used inside page.evaluate() which runs in browser context — not Node.js globals
-declare const document: any;
 declare const navigator: any;
 declare const globalThis: any;
 
@@ -20,6 +17,7 @@ interface DevicePrices {
     cex: CompetitorPrices | null;
     backMarket: CompetitorPrices | null;
     musicMagpie: CompetitorPrices | null;
+    envirofone: number | null;
 }
 
 @Injectable()
@@ -31,22 +29,34 @@ export class ScraperService {
     async runScraper(limit?: number): Promise<Record<string, DevicePrices>> {
         this.logger.log('Starting competitor price scraper…');
 
+        // Mark ALL stuck RUNNING runs as FAILED before starting.
+        // If we're here, any previous run must have crashed — safe to override.
+        const { count: stuckCount } = await this.prisma.scraperRun.updateMany({
+            where: { status: 'RUNNING' },
+            data:  { status: 'FAILED', finishedAt: new Date(), errorMessage: 'Run timed out — marked failed automatically' },
+        });
+        if (stuckCount > 0) this.logger.warn(`Marked ${stuckCount} stuck run(s) as FAILED.`);
+
         const run = await this.prisma.scraperRun.create({
             data: { status: 'RUNNING' },
         });
 
-        const devices = await this.prisma.deviceCatalog.findMany({ where: { isActive: true } });
+        const devices = await this.prisma.deviceCatalog.findMany({
+            where:   { isActive: true },
+            include: { brandCategory: { include: { brand: true } } },
+        });
         this.logger.log(`Found ${devices.length} active devices in catalog.`);
 
         const searchItems: { brand: string; model: string; storage: string; fullName: string }[] = [];
         for (const dev of devices) {
+            const brandName = dev.brandCategory.brand.name;
             const options = dev.storageOptions?.length ? dev.storageOptions : [''];
             for (const storage of options) {
                 searchItems.push({
-                    brand:    dev.brand,
+                    brand:    brandName,
                     model:    dev.model,
                     storage:  storage as string,
-                    fullName: storage ? `${dev.brand} ${dev.model} ${storage}` : `${dev.brand} ${dev.model}`,
+                    fullName: storage ? `${brandName} ${dev.model} ${storage}` : `${brandName} ${dev.model}`,
                 });
             }
         }
@@ -83,22 +93,32 @@ export class ScraperService {
 
         try {
             for (const [i, item] of itemsToScrape.entries()) {
-                this.logger.log(`[${i + 1}/${itemsToScrape.length}] "${item.fullName}"`);
+                this.logger.log(`>> [${i + 1}/${itemsToScrape.length}] ${item.fullName}`);
 
-                // CeX via Algolia interception — clean JSON, no HTML parsing needed
-                const cex = await this.scrapeCeX(context, item.brand, item.model, item.storage);
-                await this.delay(800);
+                // CeX via Algolia interception
+                let cex = await this.scrapeCeX(context, item.brand, item.model, item.storage);
+                // Fallback: retry without storage for devices CeX lists differently (e.g. MacBooks)
+                if (!cex && item.storage) {
+                    this.logger.log(`   [..] CeX retry (no storage)...`);
+                    await this.delay(500);
+                    cex = await this.scrapeCeX(context, item.brand, item.model, '');
+                }
+                await this.delay(500);
 
-                // BackMarket via HTML scraping (may hit Cloudflare — handled gracefully)
-                const backMarket = await this.scrapeBackMarket(context, item.fullName, item.storage);
-                await this.delay(1000);
+                // BackMarket via Jina.ai (no browser needed)
+                const backMarket = await this.scrapeBackMarket(item.fullName, item.storage);
+                await this.delay(500);
 
-                // MusicMagpie via HTML scraping
-                const musicMagpie = await this.scrapeMusicMagpie(context, item.fullName, item.storage);
+                // MusicMagpie via Jina.ai
+                const musicMagpie = await this.scrapeMusicMagpie(item.fullName, item.storage);
+                await this.delay(500);
 
-                results[item.fullName] = { cex, backMarket, musicMagpie };
+                // Envirofone via Jina.ai
+                const envirofone = await this.scrapeEnvirofone(item.fullName, item.storage);
 
-                const marketPrice = cex?.sellPrice ?? backMarket?.sellPrice ?? musicMagpie?.sellPrice ?? null;
+                results[item.fullName] = { cex, backMarket, musicMagpie, envirofone };
+
+                const marketPrice = cex?.sellPrice ?? backMarket?.sellPrice ?? musicMagpie?.sellPrice ?? envirofone ?? null;
 
                 await this.prisma.scrapedPrice.upsert({
                     where:  { deviceKey: item.fullName },
@@ -112,6 +132,7 @@ export class ScraperService {
                         cexExchangePrice: cex?.buyExchangePrice ?? null,
                         backMarketPrice:  backMarket?.sellPrice  ?? null,
                         musicMagpiePrice: musicMagpie?.sellPrice ?? null,
+                        envirofonePrice:  envirofone,
                         marketPrice,
                         scrapedAt:        new Date(),
                     },
@@ -121,17 +142,18 @@ export class ScraperService {
                         cexExchangePrice: cex?.buyExchangePrice ?? null,
                         backMarketPrice:  backMarket?.sellPrice  ?? null,
                         musicMagpiePrice: musicMagpie?.sellPrice ?? null,
+                        envirofonePrice:  envirofone,
                         marketPrice,
                         scrapedAt:        new Date(),
                     },
                 });
 
-                this.logger.log(
-                    `  └─ CeX=£${cex?.sellPrice ?? '—'}  BM=£${backMarket?.sellPrice ?? '—'}  MM=£${musicMagpie?.sellPrice ?? '—'}  → market=£${marketPrice ?? '—'}`,
-                );
+                const mktStr = marketPrice ? `£${marketPrice}` : 'no data';
+                this.logger.log(`   $$ Market -> ${mktStr}`);
+                this.logger.log('');
 
                 if (i < itemsToScrape.length - 1) {
-                    await this.delay(1500 + Math.random() * 1500);
+                    await this.delay(1000 + Math.random() * 1000);
                 }
             }
         } catch (err: any) {
@@ -178,7 +200,7 @@ export class ScraperService {
             const hits: any[] = json?.results?.[0]?.hits ?? [];
 
             if (hits.length === 0) {
-                this.logger.warn(`CeX: no Algolia hits for "${query}"`);
+                this.logger.log(`   [--] CeX  no result`);
                 return null;
             }
 
@@ -186,22 +208,27 @@ export class ScraperService {
             const storageL  = storage?.toLowerCase() ?? '';
             // Normalize storage for matching: "128 GB" → "128gb" to match CeX's "128GB"
             const storageN  = storageL.replace(/\s+/g, '');
+            // Normalize model: strip parentheses so "MacBook Air M2 (2022)" matches "MacBook Air M2 2022"
+            const modelN    = modelL.replace(/[()]/g, '').replace(/\s+/g, ' ').trim();
 
             // Score: +2 for storage match, +1 for "unlocked", -999 if model missing or variant mismatch
             const score = (h: any): number => {
-                const name = (h.boxName ?? '').toLowerCase();
-                if (!name.includes(modelL)) return -999;
-                // Prevent "iPhone 15 Pro" from matching "iPhone 15 Pro Max" (or Plus/Ultra/Mini variants)
-                const afterModel = name.slice(name.indexOf(modelL) + modelL.length);
-                if (/^\s+(max|plus|ultra|mini)\b/i.test(afterModel)) return -999;
-                // Normalize name spaces too so "128 gb" matches "128gb" in CeX names
-                const nameN = name.replace(/\s+/g, '');
-                return (storageN && nameN.includes(storageN) ? 2 : 0) + (name.includes('unlocked') ? 1 : 0);
+                const name  = (h.boxName ?? '').toLowerCase();
+                const nameN = name.replace(/[()]/g, '').replace(/\s+/g, ' ').trim();
+                if (!nameN.includes(modelN)) return -999;
+                // Only reject Pro Max / Plus / Ultra / Mini for iPhones —
+                // these suffixes are valid for iPad Pro, MacBook Pro Max chip, etc.
+                if (/iphone/i.test(modelL)) {
+                    const afterModel = nameN.slice(nameN.indexOf(modelN) + modelN.length);
+                    if (/^\s*(max|plus|ultra|mini)\b/i.test(afterModel)) return -999;
+                }
+                const nameNoSpace = name.replace(/\s+/g, '');
+                return (storageN && nameNoSpace.includes(storageN) ? 2 : 0) + (name.includes('unlocked') ? 1 : 0);
             };
 
             const best = hits.reduce((a, b) => (score(b) > score(a) ? b : a), hits[0]);
             if (score(best) < 0) {
-                this.logger.warn(`CeX: no matching Algolia hit for "${query}"`);
+                this.logger.log(`   [--] CeX  no result`);
                 return null;
             }
 
@@ -209,7 +236,7 @@ export class ScraperService {
             const cash     = best.cashPriceCalculated     || best.cashBuyPrice     || null;
             const exchange = best.exchangePriceCalculated || best.exchangePrice    || null;
 
-            this.logger.log(`CeX → "${best.boxName}" sell=£${best.sellPrice} cash=£${cash} exchange=£${exchange}`);
+            this.logger.log(`   [OK] CeX  £${best.sellPrice}  (cash £${cash ?? '—'} · px £${exchange ?? '—'})  "${best.boxName}"`);
 
             return {
                 sellPrice:        typeof best.sellPrice === 'number' && best.sellPrice > 0     ? best.sellPrice : null,
@@ -224,161 +251,58 @@ export class ScraperService {
         }
     }
 
-    // ─── BackMarket (Playwright HTML) ─────────────────────────────────────────
-    private async scrapeBackMarket(context: BrowserContext, query: string, storage: string): Promise<CompetitorPrices | null> {
-        const page = await context.newPage();
+    // ─── BackMarket (Jina.ai reader) ──────────────────────────────────────────────
+    // Jina.ai renders the page server-side and returns clean text, bypassing Cloudflare.
+    private async scrapeBackMarket(query: string, storage: string): Promise<CompetitorPrices | null> {
         try {
-            await page.goto(
-                `https://www.backmarket.co.uk/en-gb/search?q=${encodeURIComponent(query)}`,
-                { waitUntil: 'domcontentloaded', timeout: 30_000 },
-            );
-            await this.delay(3000);
-
-            // Dismiss cookie banner if present
-            try {
-                const btn = await page.$('button[data-qa*="accept"], button[id*="accept"]');
-                if (btn) { await btn.click(); await this.delay(600); }
-            } catch { /* ignore */ }
-
-            // Detect Cloudflare / bot challenge page
-            const title    = await page.title();
-            const bodyText = await page.evaluate(() => (document.body?.innerText ?? '').slice(0, 500));
-            if (/just a moment|cloudflare|verify you are human|checking your browser/i.test(title + bodyText)) {
-                this.logger.warn(`BackMarket: bot protection for "${query}"`);
+            const url = `https://www.backmarket.co.uk/en-gb/search?q=${encodeURIComponent(query)}`;
+            const markdown = await this.fetchWithJina(url);
+            const sellPrice = this.extractPriceFromMarkdown(markdown, storage);
+            if (!sellPrice) {
+                this.logger.log(`   [--] BackMarket  no result`);
                 return null;
             }
-
-            const priceText = await page.evaluate((storageVal: string) => {
-                const isPrice = (t: string) => /^£\s*\d+/.test(t) && t.length < 25;
-                const firstPrice = (root: any): string | null => {
-                    for (const el of Array.from(root.querySelectorAll('*')) as any[]) {
-                        if (!el.children.length) {
-                            const t = (el.textContent ?? '').trim();
-                            if (isPrice(t)) return t;
-                        }
-                    }
-                    return null;
-                };
-
-                const cardSelectors = ['[data-qa="product-card"]', '[class*="productCard"]', '[class*="product-card"]', 'article'];
-                for (const sel of cardSelectors) {
-                    const cards = Array.from(document.querySelectorAll(sel)) as any[];
-                    if (!cards.length) continue;
-
-                    // Try to find a card matching the storage variant
-                    for (const card of cards) {
-                        if (storageVal && !(card.textContent ?? '').toLowerCase().includes(storageVal.toLowerCase())) continue;
-                        const p = firstPrice(card);
-                        if (p) return p;
-                    }
-                    // Fallback: first card regardless of storage
-                    for (const card of cards) {
-                        const p = firstPrice(card);
-                        if (p) return p;
-                    }
-                    break;
-                }
-
-                // Last resort: any leaf element with a £ price
-                for (const el of Array.from(document.querySelectorAll('*')) as any[]) {
-                    if (!el.children.length) {
-                        const t = (el.textContent ?? '').trim();
-                        if (isPrice(t)) return t;
-                    }
-                }
-                return null;
-            }, storage);
-
-            if (!priceText) {
-                this.logger.warn(`BackMarket: no price for "${query}"`);
-                return null;
-            }
-
-            const sellPrice = this.extractFirstPrice(priceText);
-            if (!sellPrice) return null;
-
-            this.logger.log(`BackMarket → "${query}": £${sellPrice}`);
+            this.logger.log(`   [OK] BackMarket  £${sellPrice}`);
             return { sellPrice };
         } catch (e: any) {
             this.logger.error(`BackMarket error for "${query}": ${e.message}`);
             return null;
-        } finally {
-            await page.close();
         }
     }
 
-    // ─── MusicMagpie (Playwright HTML) ────────────────────────────────────────
-    private async scrapeMusicMagpie(context: BrowserContext, query: string, storage: string): Promise<CompetitorPrices | null> {
-        const page = await context.newPage();
+    // ─── MusicMagpie (Jina.ai reader) ────────────────────────────────────────────
+    private async scrapeMusicMagpie(query: string, storage: string): Promise<CompetitorPrices | null> {
         try {
-            await page.goto(
-                `https://www.musicmagpie.co.uk/store/search?q=${encodeURIComponent(query)}`,
-                { waitUntil: 'domcontentloaded', timeout: 30_000 },
-            );
-            await this.delay(2000);
-
-            // Dismiss cookie consent
-            try {
-                const btn = await page.$('#onetrust-accept-btn-handler, button:has-text("Accept All"), button:has-text("Accept Cookies")');
-                if (btn) { await btn.click(); await this.delay(500); }
-            } catch { /* ignore */ }
-
-            const priceText = await page.evaluate((storageVal: string) => {
-                const isPrice = (t: string) => /^£\s*\d+/.test(t) && t.length < 25;
-                const firstPrice = (root: any): string | null => {
-                    for (const el of Array.from(root.querySelectorAll('*')) as any[]) {
-                        if (!el.children.length) {
-                            const t = (el.textContent ?? '').trim();
-                            if (isPrice(t)) return t;
-                        }
-                    }
-                    return null;
-                };
-
-                const cardSelectors = ['.product-card', '.product', 'article', '[class*="ProductCard"]', 'li[class*="product"]', '.item'];
-                for (const sel of cardSelectors) {
-                    const cards = Array.from(document.querySelectorAll(sel)) as any[];
-                    if (!cards.length) continue;
-
-                    // Storage-matched card first
-                    for (const card of cards) {
-                        if (storageVal && !(card.textContent ?? '').toLowerCase().includes(storageVal.toLowerCase())) continue;
-                        const p = firstPrice(card);
-                        if (p) return p;
-                    }
-                    // Any card
-                    for (const card of cards) {
-                        const p = firstPrice(card);
-                        if (p) return p;
-                    }
-                    break;
-                }
-
-                // Last resort: any leaf with £
-                for (const el of Array.from(document.querySelectorAll('*')) as any[]) {
-                    if (!el.children.length) {
-                        const t = (el.textContent ?? '').trim();
-                        if (isPrice(t)) return t;
-                    }
-                }
-                return null;
-            }, storage);
-
-            if (!priceText) {
-                this.logger.warn(`MusicMagpie: no price for "${query}"`);
+            const url = `https://www.musicmagpie.co.uk/store/search?q=${encodeURIComponent(query)}`;
+            const markdown = await this.fetchWithJina(url);
+            const sellPrice = this.extractPriceFromMarkdown(markdown, storage);
+            if (!sellPrice) {
+                this.logger.log(`   [--] MusicMagpie  no result`);
                 return null;
             }
-
-            const sellPrice = this.extractFirstPrice(priceText);
-            if (!sellPrice) return null;
-
-            this.logger.log(`MusicMagpie → "${query}": £${sellPrice}`);
+            this.logger.log(`   [OK] MusicMagpie  £${sellPrice}`);
             return { sellPrice };
         } catch (e: any) {
             this.logger.error(`MusicMagpie error for "${query}": ${e.message}`);
             return null;
-        } finally {
-            await page.close();
+        }
+    }
+
+    // ─── Envirofone (Jina.ai reader) ─────────────────────────────────────────────
+    private async scrapeEnvirofone(query: string, storage: string): Promise<number | null> {
+        try {
+            const url = `https://www.envirofone.com/en/products/search/?q=${encodeURIComponent(query)}`;
+            const markdown = await this.fetchWithJina(url);
+            const price = this.extractPriceFromMarkdown(markdown, storage);
+            if (!price) {
+                this.logger.log(`   [--] Envirofone  no result`);
+                return null;
+            }
+            this.logger.log(`   [OK] Envirofone  £${price}`);
+            return price;
+        } catch (e: any) {
+            this.logger.error(`Envirofone error for "${query}": ${e.message}`);
+            return null;
         }
     }
 
@@ -388,9 +312,10 @@ export class ScraperService {
 
         const device = await this.prisma.deviceCatalog.findFirst({
             where: {
-                brand: { equals: brand, mode: 'insensitive' },
-                model: { equals: model, mode: 'insensitive' },
+                brandCategory: { brand: { name: { equals: brand, mode: 'insensitive' } } },
+                model:         { equals: model, mode: 'insensitive' },
             },
+            include: { brandCategory: { include: { brand: true } } },
         });
 
         const storageOptions = device?.storageOptions?.length ? device.storageOptions as string[] : [''];
@@ -415,13 +340,19 @@ export class ScraperService {
                 const fullName = storage ? `${brand} ${model} ${storage}` : `${brand} ${model}`;
                 this.logger.log(`  Scraping "${fullName}"…`);
 
-                const cex = await this.scrapeCeX(context, brand, model, storage);
-                await this.delay(800);
-                const backMarket  = await this.scrapeBackMarket(context, fullName, storage);
-                await this.delay(1000);
-                const musicMagpie = await this.scrapeMusicMagpie(context, fullName, storage);
+                let cex = await this.scrapeCeX(context, brand, model, storage);
+                if (!cex && storage) {
+                    await this.delay(500);
+                    cex = await this.scrapeCeX(context, brand, model, '');
+                }
+                await this.delay(500);
+                const backMarket  = await this.scrapeBackMarket(fullName, storage);
+                await this.delay(500);
+                const musicMagpie = await this.scrapeMusicMagpie(fullName, storage);
+                await this.delay(500);
+                const envirofone  = await this.scrapeEnvirofone(fullName, storage);
 
-                const marketPrice = cex?.sellPrice ?? backMarket?.sellPrice ?? musicMagpie?.sellPrice ?? null;
+                const marketPrice = cex?.sellPrice ?? backMarket?.sellPrice ?? musicMagpie?.sellPrice ?? envirofone ?? null;
 
                 await this.prisma.scrapedPrice.upsert({
                     where:  { deviceKey: fullName },
@@ -432,6 +363,7 @@ export class ScraperService {
                         cexExchangePrice: cex?.buyExchangePrice ?? null,
                         backMarketPrice:  backMarket?.sellPrice  ?? null,
                         musicMagpiePrice: musicMagpie?.sellPrice ?? null,
+                        envirofonePrice:  envirofone,
                         marketPrice, scrapedAt: new Date(),
                     },
                     update: {
@@ -440,11 +372,12 @@ export class ScraperService {
                         cexExchangePrice: cex?.buyExchangePrice ?? null,
                         backMarketPrice:  backMarket?.sellPrice  ?? null,
                         musicMagpiePrice: musicMagpie?.sellPrice ?? null,
+                        envirofonePrice:  envirofone,
                         marketPrice, scrapedAt: new Date(),
                     },
                 });
 
-                this.logger.log(`  └─ CeX=£${cex?.sellPrice ?? '—'}  → market=£${marketPrice ?? '—'}`);
+                this.logger.log(`  └─ CeX=£${cex?.sellPrice ?? '—'}  BM=£${backMarket?.sellPrice ?? '—'}  EF=£${envirofone ?? '—'}  → market=£${marketPrice ?? '—'}`);
             }
         } finally {
             await browser.close();
@@ -502,16 +435,54 @@ export class ScraperService {
         return { total, withMarketPrice, withCex, withBM, withMM, lastScrapedAt: latest?.scrapedAt ?? null };
     }
 
-    // ─── Utilities ────────────────────────────────────────────────────────────
-
-    private extractFirstPrice(text: string): number | null {
-        const m = text.match(/£\s*(\d+(?:\.\d{1,2})?)/);
-        if (!m || !m[1]) return null;
-        const val = parseFloat(m[1]);
-        return isNaN(val) ? null : val;
-    }
-
     private delay(ms: number): Promise<void> {
         return new Promise(r => setTimeout(r, ms));
+    }
+
+    // ─── Jina.ai Reader ───────────────────────────────────────────────────────────
+    // Fetches a URL via r.jina.ai which renders the page server-side and returns
+    // clean plain text — bypasses Cloudflare without needing a headless browser.
+    private async fetchWithJina(targetUrl: string): Promise<string> {
+        const jinaUrl = `https://r.jina.ai/${targetUrl}`;
+        const headers: Record<string, string> = {
+            'Accept': 'text/plain',
+            'X-Timeout': '30',
+        };
+        const apiKey = process.env.JINA_API_KEY;
+        if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
+        const res = await fetch(jinaUrl, { headers, signal: AbortSignal.timeout(35_000) });
+        if (!res.ok) throw new Error(`Jina.ai returned HTTP ${res.status}`);
+        return res.text();
+    }
+
+    // Extracts the first £NNN price from Jina.ai markdown output.
+    // Prefers a price within 3 lines of a storage mention (e.g. "128GB"),
+    // since product name and price are often on adjacent lines in markdown.
+    private extractPriceFromMarkdown(markdown: string, storage: string): number | null {
+        const lines    = markdown.split('\n');
+        const storageN = storage.toLowerCase().replace(/\s+/g, '');
+
+        // Pass 1: find a line mentioning the storage variant, then look up to
+        // 3 lines ahead for a price — handles heading + price on next line patterns.
+        if (storageN) {
+            for (let i = 0; i < lines.length; i++) {
+                if (!lines[i].toLowerCase().replace(/\s+/g, '').includes(storageN)) continue;
+                for (let j = i; j <= Math.min(i + 3, lines.length - 1); j++) {
+                    const m = lines[j].match(/£\s*(\d+(?:\.\d{1,2})?)/);
+                    if (m) return parseFloat(m[1]);
+                }
+            }
+        }
+
+        // Pass 2: first price on any line, ignoring trivial values like £1
+        for (const line of lines) {
+            const m = line.match(/£\s*(\d+(?:\.\d{1,2})?)/);
+            if (m) {
+                const val = parseFloat(m[1]);
+                if (val > 1) return val;
+            }
+        }
+
+        return null;
     }
 }

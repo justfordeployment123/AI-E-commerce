@@ -211,6 +211,9 @@ export const tradeInsApi = {
     method: 'POST',
     body: JSON.stringify(data),
   }),
+
+  stats: () =>
+    apiFetch<{ devicesRepurposed: number; lifespanExtension: number; idleElectronics: number }>('/trade-ins/stats'),
 };
 
 // ── Repairs ───────────────────────────────────────────────────────────────────
@@ -365,6 +368,8 @@ export interface Product {
   description?: string;
   rating: number;
   reviewCount: number;
+  otherBrandId?: string;
+  otherSubcategoryId?: string;
 }
 
 export interface CartItem {

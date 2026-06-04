@@ -46,21 +46,21 @@
 
 
 :root[data-theme="dark"] {
-  --background: #090a0f;
+  --background: #11131c; /* Deep obsidian card background */
   --foreground: #f8fafc;
-  --page-bg: #090a0f;
+  --page-bg: #07080c;    /* Deep space black page background */
   --ink: #f8fafc;
   --accent: #ff2430; /* Glowing Electric Red */
   --accent-dark: #be123c;
-  --muted: #151821;
-  --border: #1e2230;
+  --muted: #1a1c28;      /* Secondary dark widget background */
+  --border: #232738;     /* Sleek border separation */
   
   /* Mood Colors - Dark Mode */
-  --mood-rose: #2d1418;
-  --mood-sky: #0c2233;
-  --mood-amber: #332200;
-  --mood-emerald: #062e1e;
-  --mood-violet: #22123b;
+  --mood-rose: #3a151b;
+  --mood-sky: #0d283d;
+  --mood-amber: #3e2b00;
+  --mood-emerald: #083c27;
+  --mood-violet: #2b174d;
 }
 
 :root[data-theme="light"] {
@@ -100,6 +100,10 @@ html body .border-zinc-200 {
   border-color: var(--border);
 }
 
+.bg-image-light {
+  background-color: #f5f5f7 !important;
+}
+
 @layer utilities {
   .scrollbar-hide {
     -ms-overflow-style: none;  /* IE and Edge */
@@ -111,7 +115,7 @@ html body .border-zinc-200 {
 }
 
 body {
-  background: var(--background);
+  background: var(--page-bg);
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, sans-serif;
   text-rendering: optimizeLegibility;

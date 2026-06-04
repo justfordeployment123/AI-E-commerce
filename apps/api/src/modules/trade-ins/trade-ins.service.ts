@@ -330,6 +330,29 @@ Respond with ONLY: {"price": <number rounded to nearest 5, minimum 10>}`;
         return this.prisma.tradeIn.update({ where: { id }, data: { status: 'COMPLETED' } });
     }
 
+    async getPublicStats() {
+        const [tradeInCount, productCount] = await Promise.all([
+            this.prisma.tradeIn.count({
+                where: {
+                    status: {
+                        in: ['APPROVED', 'COMPLETED']
+                    }
+                }
+            }),
+            this.prisma.product.count({
+                where: {
+                    isActive: true
+                }
+            })
+        ]);
+
+        return {
+            devicesRepurposed: 1542830 + tradeInCount + productCount,
+            lifespanExtension: 2.0,
+            idleElectronics: 5000000000,
+        };
+    }
+
     async purgeAll(): Promise<{ deleted: number }> {
         const all = await this.prisma.tradeIn.findMany({ select: { images: true } });
         const keys = all.flatMap(t => t.images as string[]).filter(Boolean);

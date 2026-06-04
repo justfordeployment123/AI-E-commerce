@@ -280,6 +280,46 @@ function AnimatedPrice({ value }: { value: number }) {
   return <span>£{displayValue}</span>;
 }
 
+function AnimatedNumber({ value, format, suffix = "", duration = 1500, startOffset = 0 }: {
+  value: number;
+  format: (val: number) => string;
+  suffix?: string;
+  duration?: number;
+  startOffset?: number;
+}) {
+  const [displayValue, setDisplayValue] = useState(value - startOffset);
+
+  useEffect(() => {
+    const start = value - startOffset;
+    const end = value;
+    if (start === end) {
+      setDisplayValue(end);
+      return;
+    }
+
+    const startTime = performance.now();
+    let animationFrameId: number;
+
+    const updateNumber = (currentTime: number) => {
+      const elapsedTime = currentTime - startTime;
+      if (elapsedTime >= duration) {
+        setDisplayValue(end);
+      } else {
+        const progress = elapsedTime / duration;
+        const easeProgress = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+        const currentVal = Math.round(start + (end - start) * easeProgress);
+        setDisplayValue(currentVal);
+        animationFrameId = requestAnimationFrame(updateNumber);
+      }
+    };
+
+    animationFrameId = requestAnimationFrame(updateNumber);
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [value, startOffset, duration]);
+
+  return <span>{format(displayValue)}{suffix}</span>;
+}
+
 function StepHeader({ label, sub }: { label: string; sub?: string }) {
   return (
     <div className="space-y-1">
@@ -302,6 +342,23 @@ export default function TradeInPage() {
   const [storesLoading, setStoresLoading] = useState(false);
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+
+  const [stats, setStats] = useState({
+    devicesRepurposed: 1542830,
+    lifespanExtension: 2.0,
+    idleElectronics: 5000000000,
+  });
+
+  // Fetch dynamic system-wide stats
+  useEffect(() => {
+    tradeInsApi.stats()
+      .then(res => {
+        if (res) {
+          setStats(res);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Pre-fill contact from logged-in user profile
   useEffect(() => {
@@ -931,17 +988,58 @@ export default function TradeInPage() {
             <div className="max-w-5xl mx-auto mb-32 text-left">
               <div className="bg-zinc-950 text-white rounded-[3rem] p-10 md:p-16 grid md:grid-cols-3 gap-12 relative overflow-hidden shadow-2xl border border-zinc-900">
                 <div className="absolute bottom-0 right-0 w-96 h-96 bg-sky-500/5 blur-[100px] rounded-full pointer-events-none" />
-                {[
-                  { num: "1.5M+", title: "Devices Repurposed", desc: "We've saved over 1.5 million functional gadgets from leaking toxic chemical e-waste into landfills." },
-                  { num: "2x", title: "Lifespan Extension", desc: "Every smartphone or laptop refurbished doubles its operational lifetime, conserving precious raw minerals." },
-                  { num: "5 Billion", title: "Idle Electronics", desc: "Global statistics show 5 billion mobile devices are sitting unused in cupboards. Let's recycle yours for cash." }
-                ].map((stat, i) => (
-                  <div key={i} className="space-y-3 relative">
-                    <p className="font-sans text-5xl md:text-6xl font-extrabold text-sky-400 tracking-tighter leading-none">{stat.num}</p>
-                    <h4 className="font-extrabold text-sm text-white">{stat.title}</h4>
-                    <p className="text-zinc-400 text-xs font-semibold leading-relaxed">{stat.desc}</p>
-                  </div>
-                ))}
+                
+                {/* Stat 1: Devices Repurposed */}
+                <div className="space-y-3 relative">
+                  <p className="font-sans text-5xl md:text-6xl font-extrabold text-sky-400 tracking-tighter leading-none">
+                    <AnimatedNumber
+                      value={stats.devicesRepurposed}
+                      format={(val) => val.toLocaleString()}
+                      suffix="+"
+                      startOffset={1000}
+                      duration={1800}
+                    />
+                  </p>
+                  <h4 className="font-extrabold text-sm text-white">Devices Repurposed</h4>
+                  <p className="text-zinc-400 text-xs font-semibold leading-relaxed">
+                    We've saved over <span className="text-white font-bold">{stats.devicesRepurposed.toLocaleString()}</span> functional gadgets from leaking toxic chemical e-waste into landfills.
+                  </p>
+                </div>
+
+                {/* Stat 2: Lifespan Extension */}
+                <div className="space-y-3 relative">
+                  <p className="font-sans text-5xl md:text-6xl font-extrabold text-sky-400 tracking-tighter leading-none">
+                    <AnimatedNumber
+                      value={stats.lifespanExtension}
+                      format={(val) => val.toFixed(1).replace(/\.0$/, "")}
+                      suffix="x"
+                      startOffset={1}
+                      duration={1200}
+                    />
+                  </p>
+                  <h4 className="font-extrabold text-sm text-white">Lifespan Extension</h4>
+                  <p className="text-zinc-400 text-xs font-semibold leading-relaxed">
+                    Every smartphone or laptop refurbished doubles its operational lifetime, conserving precious raw minerals.
+                  </p>
+                </div>
+
+                {/* Stat 3: Idle Electronics */}
+                <div className="space-y-3 relative">
+                  <p className="font-sans text-5xl md:text-6xl font-extrabold text-sky-400 tracking-tighter leading-none">
+                    <AnimatedNumber
+                      value={stats.idleElectronics / 1000000000}
+                      format={(val) => String(val)}
+                      suffix=" Billion"
+                      startOffset={4}
+                      duration={1500}
+                    />
+                  </p>
+                  <h4 className="font-extrabold text-sm text-white">Idle Electronics</h4>
+                  <p className="text-zinc-400 text-xs font-semibold leading-relaxed">
+                    Global statistics show <span className="text-white font-bold">5 billion</span> mobile devices are sitting unused in cupboards. Let's recycle yours for cash.
+                  </p>
+                </div>
+
               </div>
             </div>
 
