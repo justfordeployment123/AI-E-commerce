@@ -42,6 +42,34 @@ function useLazyFetchTrigger() {
   return [ref, trigger] as const;
 }
 
+// ─── Reusable Scroll Buttons ──────────────────────────────────────────────────
+function ScrollButtons({ scrollRef }: { scrollRef: React.RefObject<HTMLElement | null> }) {
+  const scroll = (dir: "left" | "right") => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const amount = el.clientWidth * 0.75;
+    el.scrollBy({ left: dir === "right" ? amount : -amount, behavior: "smooth" });
+  };
+  return (
+    <div className="flex items-center gap-3">
+      <button
+        onClick={() => scroll("left")}
+        aria-label="Scroll left"
+        className="h-10 w-10 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-500 hover:text-zinc-950 flex items-center justify-center transition-all duration-200 shadow-sm hover:shadow-md flex-shrink-0"
+      >
+        <ChevronLeft className="h-5 w-5" />
+      </button>
+      <button
+        onClick={() => scroll("right")}
+        aria-label="Scroll right"
+        className="h-10 w-10 rounded-full bg-zinc-950 hover:bg-zinc-800 text-white flex items-center justify-center transition-all duration-200 shadow-sm hover:shadow-md flex-shrink-0"
+      >
+        <ChevronRight className="h-5 w-5" />
+      </button>
+    </div>
+  );
+}
+
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import {
@@ -51,7 +79,6 @@ import {
   ChevronLeft, ChevronRight
 } from "lucide-react";
 import dynamic from "next/dynamic";
-import Navbar from "../components/Navbar";
 import { productsApi, reviewsApi, bannersApi, catalogApi } from "../lib/api";
 import type { CatalogBrand } from "../lib/api";
 import { useCart } from "../context/cart-context";
@@ -1132,6 +1159,7 @@ function Reviews() {
   const [reviews, setReviews] = useState<any[]>([]);
   const [avgRating, setAvgRating] = useState(0);
   const [sectionRef, trigger] = useLazyFetchTrigger();
+  const scrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (trigger === 0) return;
@@ -1179,7 +1207,7 @@ function Reviews() {
           </div>
 
           {/* Horizontal scroll */}
-          <div className="flex gap-5 overflow-x-auto scrollbar-hide pb-2">
+          <div ref={scrollRef} className="flex gap-5 overflow-x-auto scrollbar-hide pb-2">
             <div className="w-4 sm:w-6 lg:w-8 flex-shrink-0" />
             {reviews.map((r: any, i: number) => {
               const displayName = r.user?.name ?? r.guestName ?? "Verified Buyer";
@@ -1218,6 +1246,9 @@ function Reviews() {
               );
             })}
             <div className="w-4 sm:w-6 lg:w-8 flex-shrink-0" />
+          </div>
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-4 flex justify-end">
+            <ScrollButtons scrollRef={scrollRef as React.RefObject<HTMLElement | null>} />
           </div>
         </>
       )}
@@ -1427,6 +1458,7 @@ function ShopByBudget() {
   const [cache, setCache] = useState<Record<number, PCard[]>>({});
   const [loading, setLoading] = useState(false);
   const [sectionRef, trigger] = useLazyFetchTrigger();
+  const scrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (trigger > 1) setCache({});
@@ -1488,6 +1520,7 @@ function ShopByBudget() {
         <AnimatePresence mode="wait">
           <motion.div
             key={activeRange}
+            ref={scrollRef}
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
@@ -1515,7 +1548,8 @@ function ShopByBudget() {
         </AnimatePresence>
       </div>
 
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-2 flex justify-end">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-2 flex items-center justify-end gap-4">
+        <ScrollButtons scrollRef={scrollRef as React.RefObject<HTMLElement | null>} />
         <a
           href="/shop/phones"
           className="inline-flex items-center gap-2 h-11 px-6 rounded-full border border-zinc-200 text-sm font-bold text-zinc-700 hover:bg-zinc-950 hover:text-white hover:border-zinc-950 transition-all duration-200"
@@ -1535,6 +1569,7 @@ function BestDealsSplit() {
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
   const { addItem } = useCart();
   const [sectionRef, trigger] = useLazyFetchTrigger();
+  const scrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (trigger === 0) return;
@@ -1646,7 +1681,7 @@ function BestDealsSplit() {
             </div>
 
             {/* Products */}
-            <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-4 flex-nowrap">
+            <div ref={scrollRef} className="flex gap-4 overflow-x-auto scrollbar-hide pb-4 flex-nowrap">
               {filtered.map((p) => {
                 const priceStr = p.price.toFixed(2);
                 const was = "£" + (p.comparePrice ?? p.price * 1.3).toFixed(2) + " new";
@@ -1691,13 +1726,8 @@ function BestDealsSplit() {
               })}
             </div>
 
-            <div className="flex justify-end gap-3 mt-4">
-              <button className="h-10 w-10 rounded-full bg-zinc-100 text-zinc-400 flex items-center justify-center">
-                <span className="text-xl leading-none -mt-1">‹</span>
-              </button>
-              <button className="h-10 w-10 rounded-full bg-zinc-950 text-white flex items-center justify-center hover:bg-zinc-800 transition-colors">
-                <span className="text-xl leading-none -mt-1">›</span>
-              </button>
+            <div className="flex justify-end mt-4">
+              <ScrollButtons scrollRef={scrollRef as React.RefObject<HTMLElement | null>} />
             </div>
           </div>
         </div>
@@ -1710,6 +1740,7 @@ function BestDealsSplit() {
 function NewArrivals() {
   const [items, setItems] = useState<any[]>([]);
   const [sectionRef, trigger] = useLazyFetchTrigger();
+  const scrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (trigger === 0) return;
@@ -1738,7 +1769,7 @@ function NewArrivals() {
         </div>
       </div>
 
-      <div className="flex gap-5 overflow-x-auto scrollbar-hide pb-2">
+      <div ref={scrollRef} className="flex gap-5 overflow-x-auto scrollbar-hide pb-2">
         <div className="w-4 sm:w-6 lg:w-8 flex-shrink-0" />
         {items.map((item, i) => (
           <Link href={`/shop/${item.category.toLowerCase()}/${item.slug}`} key={i} className="block group flex-shrink-0 w-[220px] md:w-[240px] cursor-pointer">
@@ -1764,6 +1795,9 @@ function NewArrivals() {
           </Link>
         ))}
         <div className="w-4 sm:w-6 lg:w-8 flex-shrink-0" />
+      </div>
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-4 flex justify-end">
+        <ScrollButtons scrollRef={scrollRef as React.RefObject<HTMLElement | null>} />
       </div>
     </section>
   );
@@ -2281,6 +2315,7 @@ function FeaturedShop() {
   const [cache, setCache] = useState<Record<string, PCard[]>>({});
   const [loading, setLoading] = useState(false);
   const [sectionRef, trigger] = useLazyFetchTrigger();
+  const scrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     catalogApi.listCategories()
@@ -2362,6 +2397,7 @@ function FeaturedShop() {
         <AnimatePresence mode="wait">
           <motion.div
             key={active}
+            ref={scrollRef}
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
@@ -2408,6 +2444,9 @@ function FeaturedShop() {
             )}
           </motion.div>
         </AnimatePresence>
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-4 flex justify-end">
+          <ScrollButtons scrollRef={scrollRef as React.RefObject<HTMLElement | null>} />
+        </div>
       </div>
     </section>
   );
@@ -2445,6 +2484,7 @@ function TopBrandsSplit() {
   const [cache, setCache] = useState<Record<string, any[]>>({});
   const [loading, setLoading] = useState(false);
   const sectionRef = useRef<HTMLElement | null>(null);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
 
   // Load "All" and brands on mount — no lazy trigger needed for this section
   useEffect(() => {
@@ -2545,6 +2585,7 @@ function TopBrandsSplit() {
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeBrand}
+                ref={scrollRef}
                 initial={{ opacity: 0, x: 16 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -16 }}
@@ -2586,6 +2627,9 @@ function TopBrandsSplit() {
                 })}
               </motion.div>
             </AnimatePresence>
+            <div className="flex justify-end mt-2">
+              <ScrollButtons scrollRef={scrollRef as React.RefObject<HTMLElement | null>} />
+            </div>
           </div>
         </div>
       </div>
@@ -2604,6 +2648,7 @@ const DISCOVER_ROWS = [
 function DiscoverMore() {
   const [rows, setRows] = useState<PCard[][]>(DISCOVER_ROWS.map(() => []));
   const [sectionRef, trigger] = useLazyFetchTrigger();
+  const rowScrollRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
     if (trigger === 0) return;
@@ -2651,7 +2696,10 @@ function DiscoverMore() {
                 See all <ArrowRight className="h-3.5 w-3.5" />
               </a>
             </div>
-            <div className="flex gap-4 overflow-x-auto scrollbar-hide pl-4 sm:pl-6 lg:pl-8 pr-8 pb-2">
+            <div
+              ref={el => { rowScrollRefs.current[i] = el; }}
+              className="flex gap-4 overflow-x-auto scrollbar-hide pl-4 sm:pl-6 lg:pl-8 pr-8 pb-2"
+            >
               {items.map((p, j) => (
                 <Link href={p.link ?? "/shop/phones"} key={j} className="block flex-shrink-0 w-[190px] md:w-[210px] group cursor-pointer">
                   <motion.div
@@ -2678,6 +2726,9 @@ function DiscoverMore() {
                   </motion.div>
                 </Link>
               ))}
+            </div>
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-3 flex justify-end">
+              <ScrollButtons scrollRef={{ current: rowScrollRefs.current[i] } as React.RefObject<HTMLElement | null>} />
             </div>
           </div>
         );
@@ -2721,6 +2772,7 @@ function BudgetPicks() {
   }, [trigger]);
 
   function PriceRow({ title, badge, items }: { title: string; badge: string; items: PCard[] }) {
+    const priceRowScrollRef = useRef<HTMLDivElement | null>(null);
     if (items.length === 0) return null;
     return (
       <div className="mb-12 last:mb-0">
@@ -2733,7 +2785,7 @@ function BudgetPicks() {
             See all <ArrowRight className="h-3.5 w-3.5" />
           </a>
         </div>
-        <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
+        <div ref={priceRowScrollRef} className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
           <div className="w-4 sm:w-6 lg:w-8 flex-shrink-0" />
           {items.map((p, i) => (
             <Link href={p.link ?? "/shop/phones"} key={i} className="block flex-shrink-0 w-[190px] md:w-[210px] group cursor-pointer">
@@ -2765,6 +2817,9 @@ function BudgetPicks() {
             </Link>
           ))}
           <div className="w-4 sm:w-6 lg:w-8 flex-shrink-0" />
+        </div>
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-3 flex justify-end">
+          <ScrollButtons scrollRef={priceRowScrollRef as React.RefObject<HTMLElement | null>} />
         </div>
       </div>
     );
@@ -2872,7 +2927,6 @@ export default function HomePage() {
 
   return (
     <main className="flex min-h-screen flex-col bg-background text-foreground font-sans">
-      <Navbar />
       <PromoCarouselBanner />
       <MarqueeStrip />
       {/* <Hero /> */}

@@ -14,7 +14,6 @@ import {
   Check
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import { useCart } from "../../context/cart-context";
 import RequireAuth from "../../components/RequireAuth";
@@ -28,7 +27,6 @@ function CartPageContent() {
   if (loading) {
     return (
       <div className="flex min-h-screen flex-col bg-background text-foreground font-sans selection:bg-accent selection:text-white">
-        <Navbar />
         <main className="flex-1 flex items-center justify-center min-h-screen">
           <div className="h-12 w-12 border-4 border-zinc-200 border-t-accent rounded-full animate-spin" />
         </main>
@@ -41,7 +39,6 @@ function CartPageContent() {
     return (
       <div className="flex min-h-screen flex-col bg-background text-foreground font-sans selection:bg-accent selection:text-white">
         <div className="min-h-screen">
-          <Navbar />
           <main className="flex-1 flex flex-col items-center justify-center px-4 py-20 text-center">
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
@@ -67,7 +64,6 @@ function CartPageContent() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground font-sans selection:bg-accent selection:text-white">
-      <Navbar />
 
       <main className="mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8 py-8 md:py-12">
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">

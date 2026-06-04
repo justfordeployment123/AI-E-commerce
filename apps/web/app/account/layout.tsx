@@ -5,7 +5,6 @@ import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Package, RefreshCw, Wrench, Settings, LogOut } from "lucide-react";
-import Navbar from "../../components/Navbar";
 import { useAuth } from "../../context/auth-context";
 import { fmtDate } from "./_utils";
 
@@ -30,7 +29,6 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
   if (loading || !user) {
     return (
       <div className="flex min-h-screen flex-col bg-white">
-        <Navbar />
         <main className="flex-1 flex items-center justify-center">
           <div className="h-10 w-10 border-4 border-zinc-200 border-t-black rounded-full animate-spin" />
         </main>
@@ -48,7 +46,6 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
   return (
     <div className="flex min-h-screen flex-col bg-[#f8f8f8] text-black font-sans">
       
-      <Navbar />
 
       {/* User header strip */}
       <div className="bg-white border-b border-zinc-100">

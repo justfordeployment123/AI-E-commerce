@@ -4,7 +4,6 @@ import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { motion } from "framer-motion";
 import { Check, Truck, Package, ArrowRight, Star, ShieldCheck } from "lucide-react";
-import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 
 function OrderConfirmationContent() {
@@ -20,7 +19,6 @@ function OrderConfirmationContent() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground font-sans selection:bg-accent selection:text-white">
-      <Navbar />
 
       <main className="flex-1">
         {/* Success hero */}

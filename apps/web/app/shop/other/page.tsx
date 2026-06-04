@@ -7,7 +7,6 @@ import {
   Zap, Watch, Cable, Cpu, HardDrive, Mouse, Camera, PenLine,
   Gamepad2, Film, ShoppingCart, ArrowLeft, ChevronLeft, ChevronRight,
 } from "lucide-react";
-import Navbar from "../../../components/Navbar";
 import Footer from "../../../components/Footer";
 import productsData from "../../../lib/others-data.json";
 
@@ -185,7 +184,6 @@ export default function OtherPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans">
-      <Navbar />
 
       {/* ── Page Header ─────────────────────────────────────────────────── */}
       <section className="bg-white border-b border-zinc-200">

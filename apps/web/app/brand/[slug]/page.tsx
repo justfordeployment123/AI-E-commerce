@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useParams, notFound } from "next/navigation";
 import Link from "next/link";
 import { catalogApi, CatalogBrand, CatalogBrandCategory } from "../../../lib/api";
-import Navbar from "../../../components/Navbar";
 import Footer from "../../../components/Footer";
 import { ArrowRight, ShoppingCart, Star } from "lucide-react";
 import { useCart } from "../../../context/cart-context";
@@ -61,7 +60,6 @@ export default function BrandPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
         <div className="flex items-center justify-center h-64">
           <div className="h-8 w-8 rounded-full border-2 border-zinc-900 border-t-transparent animate-spin" />
         </div>
@@ -82,7 +80,6 @@ export default function BrandPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Navbar />
 
       {/* ── Hero ──────────────────────────────────────────────────────────────── */}
       <section className="relative bg-zinc-950 text-white overflow-hidden">

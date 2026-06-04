@@ -1,20 +1,46 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { notFound, useParams } from "next/navigation";
 import { useCart } from "../../../context/cart-context";
-import { productsApi, reviewsApi } from "../../../lib/api";
+import { productsApi } from "../../../lib/api";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import {
   Smartphone, Laptop, Tablet, Gamepad2, Headphones, Package, Watch,
-  ChevronDown, ShoppingCart, Star, Check,
-  ArrowLeft, ArrowRight, ShieldCheck, Zap, RefreshCw, X, SlidersHorizontal,
+  ChevronDown, ChevronLeft, ChevronRight, ShoppingCart, Star, Check,
+  ArrowLeft, ArrowRight, ShieldCheck, Zap, RefreshCw, Wrench, X, SlidersHorizontal,
   Battery, Camera, Monitor, Wifi, Cpu
 } from "lucide-react";
-import Navbar from "../../../components/Navbar";
 import Footer from "../../../components/Footer";
 import { catalogApi } from "../../../lib/api";
+
+// ─── Scroll Buttons ───────────────────────────────────────────────────────────
+function ScrollButtons({ scrollRef }: { scrollRef: React.RefObject<HTMLElement | null> }) {
+  const scroll = (dir: "left" | "right") => {
+    if (!scrollRef.current) return;
+    const w = scrollRef.current.clientWidth;
+    scrollRef.current.scrollBy({ left: dir === "left" ? -w * 0.75 : w * 0.75, behavior: "smooth" });
+  };
+  return (
+    <div className="flex items-center gap-2">
+      <button
+        onClick={() => scroll("left")}
+        aria-label="Scroll left"
+        className="h-10 w-10 rounded-full bg-zinc-100 text-zinc-600 flex items-center justify-center hover:bg-zinc-200 transition-colors"
+      >
+        <ChevronLeft className="h-5 w-5" />
+      </button>
+      <button
+        onClick={() => scroll("right")}
+        aria-label="Scroll right"
+        className="h-10 w-10 rounded-full bg-zinc-950 text-white flex items-center justify-center hover:bg-zinc-800 transition-colors"
+      >
+        <ChevronRight className="h-5 w-5" />
+      </button>
+    </div>
+  );
+}
 
 // ─── Category meta ──────────────────────────────────────────────────────────
 
@@ -182,76 +208,7 @@ const DIAGNOSTIC_STEPS: { id: string; label: string; icon: React.ComponentType<{
   { id: "buttons", label: "Buttons & Ports", icon: Cpu, description: "Haptic engines, mechanical buttons, USB-C/Lightning ports, and headphone jacks are physically cycle-tested.", checks: ["Haptic feedback check", "USB port current stability", "Button tactile response", "Speaker grill cleaning"] },
 ];
 
-const MOCK_REVIEWS = [
-  {
-    id: 1,
-    name: "Brandiss M.",
-    rating: 5,
-    date: "Yesterday",
-    text: "So glad this phone worked out for me. It's exactly as described and works without issues. This is the 3rd phone I ordered.",
-    model: "iPhone 13 Pro Max 256GB - Gold - Unlocked",
-    verified: true,
-    image: "https://picsum.photos/seed/custphone1/400/500",
-    thumbnail: "https://picsum.photos/seed/iphone_wanted/100/100"
-  },
-  {
-    id: 2,
-    name: "Fox T.",
-    rating: 5,
-    date: "3 days ago",
-    text: "Phone came absolutely pristine! Honestly could have fooled me for it being brand new. I did miss the delivery and it required signature.",
-    model: "Google Pixel 7 128GB - Green - Unlocked",
-    verified: true,
-    image: "https://picsum.photos/seed/custphone2/400/500",
-    thumbnail: "https://picsum.photos/seed/google_wanted/100/100"
-  },
-  {
-    id: 3,
-    name: "John T.",
-    rating: 5,
-    date: "Last week",
-    text: "Phone was delivered quickly, matched the condition described, AND has a brand new battery! I would definitely order from this company again.",
-    model: "iPhone 12 mini 128GB - White - Unlocked",
-    verified: true,
-    image: "https://picsum.photos/seed/custphone3/400/500",
-    thumbnail: "https://picsum.photos/seed/iphone_wanted/100/100"
-  },
-  {
-    id: 4,
-    name: "Brandon R.",
-    rating: 5,
-    date: "2 weeks ago",
-    text: "I ordered the excellent condition and when the phone arrived I was amazed, the phone had no scratches or anything and the battery is at 98%.",
-    model: "iPhone 12 128GB - Blue - Unlocked",
-    verified: true,
-    image: "https://picsum.photos/seed/custphone4/400/500",
-    thumbnail: "https://picsum.photos/seed/iphone_wanted/100/100"
-  },
-];
 
-const BUYING_GUIDES: Record<string, { title: string; readTime: string; image: string; desc: string }[]> = {
-  phones: [
-    { title: "Refurbished iPhone vs. Android Guide", readTime: "5 min read", image: "https://picsum.photos/seed/blog1/400/250", desc: "Which operating system should you choose for your next refurbished smartphone?" },
-    { title: "How we test battery health", readTime: "3 min read", image: "https://picsum.photos/seed/blog2/400/250", desc: "An inside look at our 90-point battery diagnostics and capacity threshold check." },
-    { title: "Is the iPhone 15 still worth it?", readTime: "4 min read", image: "https://picsum.photos/seed/blog3/400/250", desc: "Comparing price drop statistics and specs between the latest refurbished generations." },
-  ],
-  tablets: [
-    { title: "Refurbished iPad Buyer's Guide", readTime: "6 min read", image: "https://picsum.photos/seed/blog4/400/250", desc: "From iPad Mini to Pro, find the perfect refurbished model for your workflow." },
-    { title: "Why buy a refurbished tablet?", readTime: "3 min read", image: "https://picsum.photos/seed/blog5/400/250", desc: "Discover how buying refurbished helps the environment and your wallet." },
-  ],
-  consoles: [
-    { title: "PS5 vs Xbox Series X in 2026", readTime: "7 min read", image: "https://picsum.photos/seed/blog6/400/250", desc: "Which console should you pick for next-gen refurbished gaming?" },
-    { title: "Refurbished console checklist", readTime: "4 min read", image: "https://picsum.photos/seed/blog7/400/250", desc: "What our engineers inspect inside every console before shipping it." },
-  ],
-  laptops: [
-    { title: "MacBook Air vs Pro refurbished", readTime: "5 min read", image: "https://picsum.photos/seed/blog8/400/250", desc: "Find the balance between portable battery life and heavy performance." },
-    { title: "Refurbished Lenovo ThinkPad Guide", readTime: "4 min read", image: "https://picsum.photos/seed/blog9/400/250", desc: "Why businesses choose refurbished corporate laptops for long-term durability." },
-  ],
-  audio: [
-    { title: "Active Noise Cancellation compared", readTime: "4 min read", image: "https://picsum.photos/seed/blog10/400/250", desc: "Comparing ANC performance of refurbished Sony, Apple, and Bose headphones." },
-    { title: "How to clean wireless earbuds safely", readTime: "3 min read", image: "https://picsum.photos/seed/blog11/400/250", desc: "Pro tips to sanitize and restore audio quality on pre-owned earbuds." },
-  ],
-};
 
 const SEO_TEXT: Record<string, { title: string; content: string[] }> = {
   phones: {
@@ -336,9 +293,10 @@ export default function CategoryPage() {
   const [displayProducts, setDisplayProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [subBrands, setSubBrands] = useState<{ brand: string; slug: string; logo: string | null; image: string | null }[]>([]);
-  const [liveReviews, setLiveReviews] = useState<typeof MOCK_REVIEWS | null>(null);
 
   const { addItem } = useCart();
+  const topPicksScrollRef = useRef<HTMLDivElement | null>(null);
+  const brandsScrollRef = useRef<HTMLDivElement | null>(null);
 
 
   useEffect(() => {
@@ -349,16 +307,6 @@ export default function CategoryPage() {
       .then(async (apiCategory) => {
         if (!apiCategory) { setLoading(false); return; }
         productsApi.brands(apiCategory).then(setSubBrands).catch(() => {});
-        reviewsApi.recent(4).then(res => {
-          if (res.length > 0) setLiveReviews(res.map((r, i) => ({
-            id: i + 1, name: r.user?.name ?? r.guestName ?? 'Verified Buyer',
-            rating: r.rating,
-            date: new Date(r.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
-            text: r.body, model: (r as any).product?.name ?? '', verified: true,
-            image: (r as any).product?.coverImage ?? `https://picsum.photos/seed/rev${i}/400/500`,
-            thumbnail: (r as any).product?.coverImage ?? `https://picsum.photos/seed/thumb${i}/100/100`,
-          })));
-        }).catch(() => {});
         try {
           const res = await productsApi.list({ category: apiCategory, limit: 100 });
           const mapped = res.items.map(p => ({
@@ -417,7 +365,6 @@ export default function CategoryPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans selection:bg-accent selection:text-white">
-      <Navbar />
 
 
       {/* ── Most Wanted Sub-brands & Accessories ────────────────────────── */}
@@ -500,12 +447,8 @@ export default function CategoryPage() {
           <div className="mb-12">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold tracking-tight">Top Picks for You</h2>
-              <div className="flex gap-2 hidden md:flex">
-                <button className="h-10 w-10 rounded-full bg-white border border-zinc-200 flex items-center justify-center hover:bg-zinc-50"><ArrowLeft className="h-5 w-5" /></button>
-                <button className="h-10 w-10 rounded-full bg-white border border-zinc-200 flex items-center justify-center hover:bg-zinc-50"><ArrowRight className="h-5 w-5" /></button>
-              </div>
             </div>
-            <div className="flex gap-4 md:gap-6 overflow-x-auto scrollbar-hide pb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
+            <div ref={topPicksScrollRef} className="flex gap-4 md:gap-6 overflow-x-auto scrollbar-hide pb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
               {allProducts.slice(0, 8).map(product => (
                 <Link href={`/shop/${categorySlug}/${product.id}`} key={`top-${product.id}`} className="shrink-0 w-[240px] md:w-[280px] group block">
                   <div className="bg-white rounded-[32px] p-3 border border-zinc-200 hover:border-black hover:shadow-xl transition-all duration-300 h-full flex flex-col">
@@ -524,6 +467,9 @@ export default function CategoryPage() {
                   </div>
                 </Link>
               ))}
+            </div>
+            <div className="flex justify-end mt-4">
+              <ScrollButtons scrollRef={topPicksScrollRef as React.RefObject<HTMLElement | null>} />
             </div>
           </div>
 
@@ -590,7 +536,7 @@ export default function CategoryPage() {
 
                 {/* Horizontal Product Carousel */}
                 <div className="relative flex-1">
-                  <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
+                  <div ref={brandsScrollRef} className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
                     {allProducts
                       .filter(p => activeTabBrand === "all" || p.brand === activeTabBrand)
                       .map(product => (
@@ -637,10 +583,9 @@ export default function CategoryPage() {
                     )}
                   </div>
 
-                  {/* Carousel navigation arrows mimicking screenshot */}
-                  <div className="flex justify-end gap-2 mt-4">
-                    <button className="h-8 w-8 rounded-full bg-zinc-200/50 flex items-center justify-center hover:bg-zinc-200 transition-colors"><ArrowLeft className="h-4 w-4 text-zinc-700" /></button>
-                    <button className="h-8 w-8 rounded-full bg-zinc-900 flex items-center justify-center hover:bg-black transition-colors"><ArrowRight className="h-4 w-4 text-white" /></button>
+                  {/* Carousel navigation arrows */}
+                  <div className="flex justify-end mt-4">
+                    <ScrollButtons scrollRef={brandsScrollRef as React.RefObject<HTMLElement | null>} />
                   </div>
                 </div>
 
@@ -980,140 +925,62 @@ export default function CategoryPage() {
             </div>
           </div>
 
-          {/* Social Proof reviews carousel */}
-          <div className="mb-16">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-8">
-              <div>
-                <h2 className="text-2xl font-bold tracking-tight mb-2">Over 15M customers globally</h2>
-                <p className="text-zinc-500 font-medium text-sm">Here is what our verified buyers say about TechStop Leicester.</p>
-              </div>
-              <div className="flex items-center gap-1 shrink-0 bg-zinc-50 border border-zinc-200 px-4 py-2 rounded-2xl">
-                <span className="font-extrabold text-2xl text-zinc-950">4.8</span>
-                <div className="flex items-center text-black">
-                  <Star className="h-5 w-5 fill-black text-black" strokeWidth={3} />
-                  <Star className="h-5 w-5 fill-black text-black" strokeWidth={3} />
-                  <Star className="h-5 w-5 fill-black text-black" strokeWidth={3} />
-                  <Star className="h-5 w-5 fill-black text-black" strokeWidth={3} />
-                  <Star className="h-5 w-5 fill-black text-black" strokeWidth={3} />
-                </div>
-                <span className="text-zinc-400 text-xs font-semibold ml-1">(over 42,000 reviews)</span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {(liveReviews ?? MOCK_REVIEWS).map((rev) => (
-                <div key={rev.id} className="flex flex-col group">
-                  
-                  {/* Top Portion: Photo with text & badge overlay */}
-                  <div className="aspect-[4/5] rounded-t-[24px] overflow-hidden relative bg-zinc-900 shadow-sm">
-                    <img
-                      src={rev.image}
-                      alt={`${rev.name}'s reviewed device`}
-                      className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
-                    />
-                    {/* Gradient Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent"></div>
-                    
-                    {/* Top-left reviewer name badge */}
-                    <span className="absolute top-3.5 left-3.5 bg-white text-zinc-900 text-[10px] font-extrabold px-2.5 py-1 rounded-lg shadow-sm">
-                      {rev.name}
-                    </span>
-
-                    {/* Review text & stars overlay */}
-                    <div className="absolute inset-x-0 bottom-0 p-4">
-                      <p className="text-white text-xs md:text-sm font-semibold leading-relaxed mb-3 drop-shadow-sm line-clamp-4">
-                        "{rev.text}"
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <div className="flex items-center text-white">
-                          <Star className="h-3.5 w-3.5 fill-white text-white" strokeWidth={3} />
-                          <Star className="h-3.5 w-3.5 fill-white text-white" strokeWidth={3} />
-                          <Star className="h-3.5 w-3.5 fill-white text-white" strokeWidth={3} />
-                          <Star className="h-3.5 w-3.5 fill-white text-white" strokeWidth={3} />
-                          <Star className="h-3.5 w-3.5 fill-white text-white" strokeWidth={3} />
-                        </div>
-                        <span className="text-[10px] font-extrabold text-white/90">5/5</span>
-                      </div>
-                    </div>
-
-                  </div>
-
-                  {/* Bottom Portion: White bar with product thumbnail & specs */}
-                  <div className="bg-white border-x border-b border-zinc-200 rounded-b-[24px] p-3 flex items-center gap-3">
-                    <img
-                      src={rev.thumbnail}
-                      alt={rev.model}
-                      className="w-9 h-9 object-contain rounded-lg bg-zinc-50 border border-zinc-150 shrink-0 p-1"
-                    />
-                    <div className="min-w-0 flex-1">
-                      <span className="text-[10px] font-bold text-zinc-700 leading-tight line-clamp-2 block hover:text-black transition-colors">
-                        {rev.model}
-                      </span>
-                    </div>
-                  </div>
-
-                </div>
-              ))}
-            </div>
-          </div>
 
           {/* Double Promo Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
-            <div className="bg-[#e4ecf9] text-[#122e5a] rounded-[32px] p-8 flex flex-col justify-between items-start group relative overflow-hidden min-h-[260px]">
-              <div className="absolute top-0 right-0 w-72 h-72 bg-blue-400/25 rounded-full blur-3xl -translate-y-1/3 translate-x-1/3 animate-pulse"></div>
-              <div className="relative z-10 max-w-md">
-                <span className="text-xs font-extrabold uppercase tracking-widest text-[#1e4fa8] mb-2 block">Trade-in Service</span>
-                <h3 className="font-extrabold text-3xl mb-3 leading-tight">Swap your old tech for cash in hand</h3>
-                <p className="text-[#3b598c] font-semibold text-sm leading-relaxed mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-16">
+            {/* Trade-in card — accent/red theme */}
+            <div className="bg-accent/[8%] dark:bg-accent/10 border border-accent/20 dark:border-accent/25 rounded-[28px] p-8 flex flex-col justify-between items-start relative overflow-hidden min-h-[260px] group">
+              {/* decorative blobs */}
+              <div className="pointer-events-none absolute -top-12 -right-12 w-56 h-56 bg-accent/15 dark:bg-accent/20 rounded-full blur-3xl" />
+              <div className="pointer-events-none absolute bottom-0 left-1/2 w-40 h-40 bg-accent/10 rounded-full blur-2xl" />
+
+              <div className="relative z-10">
+                <span className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-accent mb-4 bg-accent/10 dark:bg-accent/15 px-3 py-1 rounded-full border border-accent/20">
+                  <RefreshCw className="h-3 w-3" /> Trade-in Service
+                </span>
+                <h3 className="font-extrabold text-2xl md:text-3xl mb-3 leading-tight text-foreground">
+                  Swap your old tech<br className="hidden sm:block" /> for cash in hand
+                </h3>
+                <p className="text-muted-foreground font-medium text-sm leading-relaxed max-w-sm">
                   Get a trade-in offer instantly online or drop by our Leicester store to cash out your pre-loved phone or laptop.
                 </p>
               </div>
-              <Link href="/trade-in" className="h-12 px-6 rounded-full bg-black text-white font-bold flex items-center gap-2 hover:scale-105 transition-transform relative z-10 text-sm">
+
+              <Link
+                href="/trade-in"
+                className="mt-8 relative z-10 inline-flex items-center gap-2 h-11 px-6 rounded-full bg-accent text-white font-bold text-sm hover:bg-accent/90 hover:gap-3 transition-all shadow-sm shadow-accent/30"
+              >
                 Get an offer <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
 
-            <div className="bg-[#fcf3dc] text-[#5b4009] rounded-[32px] p-8 flex flex-col justify-between items-start group relative overflow-hidden min-h-[260px]">
-              <div className="absolute bottom-0 right-0 w-72 h-72 bg-amber-400/25 rounded-full blur-3xl translate-y-1/3 translate-x-1/3 animate-pulse"></div>
-              <div className="relative z-10 max-w-md">
-                <span className="text-xs font-extrabold uppercase tracking-widest text-[#a87f1e] mb-2 block">Local Experts</span>
-                <h3 className="font-extrabold text-3xl mb-3 leading-tight">Leicester-based technical support</h3>
-                <p className="text-[#8c6b24] font-semibold text-sm leading-relaxed mb-6">
+            {/* Help Centre card — foreground/dark theme */}
+            <div className="bg-foreground dark:bg-zinc-900 border border-foreground/10 dark:border-zinc-700 rounded-[28px] p-8 flex flex-col justify-between items-start relative overflow-hidden min-h-[260px] group">
+              {/* decorative blobs */}
+              <div className="pointer-events-none absolute -top-10 -right-10 w-52 h-52 bg-white/5 rounded-full blur-3xl" />
+              <div className="pointer-events-none absolute bottom-0 left-0 w-48 h-48 bg-accent/10 rounded-full blur-3xl" />
+
+              <div className="relative z-10">
+                <span className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-accent mb-4 bg-accent/15 px-3 py-1 rounded-full border border-accent/25">
+                  <Wrench className="h-3 w-3" /> Local Experts
+                </span>
+                <h3 className="font-extrabold text-2xl md:text-3xl mb-3 leading-tight text-white">
+                  Leicester-based<br className="hidden sm:block" /> technical support
+                </h3>
+                <p className="text-zinc-400 font-medium text-sm leading-relaxed max-w-sm">
                   Got questions about grading, setting up your device, or choosing a model? Our diagnostic technicians are always here to help.
                 </p>
               </div>
-              <Link href="/help" className="h-12 px-6 rounded-full bg-black text-white font-bold flex items-center gap-2 hover:scale-105 transition-transform relative z-10 text-sm">
+
+              <Link
+                href="/help"
+                className="mt-8 relative z-10 inline-flex items-center gap-2 h-11 px-6 rounded-full bg-white text-zinc-950 font-bold text-sm hover:bg-zinc-100 hover:gap-3 transition-all shadow-sm"
+              >
                 Visit Help Centre <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
           </div>
 
-          {/* Buying Guides / Blogs */}
-          {BUYING_GUIDES[categorySlug] && (
-            <div>
-              <h2 className="text-2xl font-bold tracking-tight mb-6">The more you know</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {BUYING_GUIDES[categorySlug].map((guide, idx) => (
-                  <Link key={idx} href="/help" className="group block">
-                    <div className="bg-white border border-zinc-200 rounded-[28px] overflow-hidden hover:border-black hover:shadow-lg transition-all duration-300 h-full flex flex-col">
-                      <div className="relative aspect-[16/10] overflow-hidden bg-zinc-100">
-                        <img src={guide.image} alt={guide.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                        <span className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-sm text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
-                          {guide.readTime}
-                        </span>
-                      </div>
-                      <div className="p-5 flex flex-col flex-1">
-                        <h3 className="font-bold text-lg leading-tight mb-2 text-zinc-950 group-hover:text-black">{guide.title}</h3>
-                        <p className="text-zinc-500 text-xs font-semibold leading-relaxed line-clamp-2">
-                          {guide.desc}
-                        </p>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
 
         </div>
       </section>

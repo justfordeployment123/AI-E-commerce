@@ -15,13 +15,11 @@ import {
   ArrowRight
 } from "lucide-react";
 import { motion } from "framer-motion";
-import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 
 export default function HowItWorksPage() {
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground font-sans selection:bg-accent selection:text-white">
-      <Navbar />
 
       <main className="flex-1">
         {/* Hero Section (Back Market Mood Violet) */}

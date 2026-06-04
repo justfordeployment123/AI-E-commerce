@@ -10,7 +10,6 @@ import {
   Monitor, Zap, Battery, Wifi, HardDrive, CircleAlert,
   Star, HelpCircle, ChevronDown, Sparkles, ChevronRight, Upload, Plus
 } from "lucide-react";
-import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import { useAuth } from "../../context/auth-context";
 
@@ -278,7 +277,6 @@ export default function RepairPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground font-sans relative overflow-x-hidden selection:bg-accent selection:text-white">
-      <Navbar />
 
       <style dangerouslySetInnerHTML={{ __html: `
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }

@@ -12,7 +12,7 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "../context/auth-context";
 import { useCart } from "../context/cart-context";
 import { NotificationBell } from "./NotificationBell";
-import { catalogApi, productsApi } from "../lib/api";
+import { catalogApi, productsApi, otherSubcategoriesApi } from "../lib/api";
 
 const SLUG_ICON_MAP: Record<string, React.ElementType> = {
   phones:   Smartphone,
@@ -104,7 +104,10 @@ export default function Navbar() {
       'other', 'others',
     ]);
 
-    catalogApi.listCategories().then(cats => {
+    Promise.all([
+      catalogApi.listCategories(),
+      otherSubcategoriesApi.list(),
+    ]).then(([cats, subcats]) => {
       const mainCats = cats
         .filter(c => !OTHERS_SLUGS.has(c.slug))
         .map(c => ({
@@ -114,23 +117,18 @@ export default function Navbar() {
           icon: SLUG_ICON_MAP[c.slug] ?? MoreHorizontal,
         }));
 
-      // Add the "Others" tab only when at least one grouped category has products
-      const othersWithProducts = cats.filter(c => OTHERS_SLUGS.has(c.slug) && c.productCount > 0);
-      if (othersWithProducts.length > 0) {
-        mainCats.push({
-          label: "Others",
-          href: `/shop/others`,
-          slug: "other",
-          icon: MoreHorizontal,
-        });
-      }
+      // Always show the Others tab
+      mainCats.push({
+        label: "Others",
+        href: `/shop/others`,
+        slug: "other",
+        icon: MoreHorizontal,
+      });
 
       setShopCategories(mainCats);
 
-      // Store the others subcategories for the dropdown
-      setOtherSubcats(
-        othersWithProducts.map(c => ({ label: c.name, slug: c.slug }))
-      );
+      // Populate Others dropdown with real OtherSubcategory names
+      setOtherSubcats(subcats.map(s => ({ label: s.name, slug: s.id })));
 
       // Pre-fetch brands for each main category
       cats
@@ -530,7 +528,7 @@ export default function Navbar() {
                             {otherSubcats.map(sub => (
                               <Link
                                 key={sub.slug}
-                                href={`/shop/${sub.slug}`}
+                                href="/shop/others"
                                 className="px-3 py-1.5 rounded-full border border-zinc-200 dark:border-zinc-700 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:border-zinc-900 hover:bg-zinc-900 hover:text-white dark:hover:bg-white dark:hover:text-zinc-950 transition-all"
                               >
                                 {sub.label}

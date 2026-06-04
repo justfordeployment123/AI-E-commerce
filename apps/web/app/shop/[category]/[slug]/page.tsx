@@ -10,7 +10,6 @@ import {
   Check, ChevronDown, ChevronUp, ArrowLeft,
   Award, Info, Camera, X, Send, Loader2, MessageSquare
 } from "lucide-react";
-import Navbar from "../../../../components/Navbar";
 import Footer from "../../../../components/Footer";
 
 const GRADE_COLORS: Record<string, string> = {
@@ -145,7 +144,6 @@ export default function ProductDetailPage() {
   if (loadingProduct) {
     return (
       <div className="flex min-h-screen flex-col bg-background text-foreground font-sans selection:bg-accent selection:text-white">
-        <Navbar />
         <main className="flex-1 mx-auto max-w-7xl px-4 py-12 w-full">
           <div className="grid lg:grid-cols-2 gap-16 animate-pulse">
             <div className="space-y-4">
@@ -170,7 +168,6 @@ export default function ProductDetailPage() {
   if (!product) {
     return (
       <div className="flex min-h-screen flex-col bg-background text-foreground font-sans selection:bg-accent selection:text-white">
-        <Navbar />
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <p className="text-2xl font-bold mb-4">Product not found</p>
@@ -190,7 +187,6 @@ export default function ProductDetailPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground font-sans selection:bg-accent selection:text-white">
-      <Navbar />
 
       {/* Breadcrumb */}
       <div className="bg-white border-b border-zinc-200 sticky top-0 z-30">

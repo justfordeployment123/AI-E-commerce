@@ -11,7 +11,6 @@ import {
   Search, ChevronDown, Sparkles, HelpCircle, Watch, Headphones,
   Upload, X, Plus
 } from "lucide-react";
-import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import { useAuth } from "../../context/auth-context";
 
@@ -698,7 +697,6 @@ export default function TradeInPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground font-sans relative overflow-x-hidden selection:bg-accent selection:text-white">
-      <Navbar />
 
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes spin-slow {

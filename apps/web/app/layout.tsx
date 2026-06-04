@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Inter, Plus_Jakarta_Sans, Playfair_Display, Lora } f
 import "./globals.css";
 import { AuthProvider } from "../context/auth-context";
 import { CartProvider } from "../context/cart-context";
+import Navbar from "../components/Navbar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -86,6 +87,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <AuthProvider>
           <CartProvider>
+            <Navbar />
             {children}
           </CartProvider>
         </AuthProvider>

@@ -13,7 +13,6 @@ import {
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
-import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import { useCart } from "../../context/cart-context";
 import { useAuth } from "../../context/auth-context";
@@ -218,7 +217,6 @@ function CheckoutInner() {
   if (cartLoading) {
     return (
       <div className="flex min-h-screen flex-col bg-background text-foreground font-sans selection:bg-accent selection:text-white">
-        <Navbar />
         <main className="flex-1 flex items-center justify-center">
           <div className="h-12 w-12 border-4 border-zinc-200 border-t-black rounded-full animate-spin" />
         </main>
@@ -230,7 +228,6 @@ function CheckoutInner() {
   if (items.length === 0 && !orderPlaced) {
     return (
       <div className="flex min-h-screen flex-col bg-background text-foreground font-sans selection:bg-accent selection:text-white">
-        <Navbar />
         <main className="flex-1 flex flex-col items-center justify-center px-4 py-20 text-center">
           <div className="h-32 w-32 bg-zinc-100 rounded-full flex items-center justify-center mb-8">
             <ShoppingCart className="h-12 w-12 text-zinc-300" />
@@ -248,7 +245,6 @@ function CheckoutInner() {
   if (orderPlaced) {
     return (
       <div className="flex min-h-screen flex-col bg-background text-foreground font-sans selection:bg-accent selection:text-white">
-        <Navbar />
         <main className="flex-1 flex items-center justify-center px-4 py-16">
           <motion.div
             initial={{ opacity: 0, y: 24 }}
@@ -303,7 +299,6 @@ function CheckoutInner() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground font-sans selection:bg-accent selection:text-white">
-      <Navbar />
 
       <main className="flex-1">
         <div className="border-b border-zinc-100 bg-zinc-50/50">

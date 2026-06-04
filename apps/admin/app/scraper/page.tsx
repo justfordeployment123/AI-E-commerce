@@ -237,8 +237,8 @@ export default function ScraperPage() {
           </div>
           <div className="flex items-center gap-3">
             {(() => {
-              const twoHoursAgo = Date.now() - 2 * 60 * 60 * 1000;
-              const stuckCount = runs.filter(r => r.status === "RUNNING" && new Date(r.startedAt).getTime() < twoHoursAgo).length;
+              const oneHourAgo = Date.now() - 1 * 60 * 60 * 1000;
+              const stuckCount = runs.filter(r => r.status === "RUNNING" && new Date(r.startedAt).getTime() < oneHourAgo).length;
               return stuckCount > 0 ? (
                 <button onClick={handleCleanup} disabled={cleaning}
                   className="flex items-center gap-1.5 text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-xl hover:bg-amber-100 transition-colors disabled:opacity-50">

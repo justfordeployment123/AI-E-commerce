@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ShoppingCart, Search, Package } from "lucide-react";
-import Navbar from "../../../components/Navbar";
 import Footer from "../../../components/Footer";
 import { productsApi } from "../../../lib/api";
 import { useCart } from "../../../context/cart-context";
@@ -80,7 +79,6 @@ export default function OthersPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <Navbar />
 
       <main className="flex-1 overflow-hidden">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">

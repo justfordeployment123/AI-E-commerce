@@ -10,7 +10,6 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { io, Socket } from "socket.io-client";
-import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import { authApi, ordersApi, type Order } from "../../lib/api";
 import { useAuth } from "../../context/auth-context";
@@ -370,7 +369,6 @@ export default function HelpPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground font-sans selection:bg-accent selection:text-white">
-      <Navbar />
 
       <main className="flex-1">
         

@@ -372,6 +372,15 @@ export interface Product {
   otherSubcategoryId?: string;
 }
 
+export interface OtherSubcategory {
+  id: string;
+  name: string;
+}
+
+export const otherSubcategoriesApi = {
+  list: () => apiFetch<OtherSubcategory[]>('/other-subcategories'),
+};
+
 export interface CartItem {
   productId: string;
   quantity: number;
