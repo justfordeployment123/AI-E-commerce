@@ -223,6 +223,30 @@ export interface ScraperRun {
   finishedAt: string | null;
   totalScraped: number | null;
   errorMessage: string | null;
+  currentProgress: number | null;
+}
+
+export interface ScrapedPricesSnapshot {
+  cexSellPrice:     number | null;
+  cexCashPrice:     number | null;
+  cexExchangePrice: number | null;
+  envirofonePrice:  number | null;
+  marketPrice:      number | null;
+  scrapedAt:        string;
+}
+
+export interface EstimateResult {
+  low:           number;
+  high:          number;
+  suggested:     number;
+  marketPrice:   number | null;
+  scrapedPrices: ScrapedPricesSnapshot | null;
+}
+
+export interface PricingRunResult {
+  applied: number;
+  flagged: number;
+  skipped: number;
 }
 
 export const scraperApi = {
@@ -244,7 +268,12 @@ export const scraperApi = {
 
   scrapeDevice: (brand: string, model: string) => {
     const q = new URLSearchParams({ brand, model });
-    return apiFetch<{ message: string }>(`/scraper/device?${q}`, { method: 'POST' });
+    return apiFetch<{ ok: boolean; message: string }>(`/scraper/device?${q}`, { method: 'POST' });
+  },
+
+  scrapeDeviceSync: (brand: string, model: string) => {
+    const q = new URLSearchParams({ brand, model, sync: 'true' });
+    return apiFetch<{ ok: boolean; prices: ScrapedPriceRow[]; message?: string }>(`/scraper/device?${q}`, { method: 'POST' });
   },
 
   stats: () => apiFetch<ScraperStats>('/scraper/stats'),
@@ -252,6 +281,30 @@ export const scraperApi = {
   runs: (limit = 20) => apiFetch<ScraperRun[]>(`/scraper/runs?limit=${limit}`),
 
   cleanup: () => apiFetch<{ cleaned: number }>('/scraper/cleanup', { method: 'POST' }),
+
+  getSchedule: () => apiFetch<{ hours: number }>('/scraper/schedule'),
+
+  setSchedule: (hours: number) =>
+    apiFetch<{ hours: number }>('/scraper/schedule', { method: 'POST', body: JSON.stringify({ hours }) }),
+};
+
+// ── Product Pricing ───────────────────────────────────────────────────────────
+export const productPricingApi = {
+  run: () =>
+    apiFetch<PricingRunResult>('/product-pricing/run', { method: 'POST' }),
+
+  priceOne: (id: string) =>
+    apiFetch<{ status: string; candidatePrice?: number }>(`/product-pricing/product/${id}`, { method: 'POST' }),
+
+  estimate: (brand: string, model: string, storage: string, condition: string) => {
+    const q = new URLSearchParams({ brand, model, storage, condition });
+    return apiFetch<EstimateResult>(`/product-pricing/estimate?${q}`);
+  },
+
+  flagged: () =>
+    apiFetch<{ id: string; name: string; condition: string; storage: string; updatedAt: string }[]>(
+      '/product-pricing/flagged',
+    ),
 };
 
 // ── Health ────────────────────────────────────────────────────────────────────
@@ -434,6 +487,7 @@ export interface Product {
   specs: Record<string, unknown>;
   description?: string;
   isActive: boolean;
+  pricingStatus: 'auto_priced' | 'manual' | 'flagged' | 'no_data';
   createdAt: string;
 }
 
