@@ -771,18 +771,13 @@ export default function CategoryPage() {
                         </div>
                       )}
                       <Link href={`/shop/${categorySlug}/${product.id}`} className="group block">
-                      <div className={`bg-white rounded-[32px] p-3 border transition-all duration-300 h-full flex flex-col ${product.stock === 0 ? "border-zinc-200 opacity-75" : "border-zinc-200 hover:border-black hover:shadow-xl"}`}>
+                      <div className={`bg-white rounded-[32px] p-3 border transition-all duration-300 h-full flex flex-col ${product.stock === 0 ? "border-zinc-200 hover:border-zinc-300" : "border-zinc-200 hover:border-black hover:shadow-xl"}`}>
 
                         <div className="relative aspect-square rounded-[24px] bg-[#f5f5f7] mb-5 overflow-hidden flex items-center justify-center p-5">
                           <div className="absolute top-4 left-4 z-10 flex flex-col gap-1.5">
                             <span className="inline-flex px-2.5 py-1 rounded-full bg-white text-[10px] font-bold text-black border border-zinc-200 shadow-sm uppercase tracking-wider">
                               {product.grade}
                             </span>
-                            {product.stock === 0 && (
-                              <span className="inline-flex px-2.5 py-1 rounded-full bg-zinc-900 text-[10px] font-bold text-white uppercase tracking-wider">
-                                Out of Stock
-                              </span>
-                            )}
                             {product.stock > 0 && product.stock <= 2 && (
                               <span className="inline-flex px-2.5 py-1 rounded-full bg-amber-500 text-[10px] font-bold text-white uppercase tracking-wider">
                                 Only {product.stock} left
@@ -790,11 +785,17 @@ export default function CategoryPage() {
                             )}
                           </div>
 
+                          {product.stock === 0 && (
+                            <span className="absolute top-2 left-2 z-10 text-[10px] font-bold bg-orange-100 text-orange-700 px-2 py-0.5 rounded-lg border border-orange-200">
+                              Out of Stock
+                            </span>
+                          )}
+
                           {product.image && (
                             <img
                               src={product.image}
                               alt={product.title}
-                              className={`max-h-full max-w-full object-contain mix-blend-multiply transition-transform duration-500 ${product.stock > 0 ? "group-hover:scale-105" : "grayscale"}`}
+                              className={`max-h-full max-w-full object-contain mix-blend-multiply transition-transform duration-500 ${product.stock > 0 ? "group-hover:scale-105" : ""}`}
                             />
                           )}
 
