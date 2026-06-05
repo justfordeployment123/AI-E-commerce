@@ -4,11 +4,12 @@ import { UpsertPricingConfigDto } from './dto/upsert-pricing-config.dto';
 
 // Default condition multipliers seeded on first read
 const DEFAULTS: { key: string; value: number; label: string }[] = [
-    { key: 'multiplier_mint', value: 1.0, label: 'Mint condition multiplier' },
-    { key: 'multiplier_good', value: 0.82, label: 'Good condition multiplier' },
-    { key: 'multiplier_used', value: 0.62, label: 'Used condition multiplier' },
-    { key: 'multiplier_damaged', value: 0.3, label: 'Damaged condition multiplier' },
-    { key: 'margin_pct', value: 30, label: 'Resale margin percentage' },
+    { key: 'multiplier_mint',    value: 1.0,  label: 'Mint condition multiplier' },
+    { key: 'multiplier_good',    value: 0.82, label: 'Good condition multiplier' },
+    { key: 'multiplier_used',    value: 0.62, label: 'Used condition multiplier' },
+    { key: 'multiplier_damaged', value: 0.3,  label: 'Damaged condition multiplier' },
+    { key: 'margin_pct',         value: 30,   label: 'Resale margin percentage' },
+    { key: 'tradein_ratio',      value: 0.50, label: 'Trade-in offer ratio (% of resale price)' },
 ];
 
 @Injectable()
