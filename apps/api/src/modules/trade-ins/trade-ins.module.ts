@@ -6,9 +6,10 @@ import { StorageModule } from '../../common/services/storage.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { ShippingModule } from '../shipping/shipping.module';
 import { ScraperDataModule } from '../scraper-data/scraper-data.module';
+import { ProductPricingModule } from '../product-pricing/product-pricing.module';
 
 @Module({
-    imports: [DatabaseModule, StorageModule, NotificationsModule, ShippingModule, ScraperDataModule],
+    imports: [DatabaseModule, StorageModule, NotificationsModule, ShippingModule, ScraperDataModule, ProductPricingModule],
     controllers: [TradeInsController],
     providers: [TradeInsService],
 })

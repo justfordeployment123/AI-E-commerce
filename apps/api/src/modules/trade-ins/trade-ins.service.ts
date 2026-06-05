@@ -11,6 +11,7 @@ import { RejectTradeInDto } from './dto/reject-trade-in.dto';
 import { CounterOfferTradeInDto } from './dto/counter-offer-trade-in.dto';
 import { AiPriceDto } from './dto/ai-price.dto';
 import { ScraperDataService } from '../scraper-data/scraper-data.service';
+import { ProductPricingService } from '../product-pricing/product-pricing.service';
 
 function applyMargin(marketPrice: number, marginPct: number): number {
     return Math.max(Math.round(marketPrice * (1 - marginPct / 100) / 5) * 5, 10);
@@ -26,6 +27,7 @@ export class TradeInsService {
         private readonly notifications: NotificationsService,
         private readonly shipping: ShippingService,
         private readonly scraper: ScraperDataService,
+        private readonly productPricing: ProductPricingService,
     ) {}
 
     async submit(dto: CreateTradeInDto, userId?: string) {
@@ -245,26 +247,31 @@ export class TradeInsService {
     }
 
     async aiPrice(dto: AiPriceDto): Promise<{ price: number; aiUsed: boolean; source?: string }> {
-        // 1. Try scraped competitor prices first (fresh data, no AI cost)
-        const storage = (dto.specs as Record<string, string>)?.storage ?? (dto.specs as Record<string, string>)?.Storage ?? '';
-        const scrapedMarketPrice = await this.scraper.lookupPrice(dto.brand, dto.model, storage);
-        if (scrapedMarketPrice !== null) {
-            const marginPct = await this.getMarginPct();
-            const offer = applyMargin(scrapedMarketPrice, marginPct);
-            this.logger.log(`Scraped price used for ${dto.brand} ${dto.model} ${storage}: market £${scrapedMarketPrice} → offer £${offer}`);
-            return { price: offer, aiUsed: false, source: 'scraped' };
+        const storage = (dto.specs as Record<string, string>)?.storage
+                     ?? (dto.specs as Record<string, string>)?.Storage
+                     ?? '';
+
+        // Priority 1 & 2: deterministic anchor (catalog product price → scraped price)
+        const anchor = await this.productPricing.getTradeInAnchor(
+            dto.brand, dto.model, storage, dto.condition,
+        );
+        if (anchor !== null) {
+            this.logger.log(
+                `Trade-in anchor for ${dto.brand} ${dto.model} ${storage} (${dto.condition}): £${anchor}`,
+            );
+            return { price: anchor, aiUsed: false, source: 'anchor' };
         }
 
-        // 2. Fall back to OpenAI
+        // Priority 3: AI fallback — only when no scraped/catalog data exists
         const apiKey = process.env.OPENAI_API_KEY;
         if (!apiKey) throw new InternalServerErrorException('AI pricing is not configured');
 
         const openai = new OpenAI({ apiKey });
 
-        const specsText = Object.entries(dto.specs).map(([k, v]) => `${k}: ${v}`).join(', ');
+        const specsText   = Object.entries(dto.specs).map(([k, v]) => `${k}: ${v}`).join(', ');
         const answersText = Object.entries(dto.answers).map(([k, v]) => `${k}: ${v}`).join(', ');
 
-        const systemMessage = `You are a UK second-hand electronics pricing expert for a refurbished device buyback service. You must always respond with a JSON object containing a "price" field. Never return an empty object. If uncertain, give your best estimate based on similar devices.`;
+        const systemMessage = `You are a UK second-hand electronics pricing expert for a refurbished device buyback service. You must always respond with a JSON object containing a "price" field. Be deterministic — given the same inputs always return the same price. Never return an empty object. If uncertain, give your best estimate based on similar devices.`;
 
         const prompt = `Estimate the current UK resale market value in GBP for this device.
 
@@ -293,33 +300,33 @@ Respond with ONLY: {"price": <number rounded to nearest 5, minimum 10>}`;
         }
 
         const response = await openai.chat.completions.create({
-            model: 'gpt-4o',
+            model:           'gpt-4o',
             messages: [
                 { role: 'system', content: systemMessage },
-                { role: 'user', content },
+                { role: 'user',   content },
             ],
-            temperature: 0,
-            max_tokens: 100,
+            temperature:     0,
+            max_tokens:      100,
             response_format: { type: 'json_object' },
         });
 
-        const choice = response.choices[0];
+        const choice      = response.choices[0];
         const finishReason = choice?.finish_reason;
-        const raw = choice?.message?.content ?? '{}';
+        const raw         = choice?.message?.content ?? '{}';
         this.logger.log(`OpenAI finish_reason: ${finishReason} | raw: ${raw}`);
 
         if (finishReason === 'content_filter') {
             throw new InternalServerErrorException('AI pricing unavailable — please try again');
         }
 
-        const parsed = JSON.parse(raw) as { price?: number };
+        const parsed     = JSON.parse(raw) as { price?: number };
         const marketPrice = parsed.price && parsed.price > 0 ? parsed.price : null;
         if (!marketPrice) {
             throw new InternalServerErrorException('AI pricing returned an invalid response — please try again');
         }
 
         const marginPct = await this.getMarginPct();
-        return { price: applyMargin(marketPrice, marginPct), aiUsed: true };
+        return { price: applyMargin(marketPrice, marginPct), aiUsed: true, source: 'ai' };
     }
 
     async complete(id: string) {
