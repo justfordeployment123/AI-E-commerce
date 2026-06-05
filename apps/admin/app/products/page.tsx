@@ -4,8 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Plus, Edit2, Trash2, X, Check, Package, Image as ImageIcon, ChevronDown, ExternalLink, AlertTriangle } from "lucide-react";
-import { productsApi, deviceCatalogApi, type Product, type CreateProductPayload, type DeviceCatalogItem } from "../../lib/api";
+import { Search, Plus, Edit2, Trash2, X, Check, Package, Image as ImageIcon,
+  ChevronDown, ExternalLink, AlertTriangle, Zap, ToggleLeft, ToggleRight,
+  RefreshCw } from "lucide-react";
+import { productsApi, deviceCatalogApi, productPricingApi,
+  type Product, type CreateProductPayload, type DeviceCatalogItem,
+  type PricingRunResult } from "../../lib/api";
 
 const CONDITIONS = ["Pristine", "Excellent", "Very Good", "Good", "Fair"];
 
@@ -44,6 +48,16 @@ export default function ProductsPage() {
   const [saving, setSaving]         = useState(false);
   const [error, setError]           = useState("");
 
+  const [filterStatus, setFilterStatus]       = useState<string>("All");
+  const [autoPricing, setAutoPricing]         = useState(false);
+  const [autoPriceResult, setAutoPriceResult] = useState<PricingRunResult | null>(null);
+  const [togglingId, setTogglingId]           = useState<string | null>(null);
+
+  // Pricing panel state (modal)
+  const [estimate, setEstimate]               = useState<import("../../lib/api").EstimateResult | null>(null);
+  const [loadingEstimate, setLoadingEstimate] = useState(false);
+  const [pricingProductId, setPricingProductId] = useState<string | null>(null);
+
   // Catalog device picker (used only in ADD mode)
   const [catalogDevices, setCatalogDevices]   = useState<DeviceCatalogItem[]>([]);
   const [selectedDevice, setSelectedDevice]   = useState<DeviceCatalogItem | null>(null);
@@ -69,6 +83,8 @@ export default function ProductsPage() {
     finally { setLoading(false); }
   }
 
+  const loadProducts = load;
+
   useEffect(() => { load(); }, []);
 
   const filtered = products.filter(p => {
@@ -76,7 +92,11 @@ export default function ProductsPage() {
       p.brand.toLowerCase().includes(search.toLowerCase());
     const matchCat = filterCategory === "All" ||
       p.category.toLowerCase() === filterCategory.toLowerCase();
-    return matchSearch && matchCat;
+    const matchStatus = filterStatus === "All"
+      || (filterStatus === "Flagged" && p.pricingStatus === "flagged")
+      || (filterStatus === "No Price" && p.price === 0)
+      || (filterStatus === "Auto-priced" && p.pricingStatus === "auto_priced");
+    return matchSearch && matchCat && matchStatus;
   });
 
   const filteredCatalog = catalogDevices.filter(d => {
@@ -111,6 +131,9 @@ export default function ProductsPage() {
     });
     setError("");
     setShowModal(true);
+    if (p.catalogId && p.brand && p.model) {
+      loadEstimate(p.brand, p.model, p.storage ?? '', p.condition);
+    }
   }
 
   function selectCatalogDevice(dev: DeviceCatalogItem) {
@@ -125,6 +148,8 @@ export default function ProductsPage() {
       name: suggestedName,
       storage: firstStorage,
     }));
+    const brand = dev.brandCategory.brand.name;
+    loadEstimate(brand, dev.model, firstStorage, formData.condition);
   }
 
   async function handleDeleteAll() {
@@ -154,6 +179,7 @@ export default function ProductsPage() {
         setProducts(ps => [created, ...ps]);
       }
       setShowModal(false);
+      setEstimate(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to save product");
     } finally {
@@ -167,6 +193,47 @@ export default function ProductsPage() {
       setProducts(ps => ps.filter(p => p.id !== id));
     } catch { /* ignore */ }
     setDeleteId(null);
+  }
+
+  async function handleAutoPrice() {
+    setAutoPricing(true);
+    setAutoPriceResult(null);
+    try {
+      const result = await productPricingApi.run();
+      setAutoPriceResult(result);
+      loadProducts();
+      setTimeout(() => setAutoPriceResult(null), 6000);
+    } catch (e: any) {
+      alert(e.message ?? "Auto-pricing failed");
+    } finally {
+      setAutoPricing(false);
+    }
+  }
+
+  async function handleToggleActive(product: Product) {
+    setTogglingId(product.id);
+    try {
+      await productsApi.update(product.id, { isActive: !product.isActive });
+      setProducts(prev => prev.map(p => p.id === product.id ? { ...p, isActive: !p.isActive } : p));
+    } catch (e: any) {
+      alert(e.message ?? "Toggle failed");
+    } finally {
+      setTogglingId(null);
+    }
+  }
+
+  async function loadEstimate(brand: string, model: string, storage: string, condition: string) {
+    if (!brand || !model) return;
+    setLoadingEstimate(true);
+    setEstimate(null);
+    try {
+      const result = await productPricingApi.estimate(brand, model, storage, condition);
+      setEstimate(result);
+    } catch {
+      setEstimate(null);
+    } finally {
+      setLoadingEstimate(false);
+    }
   }
 
   const storage = (p: Product) => p.storage || "—";
@@ -232,6 +299,37 @@ export default function ProductsPage() {
         </div>
       </div>
 
+      {/* Status filter tabs + Auto-price All */}
+      <div className="flex items-center gap-2 flex-wrap mt-2 mb-4">
+        {["All", "Auto-priced", "Flagged", "No Price"].map(tab => (
+          <button
+            key={tab}
+            onClick={() => setFilterStatus(tab)}
+            className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-colors ${
+              filterStatus === tab
+                ? tab === "Flagged" ? "bg-amber-100 text-amber-700" : "bg-black text-white"
+                : "bg-zinc-100 text-zinc-500 hover:bg-zinc-200"
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
+        <div className="flex-1" />
+        {autoPriceResult && (
+          <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
+            ✓ {autoPriceResult.applied} priced · {autoPriceResult.flagged} flagged
+          </span>
+        )}
+        <button
+          onClick={handleAutoPrice}
+          disabled={autoPricing}
+          className="flex items-center gap-1.5 h-9 px-4 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors disabled:opacity-60"
+        >
+          {autoPricing ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Zap className="h-3.5 w-3.5" />}
+          Auto-price All
+        </button>
+      </div>
+
       {/* Table */}
       <div className="bg-white rounded-3xl border border-zinc-100 shadow-sm overflow-hidden">
         {loading ? (
@@ -247,7 +345,8 @@ export default function ProductsPage() {
                 <th className="text-left px-4 py-4 text-xs font-bold uppercase tracking-widest text-zinc-400">Condition</th>
                 <th className="text-right px-4 py-4 text-xs font-bold uppercase tracking-widest text-zinc-400">Price</th>
                 <th className="text-right px-4 py-4 text-xs font-bold uppercase tracking-widest text-zinc-400">Stock</th>
-                <th className="text-center px-4 py-4 text-xs font-bold uppercase tracking-widest text-zinc-400">Status</th>
+                <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-zinc-400">Status</th>
+                <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-zinc-400">Active</th>
                 <th className="px-6 py-4" />
               </tr>
             </thead>
@@ -284,10 +383,45 @@ export default function ProductsPage() {
                   <td className={`px-4 py-4 text-right font-bold font-mono ${p.stock === 0 ? "text-red-500" : p.stock <= 2 ? "text-amber-500" : ""}`}>
                     {p.stock}
                   </td>
-                  <td className="px-4 py-4 text-center">
-                    <span className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase ${p.isActive ? "bg-emerald-100 text-emerald-700" : "bg-zinc-100 text-zinc-500"}`}>
-                      {p.isActive ? "Active" : "Hidden"}
-                    </span>
+                  {/* Pricing status badge + stock badge */}
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <div className="flex flex-col gap-1">
+                      {p.pricingStatus === 'auto_priced' && (
+                        <span className="text-[10px] font-bold bg-blue-50 text-blue-700 px-2 py-0.5 rounded-lg w-fit">Auto-priced</span>
+                      )}
+                      {p.pricingStatus === 'manual' && (
+                        <span className="text-[10px] font-bold bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded-lg w-fit">Manual</span>
+                      )}
+                      {p.pricingStatus === 'flagged' && (
+                        <span className="text-[10px] font-bold bg-amber-50 text-amber-700 px-2 py-0.5 rounded-lg w-fit">⚠ Flagged</span>
+                      )}
+                      {(p.pricingStatus === 'no_data' || !p.pricingStatus) && (
+                        <span className="text-[10px] font-bold bg-red-50 text-red-600 px-2 py-0.5 rounded-lg w-fit">No price data</span>
+                      )}
+                      {p.stock === 0 && (
+                        <span className="text-[10px] font-bold bg-orange-50 text-orange-600 px-2 py-0.5 rounded-lg w-fit">Out of stock</span>
+                      )}
+                    </div>
+                  </td>
+
+                  {/* Enable/disable toggle */}
+                  <td className="px-4 py-3">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleToggleActive(p); }}
+                      disabled={togglingId === p.id || (!p.isActive && (p.price === 0 || !p.images?.length))}
+                      title={!p.isActive && p.price === 0 ? "Set a price to enable" : ""}
+                      className={`flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg transition-colors disabled:opacity-40 ${
+                        p.isActive
+                          ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                          : "bg-zinc-100 text-zinc-500 hover:bg-zinc-200"
+                      }`}
+                    >
+                      {togglingId === p.id
+                        ? <RefreshCw className="h-3 w-3 animate-spin" />
+                        : p.isActive ? <ToggleRight className="h-3.5 w-3.5" /> : <ToggleLeft className="h-3.5 w-3.5" />
+                      }
+                      {p.isActive ? "Live" : "Disabled"}
+                    </button>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity justify-end">
@@ -318,7 +452,7 @@ export default function ProductsPage() {
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            onClick={e => { if (e.target === e.currentTarget) setShowModal(false); }}
+            onClick={e => { if (e.target === e.currentTarget) { setShowModal(false); setEstimate(null); } }}
           >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
@@ -328,7 +462,7 @@ export default function ProductsPage() {
             >
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold">{editProduct ? "Edit product" : "Add new product"}</h2>
-                <button onClick={() => setShowModal(false)} className="h-9 w-9 rounded-full hover:bg-zinc-100 flex items-center justify-center transition-colors">
+                <button onClick={() => { setShowModal(false); setEstimate(null); }} className="h-9 w-9 rounded-full hover:bg-zinc-100 flex items-center justify-center transition-colors">
                   <X className="h-4 w-4" />
                 </button>
               </div>
@@ -474,6 +608,7 @@ export default function ProductsPage() {
                             storage: newStorage,
                             name: `${selectedDevice.brandCategory.brand.name} ${selectedDevice.model}${newStorage ? ` ${newStorage}` : ""}`,
                           }));
+                          loadEstimate(selectedDevice.brandCategory.brand.name, selectedDevice.model, newStorage, formData.condition);
                         }}
                         className="h-12 w-full rounded-[0.875rem] border-2 border-zinc-200 pl-4 pr-10 text-sm font-medium outline-none focus:border-black transition-colors bg-white appearance-none"
                       >
@@ -493,6 +628,121 @@ export default function ProductsPage() {
                     />
                   )}
                 </div>
+
+                {/* ── Pricing Intelligence Panel (catalog products only) ── */}
+                {(editProduct?.catalogId || selectedDevice) && (
+                  <div className="rounded-2xl border-2 border-zinc-100 bg-zinc-50 p-4 space-y-3">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Pricing Intelligence</p>
+
+                    {loadingEstimate && (
+                      <div className="flex items-center gap-2 text-xs text-zinc-400">
+                        <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                        Loading competitor prices…
+                      </div>
+                    )}
+
+                    {/* Scraped competitor prices table */}
+                    {estimate?.scrapedPrices && (
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1.5">
+                          Competitor prices · {new Date(estimate.scrapedPrices.scrapedAt).toLocaleDateString('en-GB')}
+                        </p>
+                        <div className="grid grid-cols-4 gap-2">
+                          {([
+                            { label: "CeX Sell",   value: estimate.scrapedPrices.cexSellPrice },
+                            { label: "CeX Cash",   value: estimate.scrapedPrices.cexCashPrice },
+                            { label: "Envirofone", value: estimate.scrapedPrices.envirofonePrice },
+                            { label: "Best",       value: estimate.scrapedPrices.marketPrice },
+                          ] as { label: string; value: number | null }[]).map(({ label, value }) => (
+                            <div key={label} className="bg-white rounded-xl border border-zinc-200 px-3 py-2 text-center">
+                              <p className="text-[10px] font-bold text-zinc-400">{label}</p>
+                              <p className="text-sm font-bold text-zinc-800 mt-0.5">
+                                {value !== null ? `£${value.toFixed(0)}` : <span className="text-zinc-300">—</span>}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* AI estimate range bar */}
+                    {estimate && (
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1.5">
+                          AI estimate range · {formData.condition}
+                        </p>
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm font-bold text-zinc-600">£{estimate.low}</span>
+                          <div className="flex-1 h-2 bg-zinc-200 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-emerald-400 rounded-full"
+                              style={{
+                                marginLeft: `${Math.min(90, Math.max(0,
+                                  ((estimate.suggested - estimate.low) / Math.max(1, estimate.high - estimate.low)) * 80
+                                ))}%`,
+                                width: '10%',
+                              }}
+                            />
+                          </div>
+                          <span className="text-sm font-bold text-zinc-600">£{estimate.high}</span>
+                          <button
+                            type="button"
+                            onClick={() => setFormData(f => ({ ...f, price: estimate.suggested }))}
+                            className="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors shrink-0"
+                          >
+                            <Zap className="h-3 w-3" />
+                            Auto-fill £{estimate.suggested}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Auto-price this product button (edit mode only) */}
+                    {editProduct?.id && (
+                      <button
+                        type="button"
+                        disabled={pricingProductId === editProduct.id}
+                        onClick={async () => {
+                          setPricingProductId(editProduct.id);
+                          try {
+                            const result = await productPricingApi.priceOne(editProduct.id);
+                            if (result.candidatePrice !== undefined) {
+                              setFormData(f => ({ ...f, price: result.candidatePrice! }));
+                            }
+                            await loadEstimate(
+                              editProduct.brand, editProduct.model,
+                              editProduct.storage ?? '', editProduct.condition,
+                            );
+                          } catch (e: any) {
+                            alert(e.message ?? 'Pricing failed');
+                          } finally {
+                            setPricingProductId(null);
+                          }
+                        }}
+                        className="flex items-center gap-1.5 text-xs font-bold text-zinc-600 bg-white border border-zinc-200 hover:border-zinc-400 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 w-fit"
+                      >
+                        {pricingProductId === editProduct.id
+                          ? <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                          : <Zap className="h-3.5 w-3.5" />
+                        }
+                        Auto-price this product
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {/* Inline AI range feedback on price input */}
+                {estimate && formData.price > 0 && (
+                  formData.price >= estimate.low && formData.price <= estimate.high ? (
+                    <p className="text-xs font-bold text-emerald-600 flex items-center gap-1 -mt-1">
+                      <Check className="h-3 w-3" /> Within AI range (£{estimate.low}–£{estimate.high})
+                    </p>
+                  ) : (
+                    <p className="text-xs font-bold text-amber-600 flex items-center gap-1 -mt-1">
+                      <AlertTriangle className="h-3 w-3" /> Outside AI range (£{estimate.low}–£{estimate.high}) — you can still save
+                    </p>
+                  )
+                )}
 
                 {/* Price + Compare Price */}
                 <div className="grid grid-cols-2 gap-4">
@@ -543,7 +793,15 @@ export default function ProductsPage() {
                   <div className="relative">
                     <select
                       value={formData.condition}
-                      onChange={e => setFormData(f => ({ ...f, condition: e.target.value }))}
+                      onChange={e => {
+                        const newCondition = e.target.value;
+                        setFormData(f => ({ ...f, condition: newCondition }));
+                        if (selectedDevice) {
+                          loadEstimate(selectedDevice.brandCategory.brand.name, selectedDevice.model, formData.storage ?? '', newCondition);
+                        } else if (editProduct?.catalogId && editProduct.brand && editProduct.model) {
+                          loadEstimate(editProduct.brand, editProduct.model, formData.storage ?? '', newCondition);
+                        }
+                      }}
                       className="h-12 w-full rounded-[0.875rem] border-2 border-zinc-200 pl-4 pr-10 text-sm font-medium outline-none focus:border-black transition-colors bg-white appearance-none"
                     >
                       {CONDITIONS.map(c => <option key={c}>{c}</option>)}
@@ -567,7 +825,7 @@ export default function ProductsPage() {
               </div>
 
               <div className="flex gap-3 mt-8">
-                <button onClick={() => setShowModal(false)} className="flex-1 h-12 rounded-2xl border-2 border-zinc-200 font-bold text-sm hover:bg-zinc-50 transition-colors">
+                <button onClick={() => { setShowModal(false); setEstimate(null); }} className="flex-1 h-12 rounded-2xl border-2 border-zinc-200 font-bold text-sm hover:bg-zinc-50 transition-colors">
                   Cancel
                 </button>
                 <button
