@@ -32,6 +32,7 @@ import { SeedModule } from './modules/seed/seed.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
 import { OtherCatalogModule } from './modules/other-catalog/other-catalog.module';
 import { BannersModule } from './modules/banners/banners.module';
+import { ProductPricingModule } from './modules/product-pricing/product-pricing.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { BannersModule } from './modules/banners/banners.module';
     AuthModule,
     UsersModule,
     ProductsModule,
+    ProductPricingModule,
     TradeInsModule,
     RepairsModule,
     OrdersModule,
