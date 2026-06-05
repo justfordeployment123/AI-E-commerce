@@ -99,6 +99,8 @@ model Product {
   rating       Float     @default(0)
   reviewCount  Int       @default(0)
   isActive     Boolean   @default(true)
+  pricingStatus String   @default("no_data")
+  // "auto_priced" | "manual" | "flagged" | "no_data"
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
