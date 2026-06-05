@@ -1,8 +1,10 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { StorageService } from '../../common/services/storage.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { ProductPricingService } from '../product-pricing/product-pricing.service';
+import { evaluateActive }        from '../product-pricing/product-pricing.helpers';
 
 function slugify(text: string): string {
     return text
@@ -25,9 +27,12 @@ const CATALOG_INCLUDE = {
 
 @Injectable()
 export class ProductsService {
+    private readonly logger = new Logger(ProductsService.name);
+
     constructor(
-        private readonly prisma: PrismaService,
-        private readonly storage: StorageService,
+        private readonly prisma:          PrismaService,
+        private readonly storage:         StorageService,
+        private readonly productPricing:  ProductPricingService,
     ) {}
 
     private async presignAndFlatten(product: any) {
@@ -112,6 +117,18 @@ export class ProductsService {
             },
             include: CATALOG_INCLUDE,
         });
+
+        // Auto-price catalog products; other products start as no_data
+        if (product.catalogId) {
+            this.productPricing.priceProduct(product.id).catch((err: Error) =>
+                this.logger.error(`Auto-price on create failed: ${err.message}`),
+            );
+        } else {
+            await this.prisma.product.update({
+                where: { id: product.id },
+                data:  { pricingStatus: 'no_data' },
+            });
+        }
         return this.presignAndFlatten(product);
     }
 
@@ -224,7 +241,41 @@ export class ProductsService {
 
     async update(id: string, dto: UpdateProductDto) {
         await this.prisma.product.findUniqueOrThrow({ where: { id } });
-        return this.prisma.product.update({ where: { id }, data: dto as never });
+
+        // Block explicit enable if activation gate is not met
+        if (dto.isActive === true) {
+            const current = await this.prisma.product.findUnique({
+                where:  { id },
+                select: { price: true, images: true, pricingStatus: true },
+            });
+            if (current && !evaluateActive(
+                (dto.price      ?? current.price)  as number,
+                (dto.images     ?? current.images) as string[],
+                current.pricingStatus as string,
+            )) {
+                throw new BadRequestException(
+                    'Cannot enable product: requires a price > £0, at least one image, and no active pricing flag.',
+                );
+            }
+        }
+
+        // When admin manually sets a positive price, record it as manual
+        const extraData: Record<string, unknown> = {};
+        if (typeof dto.price === 'number' && dto.price > 0) {
+            extraData['pricingStatus'] = 'manual';
+        }
+
+        await this.prisma.product.update({
+            where: { id },
+            data:  { ...(dto as object), ...extraData } as never,
+        });
+
+        // Re-evaluate isActive unless admin explicitly set it
+        if (dto.isActive === undefined) {
+            await this.revalidateActive(id);
+        }
+
+        return this.prisma.product.findUnique({ where: { id } });
     }
 
     async remove(id: string) {
@@ -241,5 +292,22 @@ export class ProductsService {
         await this.prisma.product.delete({ where: { id } });
         await this.storage.deleteFiles(imageKeys);
         return { message: 'Product deleted' };
+    }
+
+    private async revalidateActive(productId: string): Promise<void> {
+        const p = await this.prisma.product.findUnique({
+            where:  { id: productId },
+            select: { price: true, images: true, pricingStatus: true },
+        });
+        if (!p) return;
+        const active = evaluateActive(
+            p.price,
+            p.images as string[],
+            p.pricingStatus,
+        );
+        await this.prisma.product.update({
+            where: { id: productId },
+            data:  { isActive: active },
+        });
     }
 }
