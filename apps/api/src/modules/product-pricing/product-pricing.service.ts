@@ -195,6 +195,14 @@ export class ProductPricingService {
         return null;
     }
 
+    async getFlaggedProducts() {
+        return this.prisma.product.findMany({
+            where:   { pricingStatus: 'flagged' },
+            select:  { id: true, name: true, condition: true, storage: true, updatedAt: true },
+            orderBy: { updatedAt: 'desc' },
+        });
+    }
+
     // ── Private helpers ──────────────────────────────────────────────────────
 
     protected async getAllConfigs(): Promise<Record<string, number>> {
