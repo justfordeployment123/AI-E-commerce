@@ -61,7 +61,7 @@ export default function ProductDetailPage() {
   // form state mirrors product fields
   const [form, setForm] = useState({
     name: "", brand: "", model: "", category: "Phones", condition: "Excellent",
-    price: 0, comparePrice: undefined as number | undefined,
+    price: null as number | null, comparePrice: undefined as number | undefined,
     stock: 0, description: "", isActive: true,
     storage: "",
   });
@@ -128,7 +128,7 @@ export default function ProductDetailPage() {
       await productsApi.update(product.id, {
         name: form.name, condition: form.condition,
         storage: form.storage,
-        price: Number(form.price),
+        price: form.price != null ? Number(form.price) : null,
         comparePrice: form.comparePrice ? Number(form.comparePrice) : undefined,
         stock: Number(form.stock), description: form.description,
         isActive: form.isActive,
@@ -434,8 +434,8 @@ export default function ProductDetailPage() {
                   <label className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">Sale Price (£)</label>
                   <input
                     type="number"
-                    value={form.price}
-                    onChange={e => setForm(f => ({ ...f, price: Number(e.target.value) }))}
+                    value={form.price ?? ""}
+                    onChange={e => setForm(f => ({ ...f, price: e.target.value === "" ? null : Number(e.target.value) }))}
                     className="h-12 rounded-2xl bg-white/10 border border-white/10 px-4 text-xl font-black text-white outline-none focus:border-white/30 transition-colors"
                   />
                 </div>
