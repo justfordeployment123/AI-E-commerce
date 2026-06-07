@@ -360,7 +360,7 @@ export interface Product {
   brand: string;
   model: string;
   condition: string;
-  price: number;
+  price: number | null;
   comparePrice?: number;
   stock: number;
   images: string[];

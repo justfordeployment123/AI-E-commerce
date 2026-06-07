@@ -486,7 +486,7 @@ export interface Product {
   category: string;             // flattened from either track
   condition: string;
   storage: string;
-  price: number;
+  price: number | null;
   comparePrice?: number;
   stock: number;
   images: string[];
@@ -508,7 +508,7 @@ export interface CreateProductPayload {
   name: string;
   condition: string;
   storage?: string;
-  price: number;
+  price?: number | null;
   comparePrice?: number;
   stock?: number;
   images?: string[];

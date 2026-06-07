@@ -733,8 +733,14 @@ function Hero() {
                           <h3 className="font-bold text-xl text-zinc-950 mb-1 truncate">{p.name}</h3>
                           <p className="text-[13px] text-zinc-400 font-medium truncate">{String((p.specs as any)?.storage ?? p.model ?? p.condition)}</p>
                           <div className="flex items-baseline gap-2.5 mt-3">
-                            <span className="text-2xl font-black text-zinc-950">£{p.price}</span>
-                            <span className="text-sm text-zinc-300 line-through font-medium">£{comparePrice}</span>
+                            {p.price > 0 ? (
+                              <>
+                                <span className="text-2xl font-black text-zinc-950">£{p.price}</span>
+                                <span className="text-sm text-zinc-300 line-through font-medium">£{comparePrice}</span>
+                              </>
+                            ) : (
+                              <span className="text-lg font-bold text-zinc-400 italic">Price on request</span>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -761,8 +767,14 @@ function Hero() {
                         </div>
                         <p className="font-bold text-sm text-zinc-950 truncate mb-1.5">{p.name}</p>
                         <div className="flex items-center justify-between">
-                          <span className="text-lg font-black text-zinc-950">£{p.price}</span>
-                          <span className={`text-[10px] font-black px-2 py-1 rounded-full ${gradeClr}`}>-{pct}%</span>
+                          {p.price > 0 ? (
+                            <>
+                              <span className="text-lg font-black text-zinc-950">£{p.price}</span>
+                              <span className={`text-[10px] font-black px-2 py-1 rounded-full ${gradeClr}`}>-{pct}%</span>
+                            </>
+                          ) : (
+                            <span className="text-sm font-bold text-zinc-400 italic">Price on request</span>
+                          )}
                         </div>
                       </div>
                     </Link>
@@ -1046,9 +1058,15 @@ function TrendingDeals() {
                   <h3 className="font-sans text-2xl md:text-3xl font-extrabold text-white mb-1 leading-tight tracking-tight">{featured.name}</h3>
                   <p className="text-sm text-white/60 font-medium mb-5">{String((featured.specs as any)?.storage ?? featured.model ?? "—")}</p>
                   <div className="flex items-baseline gap-3">
-                    <span className="text-3xl font-bold text-white tracking-tighter">£{featured.price}</span>
-                    {featured.comparePrice && (
-                      <span className="text-base text-white/40 line-through">£{featured.comparePrice}</span>
+                    {featured.price > 0 ? (
+                      <>
+                        <span className="text-3xl font-bold text-white tracking-tighter">£{featured.price}</span>
+                        {featured.comparePrice && (
+                          <span className="text-base text-white/40 line-through">£{featured.comparePrice}</span>
+                        )}
+                      </>
+                    ) : (
+                      <span className="text-xl font-bold text-white/60 italic">Price on request</span>
                     )}
                   </div>
                 </div>
@@ -1090,9 +1108,15 @@ function TrendingDeals() {
                   <p className="font-bold text-zinc-950 text-sm truncate mb-0.5">{deal.name}</p>
                   <p className="text-[11px] text-zinc-400 font-medium mb-2 truncate">{String((deal.specs as any)?.storage ?? deal.model ?? "—")}</p>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-lg font-bold text-zinc-950">£{deal.price}</span>
-                    {deal.comparePrice && (
-                      <span className="text-xs text-zinc-300 line-through">£{deal.comparePrice}</span>
+                    {deal.price > 0 ? (
+                      <>
+                        <span className="text-lg font-bold text-zinc-950">£{deal.price}</span>
+                        {deal.comparePrice && (
+                          <span className="text-xs text-zinc-300 line-through">£{deal.comparePrice}</span>
+                        )}
+                      </>
+                    ) : (
+                      <span className="text-sm font-bold text-zinc-400 italic">Price on request</span>
                     )}
                   </div>
                 </motion.a>
@@ -1474,8 +1498,8 @@ function ShopByBudget() {
           name: p.name,
           type: p.brand,
           spec: String((p.specs as Record<string, unknown>)?.storage ?? p.model ?? "—"),
-          price: `£${p.price}`,
-          was: `£${p.comparePrice ?? Math.round(p.price * 1.4)}`,
+          price: `£${p.price ?? 0}`,
+          was: `£${p.comparePrice ?? Math.round((p.price ?? 0) * 1.4)}`,
           grade: p.condition,
           img: p.images?.[0] ?? "",
           link: `/shop/${p.category.toLowerCase()}/${p.slug}`,
@@ -1683,8 +1707,8 @@ function BestDealsSplit() {
             {/* Products */}
             <div ref={scrollRef} className="flex gap-4 overflow-x-auto scrollbar-hide pb-4 flex-nowrap">
               {filtered.map((p) => {
-                const priceStr = p.price.toFixed(2);
-                const was = "£" + (p.comparePrice ?? p.price * 1.3).toFixed(2) + " new";
+                const priceStr = (p.price ?? 0).toFixed(2);
+                const was = "£" + (p.comparePrice ?? (p.price ?? 0) * 1.3).toFixed(2) + " new";
                 const [pWhole, pDec] = priceStr.split(".");
                 const added = addedIds.has(p.id);
                 return (
@@ -1709,10 +1733,16 @@ function BestDealsSplit() {
                     </div>
                     <div className="mt-auto pt-2 border-t border-zinc-100 flex items-end justify-between gap-2">
                       <div>
-                        <p className="text-lg font-black text-emerald-700 leading-none">
-                          £{pWhole}<span className="text-xs font-bold">.{pDec}</span>
-                        </p>
-                        <p className="text-[10px] text-zinc-400 line-through mt-0.5">{was}</p>
+                        {p.price > 0 ? (
+                          <>
+                            <p className="text-lg font-black text-emerald-700 leading-none">
+                              £{pWhole}<span className="text-xs font-bold">.{pDec}</span>
+                            </p>
+                            <p className="text-[10px] text-zinc-400 line-through mt-0.5">{was}</p>
+                          </>
+                        ) : (
+                          <p className="text-sm font-bold text-zinc-400 italic">Price on request</p>
+                        )}
                       </div>
                       <button
                         onClick={() => handleAdd(p)}
@@ -1791,7 +1821,11 @@ function NewArrivals() {
             </div>
             <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1">{item.category}</p>
             <p className="font-bold text-zinc-950 mb-1 truncate">{item.name}</p>
-            <p className="text-lg font-bold text-zinc-950">£{item.price}</p>
+            {item.price > 0 ? (
+              <p className="text-lg font-bold text-zinc-950">£{item.price}</p>
+            ) : (
+              <p className="text-sm font-bold text-zinc-400 italic">Price on request</p>
+            )}
           </Link>
         ))}
         <div className="w-4 sm:w-6 lg:w-8 flex-shrink-0" />
@@ -2177,15 +2211,17 @@ function SavingsComparison() {
     }).catch(() => {});
   }, [trigger]);
 
-  const items = rawProducts.map(p => ({
-    device: p.name,
-    newPrice: p.comparePrice ?? Math.round(p.price * 1.4),
-    ourPrice: p.price,
-    grade: p.condition,
-    img: p.images?.[0] ?? "",
-    slug: p.slug,
-    category: p.category,
-  }));
+  const items = rawProducts
+    .filter(p => p.price != null && p.price > 0)
+    .map(p => ({
+      device: p.name,
+      newPrice: p.comparePrice ?? Math.round(p.price * 1.4),
+      ourPrice: p.price as number,
+      grade: p.condition,
+      img: p.images?.[0] ?? "",
+      slug: p.slug,
+      category: p.category,
+    }));
 
   const gradeClr: Record<string, string> = {
     Pristine: "text-emerald-700",
@@ -2276,7 +2312,9 @@ const GRADE_STYLE: Record<string, string> = {
   Good:      "bg-amber-50 text-amber-700",
 };
 function ProductCard({ name, type, spec, price, was, grade, img, index = 0, link = "/shop/phones" }: PCard) {
-  const pct = Math.round((1 - parseInt(price.replace(/[^0-9]/g,"")) / parseInt(was.replace(/[^0-9]/g,""))) * 100);
+  const numericPrice = Number(price.replace(/[^0-9.]/g, ""));
+  const isUnpriced = !numericPrice;
+  const pct = isUnpriced ? 0 : Math.round((1 - numericPrice / Number(was.replace(/[^0-9.]/g, ""))) * 100);
   return (
     <Link href={link} className="block group">
       <motion.div
@@ -2288,7 +2326,7 @@ function ProductCard({ name, type, spec, price, was, grade, img, index = 0, link
         <div className="relative aspect-square rounded-2xl bg-image-light overflow-hidden mb-3 ring-1 ring-zinc-200/10 group-hover:ring-transparent group-hover:shadow-xl transition-all duration-300">
           <img src={img} alt={name} className="h-full w-full object-contain p-4 mix-blend-multiply group-hover:scale-105 transition-transform duration-500" />
           <div className={`absolute top-3 left-3 px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest ${GRADE_STYLE[grade] ?? "bg-zinc-100 text-zinc-600"}`}>{grade}</div>
-          <div className="absolute top-3 right-3 px-2 py-1 rounded-full bg-accent text-white text-[9px] font-bold">-{pct}%</div>
+          {!isUnpriced && <div className="absolute top-3 right-3 px-2 py-1 rounded-full bg-accent text-white text-[9px] font-bold">-{pct}%</div>}
           <button className="absolute bottom-3 right-3 h-10 w-10 rounded-full bg-zinc-950 text-white flex items-center justify-center opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 shadow-lg">
             <ShoppingCart className="h-4 w-4" />
           </button>
@@ -2296,11 +2334,15 @@ function ProductCard({ name, type, spec, price, was, grade, img, index = 0, link
         <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-0.5">{type}</p>
         <p className="font-bold text-zinc-950 text-sm leading-tight truncate mb-1">{name}</p>
         <p className="text-[11px] text-zinc-400 mb-2 truncate">{spec}</p>
-        <div className="flex items-baseline gap-2">
-          <span className="text-lg font-bold text-zinc-950">{price}</span>
-          <span className="text-xs text-zinc-400 line-through">{was}</span>
-          <span className="text-xs font-bold text-emerald-600">-{pct}%</span>
-        </div>
+        {isUnpriced ? (
+          <span className="text-sm font-bold text-zinc-400 italic">Price on request</span>
+        ) : (
+          <div className="flex items-baseline gap-2">
+            <span className="text-lg font-bold text-zinc-950">{price}</span>
+            <span className="text-xs text-zinc-400 line-through">{was}</span>
+            <span className="text-xs font-bold text-emerald-600">-{pct}%</span>
+          </div>
+        )}
       </motion.div>
     </Link>
   );
@@ -2347,8 +2389,8 @@ function FeaturedShop() {
           name: p.name,
           type: p.brand,
           spec: String((p.specs as Record<string, unknown>)?.storage ?? p.model ?? "—"),
-          price: `£${p.price}`,
-          was: `£${p.comparePrice ?? Math.round(p.price * 1.4)}`,
+          price: `£${p.price ?? 0}`,
+          was: `£${p.comparePrice ?? Math.round((p.price ?? 0) * 1.4)}`,
           grade: p.condition,
           img: p.images?.[0] ?? "",
           link: `/shop/${active}/${p.slug}`,
@@ -2506,18 +2548,30 @@ function TopBrandsSplit() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Fetch brand-specific products when activeBrand changes (skip "all" — already cached)
+  // Fetch brand-specific (or "all") products when activeBrand changes
   useEffect(() => {
-    if (activeBrand === "all") return;
-    if (cache[activeBrand]) return;
+    if (cache[activeBrand]?.length) return;
     setLoading(true);
-    productsApi.list({ brand: activeBrand, limit: 20 })
-      .then(r => {
-        const shuffled = r.items.sort(() => Math.random() - 0.5);
-        setCache(prev => ({ ...prev, [activeBrand]: shuffled }));
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    if (activeBrand === "all") {
+      productsApi.list({ limit: 100 })
+        .then(r => {
+          const filtered = r.items
+            .filter(p => !isOtherProduct(p.category, p.images?.[0]))
+            .sort(() => Math.random() - 0.5)
+            .slice(0, 20);
+          setCache(prev => ({ ...prev, all: filtered }));
+        })
+        .catch(() => {})
+        .finally(() => setLoading(false));
+    } else {
+      productsApi.list({ brand: activeBrand, limit: 20 })
+        .then(r => {
+          const shuffled = r.items.sort(() => Math.random() - 0.5);
+          setCache(prev => ({ ...prev, [activeBrand]: shuffled }));
+        })
+        .catch(() => {})
+        .finally(() => setLoading(false));
+    }
   }, [activeBrand]);
 
   const products = cache[activeBrand] ?? [];
@@ -2619,8 +2673,14 @@ function TopBrandsSplit() {
                         <span className="text-[10px] font-bold text-zinc-400 ml-1">{(p.rating ?? 0).toFixed(1)}/5 ({p.reviewCount ?? 0})</span>
                       </div>
                       <div className="pt-3 mt-3 border-t border-zinc-100">
-                        <p className="text-xl font-bold text-zinc-950">£{p.price}</p>
-                        <p className="text-[11px] text-zinc-400 line-through">£{comparePrice} new</p>
+                        {p.price > 0 ? (
+                          <>
+                            <p className="text-xl font-bold text-zinc-950">£{p.price}</p>
+                            <p className="text-[11px] text-zinc-400 line-through">£{comparePrice} new</p>
+                          </>
+                        ) : (
+                          <p className="text-sm font-bold text-zinc-400 italic">Price on request</p>
+                        )}
                       </div>
                     </Link>
                   );
@@ -2656,8 +2716,8 @@ function DiscoverMore() {
       name: p.name,
       type: p.brand,
       spec: String((p.specs as any)?.storage ?? p.model ?? p.condition),
-      price: `£${p.price}`,
-      was: `£${p.comparePrice ?? Math.round(p.price * 1.4)}`,
+      price: `£${p.price ?? 0}`,
+      was: `£${p.comparePrice ?? Math.round((p.price ?? 0) * 1.4)}`,
       grade: p.condition,
       img: p.images?.[0] ?? "",
       link: `/shop/${p.category.toLowerCase()}/${p.slug}`,
@@ -2719,10 +2779,14 @@ function DiscoverMore() {
                     </div>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-0.5">{p.type}</p>
                     <p className="font-bold text-zinc-950 text-xs leading-tight truncate mb-1.5">{p.name}</p>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-base font-bold text-zinc-950">{p.price}</span>
-                      <span className="text-[11px] text-zinc-400 line-through">{p.was}</span>
-                    </div>
+                    {Number(p.price.replace(/[^0-9.]/g, "")) > 0 ? (
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-base font-bold text-zinc-950">{p.price}</span>
+                        <span className="text-[11px] text-zinc-400 line-through">{p.was}</span>
+                      </div>
+                    ) : (
+                      <span className="text-sm font-bold text-zinc-400 italic">Price on request</span>
+                    )}
                   </motion.div>
                 </Link>
               ))}
@@ -2756,8 +2820,8 @@ function BudgetPicks() {
       name: p.name,
       type: p.brand,
       spec: String((p.specs as any)?.storage ?? p.model ?? p.condition),
-      price: `£${p.price}`,
-      was: `£${p.comparePrice ?? Math.round(p.price * 1.4)}`,
+      price: `£${p.price ?? 0}`,
+      was: `£${p.comparePrice ?? Math.round((p.price ?? 0) * 1.4)}`,
       grade: p.condition,
       img: p.images?.[0] ?? "",
       link: `/shop/${p.category.toLowerCase()}/${p.slug}`,

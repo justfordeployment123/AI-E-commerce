@@ -90,7 +90,7 @@ model Product {
   slug         String    @unique
   condition    String
   storage      String    @default("")
-  price        Float
+  price        Float?
   comparePrice Float?
   stock        Int       @default(0)
   images       String[]

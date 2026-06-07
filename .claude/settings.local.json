@@ -110,7 +110,8 @@
       "mcp__playwright__browser_fill_form",
       "mcp__playwright__browser_click",
       "Bash(git commit *)",
-      "Bash(xargs grep -l \"seed\\\\|Seed\\\\|scraper\\\\|Scraper\")"
+      "Bash(xargs grep -l \"seed\\\\|Seed\\\\|scraper\\\\|Scraper\")",
+      "Bash(psql -U postgres -d ai_ecommerce -c \"SELECT COUNT\\(*\\) FILTER \\(WHERE price IS NULL\\) AS null_price, COUNT\\(*\\) FILTER \\(WHERE price IS NOT NULL\\) AS has_price, COUNT\\(*\\) FILTER \\(WHERE price = 0\\) AS zero_price FROM products;\")"
     ],
     "additionalDirectories": [
       "d:\\CODE\\Projects\\Markhor Systems Projects\\Ai-Ecommerce\\apps\\web\\app\\account\\repairs",

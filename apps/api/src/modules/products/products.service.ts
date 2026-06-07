@@ -114,7 +114,7 @@ export class ProductsService {
                 slug,
                 images: dto.images ?? [],
                 specs:  (dto.specs ?? {}) as never,
-            },
+            } as never,
             include: CATALOG_INCLUDE,
         });
 
@@ -148,7 +148,22 @@ export class ProductsService {
         const skip = (page - 1) * safeLimit;
 
         const where: Record<string, unknown> = {};
-        if (!includeInactive) where.isActive = true;
+
+        if (!includeInactive) {
+            const showUnpriced = await this.prisma.pricingConfig
+                .findUnique({ where: { key: 'show_unpriced_products' } })
+                .then(r => (r?.value ?? 0) === 1)
+                .catch(() => false);
+            if (showUnpriced) {
+                // Products with price=0 are isActive=false (evaluateActive gate), so we must
+                // explicitly allow them here — otherwise isActive=true would exclude them.
+                where.AND = [{ OR: [{ isActive: true }, { pricingStatus: 'no_data' }] }];
+            } else {
+                where.isActive = true;
+                where.price = { gt: 0 };
+            }
+        }
+
         if (condition) where.condition = condition;
         if (minPrice !== undefined || maxPrice !== undefined) {
             where.price = { gte: minPrice, lte: maxPrice };
@@ -163,11 +178,15 @@ export class ProductsService {
                 mainClause.catalog = { is: { brandCategory: brandCategoryWhere } };
             }
 
-            const otherClause: Record<string, unknown> = { catalogId: null };
+            const otherClause: Record<string, unknown> = { catalog: { is: null } };
             if (category) otherClause.otherSubcategory = { name: { equals: category, mode: 'insensitive' } };
             if (brand)    otherClause.otherBrand        = { name: { equals: brand,    mode: 'insensitive' } };
 
-            where.OR = [mainClause, otherClause];
+            if (Array.isArray(where.AND)) {
+                (where.AND as unknown[]).push({ OR: [mainClause, otherClause] });
+            } else {
+                where.OR = [mainClause, otherClause];
+            }
         }
 
         if (search) {
@@ -249,7 +268,7 @@ export class ProductsService {
                 select: { price: true, images: true, pricingStatus: true },
             });
             if (current && !evaluateActive(
-                (dto.price      ?? current.price)  as number,
+                (dto.price !== undefined ? dto.price : current.price),
                 (dto.images     ?? current.images) as string[],
                 current.pricingStatus as string,
             )) {

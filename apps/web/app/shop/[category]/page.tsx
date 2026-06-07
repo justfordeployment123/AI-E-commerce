@@ -461,7 +461,10 @@ export default function CategoryPage() {
                     <div className="px-2 flex flex-col flex-1 pb-2">
                       <h3 className="font-bold text-lg leading-tight mb-1">{product.title}</h3>
                       <div className="flex items-baseline gap-2 mt-auto pt-4">
-                        <span className="text-xl md:text-2xl font-bold tracking-tight">£{product.price}</span>
+                        {product.price > 0
+                          ? <span className="text-xl md:text-2xl font-bold tracking-tight">£{product.price}</span>
+                          : <span className="text-sm font-bold text-zinc-400 italic">Price on Request</span>
+                        }
                       </div>
                     </div>
                   </div>
@@ -568,8 +571,13 @@ export default function CategoryPage() {
 
                               {/* Price */}
                               <div className="flex items-baseline gap-2 mt-auto pt-1">
-                                <span className="text-sm font-extrabold text-zinc-950">£{product.price}</span>
-                                <span className="text-[10px] text-zinc-400 line-through font-semibold">£{product.originalPrice} new</span>
+                                {product.price > 0
+                                  ? <>
+                                      <span className="text-sm font-extrabold text-zinc-950">£{product.price}</span>
+                                      <span className="text-[10px] text-zinc-400 line-through font-semibold">£{product.originalPrice} new</span>
+                                    </>
+                                  : <span className="text-xs font-bold text-zinc-400 italic">Price on Request</span>
+                                }
                               </div>
                             </div>
 
@@ -799,7 +807,7 @@ export default function CategoryPage() {
                             />
                           )}
 
-                          {product.stock > 0 && (
+                          {product.stock > 0 && product.price > 0 && (
                             <button
                               onClick={e => { e.preventDefault(); handleAdd(product.id); }}
                               className={`absolute bottom-4 right-4 h-11 w-11 rounded-full flex items-center justify-center shadow-md transition-all duration-300 ${
@@ -825,12 +833,17 @@ export default function CategoryPage() {
 
                           <div className="mt-auto pt-4 flex items-end justify-between">
                             <div>
-                              <div className="flex items-baseline gap-2">
-                                <span className="text-2xl font-bold tracking-tight">£{product.price}</span>
-                              </div>
-                              <div className="text-sm font-bold text-zinc-400 line-through">
-                                  £{product.originalPrice} new
-                              </div>
+                              {product.price > 0
+                                ? <>
+                                    <div className="flex items-baseline gap-2">
+                                      <span className="text-2xl font-bold tracking-tight">£{product.price}</span>
+                                    </div>
+                                    <div className="text-sm font-bold text-zinc-400 line-through">
+                                        £{product.originalPrice} new
+                                    </div>
+                                  </>
+                                : <span className="text-base font-bold text-zinc-400 italic">Price on Request</span>
+                              }
                             </div>
                             {product.stock === 0 && (
                               <span className="text-xs font-bold text-zinc-400">Unavailable</span>

@@ -294,47 +294,63 @@ export default function ProductDetailPage() {
               </div>
 
               {/* Price */}
-              <div className="flex items-baseline gap-4 mb-8">
-                <span className="text-5xl font-bold tracking-tight">£{product.price.toFixed(2)}</span>
-                {product.comparePrice && (
-                  <span className="text-xl text-zinc-400 line-through font-medium">£{product.comparePrice.toFixed(2)}</span>
-                )}
-                {savings > 0 && (
-                  <span className="text-sm font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full">
-                    Save £{savings.toFixed(2)}
-                  </span>
-                )}
-              </div>
+              {product.price > 0 ? (
+                <div className="flex items-baseline gap-4 mb-8">
+                  <span className="text-5xl font-bold tracking-tight">£{product.price.toFixed(2)}</span>
+                  {product.comparePrice && (
+                    <span className="text-xl text-zinc-400 line-through font-medium">£{product.comparePrice.toFixed(2)}</span>
+                  )}
+                  {savings > 0 && (
+                    <span className="text-sm font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full">
+                      Save £{savings.toFixed(2)}
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <div className="mb-8">
+                  <span className="text-3xl font-bold text-zinc-400 italic">Price on Request</span>
+                  <p className="text-sm text-zinc-500 mt-1">Contact us for pricing on this item.</p>
+                </div>
+              )}
 
               {/* Stock */}
-              {product.stock <= 5 && product.stock > 0 && (
+              {product.price > 0 && product.stock <= 5 && product.stock > 0 && (
                 <p className="text-sm font-bold text-amber-700 bg-amber-50 px-3 py-2 rounded-xl mb-6">
                   Only {product.stock} left in stock — order soon
                 </p>
               )}
 
-              {/* Add to cart */}
+              {/* Add to cart / Enquire */}
               <div className="flex gap-3 mb-8">
-                <motion.button
-                  whileTap={{ scale: 0.97 }}
-                  onClick={handleAddToCart}
-                  disabled={product.stock === 0}
-                  className={`flex-1 h-16 rounded-[1.5rem] font-bold text-base flex items-center justify-center gap-2 transition-all ${
-                    product.stock === 0
-                      ? "bg-zinc-100 text-zinc-400 cursor-not-allowed"
-                      : added
-                      ? "bg-emerald-500 text-white"
-                      : "bg-accent text-white hover:bg-accent-dark shadow-lg shadow-accent/20"
-                  }`}
-                >
-                  {product.stock === 0 ? (
-                    "Out of stock"
-                  ) : added ? (
-                    <><Check className="h-5 w-5" strokeWidth={3} /> Added to cart</>
-                  ) : (
-                    <><ShoppingCart className="h-5 w-5" /> Add to cart</>
-                  )}
-                </motion.button>
+                {product.price > 0 ? (
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
+                    onClick={handleAddToCart}
+                    disabled={product.stock === 0}
+                    className={`flex-1 h-16 rounded-[1.5rem] font-bold text-base flex items-center justify-center gap-2 transition-all ${
+                      product.stock === 0
+                        ? "bg-zinc-100 text-zinc-400 cursor-not-allowed"
+                        : added
+                        ? "bg-emerald-500 text-white"
+                        : "bg-accent text-white hover:bg-accent-dark shadow-lg shadow-accent/20"
+                    }`}
+                  >
+                    {product.stock === 0 ? (
+                      "Out of stock"
+                    ) : added ? (
+                      <><Check className="h-5 w-5" strokeWidth={3} /> Added to cart</>
+                    ) : (
+                      <><ShoppingCart className="h-5 w-5" /> Add to cart</>
+                    )}
+                  </motion.button>
+                ) : (
+                  <a
+                    href="mailto:info@techstopleicester.co.uk"
+                    className="flex-1 h-16 rounded-[1.5rem] font-bold text-base flex items-center justify-center gap-2 bg-zinc-800 text-white hover:bg-zinc-700 transition-all"
+                  >
+                    Enquire about this item
+                  </a>
+                )}
               </div>
 
               {/* Quick features from specs */}

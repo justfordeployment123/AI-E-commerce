@@ -29,8 +29,8 @@ export function computeTradeInOffer(resalePrice: number, tradeInRatio: number): 
  *   - at least one image
  *   - pricingStatus is not 'flagged'
  */
-export function evaluateActive(price: number, images: string[], pricingStatus: string): boolean {
-    return price > 0 && images.length >= 1 && pricingStatus !== 'flagged';
+export function evaluateActive(price: number | null, images: string[], pricingStatus: string): boolean {
+    return price != null && price > 0 && images.length >= 1 && pricingStatus !== 'flagged';
 }
 
 /**

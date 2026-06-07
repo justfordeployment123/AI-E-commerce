@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Search, Plus, Edit2, Trash2, X, Check, Package, Image as ImageIcon,
   ChevronDown, ExternalLink, AlertTriangle, Zap, ToggleLeft, ToggleRight,
   RefreshCw } from "lucide-react";
-import { productsApi, deviceCatalogApi, productPricingApi,
+import { productsApi, deviceCatalogApi, productPricingApi, pricingConfigApi,
   type Product, type CreateProductPayload, type DeviceCatalogItem,
   type PricingRunResult } from "../../lib/api";
 
@@ -52,6 +52,8 @@ export default function ProductsPage() {
   const [autoPricing, setAutoPricing]         = useState(false);
   const [autoPriceResult, setAutoPriceResult] = useState<PricingRunResult | null>(null);
   const [togglingId, setTogglingId]           = useState<string | null>(null);
+  const [showUnpriced, setShowUnpriced]       = useState(false);
+  const [savingUnpriced, setSavingUnpriced]   = useState(false);
 
   // Pricing panel state (modal)
   const [estimate, setEstimate]               = useState<import("../../lib/api").EstimateResult | null>(null);
@@ -85,7 +87,25 @@ export default function ProductsPage() {
 
   const loadProducts = load;
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    pricingConfigApi.list()
+      .then(configs => {
+        const c = configs.find(x => x.key === 'show_unpriced_products');
+        setShowUnpriced((c?.value ?? 0) === 1);
+      })
+      .catch(() => {});
+  }, []);
+
+  async function toggleShowUnpriced() {
+    setSavingUnpriced(true);
+    const next = !showUnpriced;
+    try {
+      await pricingConfigApi.upsert('show_unpriced_products', next ? 1 : 0, 'Show unpriced products on storefront (0=hide, 1=show)');
+      setShowUnpriced(next);
+    } catch { /* ignore */ }
+    finally { setSavingUnpriced(false); }
+  }
 
   const filtered = products.filter(p => {
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -94,7 +114,7 @@ export default function ProductsPage() {
       p.category.toLowerCase() === filterCategory.toLowerCase();
     const matchStatus = filterStatus === "All"
       || (filterStatus === "Flagged" && p.pricingStatus === "flagged")
-      || (filterStatus === "No Price" && p.price === 0)
+      || (filterStatus === "No Price" && p.price == null)
       || (filterStatus === "Auto-priced" && p.pricingStatus === "auto_priced");
     const isOther = OTHERS_SLUGS.has(p.category?.toLowerCase());
     return matchSearch && matchCat && matchStatus && !isOther;
@@ -253,6 +273,19 @@ export default function ProductsPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <button
+            onClick={toggleShowUnpriced}
+            disabled={savingUnpriced}
+            title={showUnpriced ? "Unpriced products visible on storefront — click to hide" : "Unpriced products hidden from storefront — click to show"}
+            className={`flex items-center gap-2 h-11 px-4 rounded-2xl text-sm font-bold border transition-colors ${
+              showUnpriced
+                ? "bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100"
+                : "bg-white border-zinc-200 text-zinc-500 hover:border-zinc-400"
+            } disabled:opacity-50`}
+          >
+            {showUnpriced ? <ToggleRight className="h-4 w-4" /> : <ToggleLeft className="h-4 w-4" />}
+            Unpriced on web
+          </button>
           <Link
             href="/products/others"
             className="flex items-center gap-2 h-11 px-4 border border-zinc-200 rounded-2xl text-sm font-bold text-zinc-600 hover:border-zinc-400 hover:text-black transition-colors bg-white"
@@ -379,7 +412,7 @@ export default function ProductsPage() {
                     <span className="rounded-full bg-zinc-100 px-3 py-1 text-[10px] font-bold uppercase tracking-widest">{p.condition}</span>
                   </td>
                   <td className="px-4 py-4 text-right font-bold font-mono">
-                    £{p.price}
+                    {p.price != null ? `£${p.price}` : <span className="text-zinc-400 italic text-xs font-normal">No price</span>}
                     {p.comparePrice && <span className="text-zinc-300 line-through ml-2 text-xs">£{p.comparePrice}</span>}
                   </td>
                   <td className={`px-4 py-4 text-right font-bold font-mono ${p.stock === 0 ? "text-red-500" : p.stock <= 2 ? "text-amber-500" : ""}`}>
@@ -410,8 +443,8 @@ export default function ProductsPage() {
                   <td className="px-4 py-3">
                     <button
                       onClick={(e) => { e.stopPropagation(); handleToggleActive(p); }}
-                      disabled={togglingId === p.id || (!p.isActive && (p.price === 0 || !p.images?.length))}
-                      title={!p.isActive && p.price === 0 ? "Set a price to enable" : ""}
+                      disabled={togglingId === p.id || (!p.isActive && (p.price == null || !p.images?.length))}
+                      title={!p.isActive && p.price == null ? "Set a price to enable" : ""}
                       className={`flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg transition-colors disabled:opacity-40 ${
                         p.isActive
                           ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
@@ -734,7 +767,7 @@ export default function ProductsPage() {
                 )}
 
                 {/* Inline AI range feedback on price input */}
-                {estimate && formData.price > 0 && (
+                {estimate && formData.price != null && formData.price > 0 && (
                   formData.price >= estimate.low && formData.price <= estimate.high ? (
                     <p className="text-xs font-bold text-emerald-600 flex items-center gap-1 -mt-1">
                       <Check className="h-3 w-3" /> Within AI range (£{estimate.low}–£{estimate.high})

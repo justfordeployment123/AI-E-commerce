@@ -46,6 +46,7 @@ const PRICING_DEFAULTS = [
     { key: 'multiplier_good', value: 0.85, label: 'Good Condition Multiplier' },
     { key: 'multiplier_used', value: 0.70, label: 'Used Condition Multiplier' },
     { key: 'multiplier_damaged', value: 0.40, label: 'Damaged Condition Multiplier' },
+    { key: 'show_unpriced_products', value: 0, label: 'Show unpriced products on storefront (0=hide, 1=show)' },
 ];
 
 const DEVICE_CATALOG = [
@@ -647,7 +648,7 @@ export class SeedService {
                         slug:          item.id,
                         condition:     'Pristine',
                         storage:       '',
-                        price:         typeof item.price === 'number' ? item.price : 0,
+                        price:         typeof item.price === 'number' ? item.price : null,
                         comparePrice:  typeof item.comparePrice === 'number' ? item.comparePrice : null,
                         stock:         10,
                         images:        s3ImageKey ? [s3ImageKey] : [],
@@ -769,7 +770,7 @@ export class SeedService {
                     slug,
                     condition: prod.condition,
                     storage,
-                    price: 0,
+                    price: null,
                     comparePrice: null,
                     stock: Number(prod.stock ?? 10),
                     images: s3Keys.length > 0 ? s3Keys : (Array.isArray(prod.images) ? prod.images : []),

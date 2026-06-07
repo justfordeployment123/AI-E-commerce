@@ -39,8 +39,9 @@ export class CreateProductDto {
     storage?: string;
 
     @IsNumber()
-    @IsPositive()
-    price!: number;
+    @Min(0)
+    @IsOptional()
+    price?: number | null;
 
     @IsNumber()
     @IsOptional()
