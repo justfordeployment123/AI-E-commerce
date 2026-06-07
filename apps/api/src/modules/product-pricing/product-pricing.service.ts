@@ -146,7 +146,7 @@ export class ProductPricingService {
         return { started: true, alreadyRunning: false };
     }
 
-    private async runPriceCatalog(): Promise<void> {
+    async runPriceCatalog(): Promise<void> {
         this.logger.log('Starting catalog pricing run…');
 
         const products = await this.prisma.product.findMany({

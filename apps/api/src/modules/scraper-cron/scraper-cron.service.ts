@@ -59,9 +59,10 @@ export class ScraperCronService implements OnModuleInit, OnModuleDestroy {
                 // Wait 30s for scraper to start writing data, then auto-price
                 await new Promise(r => setTimeout(r, 30_000));
                 this.logger.log('Triggering auto-pricing after scraper run…');
-                const result = await this.productPricing.priceCatalog();
+                await this.productPricing.runPriceCatalog();
+                const status = this.productPricing.getJobStatus();
                 this.logger.log(
-                    `Auto-pricing complete: ${result.applied} applied, ${result.flagged} flagged`,
+                    `Auto-pricing complete: ${status.result?.applied ?? 0} applied, ${status.result?.flagged ?? 0} flagged`,
                 );
             } catch (err: any) {
                 this.logger.error(`Auto-scraper/pricing cycle failed: ${err?.message}`);
