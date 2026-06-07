@@ -294,7 +294,7 @@ export default function ProductDetailPage() {
               </div>
 
               {/* Price */}
-              {product.price > 0 ? (
+              {(product.price ?? 0) > 0 ? (
                 <div className="flex items-baseline gap-4 mb-8">
                   <span className="text-5xl font-bold tracking-tight">£{(product.price as number).toFixed(2)}</span>
                   {product.comparePrice && (
@@ -314,7 +314,7 @@ export default function ProductDetailPage() {
               )}
 
               {/* Stock */}
-              {product.price > 0 && product.stock <= 5 && product.stock > 0 && (
+              {(product.price ?? 0) > 0 && product.stock <= 5 && product.stock > 0 && (
                 <p className="text-sm font-bold text-amber-700 bg-amber-50 px-3 py-2 rounded-xl mb-6">
                   Only {product.stock} left in stock — order soon
                 </p>
@@ -322,7 +322,7 @@ export default function ProductDetailPage() {
 
               {/* Add to cart / Enquire */}
               <div className="flex gap-3 mb-8">
-                {product.price > 0 ? (
+                {(product.price ?? 0) > 0 ? (
                   <motion.button
                     whileTap={{ scale: 0.97 }}
                     onClick={handleAddToCart}
