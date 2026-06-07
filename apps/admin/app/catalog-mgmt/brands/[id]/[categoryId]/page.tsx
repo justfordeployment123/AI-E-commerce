@@ -147,7 +147,7 @@ export default function RelatedProductsPage() {
                         {product.condition}
                       </td>
                       <td className="px-6 py-4 text-right font-bold text-zinc-800">
-                        £{product.price.toFixed(2)}
+                        {product.price != null ? `£${product.price.toFixed(2)}` : "—"}
                       </td>
                       <td className="px-6 py-4 text-center font-bold text-zinc-700">
                         {product.stock}
