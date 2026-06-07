@@ -632,58 +632,81 @@ export default function ScraperPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-50">
-                  {rows.map(row => (
-                    <tr key={row.id} className="hover:bg-zinc-50 transition-colors">
-                      <td className="px-6 py-3.5 font-bold text-black whitespace-nowrap">{row.brand} {row.model}</td>
-                      <td className="px-6 py-3.5 text-zinc-500 whitespace-nowrap">{row.storage || "—"}</td>
-                      <td className="px-6 py-3.5 font-mono text-zinc-700">{fmt(row.cexSellPrice)}</td>
-                      <td className="px-6 py-3.5 font-mono text-zinc-500">{fmt(row.cexCashPrice)}</td>
-                      <td className="px-6 py-3.5 font-mono text-zinc-500">{fmt(row.cexExchangePrice)}</td>
-                      <td className="px-6 py-3.5 font-mono text-zinc-700">{fmt(row.envirofonePrice)}</td>
-                      <td className="px-6 py-3.5">
-                        {row.marketPrice !== null ? (
-                          <span className="inline-flex items-center gap-1.5 font-bold font-mono text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg text-xs">
-                            £{row.marketPrice.toFixed(0)}
-                          </span>
-                        ) : (
-                          <span className="text-zinc-300 text-xs font-medium">No data</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-3.5">
-                        <span className="flex items-center gap-1.5 text-xs text-zinc-400 whitespace-nowrap">
-                          <Clock className="h-3 w-3" />
-                          {fmtTime(row.scrapedAt)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-3.5 whitespace-nowrap">
-                        {(() => {
-                          const key = `${row.brand}|${row.model}`;
-                          const isLoading = scrapingKey === key;
-                          const result = scrapeRowResult?.key === key ? scrapeRowResult : null;
-                          if (isLoading) return (
-                            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg">
-                              <Loader2 className="h-3 w-3 animate-spin" /> Scraping…
+                  {(() => {
+                    const catalogRows = rows.filter(r => r.storage !== "");
+                    const otherRows   = rows.filter(r => r.storage === "");
+
+                    const renderRow = (row: ScrapedPriceRow) => {
+                      const key = `${row.brand}|${row.model}`;
+                      const isLoading = scrapingKey === key;
+                      const result = scrapeRowResult?.key === key ? scrapeRowResult : null;
+                      return (
+                        <tr key={row.id} className="hover:bg-zinc-50 transition-colors">
+                          <td className="px-6 py-3.5 font-bold text-black whitespace-nowrap">{row.brand} {row.model}</td>
+                          <td className="px-6 py-3.5 text-zinc-500 whitespace-nowrap">{row.storage || "—"}</td>
+                          <td className="px-6 py-3.5 font-mono text-zinc-700">{fmt(row.cexSellPrice)}</td>
+                          <td className="px-6 py-3.5 font-mono text-zinc-500">{fmt(row.cexCashPrice)}</td>
+                          <td className="px-6 py-3.5 font-mono text-zinc-500">{fmt(row.cexExchangePrice)}</td>
+                          <td className="px-6 py-3.5 font-mono text-zinc-700">{fmt(row.envirofonePrice)}</td>
+                          <td className="px-6 py-3.5">
+                            {row.marketPrice !== null ? (
+                              <span className="inline-flex items-center gap-1.5 font-bold font-mono text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg text-xs">
+                                £{row.marketPrice.toFixed(0)}
+                              </span>
+                            ) : (
+                              <span className="text-zinc-300 text-xs font-medium">No data</span>
+                            )}
+                          </td>
+                          <td className="px-6 py-3.5">
+                            <span className="flex items-center gap-1.5 text-xs text-zinc-400 whitespace-nowrap">
+                              <Clock className="h-3 w-3" />
+                              {fmtTime(row.scrapedAt)}
                             </span>
-                          );
-                          if (result) return (
-                            <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg ${result.ok ? "text-emerald-700 bg-emerald-50" : "text-red-700 bg-red-50"}`}>
-                              {result.ok ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
-                              {result.ok ? "Done" : "Failed"}
-                            </span>
-                          );
-                          return (
-                            <button
-                              onClick={() => handleScrapeRow(row.brand, row.model)}
-                              disabled={scrapingKey !== null}
-                              className="inline-flex items-center gap-1.5 text-xs font-bold text-zinc-600 bg-zinc-100 hover:bg-zinc-200 px-2.5 py-1 rounded-lg transition-colors disabled:opacity-40"
-                            >
-                              <Zap className="h-3 w-3" /> Scrape
-                            </button>
-                          );
-                        })()}
-                      </td>
-                    </tr>
-                  ))}
+                          </td>
+                          <td className="px-6 py-3.5 whitespace-nowrap">
+                            {isLoading ? (
+                              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg">
+                                <Loader2 className="h-3 w-3 animate-spin" /> Scraping…
+                              </span>
+                            ) : result ? (
+                              <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg ${result.ok ? "text-emerald-700 bg-emerald-50" : "text-red-700 bg-red-50"}`}>
+                                {result.ok ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
+                                {result.ok ? "Done" : "Failed"}
+                              </span>
+                            ) : (
+                              <button
+                                onClick={() => handleScrapeRow(row.brand, row.model)}
+                                disabled={scrapingKey !== null}
+                                className="inline-flex items-center gap-1.5 text-xs font-bold text-zinc-600 bg-zinc-100 hover:bg-zinc-200 px-2.5 py-1 rounded-lg transition-colors disabled:opacity-40"
+                              >
+                                <Zap className="h-3 w-3" /> Scrape
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    };
+
+                    const sectionHeader = (label: string, count: number) => (
+                      <tr key={`hdr-${label}`} className="bg-zinc-50 border-y border-zinc-100">
+                        <td colSpan={9} className="px-6 py-2">
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">{label}</span>
+                          <span className="ml-2 text-[10px] font-bold text-zinc-300">{count}</span>
+                        </td>
+                      </tr>
+                    );
+
+                    const hasBoth = catalogRows.length > 0 && otherRows.length > 0;
+
+                    return (
+                      <>
+                        {hasBoth && sectionHeader("Catalog Devices", catalogRows.length)}
+                        {catalogRows.map(renderRow)}
+                        {hasBoth && sectionHeader("Other Products", otherRows.length)}
+                        {otherRows.map(renderRow)}
+                      </>
+                    );
+                  })()}
                 </tbody>
               </table>
             </div>
