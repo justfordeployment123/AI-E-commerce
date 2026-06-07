@@ -636,15 +636,16 @@ export class SeedService {
                         slug: item.id,
                         condition: 'Pristine',
                         storage: '',
-                        price: Number(item.price),
-                        comparePrice: item.comparePrice ? Number(item.comparePrice) : null,
+                        price: 0,
+                        comparePrice: null,
                         stock: 10,
                         images: s3ImageKey ? [s3ImageKey] : [],
                         specs: {},
                         description: '',
                         rating: 0,
                         reviewCount: 0,
-                        isActive: true,
+                        pricingStatus: 'no_data',
+                        isActive: false,
                     };
 
                     const existing = await this.prisma.product.findUnique({ where: { slug: item.id } });
@@ -757,15 +758,16 @@ export class SeedService {
                     slug,
                     condition: prod.condition,
                     storage,
-                    price: Number(prod.price),
-                    comparePrice: prod.comparePrice ? Number(prod.comparePrice) : null,
+                    price: 0,
+                    comparePrice: null,
                     stock: Number(prod.stock ?? 10),
                     images: s3Keys.length > 0 ? s3Keys : (Array.isArray(prod.images) ? prod.images : []),
                     specs: remainingSpecs ?? {},
                     description: prod.description ?? '',
                     rating: Number(prod.rating ?? 0),
                     reviewCount: Number(prod.reviewCount ?? 0),
-                    isActive: prod.isActive !== undefined ? Boolean(prod.isActive) : true,
+                    pricingStatus: 'no_data',
+                    isActive: false,
                 };
 
                 const existing = await this.prisma.product.findUnique({ where: { slug } });

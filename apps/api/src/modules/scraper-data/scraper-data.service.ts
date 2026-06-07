@@ -53,18 +53,28 @@ export class ScraperDataService {
     }
 
     async getRuns(limit = 20) {
-        return this.prisma.scraperRun.findMany({
+        const runs = await this.prisma.scraperRun.findMany({
             orderBy: { startedAt: 'desc' },
             take: limit,
         });
+
+        // For any RUNNING run, count how many ScrapedPrice rows have been
+        // written since the run started — gives real-time progress without schema changes.
+        const running = runs.find(r => r.status === 'RUNNING');
+        if (!running) return runs.map(r => ({ ...r, currentProgress: null as number | null }));
+
+        const currentProgress = await this.prisma.scrapedPrice.count({
+            where: { scrapedAt: { gte: running.startedAt } },
+        });
+
+        return runs.map(r => ({
+            ...r,
+            currentProgress: r.id === running.id ? currentProgress : null,
+        }));
     }
 
     async triggerScraper() {
-        const scraperUrl = process.env.SCRAPER_URL;
-        if (!scraperUrl) {
-            this.logger.warn('SCRAPER_URL not set — cannot trigger scraper manually.');
-            return { ok: false, message: 'Scraper service is not configured. Set SCRAPER_URL in the API environment.' };
-        }
+        const scraperUrl = process.env.SCRAPER_URL || 'http://localhost:3003';
         try {
             // Await just the initial HTTP handshake — if scraper is down this throws immediately.
             // The scraper responds 202 and runs in the background, so we don't wait for scraping to finish.
@@ -100,8 +110,7 @@ export class ScraperDataService {
     }
 
     async triggerDeviceScrape(brand: string, model: string) {
-        const scraperUrl = process.env.SCRAPER_URL;
-        if (!scraperUrl) return { ok: false, message: 'Scraper service is not configured.' };
+        const scraperUrl = process.env.SCRAPER_URL || 'http://localhost:3003';
         try {
             const res = await fetch(
                 `${scraperUrl}/scraper/device?brand=${encodeURIComponent(brand)}&model=${encodeURIComponent(model)}`,
@@ -112,6 +121,26 @@ export class ScraperDataService {
         } catch (err: any) {
             this.logger.error(`Failed to trigger device scrape: ${err?.message}`);
             return { ok: false, message: 'Scraper service is unreachable.' };
+        }
+    }
+
+    async triggerDeviceScrapeSync(brand: string, model: string): Promise<{ ok: boolean; prices?: any[]; message?: string }> {
+        const scraperUrl = process.env.SCRAPER_URL || 'http://localhost:3003';
+        try {
+            const res = await fetch(
+                `${scraperUrl}/scraper/device?brand=${encodeURIComponent(brand)}&model=${encodeURIComponent(model)}&sync=true`,
+                { method: 'POST', signal: AbortSignal.timeout(120_000) },
+            );
+            if (!res.ok) return { ok: false, message: `Scraper service returned ${res.status}.` };
+            const data = await res.json() as { prices?: any[] };
+            return { ok: true, prices: data.prices };
+        } catch (err: any) {
+            const isTimeout = err?.name === 'TimeoutError';
+            const msg = isTimeout
+                ? 'Scraper timed out — it may still be running in the background.'
+                : 'Scraper service is unreachable.';
+            this.logger.error(`Failed to trigger sync device scrape: ${err?.message}`);
+            return { ok: false, message: msg };
         }
     }
 }

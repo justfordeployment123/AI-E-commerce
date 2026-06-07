@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { scraperApi, healthApi, type ScrapedPriceRow, type ScraperStats, type ScraperRun } from "../../lib/api";
-import { Play, RefreshCw, Search, TrendingUp, CheckCircle2, AlertCircle, Clock, XCircle, Loader2 } from "lucide-react";
+import { Play, RefreshCw, Search, TrendingUp, CheckCircle2, AlertCircle, Clock, XCircle, Loader2, Zap } from "lucide-react";
 
 function fmt(v: number | null) {
   return v !== null ? `£${v.toFixed(0)}` : <span className="text-zinc-300">—</span>;
@@ -52,6 +52,25 @@ function fmtTime(iso: string) {
 
 const SCRAPER_ENABLED = process.env.NEXT_PUBLIC_SCRAPER_ENABLED === "true";
 
+function hoursToForm(h: number): { val: string; unit: "hours" | "days" | "weeks" } {
+  if (h >= 168 && h % 168 === 0) return { val: String(h / 168), unit: "weeks" };
+  if (h >= 24  && h % 24  === 0) return { val: String(h / 24),  unit: "days" };
+  return { val: String(h || 1), unit: "hours" };
+}
+
+function formToHours(val: string, unit: string): number {
+  const n = Math.max(1, parseInt(val) || 1);
+  if (unit === "weeks") return n * 168;
+  if (unit === "days")  return n * 24;
+  return n;
+}
+
+function humanizeHours(h: number): string {
+  if (h >= 168 && h % 168 === 0) { const w = h / 168; return `${w} week${w > 1 ? "s" : ""}`; }
+  if (h >= 24  && h % 24  === 0) { const d = h / 24;  return `${d} day${d  > 1 ? "s" : ""}`; }
+  return `${h} hour${h > 1 ? "s" : ""}`;
+}
+
 export default function ScraperPage() {
   const router = useRouter();
   const [stats, setStats] = useState<ScraperStats | null>(null);
@@ -63,14 +82,35 @@ export default function ScraperPage() {
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [loadingTable, setLoadingTable] = useState(false);
+  const [refreshingTable, setRefreshingTable] = useState(false);
+  const tableHasData = useRef(false);
   const [running, setRunning] = useState(false);
   const [runMsg, setRunMsg] = useState("");
+  const [scrapingKey, setScrapingKey] = useState<string | null>(null);
+  const [scrapeRowResult, setScrapeRowResult] = useState<{ key: string; ok: boolean } | null>(null);
+  const scrapeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [cleaning, setCleaning] = useState(false);
   const [cleanMsg, setCleanMsg] = useState("");
   const [serviceOnline, setServiceOnline] = useState<boolean | null>(null);
+  const [scheduleHours, setScheduleHours] = useState<number | null>(null);
+  const [scheduleInputVal, setScheduleInputVal] = useState("1");
+  const [scheduleUnit, setScheduleUnit] = useState<"hours" | "days" | "weeks">("hours");
+  const [savingSchedule, setSavingSchedule] = useState(false);
+  const [scheduleMsg, setScheduleMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   const loadStats = useCallback(() => {
     scraperApi.stats().then(setStats).catch(() => {});
+  }, []);
+
+  const loadSchedule = useCallback(() => {
+    scraperApi.getSchedule().then(r => {
+      setScheduleHours(r.hours);
+      if (r.hours > 0) {
+        const { val, unit } = hoursToForm(r.hours);
+        setScheduleInputVal(val);
+        setScheduleUnit(unit);
+      }
+    }).catch(() => {});
   }, []);
 
   const checkServiceHealth = useCallback(() => {
@@ -84,22 +124,35 @@ export default function ScraperPage() {
   }, []);
 
   const loadPrices = useCallback(() => {
-    setLoadingTable(true);
+    // First load (or page/search change): show full spinner. Background polls: silent.
+    if (!tableHasData.current) {
+      setLoadingTable(true);
+    } else {
+      setRefreshingTable(true);
+    }
     scraperApi.prices(page, 50, search || undefined)
-      .then(r => { setRows(r.items); setTotal(r.total); setPages(r.pages); })
+      .then(r => {
+        setRows(r.items);
+        setTotal(r.total);
+        setPages(r.pages);
+        tableHasData.current = true;
+      })
       .catch(() => {})
-      .finally(() => setLoadingTable(false));
+      .finally(() => { setLoadingTable(false); setRefreshingTable(false); });
   }, [page, search]);
 
   useEffect(() => {
     if (!SCRAPER_ENABLED) { router.replace("/"); return; }
     loadStats();
     loadRuns();
+    loadSchedule();
     checkServiceHealth();
-  }, [loadStats, loadRuns, checkServiceHealth, router]);
+  }, [loadStats, loadRuns, loadSchedule, checkServiceHealth, router]);
 
   useEffect(() => {
     if (!SCRAPER_ENABLED) return;
+    // Reset so the spinner shows when page or search changes
+    tableHasData.current = false;
     loadPrices();
   }, [loadPrices]);
 
@@ -116,6 +169,11 @@ export default function ScraperPage() {
     const id = setInterval(tick, isRunning ? 8_000 : 30_000);
     return () => clearInterval(id);
   }, [runs, loadStats, loadRuns, loadPrices, checkServiceHealth]);
+
+  // Cleanup per-row scrape interval on unmount
+  useEffect(() => {
+    return () => { if (scrapeIntervalRef.current) clearInterval(scrapeIntervalRef.current); };
+  }, []);
 
   if (!SCRAPER_ENABLED) return null;
 
@@ -149,6 +207,96 @@ export default function ScraperPage() {
     }
   }
 
+  async function handleSaveSchedule(hoursOverride?: number) {
+    const hours = hoursOverride ?? formToHours(scheduleInputVal, scheduleUnit);
+    setSavingSchedule(true);
+    setScheduleMsg(null);
+    try {
+      await scraperApi.setSchedule(hours);
+      setScheduleHours(hours);
+      setScheduleMsg({
+        ok: true,
+        text: hours === 0 ? "Auto-run disabled." : `Saved — runs every ${humanizeHours(hours)}.`,
+      });
+    } catch (e: any) {
+      setScheduleMsg({ ok: false, text: e.message ?? "Failed to save schedule." });
+    } finally {
+      setSavingSchedule(false);
+      setTimeout(() => setScheduleMsg(null), 4000);
+    }
+  }
+
+  // Replace matching rows in-place by id (keeps their position in the table).
+  // Any brand-new storage variants not yet in the table get appended.
+  function applyFreshPrices(fresh: ScrapedPriceRow[]) {
+    if (!fresh.length) return;
+    setRows(prev => {
+      const freshById = new Map(fresh.map(r => [r.id, r]));
+      const updated = prev.map(r => freshById.get(r.id) ?? r);
+      const existingIds = new Set(prev.map(r => r.id));
+      const newRows = fresh.filter(f => !existingIds.has(f.id));
+      return [...updated, ...newRows];
+    });
+  }
+
+  async function handleScrapeRow(brand: string, model: string) {
+    const key = `${brand}|${model}`;
+    const startedAt = Date.now();
+
+    setScrapingKey(key);
+    setScrapeRowResult(null);
+
+    // Snapshot current variant ids — used to detect when ALL known variants are fresh
+    let watchIds: string[] = [];
+    try {
+      const current = await scraperApi.devicePrices(brand, model);
+      watchIds = current.map(r => r.id);
+    } catch {}
+
+    // Trigger background scrape (returns in ~2s, actual scraping happens async in scraper service)
+    scraperApi.scrapeDevice(brand, model).catch(() => {});
+
+    // Poll every 3s — update rows live and detect completion via scrapedAt timestamps
+    if (scrapeIntervalRef.current) clearInterval(scrapeIntervalRef.current);
+    scrapeIntervalRef.current = setInterval(async () => {
+      try {
+        const fresh = await scraperApi.devicePrices(brand, model);
+        if (fresh.length > 0) {
+          applyFreshPrices(fresh);
+
+          const freshMap = new Map(fresh.map(r => [r.id, r]));
+          // "Done" = every variant we saw before scraping now has scrapedAt >= startedAt
+          // (falls back to checking all returned rows if device had no prior rows)
+          const allDone = watchIds.length > 0
+            ? watchIds.every(id => {
+                const row = freshMap.get(id);
+                return row && new Date(row.scrapedAt).getTime() >= startedAt;
+              })
+            : fresh.every(r => new Date(r.scrapedAt).getTime() >= startedAt);
+
+          if (allDone) {
+            clearInterval(scrapeIntervalRef.current!);
+            scrapeIntervalRef.current = null;
+            setScrapingKey(null);
+            setScrapeRowResult({ key, ok: true });
+            loadStats();
+            setTimeout(() => setScrapeRowResult(r => r?.key === key ? null : r), 3000);
+            return;
+          }
+        }
+      } catch {}
+
+      // Timeout after 2 minutes
+      if (Date.now() - startedAt > 120_000) {
+        clearInterval(scrapeIntervalRef.current!);
+        scrapeIntervalRef.current = null;
+        setScrapingKey(null);
+        setScrapeRowResult({ key, ok: false });
+        setTimeout(() => setScrapeRowResult(r => r?.key === key ? null : r), 3000);
+      }
+    }, 3000);
+  }
+
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
     setSearch(searchInput);
@@ -167,7 +315,7 @@ export default function ScraperPage() {
           <h1 className="text-3xl font-bold tracking-tight">Competitor Prices</h1>
           <div className="flex items-center gap-3 mt-1">
             <p className="text-sm text-zinc-500">
-              Scraped from CeX, Back Market, Music Magpie &amp; Envirofone. Runs automatically every hour.
+              Scraped from CeX &amp; Envirofone.{scheduleHours ? ` Auto-runs every ${humanizeHours(scheduleHours)}.` : ""}
             </p>
             <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg border shrink-0 ${
               serviceOnline === true
@@ -211,14 +359,86 @@ export default function ScraperPage() {
         </div>
       )}
 
+      {/* Auto-run Schedule */}
+      <div className="bg-white rounded-3xl border border-zinc-100 shadow-sm p-6">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div>
+            <h2 className="font-bold text-base">Auto-run Schedule</h2>
+            <p className="text-xs text-zinc-400 mt-0.5">Run the scraper automatically in the background</p>
+          </div>
+          {/* Active status badge */}
+          {scheduleHours !== null && (
+            scheduleHours === 0 ? (
+              <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl bg-zinc-100 text-zinc-500">
+                <span className="h-1.5 w-1.5 rounded-full bg-zinc-400" />
+                Disabled
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Running every {humanizeHours(scheduleHours)}
+              </span>
+            )
+          )}
+        </div>
+
+        <div className="mt-5 flex items-center gap-3 flex-wrap">
+          <span className="text-sm font-medium text-zinc-500 shrink-0">Run every</span>
+
+          <input
+            type="number"
+            min="1"
+            value={scheduleInputVal}
+            onChange={e => setScheduleInputVal(e.target.value)}
+            className="w-20 h-10 px-3 rounded-xl border-2 border-zinc-200 text-sm font-bold outline-none focus:border-emerald-500 transition-colors text-center"
+          />
+
+          <select
+            value={scheduleUnit}
+            onChange={e => setScheduleUnit(e.target.value as "hours" | "days" | "weeks")}
+            className="h-10 px-3 pr-8 rounded-xl border-2 border-zinc-200 text-sm font-bold outline-none focus:border-emerald-500 transition-colors bg-white appearance-none cursor-pointer"
+          >
+            <option value="hours">Hours</option>
+            <option value="days">Days</option>
+            <option value="weeks">Weeks</option>
+          </select>
+
+          <button
+            onClick={() => handleSaveSchedule()}
+            disabled={savingSchedule}
+            className="h-10 px-5 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 transition-colors disabled:opacity-60 flex items-center gap-2"
+          >
+            {savingSchedule ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+            Save
+          </button>
+
+          {scheduleHours !== null && scheduleHours > 0 && (
+            <button
+              onClick={() => handleSaveSchedule(0)}
+              disabled={savingSchedule}
+              className="h-10 px-4 rounded-xl border-2 border-zinc-200 text-sm font-bold text-zinc-500 hover:border-red-300 hover:text-red-600 transition-colors disabled:opacity-40"
+            >
+              Disable
+            </button>
+          )}
+
+          {scheduleMsg && (
+            <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl ${
+              scheduleMsg.ok ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"
+            }`}>
+              {scheduleMsg.ok ? <CheckCircle2 className="h-3.5 w-3.5" /> : <AlertCircle className="h-3.5 w-3.5" />}
+              {scheduleMsg.text}
+            </span>
+          )}
+        </div>
+      </div>
+
       {/* Stats */}
       {stats && (
-        <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
           <StatCard label="Total devices" value={stats.total} />
           <StatCard label="With market price" value={stats.withMarketPrice} sub={`${coverage}% coverage`} />
           <StatCard label="CeX" value={stats.withCex} sub={`${stats.total ? Math.round(stats.withCex / stats.total * 100) : 0}%`} />
-          <StatCard label="Back Market" value={stats.withBM} sub={`${stats.total ? Math.round(stats.withBM / stats.total * 100) : 0}%`} />
-          <StatCard label="Music Magpie" value={stats.withMM} sub={`${stats.total ? Math.round(stats.withMM / stats.total * 100) : 0}%`} />
           <StatCard label="Envirofone" value={stats.withEnvirofone ?? 0} sub={`${stats.total ? Math.round((stats.withEnvirofone ?? 0) / stats.total * 100) : 0}%`} />
           <StatCard
             label="Last scraped"
@@ -277,13 +497,34 @@ export default function ScraperPage() {
                     <td className="px-6 py-3.5 text-zinc-700 whitespace-nowrap font-medium">{fmtTime(run.startedAt)}</td>
                     <td className="px-6 py-3.5 text-zinc-500 whitespace-nowrap">{run.finishedAt ? fmtTime(run.finishedAt) : <span className="text-zinc-300">—</span>}</td>
                     <td className="px-6 py-3.5 text-zinc-500 font-mono">{duration(run.startedAt, run.finishedAt)}</td>
-                    <td className="px-6 py-3.5">
-                      {run.totalScraped !== null
-                        ? <span className="font-bold text-zinc-700">{run.totalScraped}</span>
-                        : <span className="text-zinc-300">—</span>}
+                    <td className="px-6 py-3.5 min-w-[160px]">
+                      {run.status === "RUNNING" && run.currentProgress !== null && stats ? (
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-xs font-bold text-blue-700">
+                              {run.currentProgress} / {stats.total}
+                            </span>
+                            <span className="text-[10px] font-bold text-blue-500">
+                              {Math.round(run.currentProgress / stats.total * 100)}%
+                            </span>
+                          </div>
+                          <div className="w-full bg-zinc-100 rounded-full h-1.5 overflow-hidden">
+                            <div
+                              className="bg-blue-500 h-full rounded-full transition-all duration-500"
+                              style={{ width: `${Math.round(run.currentProgress / stats.total * 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                      ) : run.totalScraped !== null ? (
+                        <span className="font-bold text-zinc-700">{run.totalScraped}</span>
+                      ) : (
+                        <span className="text-zinc-300">—</span>
+                      )}
                     </td>
-                    <td className="px-6 py-3.5 text-red-500 text-xs max-w-xs truncate">
-                      {run.errorMessage ?? <span className="text-zinc-300">—</span>}
+                    <td className="px-6 py-3.5 text-xs max-w-70">
+                      {run.errorMessage
+                        ? <span className="text-red-500 truncate block cursor-help" title={run.errorMessage}>{run.errorMessage}</span>
+                        : <span className="text-zinc-300">—</span>}
                     </td>
                   </tr>
                 ))}
@@ -310,7 +551,14 @@ export default function ScraperPage() {
               Search
             </button>
           </form>
-          <p className="text-sm text-zinc-400 font-medium">{total} devices</p>
+          <div className="flex items-center gap-2">
+            {refreshingTable && (
+              <span className="flex items-center gap-1.5 text-[11px] text-zinc-400 font-medium">
+                <RefreshCw className="h-3 w-3 animate-spin" /> Updating…
+              </span>
+            )}
+            <p className="text-sm text-zinc-400 font-medium">{total} devices</p>
+          </div>
         </div>
 
         {loadingTable ? (
@@ -329,7 +577,7 @@ export default function ScraperPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-zinc-100">
-                    {["Device", "Storage", "CeX Sell", "CeX Cash", "CeX Exchange", "Back Market", "Music Magpie", "Envirofone", "Market Price", "Last Updated"].map(h => (
+                    {["Device", "Storage", "CeX Sell", "CeX Cash", "CeX Exchange", "Envirofone", "Market Price", "Last Updated", ""].map(h => (
                       <th key={h} className="text-left text-[10px] font-bold uppercase tracking-widest text-zinc-400 px-6 py-3 whitespace-nowrap">{h}</th>
                     ))}
                   </tr>
@@ -338,12 +586,10 @@ export default function ScraperPage() {
                   {rows.map(row => (
                     <tr key={row.id} className="hover:bg-zinc-50 transition-colors">
                       <td className="px-6 py-3.5 font-bold text-black whitespace-nowrap">{row.brand} {row.model}</td>
-                      <td className="px-6 py-3.5 text-zinc-500">{row.storage || "—"}</td>
+                      <td className="px-6 py-3.5 text-zinc-500 whitespace-nowrap">{row.storage || "—"}</td>
                       <td className="px-6 py-3.5 font-mono text-zinc-700">{fmt(row.cexSellPrice)}</td>
                       <td className="px-6 py-3.5 font-mono text-zinc-500">{fmt(row.cexCashPrice)}</td>
                       <td className="px-6 py-3.5 font-mono text-zinc-500">{fmt(row.cexExchangePrice)}</td>
-                      <td className="px-6 py-3.5 font-mono text-zinc-700">{fmt(row.backMarketPrice)}</td>
-                      <td className="px-6 py-3.5 font-mono text-zinc-700">{fmt(row.musicMagpiePrice)}</td>
                       <td className="px-6 py-3.5 font-mono text-zinc-700">{fmt(row.envirofonePrice)}</td>
                       <td className="px-6 py-3.5">
                         {row.marketPrice !== null ? (
@@ -359,6 +605,33 @@ export default function ScraperPage() {
                           <Clock className="h-3 w-3" />
                           {fmtTime(row.scrapedAt)}
                         </span>
+                      </td>
+                      <td className="px-6 py-3.5 whitespace-nowrap">
+                        {(() => {
+                          const key = `${row.brand}|${row.model}`;
+                          const isLoading = scrapingKey === key;
+                          const result = scrapeRowResult?.key === key ? scrapeRowResult : null;
+                          if (isLoading) return (
+                            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg">
+                              <Loader2 className="h-3 w-3 animate-spin" /> Scraping…
+                            </span>
+                          );
+                          if (result) return (
+                            <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg ${result.ok ? "text-emerald-700 bg-emerald-50" : "text-red-700 bg-red-50"}`}>
+                              {result.ok ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
+                              {result.ok ? "Done" : "Failed"}
+                            </span>
+                          );
+                          return (
+                            <button
+                              onClick={() => handleScrapeRow(row.brand, row.model)}
+                              disabled={scrapingKey !== null}
+                              className="inline-flex items-center gap-1.5 text-xs font-bold text-zinc-600 bg-zinc-100 hover:bg-zinc-200 px-2.5 py-1 rounded-lg transition-colors disabled:opacity-40"
+                            >
+                              <Zap className="h-3 w-3" /> Scrape
+                            </button>
+                          );
+                        })()}
                       </td>
                     </tr>
                   ))}

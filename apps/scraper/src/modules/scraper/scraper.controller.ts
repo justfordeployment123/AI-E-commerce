@@ -41,16 +41,28 @@ export class ScraperController {
     }
 
     @Post('device')
-    @HttpCode(HttpStatus.ACCEPTED)
-    scrapeDevice(@Query('brand') brand: string, @Query('model') model: string) {
-        this.scraperService.scrapeDevice(brand ?? '', model ?? '').catch(err => {
+    async scrapeDevice(
+        @Query('brand') brand: string,
+        @Query('model') model: string,
+        @Query('sync') sync?: string,
+    ) {
+        const b = brand ?? '';
+        const m = model ?? '';
+        if (sync === 'true') {
+            // Synchronous: await scrape and return fresh prices immediately
+            await this.scraperService.scrapeDevice(b, m);
+            const prices = await this.scraperService.getDevicePrices(b, m);
+            return { ok: true, prices };
+        }
+        this.scraperService.scrapeDevice(b, m).catch(err => {
             console.error('Background device scrape failed:', err);
         });
-        return { message: `Scraping ${brand} ${model} in the background.` };
+        return { ok: false, message: `Scraping ${b} ${m} in the background.` };
     }
 
     @Get('stats')
     getStats() {
         return this.scraperService.getStats();
     }
+
 }

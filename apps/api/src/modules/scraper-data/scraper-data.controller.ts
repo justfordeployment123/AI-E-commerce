@@ -1,14 +1,23 @@
-import { Controller, Post, Get, Query, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Query, Body, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
+import { IsInt, Min } from 'class-validator';
 import { ScraperDataService } from './scraper-data.service';
+import { ScraperCronService } from '../scraper-cron/scraper-cron.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
+
+class SetScheduleDto {
+    @IsInt() @Min(0) hours!: number;
+}
 
 @Controller('scraper')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('ADMIN')
 export class ScraperDataController {
-    constructor(private readonly service: ScraperDataService) {}
+    constructor(
+        private readonly service: ScraperDataService,
+        private readonly cron: ScraperCronService,
+    ) {}
 
     @Post('run')
     @HttpCode(HttpStatus.ACCEPTED)
@@ -31,8 +40,15 @@ export class ScraperDataController {
     }
 
     @Post('device')
-    @HttpCode(HttpStatus.ACCEPTED)
-    scrapeDevice(@Query('brand') brand: string, @Query('model') model: string) {
+    @HttpCode(HttpStatus.OK)
+    scrapeDevice(
+        @Query('brand') brand: string,
+        @Query('model') model: string,
+        @Query('sync') sync?: string,
+    ) {
+        if (sync === 'true') {
+            return this.service.triggerDeviceScrapeSync(brand ?? '', model ?? '');
+        }
         return this.service.triggerDeviceScrape(brand ?? '', model ?? '');
     }
 
@@ -50,5 +66,16 @@ export class ScraperDataController {
     @HttpCode(HttpStatus.OK)
     cleanup() {
         return this.service.cleanupStuckRuns();
+    }
+
+    @Get('schedule')
+    getSchedule() {
+        return this.cron.getSchedule();
+    }
+
+    @Post('schedule')
+    @HttpCode(HttpStatus.OK)
+    setSchedule(@Body() body: SetScheduleDto) {
+        return this.cron.setSchedule(Number(body.hours));
     }
 }
