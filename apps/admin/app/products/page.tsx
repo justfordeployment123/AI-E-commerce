@@ -238,7 +238,8 @@ export default function ProductsPage() {
   }
 
   const storage = (p: Product) => p.storage || "—";
-  const countFor = (cat: string) => products.filter(p =>
+  const mainProducts = products.filter(p => !OTHERS_SLUGS.has(p.category?.toLowerCase()));
+  const countFor = (cat: string) => mainProducts.filter(p =>
     cat === "All" ? true : p.category.toLowerCase() === cat.toLowerCase()
   ).length;
 
@@ -288,7 +289,7 @@ export default function ProductsPage() {
           />
         </div>
         <div className="flex gap-2 flex-wrap">
-          {["All", ...Array.from(new Set(products.map(p => p.category))).sort()].map(cat => (
+          {["All", ...Array.from(new Set(mainProducts.map(p => p.category))).sort()].map(cat => (
             <button
               key={cat}
               onClick={() => setFilterCategory(cat)}
