@@ -96,7 +96,8 @@ export default function ProductsPage() {
       || (filterStatus === "Flagged" && p.pricingStatus === "flagged")
       || (filterStatus === "No Price" && p.price === 0)
       || (filterStatus === "Auto-priced" && p.pricingStatus === "auto_priced");
-    return matchSearch && matchCat && matchStatus;
+    const isOther = OTHERS_SLUGS.has(p.category?.toLowerCase());
+    return matchSearch && matchCat && matchStatus && !isOther;
   });
 
   const filteredCatalog = catalogDevices.filter(d => {
