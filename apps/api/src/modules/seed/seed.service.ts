@@ -641,8 +641,8 @@ export class SeedService {
                     }
 
                     const productData = {
-                        otherBrand:        { connect: { id: otherBrandId } },
-                        otherSubcategory:  { connect: { id: otherSubcategoryId } },
+                        otherBrandId,
+                        otherSubcategoryId,
                         name:          item.name,
                         slug:          item.id,
                         condition:     'Pristine',
@@ -764,7 +764,7 @@ export class SeedService {
                 }
 
                 const data = {
-                    catalog: catalogId ? { connect: { id: catalogId } } : undefined,
+                    catalogId,
                     name: prod.name,
                     slug,
                     condition: prod.condition,
