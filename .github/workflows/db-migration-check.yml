@@ -32,7 +32,7 @@ jobs:
         run: |
           npx prisma migrate diff \
             --from-migrations ./prisma/migrations \
-            --to-schema-datamodel ./prisma/schema.prisma \
+            --to-schema ./prisma/schema.prisma \
             --exit-code
         # Exit code 2 means there are differences (schema ahead of migrations).
         # This means someone edited schema.prisma without running prisma migrate dev.
