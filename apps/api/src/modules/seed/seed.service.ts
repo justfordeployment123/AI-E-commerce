@@ -254,6 +254,7 @@ export class SeedService {
         // 3. Wipe DB in FK-safe order and track counts
         const orderItems = await this.prisma.orderItem.deleteMany({});
         const reviews = await this.prisma.review.deleteMany({});
+        const scraperRuns = await this.prisma.scraperRun.deleteMany({});
         const scrapedPrices = await this.prisma.scrapedPrice.deleteMany({});
         const productsDeleted = await this.prisma.product.deleteMany({});
         const deviceCatalogDeleted = await this.prisma.deviceCatalog.deleteMany({});
