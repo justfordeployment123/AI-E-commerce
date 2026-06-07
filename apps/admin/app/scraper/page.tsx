@@ -75,12 +75,11 @@ export default function ScraperPage() {
   const router = useRouter();
   const [stats, setStats] = useState<ScraperStats | null>(null);
   const [runs, setRuns] = useState<ScraperRun[]>([]);
-  const [rows, setRows] = useState<ScrapedPriceRow[]>([]);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
-  const [pages, setPages] = useState(1);
+  const [allRows, setAllRows] = useState<ScrapedPriceRow[]>([]);
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
+  const [catalogPage, setCatalogPage] = useState(1);
+  const CATALOG_PAGE_SIZE = 50;
   const [loadingTable, setLoadingTable] = useState(false);
   const [refreshingTable, setRefreshingTable] = useState(false);
   const tableHasData = useRef(false);
@@ -126,22 +125,20 @@ export default function ScraperPage() {
   }, []);
 
   const loadPrices = useCallback(() => {
-    // First load (or page/search change): show full spinner. Background polls: silent.
     if (!tableHasData.current) {
       setLoadingTable(true);
     } else {
       setRefreshingTable(true);
     }
-    scraperApi.prices(page, 50, search || undefined)
+    // Load all rows at once so we can split catalog vs others client-side
+    scraperApi.prices(1, 2000, search || undefined)
       .then(r => {
-        setRows(r.items);
-        setTotal(r.total);
-        setPages(r.pages);
+        setAllRows(r.items);
         tableHasData.current = true;
       })
       .catch(() => {})
       .finally(() => { setLoadingTable(false); setRefreshingTable(false); });
-  }, [page, search]);
+  }, [search]);
 
   useEffect(() => {
     if (!SCRAPER_ENABLED) { router.replace("/"); return; }
@@ -243,11 +240,9 @@ export default function ScraperPage() {
     }
   }
 
-  // Replace matching rows in-place by id (keeps their position in the table).
-  // Any brand-new storage variants not yet in the table get appended.
   function applyFreshPrices(fresh: ScrapedPriceRow[]) {
     if (!fresh.length) return;
-    setRows(prev => {
+    setAllRows(prev => {
       const freshById = new Map(fresh.map(r => [r.id, r]));
       const updated = prev.map(r => freshById.get(r.id) ?? r);
       const existingIds = new Set(prev.map(r => r.id));
@@ -317,12 +312,78 @@ export default function ScraperPage() {
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
     setSearch(searchInput);
-    setPage(1);
+    setCatalogPage(1);
   }
 
   const coverage = stats && stats.total > 0
     ? Math.round((stats.withMarketPrice / stats.total) * 100)
     : 0;
+
+  const catalogRows = allRows.filter(r => r.storage !== "");
+  const otherRows   = allRows.filter(r => r.storage === "");
+  const catalogPages = Math.max(1, Math.ceil(catalogRows.length / CATALOG_PAGE_SIZE));
+  const pagedCatalog = catalogRows.slice((catalogPage - 1) * CATALOG_PAGE_SIZE, catalogPage * CATALOG_PAGE_SIZE);
+
+  const renderPriceRow = (row: ScrapedPriceRow) => {
+    const key = `${row.brand}|${row.model}`;
+    const isLoading = scrapingKey === key;
+    const result = scrapeRowResult?.key === key ? scrapeRowResult : null;
+    return (
+      <tr key={row.id} className="hover:bg-zinc-50 transition-colors">
+        <td className="px-6 py-3.5 font-bold text-black whitespace-nowrap">{row.brand} {row.model}</td>
+        <td className="px-6 py-3.5 text-zinc-500 whitespace-nowrap">{row.storage || "—"}</td>
+        <td className="px-6 py-3.5 font-mono text-zinc-700">{fmt(row.cexSellPrice)}</td>
+        <td className="px-6 py-3.5 font-mono text-zinc-500">{fmt(row.cexCashPrice)}</td>
+        <td className="px-6 py-3.5 font-mono text-zinc-500">{fmt(row.cexExchangePrice)}</td>
+        <td className="px-6 py-3.5 font-mono text-zinc-700">{fmt(row.envirofonePrice)}</td>
+        <td className="px-6 py-3.5">
+          {row.marketPrice !== null ? (
+            <span className="inline-flex items-center gap-1.5 font-bold font-mono text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg text-xs">
+              £{row.marketPrice.toFixed(0)}
+            </span>
+          ) : (
+            <span className="text-zinc-300 text-xs font-medium">No data</span>
+          )}
+        </td>
+        <td className="px-6 py-3.5">
+          <span className="flex items-center gap-1.5 text-xs text-zinc-400 whitespace-nowrap">
+            <Clock className="h-3 w-3" />
+            {fmtTime(row.scrapedAt)}
+          </span>
+        </td>
+        <td className="px-6 py-3.5 whitespace-nowrap">
+          {isLoading ? (
+            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg">
+              <Loader2 className="h-3 w-3 animate-spin" /> Scraping…
+            </span>
+          ) : result ? (
+            <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg ${result.ok ? "text-emerald-700 bg-emerald-50" : "text-red-700 bg-red-50"}`}>
+              {result.ok ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
+              {result.ok ? "Done" : "Failed"}
+            </span>
+          ) : (
+            <button
+              onClick={() => handleScrapeRow(row.brand, row.model)}
+              disabled={scrapingKey !== null}
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-zinc-600 bg-zinc-100 hover:bg-zinc-200 px-2.5 py-1 rounded-lg transition-colors disabled:opacity-40"
+            >
+              <Zap className="h-3 w-3" /> Scrape
+            </button>
+          )}
+        </td>
+      </tr>
+    );
+  };
+
+  const priceTableHead = (
+    <thead>
+      <tr className="border-b border-zinc-100">
+        {["Device", "Storage", "CeX Sell", "CeX Cash", "CeX Exchange", "Envirofone", "Market Price", "Last Updated", ""].map(h => (
+          <th key={h} className="text-left text-[10px] font-bold uppercase tracking-widest text-zinc-400 px-6 py-3 whitespace-nowrap">{h}</th>
+        ))}
+      </tr>
+    </thead>
+  );
 
   return (
     <div className="min-h-screen bg-background p-8 space-y-8">
@@ -583,147 +644,70 @@ export default function ScraperPage() {
         )}
       </div>
 
-      {/* Prices Table */}
+      {/* Search bar — shared across both tables */}
+      <form onSubmit={handleSearch} className="flex items-center gap-2 max-w-sm">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+          <input
+            value={searchInput}
+            onChange={e => setSearchInput(e.target.value)}
+            placeholder="Search brand or model…"
+            className="w-full h-10 pl-9 pr-4 rounded-xl border-2 border-zinc-200 text-sm font-medium outline-none focus:border-black transition-colors bg-white"
+          />
+        </div>
+        <button type="submit" className="h-10 px-4 rounded-xl bg-black text-white text-sm font-bold hover:bg-zinc-800 transition-colors">
+          Search
+        </button>
+        {refreshingTable && (
+          <span className="flex items-center gap-1.5 text-[11px] text-zinc-400 font-medium ml-1">
+            <RefreshCw className="h-3 w-3 animate-spin" /> Updating…
+          </span>
+        )}
+      </form>
+
+      {/* Catalog Devices Table */}
       <div className="bg-white rounded-3xl border border-zinc-100 shadow-sm overflow-hidden">
-        <div className="flex items-center justify-between gap-4 px-6 py-4 border-b border-zinc-100">
-          <form onSubmit={handleSearch} className="flex items-center gap-2 flex-1 max-w-sm">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
-              <input
-                value={searchInput}
-                onChange={e => setSearchInput(e.target.value)}
-                placeholder="Search brand or model…"
-                className="w-full h-10 pl-9 pr-4 rounded-xl border-2 border-zinc-200 text-sm font-medium outline-none focus:border-black transition-colors"
-              />
-            </div>
-            <button type="submit" className="h-10 px-4 rounded-xl bg-black text-white text-sm font-bold hover:bg-zinc-800 transition-colors">
-              Search
-            </button>
-          </form>
-          <div className="flex items-center gap-2">
-            {refreshingTable && (
-              <span className="flex items-center gap-1.5 text-[11px] text-zinc-400 font-medium">
-                <RefreshCw className="h-3 w-3 animate-spin" /> Updating…
-              </span>
-            )}
-            <p className="text-sm text-zinc-400 font-medium">{total} devices</p>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100">
+          <div>
+            <h2 className="font-bold text-base">Catalog Devices</h2>
+            <p className="text-xs text-zinc-400 mt-0.5">Phones, tablets, laptops &amp; consoles</p>
           </div>
+          <p className="text-sm text-zinc-400 font-medium">{catalogRows.length} devices</p>
         </div>
 
         {loadingTable ? (
           <div className="flex items-center justify-center py-20">
             <div className="h-8 w-8 border-4 border-zinc-200 border-t-black rounded-full animate-spin" />
           </div>
-        ) : rows.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <TrendingUp className="h-12 w-12 text-zinc-200 mb-4" />
-            <p className="font-bold text-zinc-600 mb-1">No scraped prices yet</p>
-            <p className="text-sm text-zinc-400">Click &quot;Run Now&quot; to fetch competitor prices for all active devices.</p>
+        ) : catalogRows.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <TrendingUp className="h-10 w-10 text-zinc-200 mb-3" />
+            <p className="font-bold text-zinc-500">No catalog prices yet</p>
+            <p className="text-sm text-zinc-400">Click &quot;Run Now&quot; to scrape competitor prices.</p>
           </div>
         ) : (
           <>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-zinc-100">
-                    {["Device", "Storage", "CeX Sell", "CeX Cash", "CeX Exchange", "Envirofone", "Market Price", "Last Updated", ""].map(h => (
-                      <th key={h} className="text-left text-[10px] font-bold uppercase tracking-widest text-zinc-400 px-6 py-3 whitespace-nowrap">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
+                {priceTableHead}
                 <tbody className="divide-y divide-zinc-50">
-                  {(() => {
-                    const catalogRows = rows.filter(r => r.storage !== "");
-                    const otherRows   = rows.filter(r => r.storage === "");
-
-                    const renderRow = (row: ScrapedPriceRow) => {
-                      const key = `${row.brand}|${row.model}`;
-                      const isLoading = scrapingKey === key;
-                      const result = scrapeRowResult?.key === key ? scrapeRowResult : null;
-                      return (
-                        <tr key={row.id} className="hover:bg-zinc-50 transition-colors">
-                          <td className="px-6 py-3.5 font-bold text-black whitespace-nowrap">{row.brand} {row.model}</td>
-                          <td className="px-6 py-3.5 text-zinc-500 whitespace-nowrap">{row.storage || "—"}</td>
-                          <td className="px-6 py-3.5 font-mono text-zinc-700">{fmt(row.cexSellPrice)}</td>
-                          <td className="px-6 py-3.5 font-mono text-zinc-500">{fmt(row.cexCashPrice)}</td>
-                          <td className="px-6 py-3.5 font-mono text-zinc-500">{fmt(row.cexExchangePrice)}</td>
-                          <td className="px-6 py-3.5 font-mono text-zinc-700">{fmt(row.envirofonePrice)}</td>
-                          <td className="px-6 py-3.5">
-                            {row.marketPrice !== null ? (
-                              <span className="inline-flex items-center gap-1.5 font-bold font-mono text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg text-xs">
-                                £{row.marketPrice.toFixed(0)}
-                              </span>
-                            ) : (
-                              <span className="text-zinc-300 text-xs font-medium">No data</span>
-                            )}
-                          </td>
-                          <td className="px-6 py-3.5">
-                            <span className="flex items-center gap-1.5 text-xs text-zinc-400 whitespace-nowrap">
-                              <Clock className="h-3 w-3" />
-                              {fmtTime(row.scrapedAt)}
-                            </span>
-                          </td>
-                          <td className="px-6 py-3.5 whitespace-nowrap">
-                            {isLoading ? (
-                              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg">
-                                <Loader2 className="h-3 w-3 animate-spin" /> Scraping…
-                              </span>
-                            ) : result ? (
-                              <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg ${result.ok ? "text-emerald-700 bg-emerald-50" : "text-red-700 bg-red-50"}`}>
-                                {result.ok ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
-                                {result.ok ? "Done" : "Failed"}
-                              </span>
-                            ) : (
-                              <button
-                                onClick={() => handleScrapeRow(row.brand, row.model)}
-                                disabled={scrapingKey !== null}
-                                className="inline-flex items-center gap-1.5 text-xs font-bold text-zinc-600 bg-zinc-100 hover:bg-zinc-200 px-2.5 py-1 rounded-lg transition-colors disabled:opacity-40"
-                              >
-                                <Zap className="h-3 w-3" /> Scrape
-                              </button>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    };
-
-                    const sectionHeader = (label: string, count: number) => (
-                      <tr key={`hdr-${label}`} className="bg-zinc-50 border-y border-zinc-100">
-                        <td colSpan={9} className="px-6 py-2">
-                          <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">{label}</span>
-                          <span className="ml-2 text-[10px] font-bold text-zinc-300">{count}</span>
-                        </td>
-                      </tr>
-                    );
-
-                    const hasBoth = catalogRows.length > 0 && otherRows.length > 0;
-
-                    return (
-                      <>
-                        {hasBoth && sectionHeader("Catalog Devices", catalogRows.length)}
-                        {catalogRows.map(renderRow)}
-                        {hasBoth && sectionHeader("Other Products", otherRows.length)}
-                        {otherRows.map(renderRow)}
-                      </>
-                    );
-                  })()}
+                  {pagedCatalog.map(renderPriceRow)}
                 </tbody>
               </table>
             </div>
-
-            {pages > 1 && (
+            {catalogPages > 1 && (
               <div className="flex items-center justify-between px-6 py-4 border-t border-zinc-100">
                 <button
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
-                  disabled={page === 1}
+                  onClick={() => setCatalogPage(p => Math.max(1, p - 1))}
+                  disabled={catalogPage === 1}
                   className="h-9 px-4 rounded-xl border-2 border-zinc-200 text-sm font-bold hover:border-zinc-400 transition-colors disabled:opacity-40"
                 >
                   Previous
                 </button>
-                <p className="text-sm text-zinc-500 font-medium">Page {page} of {pages}</p>
+                <p className="text-sm text-zinc-500 font-medium">Page {catalogPage} of {catalogPages}</p>
                 <button
-                  onClick={() => setPage(p => Math.min(pages, p + 1))}
-                  disabled={page === pages}
+                  onClick={() => setCatalogPage(p => Math.min(catalogPages, p + 1))}
+                  disabled={catalogPage === catalogPages}
                   className="h-9 px-4 rounded-xl border-2 border-zinc-200 text-sm font-bold hover:border-zinc-400 transition-colors disabled:opacity-40"
                 >
                   Next
@@ -733,6 +717,40 @@ export default function ScraperPage() {
           </>
         )}
       </div>
+
+      {/* Other Products Table */}
+      {(otherRows.length > 0 || !loadingTable) && (
+        <div className="bg-white rounded-3xl border border-zinc-100 shadow-sm overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100">
+            <div>
+              <h2 className="font-bold text-base">Other Products</h2>
+              <p className="text-xs text-zinc-400 mt-0.5">Accessories, cables, games &amp; more</p>
+            </div>
+            <p className="text-sm text-zinc-400 font-medium">{otherRows.length} items</p>
+          </div>
+
+          {loadingTable ? (
+            <div className="flex items-center justify-center py-16">
+              <div className="h-8 w-8 border-4 border-zinc-200 border-t-black rounded-full animate-spin" />
+            </div>
+          ) : otherRows.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <TrendingUp className="h-10 w-10 text-zinc-200 mb-3" />
+              <p className="font-bold text-zinc-500">No other product prices yet</p>
+              <p className="text-sm text-zinc-400">Run the scraper to fetch prices for accessories and other items.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                {priceTableHead}
+                <tbody className="divide-y divide-zinc-50">
+                  {otherRows.map(renderPriceRow)}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

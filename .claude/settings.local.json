@@ -111,7 +111,18 @@
       "mcp__playwright__browser_click",
       "Bash(git commit *)",
       "Bash(xargs grep -l \"seed\\\\|Seed\\\\|scraper\\\\|Scraper\")",
-      "Bash(psql -U postgres -d ai_ecommerce -c \"SELECT COUNT\\(*\\) FILTER \\(WHERE price IS NULL\\) AS null_price, COUNT\\(*\\) FILTER \\(WHERE price IS NOT NULL\\) AS has_price, COUNT\\(*\\) FILTER \\(WHERE price = 0\\) AS zero_price FROM products;\")"
+      "Bash(psql -U postgres -d ai_ecommerce -c \"SELECT COUNT\\(*\\) FILTER \\(WHERE price IS NULL\\) AS null_price, COUNT\\(*\\) FILTER \\(WHERE price IS NOT NULL\\) AS has_price, COUNT\\(*\\) FILTER \\(WHERE price = 0\\) AS zero_price FROM products;\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); [print\\(k,':',v\\) for k,v in d.get\\('scripts',{}\\).items\\(\\) if 'prisma' in k.lower\\(\\) or 'generate' in k.lower\\(\\)]\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\({k:d[k] for k in ['prisma','scripts'] if k in d}, indent=2\\)\\)\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('dependencies',{}\\), indent=2\\)\\)\")",
+      "Bash(git -C \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\" status)",
+      "Bash(git -C \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\" log --oneline -5)",
+      "Bash(git -C \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\" add apps/api/prisma/migrations/20260608000002_add_envirofone_price_to_scraped_prices/)",
+      "Bash(git -C 'd:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce' commit -m ' *)",
+      "Bash(git -C \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\" push)",
+      "Bash(git -C \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\" add .github/workflows/db-migration-check.yml)",
+      "Bash(git -C \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\" add apps/api/src/modules/seed/seed.service.ts apps/api/prisma/seed/products/products.json)",
+      "Bash(git -C \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\" add apps/admin/app/scraper/page.tsx)"
     ],
     "additionalDirectories": [
       "d:\\CODE\\Projects\\Markhor Systems Projects\\Ai-Ecommerce\\apps\\web\\app\\account\\repairs",
