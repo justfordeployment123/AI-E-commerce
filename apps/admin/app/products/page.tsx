@@ -9,7 +9,7 @@ import { Search, Plus, Edit2, Trash2, X, Check, Package, Image as ImageIcon,
   RefreshCw } from "lucide-react";
 import { productsApi, deviceCatalogApi, productPricingApi, pricingConfigApi,
   type Product, type CreateProductPayload, type DeviceCatalogItem,
-  type PricingRunResult } from "../../lib/api";
+  type PricingRunResult, type PricingJobStatus } from "../../lib/api";
 
 const CONDITIONS = ["Pristine", "Excellent", "Very Good", "Good", "Fair"];
 
@@ -51,6 +51,8 @@ export default function ProductsPage() {
   const [filterStatus, setFilterStatus]       = useState<string>("All");
   const [autoPricing, setAutoPricing]         = useState(false);
   const [autoPriceResult, setAutoPriceResult] = useState<PricingRunResult | null>(null);
+  const [autoPriceJob, setAutoPriceJob]       = useState<PricingJobStatus | null>(null);
+  const autoPriceIntervalRef                  = useRef<ReturnType<typeof setInterval> | null>(null);
   const [togglingId, setTogglingId]           = useState<string | null>(null);
   const [showUnpriced, setShowUnpriced]       = useState(false);
   const [savingUnpriced, setSavingUnpriced]   = useState(false);
@@ -219,15 +221,36 @@ export default function ProductsPage() {
   async function handleAutoPrice() {
     setAutoPricing(true);
     setAutoPriceResult(null);
+    setAutoPriceJob(null);
     try {
-      const result = await productPricingApi.run();
-      setAutoPriceResult(result);
-      loadProducts();
-      setTimeout(() => setAutoPriceResult(null), 6000);
+      const res = await productPricingApi.run();
+      if (!res.started && res.alreadyRunning) {
+        // Job already running — just start polling
+      }
+      // Poll every 4s until done
+      if (autoPriceIntervalRef.current) clearInterval(autoPriceIntervalRef.current);
+      autoPriceIntervalRef.current = setInterval(async () => {
+        try {
+          const job = await productPricingApi.status();
+          setAutoPriceJob(job);
+          if (!job.running) {
+            clearInterval(autoPriceIntervalRef.current!);
+            autoPriceIntervalRef.current = null;
+            setAutoPricing(false);
+            if (job.result) {
+              setAutoPriceResult(job.result);
+              loadProducts();
+              setTimeout(() => { setAutoPriceResult(null); setAutoPriceJob(null); }, 8000);
+            } else if (job.error) {
+              alert(`Auto-pricing failed: ${job.error}`);
+              setAutoPriceJob(null);
+            }
+          }
+        } catch {}
+      }, 4000);
     } catch (e: any) {
-      alert(e.message ?? "Auto-pricing failed");
-    } finally {
       setAutoPricing(false);
+      alert(e.message ?? "Auto-pricing failed");
     }
   }
 
@@ -350,6 +373,11 @@ export default function ProductsPage() {
           </button>
         ))}
         <div className="flex-1" />
+        {autoPriceJob?.running && autoPriceJob.total > 0 && (
+          <span className="text-xs font-bold text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100">
+            Pricing… {autoPriceJob.done}/{autoPriceJob.total}
+          </span>
+        )}
         {autoPriceResult && (
           <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
             ✓ {autoPriceResult.applied} priced · {autoPriceResult.flagged} flagged

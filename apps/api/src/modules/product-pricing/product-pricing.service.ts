@@ -17,10 +17,25 @@ import type {
     ScrapedPricesSnapshot,
 } from './dto/price-estimate.dto';
 
+export interface PricingJobStatus {
+    running: boolean;
+    done: number;
+    total: number;
+    result: PricingRunResult | null;
+    error: string | null;
+    startedAt: string | null;
+    finishedAt: string | null;
+}
+
 @Injectable()
 export class ProductPricingService {
     private readonly logger = new Logger(ProductPricingService.name);
     private readonly openai: OpenAI;
+
+    private jobStatus: PricingJobStatus = {
+        running: false, done: 0, total: 0,
+        result: null, error: null, startedAt: null, finishedAt: null,
+    };
 
     constructor(
         private readonly prisma:        PrismaService,
@@ -116,7 +131,22 @@ export class ProductPricingService {
         return { productId, status: 'applied', candidatePrice, aiRange };
     }
 
-    async priceCatalog(): Promise<PricingRunResult> {
+    getJobStatus(): PricingJobStatus {
+        return { ...this.jobStatus };
+    }
+
+    startPriceCatalog(): { started: boolean; alreadyRunning: boolean } {
+        if (this.jobStatus.running) return { started: false, alreadyRunning: true };
+        this.jobStatus = { running: true, done: 0, total: 0, result: null, error: null, startedAt: new Date().toISOString(), finishedAt: null };
+        this.runPriceCatalog().catch(err => {
+            this.jobStatus.running = false;
+            this.jobStatus.error = err?.message ?? 'Unknown error';
+            this.jobStatus.finishedAt = new Date().toISOString();
+        });
+        return { started: true, alreadyRunning: false };
+    }
+
+    private async runPriceCatalog(): Promise<void> {
         this.logger.log('Starting catalog pricing run…');
 
         const products = await this.prisma.product.findMany({
@@ -131,11 +161,13 @@ export class ProductPricingService {
             select: { id: true },
         });
 
+        this.jobStatus.total = products.length;
         const details: PricingDetail[] = [];
 
         for (const { id } of products) {
             const detail = await this.priceProduct(id);
             details.push(detail);
+            this.jobStatus.done++;
             await new Promise(r => setTimeout(r, 250));
         }
 
@@ -146,10 +178,10 @@ export class ProductPricingService {
             details,
         };
 
-        this.logger.log(
-            `Pricing run complete: ${result.applied} applied, ${result.flagged} flagged, ${result.skipped} skipped`,
-        );
-        return result;
+        this.jobStatus.running = false;
+        this.jobStatus.result = result;
+        this.jobStatus.finishedAt = new Date().toISOString();
+        this.logger.log(`Pricing run complete: ${result.applied} applied, ${result.flagged} flagged, ${result.skipped} skipped`);
     }
 
     async getTradeInAnchor(

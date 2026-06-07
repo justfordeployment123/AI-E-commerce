@@ -296,9 +296,22 @@ export const scraperApi = {
 };
 
 // ── Product Pricing ───────────────────────────────────────────────────────────
+export interface PricingJobStatus {
+  running: boolean;
+  done: number;
+  total: number;
+  result: PricingRunResult | null;
+  error: string | null;
+  startedAt: string | null;
+  finishedAt: string | null;
+}
+
 export const productPricingApi = {
   run: () =>
-    apiFetch<PricingRunResult>('/product-pricing/run', { method: 'POST' }),
+    apiFetch<{ started: boolean; alreadyRunning: boolean }>('/product-pricing/run', { method: 'POST' }),
+
+  status: () =>
+    apiFetch<PricingJobStatus>('/product-pricing/run/status'),
 
   priceOne: (id: string) =>
     apiFetch<{ status: string; candidatePrice?: number }>(`/product-pricing/product/${id}`, { method: 'POST' }),

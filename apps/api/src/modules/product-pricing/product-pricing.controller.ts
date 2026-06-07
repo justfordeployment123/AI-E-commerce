@@ -16,7 +16,12 @@ export class ProductPricingController {
     @Post('run')
     @HttpCode(HttpStatus.OK)
     run() {
-        return this.service.priceCatalog();
+        return this.service.startPriceCatalog();
+    }
+
+    @Get('run/status')
+    runStatus() {
+        return this.service.getJobStatus();
     }
 
     @Post('product/:id')
