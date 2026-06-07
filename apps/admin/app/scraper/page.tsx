@@ -498,20 +498,20 @@ export default function ScraperPage() {
                     <td className="px-6 py-3.5 text-zinc-500 whitespace-nowrap">{run.finishedAt ? fmtTime(run.finishedAt) : <span className="text-zinc-300">—</span>}</td>
                     <td className="px-6 py-3.5 text-zinc-500 font-mono">{duration(run.startedAt, run.finishedAt)}</td>
                     <td className="px-6 py-3.5 min-w-[160px]">
-                      {run.status === "RUNNING" && run.currentProgress !== null && stats ? (
+                      {run.status === "RUNNING" && run.currentProgress !== null && run.totalVariants ? (
                         <div className="space-y-1">
                           <div className="flex items-center justify-between gap-2">
                             <span className="text-xs font-bold text-blue-700">
-                              {run.currentProgress} / {stats.total}
+                              {run.currentProgress} / {run.totalVariants}
                             </span>
                             <span className="text-[10px] font-bold text-blue-500">
-                              {Math.round(run.currentProgress / stats.total * 100)}%
+                              {Math.round(run.currentProgress / run.totalVariants * 100)}%
                             </span>
                           </div>
                           <div className="w-full bg-zinc-100 rounded-full h-1.5 overflow-hidden">
                             <div
                               className="bg-blue-500 h-full rounded-full transition-all duration-500"
-                              style={{ width: `${Math.round(run.currentProgress / stats.total * 100)}%` }}
+                              style={{ width: `${Math.min(100, Math.round(run.currentProgress / run.totalVariants * 100))}%` }}
                             />
                           </div>
                         </div>

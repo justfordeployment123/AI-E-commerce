@@ -224,6 +224,7 @@ export interface ScraperRun {
   totalScraped: number | null;
   errorMessage: string | null;
   currentProgress: number | null;
+  totalVariants: number | null;
 }
 
 export interface ScrapedPricesSnapshot {

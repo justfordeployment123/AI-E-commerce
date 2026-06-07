@@ -58,18 +58,29 @@ export class ScraperDataService {
             take: limit,
         });
 
-        // For any RUNNING run, count how many ScrapedPrice rows have been
-        // written since the run started — gives real-time progress without schema changes.
         const running = runs.find(r => r.status === 'RUNNING');
-        if (!running) return runs.map(r => ({ ...r, currentProgress: null as number | null }));
+        if (!running) return runs.map(r => ({ ...r, currentProgress: null as number | null, totalVariants: null as number | null }));
 
+        // Count how many ScrapedPrice rows written since this run started (= items done)
         const currentProgress = await this.prisma.scrapedPrice.count({
             where: { scrapedAt: { gte: running.startedAt } },
         });
 
+        // Count total variants the scraper will process = sum of storageOptions per active device
+        // (devices with no storage options count as 1 variant)
+        const catalogDevices = await this.prisma.deviceCatalog.findMany({
+            where:  { isActive: true },
+            select: { storageOptions: true },
+        });
+        const totalVariants = catalogDevices.reduce(
+            (sum, d) => sum + Math.max((d.storageOptions as string[]).length, 1),
+            0,
+        );
+
         return runs.map(r => ({
             ...r,
             currentProgress: r.id === running.id ? currentProgress : null,
+            totalVariants:   r.id === running.id ? totalVariants   : null,
         }));
     }
 
