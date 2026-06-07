@@ -565,6 +565,8 @@ export class SeedService {
     }
 
     // ─── Others (accessories, smartwatches, games, etc.) ─────────────────────
+    // Uses OtherBrand + OtherSubcategory so these products appear on /products/others
+    // and NOT in the main catalog.
 
     private async seedOthers(): Promise<number> {
         const othersJsonPath = path.join(this.seedDir, 'others', 'products.json');
@@ -575,9 +577,6 @@ export class SeedService {
 
         const data: Record<string, any[]> = JSON.parse(fs.readFileSync(othersJsonPath, 'utf8'));
 
-        // Each subfolder key maps to its own category (snake_case → kebab-case slug)
-        // Only exception: smart_watches → smartwatches
-        const CAT_SLUG: Record<string, string> = { smart_watches: 'smartwatches' };
         const CAT_NAME: Record<string, string> = {
             cables:       'Cables',
             chargers:     'Chargers',
@@ -588,44 +587,45 @@ export class SeedService {
             memory:       'Memory',
             mouse:        'Mouse & Peripherals',
             pen:          'Stylus & Pens',
+            smart_watches:'Smartwatches',
             smartwatches: 'Smartwatches',
             storage:      'Storage',
         };
 
+        // Cache to avoid redundant DB round-trips
+        const subcatCache = new Map<string, string>(); // name → id
+        const brandCache  = new Map<string, string>(); // name → id
+
         let total = 0;
 
         for (const [subcatKey, items] of Object.entries(data)) {
-            const categorySlug = CAT_SLUG[subcatKey] ?? subcatKey.replace(/_/g, '-');
-            const categoryName = CAT_NAME[categorySlug] ?? capitalize(categorySlug);
+            const subcatName = CAT_NAME[subcatKey] ?? capitalize(subcatKey.replace(/_/g, ' '));
 
             for (const item of items) {
                 try {
-                    const brandSlug = (item.brand as string).toLowerCase().replace(/[^a-z0-9]+/g, '-');
+                    const brandName = item.brand as string;
 
-                    const brand = await this.prisma.brand.upsert({
-                        where: { slug: brandSlug },
-                        update: {},
-                        create: { name: item.brand, slug: brandSlug },
-                    });
-                    const cat = await this.prisma.category.upsert({
-                        where: { slug: categorySlug },
-                        update: { ...categoryFlags(categorySlug) },
-                        create: { name: categoryName, slug: categorySlug, ...categoryFlags(categorySlug) },
-                    });
-                    const bc = await this.prisma.brandCategory.upsert({
-                        where: { brandId_categoryId: { brandId: brand.id, categoryId: cat.id } },
-                        update: {},
-                        create: { brandId: brand.id, categoryId: cat.id, images: [] },
-                    });
-                    const deviceEntry = await this.prisma.deviceCatalog.upsert({
-                        where: { brandCategoryId_model: { brandCategoryId: bc.id, model: item.name } },
-                        update: {},
-                        create: { brandCategoryId: bc.id, model: item.name, storageOptions: [], isActive: true },
-                    });
+                    // OtherBrand (keyed by name)
+                    if (!brandCache.has(brandName)) {
+                        const existing = await this.prisma.otherBrand.findFirst({ where: { name: brandName } });
+                        const ob = existing
+                            ?? await this.prisma.otherBrand.create({ data: { name: brandName } });
+                        brandCache.set(brandName, ob.id);
+                    }
+                    const otherBrandId = brandCache.get(brandName)!;
 
-                    // Upload image: "/others/chargers/filename.png" → seed/others/chargers/filename.png
+                    // OtherSubcategory (keyed by display name)
+                    if (!subcatCache.has(subcatName)) {
+                        const existing = await this.prisma.otherSubcategory.findFirst({ where: { name: subcatName } });
+                        const os = existing
+                            ?? await this.prisma.otherSubcategory.create({ data: { name: subcatName } });
+                        subcatCache.set(subcatName, os.id);
+                    }
+                    const otherSubcategoryId = subcatCache.get(subcatName)!;
+
+                    // Upload image
                     const imgPath: string = item.image ?? '';
-                    const parts = imgPath.replace(/^\//, '').split('/'); // ["others","chargers","file.png"]
+                    const parts = imgPath.replace(/^\//, '').split('/');
                     const localImgPath = path.join(this.seedDir, ...parts);
                     let s3ImageKey: string | null = null;
                     if (fs.existsSync(localImgPath)) {
@@ -634,21 +634,22 @@ export class SeedService {
                     }
 
                     const productData = {
-                        catalogId: deviceEntry.id,
-                        name: item.name,
-                        slug: item.id,
-                        condition: 'Pristine',
-                        storage: '',
-                        price: 0,
-                        comparePrice: null,
-                        stock: 10,
-                        images: s3ImageKey ? [s3ImageKey] : [],
-                        specs: {},
-                        description: '',
-                        rating: 0,
-                        reviewCount: 0,
+                        otherBrandId,
+                        otherSubcategoryId,
+                        name:          item.name,
+                        slug:          item.id,
+                        condition:     'Pristine',
+                        storage:       '',
+                        price:         0,
+                        comparePrice:  null,
+                        stock:         10,
+                        images:        s3ImageKey ? [s3ImageKey] : [],
+                        specs:         {},
+                        description:   '',
+                        rating:        0,
+                        reviewCount:   0,
                         pricingStatus: 'no_data',
-                        isActive: false,
+                        isActive:      false,
                     };
 
                     const existing = await this.prisma.product.findUnique({ where: { slug: item.id } });
