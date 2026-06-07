@@ -120,6 +120,21 @@ export class ScraperDataService {
         return rows[0]?.marketPrice ?? null;
     }
 
+    async stopScraper() {
+        const scraperUrl = process.env.SCRAPER_URL || 'http://localhost:3003';
+        try {
+            const res = await fetch(`${scraperUrl}/scraper/stop`, {
+                method: 'POST',
+                signal: AbortSignal.timeout(5000),
+            });
+            if (!res.ok) return { ok: false, message: `Scraper returned ${res.status}.` };
+            return { ok: true, message: 'Stop signal sent — scraper will halt after the current device.' };
+        } catch (err: any) {
+            this.logger.error(`Failed to stop scraper: ${err?.message}`);
+            return { ok: false, message: 'Scraper service is unreachable.' };
+        }
+    }
+
     async triggerDeviceScrape(brand: string, model: string) {
         const scraperUrl = process.env.SCRAPER_URL || 'http://localhost:3003';
         try {

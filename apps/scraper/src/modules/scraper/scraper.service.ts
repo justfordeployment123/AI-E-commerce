@@ -26,8 +26,17 @@ interface JinaResult { price: number | null; reason: Reason; }
 @Injectable()
 export class ScraperService implements OnApplicationBootstrap {
     private readonly logger = new Logger(ScraperService.name);
+    private stopRequested = false;
 
     constructor(private readonly prisma: PrismaService) {}
+
+    /** Signal the running scraper to stop after the current device finishes. */
+    async stop(): Promise<{ stopped: boolean }> {
+        if (this.stopRequested) return { stopped: false };
+        this.stopRequested = true;
+        this.logger.log('Stop requested — will halt after current device completes.');
+        return { stopped: true };
+    }
 
     // ─── Startup: resume any interrupted run ──────────────────────────────────
     async onApplicationBootstrap() {
@@ -165,8 +174,22 @@ export class ScraperService implements OnApplicationBootstrap {
         console.log(`  Started : ${ts()}`);
         console.log(`${SEP}\n`);
 
+        this.stopRequested = false; // reset before each run
+
         try {
             for (const [i, item] of itemsToScrape.entries()) {
+                // Admin requested stop — halt cleanly between devices
+                if (this.stopRequested) {
+                    this.logger.log(`Stop requested — halting after ${i} of ${total} devices.`);
+                    await browser.close();
+                    await this.prisma.scraperRun.update({
+                        where: { id: run.id },
+                        data:  { status: 'FAILED', finishedAt: new Date(), errorMessage: `Stopped manually by admin after ${i} of ${total} devices.` },
+                    });
+                    this.stopRequested = false;
+                    return results;
+                }
+
                 const num = `[${String(i + 1).padStart(2, '0')}/${String(total).padStart(2, '0')}]`;
 
                 let cex = await this.scrapeCeX(context, item.brand, item.model, item.storage);

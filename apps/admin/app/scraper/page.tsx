@@ -86,6 +86,8 @@ export default function ScraperPage() {
   const tableHasData = useRef(false);
   const [running, setRunning] = useState(false);
   const [runMsg, setRunMsg] = useState("");
+  const [stopping, setStopping] = useState(false);
+  const [stopMsg, setStopMsg] = useState("");
   const [scrapingKey, setScrapingKey] = useState<string | null>(null);
   const [scrapeRowResult, setScrapeRowResult] = useState<{ key: string; ok: boolean } | null>(null);
   const scrapeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -190,6 +192,21 @@ export default function ScraperPage() {
       setRunMsg(e.message ?? "Failed to start scraper");
     } finally {
       setRunning(false);
+    }
+  }
+
+  async function handleStop() {
+    setStopping(true);
+    setStopMsg("");
+    try {
+      const res = await scraperApi.stop();
+      setStopMsg(res.message);
+      setTimeout(() => { loadRuns(); loadStats(); }, 2000);
+    } catch (e: any) {
+      setStopMsg(e.message ?? "Failed to stop scraper");
+    } finally {
+      setStopping(false);
+      setTimeout(() => setStopMsg(""), 5000);
     }
   }
 
@@ -455,7 +472,23 @@ export default function ScraperPage() {
             <h2 className="font-bold text-base">Run History</h2>
             <p className="text-xs text-zinc-400 mt-0.5">Last 20 scraper executions</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
+            {/* Stop button — only shown while a run is active */}
+            {runs.some(r => r.status === "RUNNING") && (
+              <button
+                onClick={handleStop}
+                disabled={stopping}
+                className="flex items-center gap-1.5 text-xs font-bold text-red-700 bg-red-50 border border-red-200 px-3 py-1.5 rounded-xl hover:bg-red-100 transition-colors disabled:opacity-50"
+              >
+                {stopping
+                  ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Stopping…</>
+                  : <><XCircle className="h-3.5 w-3.5" /> Stop Scraper</>
+                }
+              </button>
+            )}
+            {stopMsg && (
+              <span className="text-xs font-bold text-zinc-500">{stopMsg}</span>
+            )}
             {(() => {
               const oneHourAgo = Date.now() - 1 * 60 * 60 * 1000;
               const stuckCount = runs.filter(r => r.status === "RUNNING" && new Date(r.startedAt).getTime() < oneHourAgo).length;

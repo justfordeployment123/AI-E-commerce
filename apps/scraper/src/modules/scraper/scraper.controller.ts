@@ -60,6 +60,12 @@ export class ScraperController {
         return { ok: false, message: `Scraping ${b} ${m} in the background.` };
     }
 
+    @Post('stop')
+    @HttpCode(HttpStatus.OK)
+    stopScraper() {
+        return this.scraperService.stop();
+    }
+
     @Get('stats')
     getStats() {
         return this.scraperService.getStats();

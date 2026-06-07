@@ -62,6 +62,12 @@ export class ScraperDataController {
         return this.service.getRuns(limit ? Number(limit) : 20);
     }
 
+    @Post('stop')
+    @HttpCode(HttpStatus.OK)
+    stop() {
+        return this.service.stopScraper();
+    }
+
     @Post('cleanup')
     @HttpCode(HttpStatus.OK)
     cleanup() {

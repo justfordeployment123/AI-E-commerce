@@ -281,6 +281,8 @@ export const scraperApi = {
 
   runs: (limit = 20) => apiFetch<ScraperRun[]>(`/scraper/runs?limit=${limit}`),
 
+  stop: () => apiFetch<{ ok: boolean; message: string }>('/scraper/stop', { method: 'POST' }),
+
   cleanup: () => apiFetch<{ cleaned: number }>('/scraper/cleanup', { method: 'POST' }),
 
   getSchedule: () => apiFetch<{ hours: number }>('/scraper/schedule'),
