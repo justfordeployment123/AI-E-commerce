@@ -14,7 +14,7 @@ const ORDER_INCLUDE = {
         },
     },
     user: { select: { id: true, name: true, email: true } },
-};
+} as const;
 
 @Injectable()
 export class OrdersService {
@@ -39,7 +39,7 @@ export class OrdersService {
             if (product.stock < item.quantity) {
                 throw new BadRequestException(`Insufficient stock for ${product.name}`);
             }
-            return { productId: item.productId, quantity: item.quantity, price: product.price };
+            return { productId: item.productId, quantity: item.quantity, price: product.price ?? 0 };
         });
 
         const subtotal = lineItems.reduce((sum, li) => sum + li.price * li.quantity, 0);

@@ -35,7 +35,7 @@ export class PaymentsService {
             if (product.stock < item.quantity) {
                 throw new BadRequestException(`Insufficient stock for ${product.name}`);
             }
-            subtotal += product.price * item.quantity;
+            subtotal += (product.price ?? 0) * item.quantity;
         }
 
         const shipping = subtotal >= 100 ? 0 : 5.99;

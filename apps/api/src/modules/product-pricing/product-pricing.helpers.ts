@@ -19,7 +19,8 @@ export function computeCandidatePrice(
  * Computes the trade-in offer from a known resale price.
  * formula: resalePrice × tradeInRatio, rounded to £5
  */
-export function computeTradeInOffer(resalePrice: number, tradeInRatio: number): number {
+export function computeTradeInOffer(resalePrice: number | null, tradeInRatio: number): number {
+    if (resalePrice == null) return 0;
     return round5(resalePrice * tradeInRatio);
 }
 
