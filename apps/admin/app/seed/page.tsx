@@ -24,7 +24,7 @@ interface SeedResult {
   deviceCatalog: number;
   banners: number;
   promoSlides: number;
-  others: number;
+  others: { created: number; updated: number; errors: string[] };
   categories: number;
   brands: number;
   brandCategories: number;
@@ -212,12 +212,16 @@ export default function SeedPage() {
                 <span className="font-bold text-sm text-sky-600">{result.products.updated}</span>
               </div>
               <div className="flex items-center justify-between px-5 py-2.5">
-                <span className="text-sm text-zinc-500">Other items seeded</span>
-                <span className="font-bold text-sm text-teal-600">{result.others}</span>
+                <span className="text-sm text-zinc-500">Other items created</span>
+                <span className="font-bold text-sm text-teal-600">{result.others.created}</span>
+              </div>
+              <div className="flex items-center justify-between px-5 py-2.5">
+                <span className="text-sm text-zinc-500">Other items updated</span>
+                <span className="font-bold text-sm text-sky-600">{result.others.updated}</span>
               </div>
               <div className="flex items-center justify-between px-5 py-3 bg-zinc-50/50">
                 <span className="text-sm font-semibold text-zinc-700">Total products processed</span>
-                <span className="font-bold text-sm">{result.products.total + result.others}</span>
+                <span className="font-bold text-sm">{result.products.total + result.others.created + result.others.updated}</span>
               </div>
             </div>
 
@@ -225,12 +229,27 @@ export default function SeedPage() {
               <div className="rounded-2xl border border-red-100 overflow-hidden">
                 <div className="px-5 py-3 bg-red-50 border-b border-red-100">
                   <p className="text-xs font-bold text-red-600 uppercase tracking-widest">
-                    {result.products.errors.length} errors
+                    {result.products.errors.length} device product errors
                   </p>
                 </div>
                 <div className="px-5 py-3 max-h-48 overflow-y-auto space-y-1">
                   {result.products.errors.map((e, i) => (
                     <p key={i} className="text-xs text-red-600 font-mono">{e}</p>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {result.others.errors.length > 0 && (
+              <div className="rounded-2xl border border-orange-100 overflow-hidden">
+                <div className="px-5 py-3 bg-orange-50 border-b border-orange-100">
+                  <p className="text-xs font-bold text-orange-600 uppercase tracking-widest">
+                    {result.others.errors.length} others errors
+                  </p>
+                </div>
+                <div className="px-5 py-3 max-h-48 overflow-y-auto space-y-1">
+                  {result.others.errors.map((e, i) => (
+                    <p key={i} className="text-xs text-orange-700 font-mono">{e}</p>
                   ))}
                 </div>
               </div>

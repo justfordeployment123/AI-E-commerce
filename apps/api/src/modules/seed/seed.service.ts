@@ -180,18 +180,18 @@ export class SeedService {
         const slideCount     = await this.seedPromoSlides();
         const deviceCount    = await this.seedCatalogFromFolder();
         const productsResult = await this.seedProducts(productsData);
-        const othersCount    = await this.seedOthers();
+        const othersResult   = await this.seedOthers();
 
         const categoryCount      = await this.prisma.category.count();
         const brandCount         = await this.prisma.brand.count();
         const brandCategoryCount = await this.prisma.brandCategory.count();
 
-        return { 
-            pricingConfigs: pricingCount, 
-            banners: bannerCount, 
-            promoSlides: slideCount, 
-            deviceCatalog: deviceCount, 
-            others: othersCount, 
+        return {
+            pricingConfigs: pricingCount,
+            banners: bannerCount,
+            promoSlides: slideCount,
+            deviceCatalog: deviceCount,
+            others: othersResult,
             products: productsResult,
             categories: categoryCount,
             brands: brandCount,
@@ -575,11 +575,11 @@ export class SeedService {
     // Uses OtherBrand + OtherSubcategory so these products appear on /products/others
     // and NOT in the main catalog.
 
-    private async seedOthers(): Promise<number> {
+    private async seedOthers(): Promise<{ created: number; updated: number; errors: string[] }> {
         const othersJsonPath = path.join(this.seedDir, 'others', 'products.json');
         if (!fs.existsSync(othersJsonPath)) {
             this.logger.warn('others/products.json not found — skipping');
-            return 0;
+            return { created: 0, updated: 0, errors: ['others/products.json not found'] };
         }
 
         const data: Record<string, any[]> = JSON.parse(fs.readFileSync(othersJsonPath, 'utf8'));
@@ -599,11 +599,12 @@ export class SeedService {
             storage:      'Storage',
         };
 
-        // Cache to avoid redundant DB round-trips
-        const subcatCache = new Map<string, string>(); // name → id
-        const brandCache  = new Map<string, string>(); // name → id
+        const subcatCache = new Map<string, string>();
+        const brandCache  = new Map<string, string>();
 
-        let total = 0;
+        let created = 0;
+        let updated = 0;
+        const errors: string[] = [];
 
         for (const [subcatKey, items] of Object.entries(data)) {
             const subcatName = CAT_NAME[subcatKey] ?? capitalize(subcatKey.replace(/_/g, ' '));
@@ -612,7 +613,6 @@ export class SeedService {
                 try {
                     const brandName = item.brand as string;
 
-                    // OtherBrand (keyed by name)
                     if (!brandCache.has(brandName)) {
                         const existing = await this.prisma.otherBrand.findFirst({ where: { name: brandName } });
                         const ob = existing
@@ -621,7 +621,6 @@ export class SeedService {
                     }
                     const otherBrandId = brandCache.get(brandName)!;
 
-                    // OtherSubcategory (keyed by display name)
                     if (!subcatCache.has(subcatName)) {
                         const existing = await this.prisma.otherSubcategory.findFirst({ where: { name: subcatName } });
                         const os = existing
@@ -630,7 +629,6 @@ export class SeedService {
                     }
                     const otherSubcategoryId = subcatCache.get(subcatName)!;
 
-                    // Upload image
                     const imgPath: string = item.image ?? '';
                     const parts = imgPath.replace(/^\//, '').split('/');
                     const localImgPath = path.join(this.seedDir, ...parts);
@@ -662,19 +660,22 @@ export class SeedService {
                     const existing = await this.prisma.product.findUnique({ where: { slug: item.id } });
                     if (existing) {
                         await this.prisma.product.update({ where: { slug: item.id }, data: productData as never });
+                        updated++;
                     } else {
                         await this.prisma.product.create({ data: productData as never });
-                        total++;
+                        created++;
                     }
                 } catch (e: any) {
-                    this.logger.error(`Failed to seed others/${subcatKey}/${item.id}: ${e.message}`);
+                    const msg = `${subcatKey}/${item.id}: ${e.message}`;
+                    this.logger.error(`Failed to seed others/${msg}`);
+                    errors.push(msg);
                 }
             }
             this.logger.log(`  Others seeded: ${subcatKey} (${items.length} items)`);
         }
 
-        this.logger.log(`Seeded ${total} others products`);
-        return total;
+        this.logger.log(`Seeded ${created} others products (${updated} updated, ${errors.length} errors)`);
+        return { created, updated, errors };
     }
 
     private normalizeCategory(raw: string): string {
