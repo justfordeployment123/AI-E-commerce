@@ -199,11 +199,12 @@ export class SeedService {
     }
 
     // ─── Purge: wipe all catalog + product data from DB and Garage ───────────
-    async purgeAll(): Promise<{ 
-        deleted: number; 
+    async purgeAll(): Promise<{
+        deleted: number;
         counts: {
             orderItems: number;
             reviews: number;
+            scraperRuns: number;
             scrapedPrices: number;
             products: number;
             deviceCatalog: number;
@@ -265,12 +266,13 @@ export class SeedService {
         const promoSlidesDeleted = await this.prisma.promoSlide.deleteMany({});
         const pricingConfigsDeleted = await this.prisma.pricingConfig.deleteMany({});
 
-        this.logger.log('Database purged — catalog, products, banners, pricing all cleared');
-        return { 
+        this.logger.log('Database purged — catalog, products, banners, pricing, scraper history all cleared');
+        return {
             deleted: s3Keys.length,
             counts: {
                 orderItems: orderItems.count,
                 reviews: reviews.count,
+                scraperRuns: scraperRuns.count,
                 scrapedPrices: scrapedPrices.count,
                 products: productsDeleted.count,
                 deviceCatalog: deviceCatalogDeleted.count,

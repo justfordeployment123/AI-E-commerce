@@ -41,6 +41,7 @@ interface PurgeResult {
   counts: {
     orderItems: number;
     reviews: number;
+    scraperRuns: number;
     scrapedPrices: number;
     products: number;
     deviceCatalog: number;
@@ -370,6 +371,14 @@ export default function SeedPage() {
                 <div className="flex items-center justify-between px-5 py-2.5">
                   <span className="text-sm text-zinc-500">Reviews</span>
                   <span className="font-bold text-sm text-red-600">{purgeResult.counts.reviews}</span>
+                </div>
+                <div className="flex items-center justify-between px-5 py-2.5">
+                  <span className="text-sm text-zinc-500">Scraper Run History</span>
+                  <span className="font-bold text-sm text-red-600">{purgeResult.counts.scraperRuns}</span>
+                </div>
+                <div className="flex items-center justify-between px-5 py-2.5">
+                  <span className="text-sm text-zinc-500">Scraped Prices</span>
+                  <span className="font-bold text-sm text-red-600">{purgeResult.counts.scrapedPrices}</span>
                 </div>
                 <div className="flex items-center justify-between px-5 py-3 bg-zinc-50/50">
                   <span className="text-sm font-semibold text-zinc-700">Garage S3 Assets Deleted</span>
