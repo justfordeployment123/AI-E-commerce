@@ -6,7 +6,7 @@ WORKDIR /app
 RUN apt-get update -y && apt-get install -y --no-install-recommends openssl ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 COPY apps/scraper/package*.json ./
-RUN npm install --no-audit --no-fund
+RUN NODE_ENV=development npm install --no-audit --no-fund
 
 FROM node:24-bookworm-slim AS builder
 WORKDIR /app
