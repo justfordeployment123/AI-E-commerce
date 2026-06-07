@@ -1599,7 +1599,7 @@ function BestDealsSplit() {
     if (trigger === 0) return;
     productsApi.list({ limit: 80 }).then(r => {
       const filtered = r.items.filter(p => isOtherProduct(p.category, p.images?.[0]));
-      setAllProducts(filtered.sort((a, b) => b.price - a.price));
+      setAllProducts(filtered.sort((a, b) => (b.price ?? 0) - (a.price ?? 0)));
     }).catch(() => {});
   }, [trigger]);
 

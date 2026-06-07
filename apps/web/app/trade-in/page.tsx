@@ -450,7 +450,7 @@ export default function TradeInPage() {
       // pick the most expensive product from each category, up to 4
       const seen = new Set<string>();
       const picks: Product[] = [];
-      for (const p of [...r.items].sort((a, b) => b.price - a.price)) {
+      for (const p of [...r.items].sort((a, b) => (b.price ?? 0) - (a.price ?? 0))) {
         if (!seen.has(p.category) && picks.length < 4) {
           seen.add(p.category);
           picks.push(p);
@@ -911,7 +911,7 @@ export default function TradeInPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {hotItems.map((p) => {
-                  const tradeInVal = p.comparePrice ?? Math.round(p.price * 1.35);
+                  const tradeInVal = p.comparePrice ?? Math.round((p.price ?? 0) * 1.35);
                   const mood = CAT_NAME_MOOD[p.category] ?? "bg-zinc-500/10";
                   const wizardId = CAT_NAME_TO_WIZARD_ID[p.category] ?? p.category;
                   // Device categories have lifestyle photos → cover; accessories/others have product shots → contain

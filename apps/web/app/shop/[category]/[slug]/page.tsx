@@ -131,7 +131,7 @@ export default function ProductDetailPage() {
       await addItem({
         productId: product.id,
         quantity: 1,
-        price: product.price,
+        price: product.price ?? 0,
         name: product.name,
         slug: product.slug,
         image: product.images[0],
@@ -181,7 +181,7 @@ export default function ProductDetailPage() {
     );
   }
 
-  const savings = product.comparePrice ? product.comparePrice - product.price : 0;
+  const savings = product.comparePrice ? product.comparePrice - (product.price ?? 0) : 0;
   const images = product.images.length > 0 ? product.images : ["https://picsum.photos/seed/placeholder/600/600"];
   const specs = product.specs as Record<string, unknown>;
 
@@ -296,7 +296,7 @@ export default function ProductDetailPage() {
               {/* Price */}
               {product.price > 0 ? (
                 <div className="flex items-baseline gap-4 mb-8">
-                  <span className="text-5xl font-bold tracking-tight">£{product.price.toFixed(2)}</span>
+                  <span className="text-5xl font-bold tracking-tight">£{(product.price as number).toFixed(2)}</span>
                   {product.comparePrice && (
                     <span className="text-xl text-zinc-400 line-through font-medium">£{product.comparePrice.toFixed(2)}</span>
                   )}
