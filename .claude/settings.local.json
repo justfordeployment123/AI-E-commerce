@@ -122,7 +122,8 @@
       "Bash(git -C \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\" push)",
       "Bash(git -C \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\" add .github/workflows/db-migration-check.yml)",
       "Bash(git -C \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\" add apps/api/src/modules/seed/seed.service.ts apps/api/prisma/seed/products/products.json)",
-      "Bash(git -C \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\" add apps/admin/app/scraper/page.tsx)"
+      "Bash(git -C \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\" add apps/admin/app/scraper/page.tsx)",
+      "Bash(git -C \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\" add apps/api/src/modules/product-pricing/product-pricing.service.ts apps/api/src/modules/product-pricing/product-pricing.controller.ts apps/admin/lib/api.ts apps/admin/app/products/page.tsx)"
     ],
     "additionalDirectories": [
       "d:\\CODE\\Projects\\Markhor Systems Projects\\Ai-Ecommerce\\apps\\web\\app\\account\\repairs",

@@ -71,6 +71,10 @@ export default function RootLayout({
               (function() {
                 try {
                   var theme = localStorage.getItem('ts-theme');
+                  if (!theme) {
+                    theme = 'light';
+                    localStorage.setItem('ts-theme', 'light');
+                  }
                   if (theme === 'dark') {
                     document.documentElement.setAttribute('data-theme', 'dark');
                     document.documentElement.classList.add('dark');

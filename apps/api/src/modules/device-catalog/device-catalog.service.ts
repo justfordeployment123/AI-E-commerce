@@ -13,11 +13,11 @@ export class DeviceCatalogService {
     findAll(params?: { categorySlug?: string; brandSlug?: string; search?: string; isActive?: boolean }) {
         const where: Record<string, unknown> = {};
         if (params?.isActive !== undefined) where.isActive = params.isActive;
-        if (params?.categorySlug) {
-            where.brandCategory = { category: { slug: params.categorySlug } };
-        }
-        if (params?.brandSlug) {
-            where.brandCategory = { brand: { slug: params.brandSlug } };
+        if (params?.categorySlug || params?.brandSlug) {
+            const bc: Record<string, unknown> = {};
+            if (params?.categorySlug) bc.category = { slug: params.categorySlug };
+            if (params?.brandSlug)    bc.brand    = { slug: params.brandSlug };
+            where.brandCategory = bc;
         }
         if (params?.search) {
             where.model = { contains: params.search, mode: 'insensitive' };

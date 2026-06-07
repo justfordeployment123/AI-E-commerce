@@ -128,10 +128,10 @@ const SPECS: Record<string, { label: string; options: string[] }[]> = {
 };
 
 const CONDITIONS = [
-  { id: "Mint", label: "Mint", desc: "Like new, no marks or scuffs", color: "bg-emerald-50 border-emerald-200/60", dot: "bg-emerald-400", multiplier: 1.0 },
-  { id: "Good", label: "Good", desc: "Minor scuffs, fully working", color: "bg-blue-50 border-blue-200/60", dot: "bg-blue-400", multiplier: 0.82 },
-  { id: "Used", label: "Used", desc: "Moderate wear, fully working", color: "bg-amber-50 border-amber-200/60", dot: "bg-amber-400", multiplier: 0.62 },
-  { id: "Damaged", label: "Damaged", desc: "Cracked screen or body damage", color: "bg-red-50 border-red-200/60", dot: "bg-red-400", multiplier: 0.3 },
+  { id: "Mint", label: "Mint", desc: "Like new, no marks or scuffs", color: "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200/60 dark:border-emerald-500/20", dot: "bg-emerald-400", descColor: "text-zinc-500 dark:text-emerald-400/70", multiplier: 1.0 },
+  { id: "Good", label: "Good", desc: "Minor scuffs, fully working", color: "bg-blue-50 dark:bg-blue-950/30 border-blue-200/60 dark:border-blue-500/20", dot: "bg-blue-400", descColor: "text-zinc-500 dark:text-blue-400/70", multiplier: 0.82 },
+  { id: "Used", label: "Used", desc: "Moderate wear, fully working", color: "bg-amber-50 dark:bg-amber-950/30 border-amber-200/60 dark:border-amber-500/20", dot: "bg-amber-400", descColor: "text-zinc-500 dark:text-amber-400/70", multiplier: 0.62 },
+  { id: "Damaged", label: "Damaged", desc: "Cracked screen or body damage", color: "bg-red-50 dark:bg-red-950/30 border-red-200/60 dark:border-red-500/20", dot: "bg-red-400", descColor: "text-zinc-500 dark:text-red-400/70", multiplier: 0.3 },
 ];
 
 const CONDITION_QUESTIONS: Record<string, { id: string; question: string; options: string[] }[]> = {
@@ -322,8 +322,8 @@ function AnimatedNumber({ value, format, suffix = "", duration = 1500, startOffs
 function StepHeader({ label, sub }: { label: string; sub?: string }) {
   return (
     <div className="space-y-1">
-      <h2 className="font-sans text-2xl md:text-3xl font-extrabold tracking-tight text-zinc-950">{label}</h2>
-      {sub && <p className="text-xs font-semibold text-zinc-400">{sub}</p>}
+      <h2 className="font-sans text-2xl md:text-3xl font-extrabold tracking-tight text-zinc-950 dark:text-white">{label}</h2>
+      {sub && <p className="text-xs font-semibold text-zinc-400 dark:text-zinc-400">{sub}</p>}
     </div>
   );
 }
@@ -343,7 +343,7 @@ export default function TradeInPage() {
   const router = useRouter();
 
   const [stats, setStats] = useState({
-    devicesRepurposed: 1542830,
+    ukIdlePhones: 55,
     lifespanExtension: 2.0,
     idleElectronics: 5000000000,
   });
@@ -388,7 +388,8 @@ export default function TradeInPage() {
 
   // Dynamic brand + model loading from catalog API
   const CATEGORY_SLUG_MAP: Record<string, string> = {
-    Phone: "phones", Tablet: "tablets", Console: "consoles", Laptop: "laptops", Audio: "audio",
+    Phone: "phones", Tablet: "tablets", Console: "consoles",
+    Laptop: "laptops", Audio: "audio", Smartwatch: "smartwatches",
   };
   const [dynamicBrands, setDynamicBrands] = useState<string[]>([]);
   const [dynamicModels, setDynamicModels] = useState<string[]>([]);
@@ -397,18 +398,9 @@ export default function TradeInPage() {
     setDynamicBrands([]); setDynamicModels([]);
     const slug = CATEGORY_SLUG_MAP[state.category];
     if (!slug) return;
-    catalogApi.listBrandCategories({ brandId: undefined })
-      .then(() => catalogApi.listCategories())
-      .then(cats => {
-        const cat = cats.find(c => c.slug === slug);
-        if (!cat) return;
-        return catalogApi.listBrandCategories({ includeInactive: false });
-      })
-      .then(bcs => {
-        if (!bcs) return;
-        const slug2 = CATEGORY_SLUG_MAP[state.category];
-        const filtered = bcs.filter(bc => bc.category.slug === slug2);
-        setDynamicBrands(filtered.map(bc => bc.brand.name));
+    productsApi.brands(slug)
+      .then(data => {
+        if (data.length > 0) setDynamicBrands(data.map(b => b.brand));
       })
       .catch(() => {});
   }, [state.category]);
@@ -521,6 +513,9 @@ export default function TradeInPage() {
   // Model search query inside Phase 1 wizard
   const [wizardModelSearch, setWizardModelSearch] = useState("");
 
+  // One-question-at-a-time tracker for Phase 3
+  const [diagIndex, setDiagIndex] = useState(0);
+
 
 
   const scrollToTop = () => {
@@ -555,6 +550,7 @@ export default function TradeInPage() {
   };
 
   const goToPhase = (p: number) => {
+    if (p === 3) setDiagIndex(0);
     setPhase(p);
     scrollToTop();
   };
@@ -581,7 +577,9 @@ export default function TradeInPage() {
         setAiPrice(null);
         setAiError(false);
       }
-      setPhase(p => p - 1);
+      const prev = phase - 1;
+      if (prev === 3) setDiagIndex(currentQuestions.length - 1);
+      setPhase(prev);
       scrollToTop();
     }
   };
@@ -683,7 +681,7 @@ export default function TradeInPage() {
   const PHASE_LABELS = [
     "Device Selection",
     "Configuration & Condition",
-    "Diagnostics Questionnaire",
+    "Quick Check",
     "Offer Valuation",
     "Fulfillment & Details",
     "Done"
@@ -719,6 +717,12 @@ export default function TradeInPage() {
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
           background: #d4d4d8;
         }
+        [data-theme="dark"] .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #27272a;
+        }
+        [data-theme="dark"] .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #3f3f46;
+        }
       ` }} />
       <div className="flex-1 bg-background relative">
 
@@ -744,7 +748,7 @@ export default function TradeInPage() {
 
             <h1 className="font-sans text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tight text-zinc-950 dark:text-white mb-8 max-w-4xl mx-auto leading-none">
               Sell your tech for cash. <br />
-              <span className="text-transparent bg-clip-text bg-linear-to-r from-zinc-500 via-zinc-800 to-zinc-950">Fast. Fair. Easy.</span>
+              <span className="text-transparent bg-clip-text bg-linear-to-r from-zinc-500 via-zinc-800 to-zinc-950 dark:from-zinc-300 dark:via-zinc-100 dark:to-white">Fast. Fair. Easy.</span>
             </h1>
             <p className="max-w-2xl mx-auto text-zinc-500 font-semibold text-base md:text-lg mb-10 leading-relaxed">
               Get an instant online offer on your phone, tablet, laptop, or gaming console. Free fully-insured Royal Mail shipping is included with every trade.
@@ -811,7 +815,7 @@ export default function TradeInPage() {
                 <button
                   key={i}
                   onClick={() => handleSelectSuggestion({ name: item.name, category: item.category, brand: item.brand })}
-                  className="px-3.5 py-1.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 rounded-full transition-colors font-bold shadow-sm"
+                  className="px-3.5 py-1.5 bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-800 dark:text-zinc-200 rounded-full transition-colors font-bold shadow-sm"
                 >
                   {item.name}
                 </button>
@@ -904,7 +908,7 @@ export default function TradeInPage() {
                     Hot trade-in prices
                   </h2>
                 </div>
-                <p className="text-zinc-500 dark:text-zinc-450 font-semibold text-sm max-w-sm mt-4 md:mt-0 leading-relaxed">
+                <p className="text-zinc-500 dark:text-zinc-400 font-semibold text-sm max-w-sm mt-4 md:mt-0 leading-relaxed">
                   Ready to upgrade? We are currently paying premium rates for these popular devices:
                 </p>
               </div>
@@ -987,20 +991,20 @@ export default function TradeInPage() {
               <div className="bg-zinc-950 text-white rounded-[3rem] p-10 md:p-16 grid md:grid-cols-3 gap-12 relative overflow-hidden shadow-2xl border border-zinc-900">
                 <div className="absolute bottom-0 right-0 w-96 h-96 bg-sky-500/5 blur-[100px] rounded-full pointer-events-none" />
                 
-                {/* Stat 1: Devices Repurposed */}
+                {/* Stat 1: UK Idle Phones */}
                 <div className="space-y-3 relative">
                   <p className="font-sans text-5xl md:text-6xl font-extrabold text-sky-400 tracking-tighter leading-none">
                     <AnimatedNumber
-                      value={stats.devicesRepurposed}
-                      format={(val) => val.toLocaleString()}
+                      value={stats.ukIdlePhones}
+                      format={(val) => Math.round(val) + "M"}
                       suffix="+"
-                      startOffset={1000}
+                      startOffset={10}
                       duration={1800}
                     />
                   </p>
-                  <h4 className="font-extrabold text-sm text-white">Devices Repurposed</h4>
+                  <h4 className="font-extrabold text-sm text-white">UK Idle Phones</h4>
                   <p className="text-zinc-400 text-xs font-semibold leading-relaxed">
-                    We've saved over <span className="text-white font-bold">{stats.devicesRepurposed.toLocaleString()}</span> functional gadgets from leaking toxic chemical e-waste into landfills.
+                    Ofcom research shows <span className="text-white font-bold">55 million</span> phones are sitting unused in UK homes. Trade yours in and put cash in your pocket.
                   </p>
                 </div>
 
@@ -1034,7 +1038,7 @@ export default function TradeInPage() {
                   </p>
                   <h4 className="font-extrabold text-sm text-white">Idle Electronics</h4>
                   <p className="text-zinc-400 text-xs font-semibold leading-relaxed">
-                    Global statistics show <span className="text-white font-bold">5 billion</span> mobile devices are sitting unused in cupboards. Let's recycle yours for cash.
+                    GSMA data shows <span className="text-white font-bold">5 billion</span> mobile devices are sitting unused globally. Yours could be someone else's next phone.
                   </p>
                 </div>
 
@@ -1057,7 +1061,7 @@ export default function TradeInPage() {
                   <div key={idx} className="border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden bg-white dark:bg-zinc-900 shadow-sm hover:shadow-md transition-shadow">
                     <button
                       onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
-                      className="w-full flex items-center justify-between p-6 text-left font-bold text-sm text-zinc-950 dark:text-white hover:bg-zinc-50 dark:hover:bg-zinc-850 transition-colors"
+                      className="w-full flex items-center justify-between p-6 text-left font-bold text-sm text-zinc-950 dark:text-white hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
                     >
                       <span className="flex items-center gap-3">
                         <HelpCircle className="h-4.5 w-4.5 text-zinc-400 shrink-0" />
@@ -1150,7 +1154,7 @@ export default function TradeInPage() {
                 <div className="w-full max-w-4xl mx-auto space-y-6">
 
                   {/* Wizard Navigation / Progress Header */}
-                  <div className="bg-white dark:bg-zinc-950 rounded-3xl border border-zinc-200/80 dark:border-zinc-850 shadow-sm p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="bg-white dark:bg-zinc-950 rounded-3xl border border-zinc-200/80 dark:border-zinc-800 shadow-sm p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
                       <button
                         onClick={handleBack}
@@ -1166,9 +1170,9 @@ export default function TradeInPage() {
               </div>
 
               <div className="flex-1 max-w-xs md:ml-auto">
-                <div className="h-2 bg-zinc-100 rounded-full overflow-hidden">
+                <div className="h-2 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
                   <motion.div
-                    className="h-full bg-zinc-950 rounded-full"
+                    className="h-full bg-zinc-950 dark:bg-white rounded-full"
                     animate={{ width: `${(phase / 6) * 100}%` }}
                     transition={{ duration: 0.4, ease: "easeOut" }}
                   />
@@ -1185,20 +1189,20 @@ export default function TradeInPage() {
                       setState(s => ({ ...s, category: "", brand: "", model: "" }));
                       setPhase(1);
                     }}
-                    className="text-[11px] font-bold bg-white border border-zinc-200 rounded-full px-3 py-1 text-zinc-500 hover:border-red-400 hover:text-red-500 transition-colors"
+                    className="text-[11px] font-bold bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full px-3 py-1 text-zinc-500 dark:text-zinc-400 hover:border-red-400 hover:text-red-500 dark:hover:border-red-500 transition-colors"
                   >
                     Category: {state.category}
                   </button>
                 )}
                 {state.brand && (
                   <>
-                    <ChevronRight className="h-3.5 w-3.5 text-zinc-300" />
+                    <ChevronRight className="h-3.5 w-3.5 text-zinc-300 dark:text-zinc-700" />
                     <button
                       onClick={() => {
                         setState(s => ({ ...s, brand: "", model: "" }));
                         setPhase(1);
                       }}
-                      className="text-[11px] font-bold bg-white border border-zinc-200 rounded-full px-3 py-1 text-zinc-500 hover:border-red-400 hover:text-red-500 transition-colors"
+                      className="text-[11px] font-bold bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full px-3 py-1 text-zinc-500 dark:text-zinc-400 hover:border-red-400 hover:text-red-500 dark:hover:border-red-500 transition-colors"
                     >
                       Brand: {state.brand}
                     </button>
@@ -1206,8 +1210,8 @@ export default function TradeInPage() {
                 )}
                 {state.model && (
                   <>
-                    <ChevronRight className="h-3.5 w-3.5 text-zinc-300" />
-                    <span className="text-[11px] font-black bg-zinc-950 text-white rounded-full px-3 py-1 shadow-sm">
+                    <ChevronRight className="h-3.5 w-3.5 text-zinc-300 dark:text-zinc-700" />
+                    <span className="text-[11px] font-black bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 rounded-full px-3 py-1 shadow-sm">
                       Model: {state.model}
                     </span>
                   </>
@@ -1216,7 +1220,7 @@ export default function TradeInPage() {
             )}
 
             {/* Main Stepper Card */}
-            <div className="bg-white rounded-[2rem] border border-zinc-200 shadow-xl overflow-hidden min-h-[400px] flex flex-col">
+            <div className="bg-white dark:bg-zinc-950 rounded-[2rem] border border-zinc-200 dark:border-zinc-800 shadow-xl overflow-hidden min-h-[400px] flex flex-col">
               <div className="p-8 md:p-10 flex-1 flex flex-col justify-between">
                 <AnimatePresence mode="wait">
                   <motion.div
@@ -1257,14 +1261,14 @@ export default function TradeInPage() {
                                       whileHover={{ y: -4, scale: 1.02 }}
                                       whileTap={{ scale: 0.98 }}
                                       onClick={() => handleCategorySelect(catId)}
-                                      className={`flex flex-col items-center gap-4 p-6 rounded-2xl border border-zinc-200 hover:border-zinc-950 transition-all text-center group bg-zinc-50 hover:bg-white hover:shadow-lg ${glow}`}
+                                      className={`flex flex-col items-center gap-4 p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 hover:border-zinc-950 dark:hover:border-zinc-200 transition-all text-center group bg-zinc-50 dark:bg-zinc-900 hover:bg-white dark:hover:bg-zinc-950 hover:shadow-lg ${glow}`}
                                     >
-                                      <div className={`h-14 w-14 rounded-2xl bg-white border border-zinc-100 flex items-center justify-center shadow-sm group-hover:${mood} group-hover:border-transparent transition-all`}>
-                                        <Icon className={`h-6 w-6 text-zinc-500 group-hover:${moodIcon} transition-colors`} strokeWidth={1.5} />
+                                      <div className={`h-14 w-14 rounded-2xl bg-white dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 flex items-center justify-center shadow-sm group-hover:${mood} group-hover:border-transparent transition-all`}>
+                                        <Icon className={`h-6 w-6 text-zinc-500 dark:text-zinc-400 group-hover:${moodIcon} transition-colors`} strokeWidth={1.5} />
                                       </div>
                                       <div>
-                                        <p className="text-sm font-extrabold text-zinc-900">{cat.name}</p>
-                                        <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider mt-0.5">{count}</p>
+                                        <p className="text-sm font-extrabold text-zinc-900 dark:text-zinc-100">{cat.name}</p>
+                                        <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-wider mt-0.5">{count}</p>
                                       </div>
                                     </motion.button>
                                   );
@@ -1288,7 +1292,7 @@ export default function TradeInPage() {
                                     whileHover={{ y: -3, scale: 1.02, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.05)" }}
                                     whileTap={{ scale: 0.98 }}
                                     onClick={() => handleBrandSelect(brand)}
-                                    className="p-5 rounded-2xl border border-zinc-200 bg-white hover:border-zinc-950 text-center font-extrabold text-sm text-zinc-800 transition-all hover:shadow-md"
+                                    className="p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-zinc-950 dark:hover:border-white text-center font-extrabold text-sm text-zinc-800 dark:text-zinc-200 transition-all hover:shadow-md"
                                   >
                                     {brand}
                                   </motion.button>
@@ -1312,13 +1316,13 @@ export default function TradeInPage() {
                                   placeholder={`Filter ${state.brand} models...`}
                                   value={wizardModelSearch}
                                   onChange={(e) => setWizardModelSearch(e.target.value)}
-                                  className="h-12 w-full rounded-xl bg-zinc-50 border border-zinc-200 pl-11 pr-4 text-xs font-semibold outline-none focus:border-accent focus:bg-white transition-all"
+                                  className="h-12 w-full rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 pl-11 pr-4 text-xs font-semibold outline-none focus:border-accent focus:bg-white dark:focus:bg-zinc-950 text-zinc-900 dark:text-white transition-all"
                                 />
                                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-zinc-400" />
                                 {wizardModelSearch && (
                                   <button
                                     onClick={() => setWizardModelSearch("")}
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-zinc-400 hover:text-zinc-900"
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
                                   >
                                     Clear
                                   </button>
@@ -1336,10 +1340,10 @@ export default function TradeInPage() {
                                         setState(s => ({ ...s, model }));
                                         goToPhase(2);
                                       }}
-                                      className="flex items-center justify-between px-5 py-4 rounded-xl border border-zinc-200 hover:border-zinc-950 hover:bg-zinc-50 bg-white text-xs font-bold text-left transition-all hover:shadow-sm group"
+                                      className="flex items-center justify-between px-5 py-4 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:border-zinc-950 dark:hover:border-white hover:bg-zinc-50 dark:hover:bg-zinc-950 bg-white dark:bg-zinc-900 text-xs font-bold text-left transition-all hover:shadow-sm group text-zinc-800 dark:text-zinc-200"
                                     >
                                       <span>{model}</span>
-                                      <ChevronRight className="h-4 w-4 text-zinc-400 group-hover:text-zinc-950 group-hover:translate-x-0.5 transition-all" />
+                                      <ChevronRight className="h-4 w-4 text-zinc-400 group-hover:text-zinc-950 dark:group-hover:text-white group-hover:translate-x-0.5 transition-all" />
                                     </motion.button>
                                   ))
                                 }
@@ -1358,12 +1362,12 @@ export default function TradeInPage() {
 
                           {/* Render Specification Selectors */}
                           {currentSpecs.length > 0 && (
-                            <div className="space-y-4 border-b border-zinc-100 pb-6">
+                            <div className="space-y-4 border-b border-zinc-100 dark:border-zinc-800 pb-6">
                               <h4 className="text-xs font-black uppercase tracking-widest text-zinc-400">Specifications</h4>
                               <div className="grid gap-4 sm:grid-cols-2">
                                 {currentSpecs.map((spec) => (
                                   <div key={spec.label} className="space-y-2">
-                                    <span className="text-xs font-extrabold text-zinc-800">{spec.label}</span>
+                                    <span className="text-xs font-extrabold text-zinc-800 dark:text-zinc-200">{spec.label}</span>
                                     <div className="flex flex-wrap gap-1.5">
                                       {spec.options.map((opt) => {
                                         const isSelected = state.specs[spec.label] === opt;
@@ -1376,8 +1380,8 @@ export default function TradeInPage() {
                                             }))}
                                             className={`px-3 py-2 rounded-xl border text-xs font-bold transition-all ${
                                               isSelected
-                                                ? "border-zinc-950 bg-zinc-950 text-white shadow-sm"
-                                                : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-950"
+                                                ? "border-zinc-950 bg-zinc-950 text-white shadow-sm dark:border-white dark:bg-white dark:text-zinc-950"
+                                                : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-950 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-white"
                                             }`}
                                           >
                                             {opt}
@@ -1403,14 +1407,14 @@ export default function TradeInPage() {
                                     onClick={() => setState(s => ({ ...s, condition: c.id }))}
                                     className={`p-4 w-full rounded-2xl border text-left transition-all flex items-start gap-3 ${
                                       isSelected
-                                        ? "border-zinc-950 bg-zinc-950 text-white shadow-md"
-                                        : `${c.color} hover:border-zinc-300 text-zinc-800`
+                                        ? "border-zinc-950 bg-zinc-950 text-white shadow-md dark:border-white dark:bg-white dark:text-zinc-950"
+                                        : `${c.color} hover:border-zinc-300 dark:hover:border-zinc-700 text-zinc-800 dark:text-zinc-200`
                                     }`}
                                   >
                                     <div className={`h-3 w-3 rounded-full mt-1 shrink-0 ${c.dot}`} />
                                     <div className="flex-1">
-                                      <p className={`text-xs font-black ${isSelected ? "text-white" : "text-zinc-900"}`}>{c.label}</p>
-                                      <p className={`text-[10px] leading-snug mt-1 ${isSelected ? "text-white/70" : "text-zinc-500"}`}>{c.desc}</p>
+                                      <p className={`text-xs font-black ${isSelected ? "text-white dark:text-zinc-950" : "text-zinc-900 dark:text-zinc-100"}`}>{c.label}</p>
+                                      <p className={`text-[10px] leading-snug mt-1 ${isSelected ? "text-white/70 dark:text-zinc-950/70" : c.descColor}`}>{c.desc}</p>
                                     </div>
                                   </button>
                                 );
@@ -1420,96 +1424,128 @@ export default function TradeInPage() {
                         </div>
 
                         {/* Continue Button */}
-                        <div className="pt-6 border-t border-zinc-100 flex flex-col sm:flex-row sm:justify-end">
+                        <div className="pt-6 border-t border-zinc-100 dark:border-zinc-800 flex flex-col sm:flex-row sm:justify-end">
                           <motion.button
                             whileHover={{ y: -2 }}
                             whileTap={{ scale: 0.98 }}
                             disabled={!(currentSpecs.every(s => state.specs[s.label]) && state.condition)}
                             onClick={() => goToPhase(3)}
-                            className="w-full sm:w-auto h-12 px-8 bg-zinc-950 text-white hover:bg-zinc-800 disabled:opacity-50 disabled:pointer-events-none rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 shadow-lg shrink-0"
+                            className="w-full sm:w-auto h-12 px-8 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:opacity-50 disabled:pointer-events-none rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 shadow-lg shrink-0"
                           >
-                            <span className="whitespace-nowrap">Diagnostics Questionnaire</span>
+                            <span className="whitespace-nowrap">Quick Check</span>
                             <ArrowRight className="h-4 w-4 shrink-0" />
                           </motion.button>
                         </div>
                       </div>
                     )}
 
-                    {/* ── PHASE 3: Diagnostics ── */}
-                    {phase === 3 && (
-                      <div className="space-y-6 flex-1 flex flex-col justify-between">
-                        <div className="space-y-6">
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-100 pb-4">
-                            <StepHeader label="Device Diagnostics" sub="Tell us about the functional state of the device parts." />
-                            <div className="shrink-0 bg-zinc-100 rounded-full px-4 py-1.5 text-[10px] font-black text-zinc-600 tracking-wider">
-                              {Object.keys(state.answers).length} / {currentQuestions.length} ANSWERED
-                            </div>
-                          </div>
-
-                          <div className="space-y-4">
-                            {currentQuestions.map((q) => {
-                              const isAnswered = !!state.answers[q.id];
-                              return (
+                    {/* ── PHASE 3: Diagnostics (one question at a time) ── */}
+                    {phase === 3 && (() => {
+                      const q = currentQuestions[diagIndex];
+                      const isLast = diagIndex === currentQuestions.length - 1;
+                      const allAnswered = Object.keys(state.answers).length >= currentQuestions.length;
+                      if (!q) {
+                        // No questions for this category — skip straight to offer
+                        goToPhase(4);
+                        return null;
+                      }
+                      return (
+                        <div className="flex-1 flex flex-col justify-between gap-6">
+                          <div className="space-y-5">
+                            {/* Progress dots */}
+                            <div className="flex gap-1.5">
+                              {currentQuestions.map((_, i) => (
                                 <div
-                                  key={q.id}
-                                  className={`p-5 rounded-2xl border transition-all duration-300 space-y-3 ${
-                                    isAnswered
-                                      ? "border-emerald-500/20 bg-emerald-500/[0.01]"
-                                      : "border-zinc-300/60 bg-zinc-50/50 hover:border-zinc-400"
+                                  key={i}
+                                  className={`h-1.5 rounded-full flex-1 transition-all duration-300 ${
+                                    i < diagIndex ? "bg-emerald-500" :
+                                    i === diagIndex ? "bg-zinc-950 dark:bg-white" :
+                                    "bg-zinc-200 dark:bg-zinc-800"
                                   }`}
-                                >
-                                  <div className="flex items-center justify-between">
-                                    <label className="text-xs font-black text-zinc-900">{q.question}</label>
-                                    {isAnswered && (
-                                      <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 rounded-full px-2.5 py-0.5">
-                                        <Check className="h-3 w-3" strokeWidth={3} /> Answered
-                                      </span>
-                                    )}
-                                  </div>
-                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                    {q.options.map((opt) => {
-                                      const isSelected = state.answers[q.id] === opt;
-                                      return (
-                                        <button
-                                          key={opt}
-                                          type="button"
-                                          onClick={() => setState(s => ({
-                                            ...s,
-                                            answers: { ...s.answers, [q.id]: opt }
-                                          }))}
-                                          className={`px-4 py-3 rounded-xl border text-xs font-semibold text-left transition-all flex items-center justify-between ${
-                                            isSelected
-                                              ? "border-zinc-950 bg-zinc-950 text-white shadow-sm"
-                                              : "border-zinc-200 bg-white hover:border-zinc-400 text-zinc-700 hover:bg-zinc-50"
-                                          }`}
-                                        >
-                                          <span>{opt}</span>
-                                          {isSelected && <Check className="h-3.5 w-3.5 text-white shrink-0" strokeWidth={3} />}
-                                        </button>
-                                      );
-                                    })}
-                                  </div>
-                                </div>
-                              );
-                            })}
+                                />
+                              ))}
+                            </div>
+
+                            <div className="flex items-center justify-between">
+                              <StepHeader
+                                label={q.question}
+                                sub={`Question ${diagIndex + 1} of ${currentQuestions.length}`}
+                              />
+                            </div>
+
+                            <AnimatePresence mode="wait">
+                              <motion.div
+                                key={diagIndex}
+                                initial={{ opacity: 0, x: 16 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -16 }}
+                                transition={{ duration: 0.2 }}
+                                className="space-y-2.5"
+                              >
+                                {q.options.map((opt) => {
+                                  const isSelected = state.answers[q.id] === opt;
+                                  return (
+                                    <button
+                                      key={opt}
+                                      type="button"
+                                      onClick={() => {
+                                        setState(s => ({ ...s, answers: { ...s.answers, [q.id]: opt } }));
+                                        setTimeout(() => {
+                                          if (!isLast) setDiagIndex(i => i + 1);
+                                        }, 260);
+                                      }}
+                                      className={`w-full px-5 py-4 rounded-2xl border text-sm font-semibold text-left transition-all flex items-center justify-between ${
+                                        isSelected
+                                          ? "border-zinc-950 bg-zinc-950 text-white shadow-sm dark:border-white dark:bg-white dark:text-zinc-950"
+                                          : "border-zinc-200 bg-white hover:border-zinc-400 text-zinc-700 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-white dark:hover:bg-zinc-950"
+                                      }`}
+                                    >
+                                      <span>{opt}</span>
+                                      {isSelected && <Check className="h-4 w-4 shrink-0 text-white dark:text-zinc-950" strokeWidth={3} />}
+                                    </button>
+                                  );
+                                })}
+                              </motion.div>
+                            </AnimatePresence>
+                          </div>
+
+                          <div className="pt-6 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-3">
+                            <button
+                              onClick={() => {
+                                if (diagIndex > 0) setDiagIndex(i => i - 1);
+                                else goToPhase(2);
+                              }}
+                              className="h-12 px-5 border border-zinc-200 dark:border-zinc-800 rounded-xl font-bold text-xs text-zinc-600 dark:text-zinc-400 hover:border-zinc-950 dark:hover:border-white hover:text-zinc-950 dark:hover:text-white transition-colors flex items-center gap-2"
+                            >
+                              <ArrowLeft className="h-4 w-4" /> Back
+                            </button>
+
+                            {isLast ? (
+                              <motion.button
+                                whileHover={{ y: -2 }}
+                                whileTap={{ scale: 0.98 }}
+                                disabled={!allAnswered}
+                                onClick={() => goToPhase(4)}
+                                className="h-12 px-8 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:opacity-50 disabled:pointer-events-none rounded-xl text-xs font-black transition-all flex items-center gap-2 shadow-lg"
+                              >
+                                <span>Get My Offer</span>
+                                <ArrowRight className="h-4 w-4" />
+                              </motion.button>
+                            ) : (
+                              <motion.button
+                                whileHover={{ y: -2 }}
+                                disabled={!state.answers[q.id]}
+                                onClick={() => setDiagIndex(i => i + 1)}
+                                className="h-12 px-8 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:opacity-50 disabled:pointer-events-none rounded-xl text-xs font-black transition-all flex items-center gap-2 shadow-lg"
+                              >
+                                <span>Next</span>
+                                <ArrowRight className="h-4 w-4" />
+                              </motion.button>
+                            )}
                           </div>
                         </div>
-
-                        {/* Continue Button */}
-                        <div className="pt-6 border-t border-zinc-100 flex flex-col sm:flex-row sm:justify-end">
-                          <motion.button
-                            whileHover={{ y: -2 }}
-                            whileTap={{ scale: 0.98 }}
-                            disabled={Object.keys(state.answers).length < currentQuestions.length}
-                            onClick={() => goToPhase(4)}
-                            className="w-full sm:w-auto h-12 px-8 bg-zinc-950 text-white hover:bg-zinc-800 disabled:opacity-50 disabled:pointer-events-none rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 shadow-lg shrink-0"
-                          >
-                            <span className="whitespace-nowrap">Continue to Offer</span>
-                            <ArrowRight className="h-4 w-4 shrink-0" />
-                          </motion.button>
-                        </div>
-                      </div>
-                    )}
+                      );
+                    })()}
 
                     {/* ── PHASE 4: Valuation & Offer ── */}
                     {phase === 4 && (
@@ -1521,9 +1557,9 @@ export default function TradeInPage() {
                             <motion.div
                               animate={{ rotate: 360 }}
                               transition={{ repeat: Infinity, duration: 1.2, ease: "linear" }}
-                              className="h-14 w-14 border-4 border-zinc-200 border-t-zinc-950 rounded-full mb-6"
+                              className="h-14 w-14 border-4 border-zinc-200 dark:border-zinc-800 border-t-zinc-950 dark:border-t-white rounded-full mb-6"
                             />
-                            <h3 className="text-lg font-black text-zinc-900 mb-2">Analyzing Valuation</h3>
+                            <h3 className="text-lg font-black text-zinc-900 dark:text-white mb-2">Analyzing Valuation</h3>
                             <p className="text-xs font-semibold text-zinc-400 tracking-wider animate-pulse uppercase">{aiLoadingText}</p>
                           </div>
                         )}
@@ -1531,16 +1567,16 @@ export default function TradeInPage() {
                         {/* Error Screen */}
                         {!aiLoading && aiError && aiPrice === null && (
                           <div className="flex-1 flex flex-col items-center justify-center gap-6 py-8">
-                            <div className="h-14 w-14 rounded-full bg-red-50 border border-red-200 flex items-center justify-center">
+                            <div className="h-14 w-14 rounded-full bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 flex items-center justify-center">
                               <X className="h-6 w-6 text-red-500" />
                             </div>
                             <div className="text-center space-y-2">
-                              <p className="text-sm font-black text-zinc-950">Could not reach pricing service</p>
+                              <p className="text-sm font-black text-zinc-950 dark:text-white">Could not reach pricing service</p>
                               <p className="text-xs font-semibold text-zinc-400 max-w-xs">Check your connection and try again. No fallback price will be shown.</p>
                             </div>
                             <button
                               onClick={() => { setAiError(false); fetchAiPrice(); }}
-                              className="h-11 px-6 bg-zinc-950 text-white rounded-xl text-xs font-black hover:bg-zinc-800 transition-colors"
+                              className="h-11 px-6 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 rounded-xl text-xs font-black hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors"
                             >
                               Retry
                             </button>
@@ -1551,32 +1587,32 @@ export default function TradeInPage() {
                         {!aiLoading && !aiError && aiPrice === null && (
                           <div className="space-y-6 flex-1 flex flex-col justify-between">
                             <div className="space-y-6">
-                              <StepHeader label="Device Photos (Required)" sub="Upload at least 1 photo so our AI can verify the hardware condition accurately." />
+                              <StepHeader label="Device Photos (Optional)" sub="Add photos to help our AI give a more accurate valuation — you can skip this step." />
 
                               <motion.button
                                 whileHover={{ scale: 1.01 }}
                                 whileTap={{ scale: 0.99 }}
                                 onClick={() => fileInputRef.current?.click()}
                                 disabled={imageUploading}
-                                className="w-full border-2 border-dashed border-zinc-300 hover:border-zinc-950 rounded-2xl p-8 flex flex-col items-center gap-3 transition-all bg-zinc-50 hover:bg-white group disabled:opacity-60 disabled:pointer-events-none"
+                                className="w-full border-2 border-dashed border-zinc-300 dark:border-zinc-800 hover:border-zinc-950 dark:hover:border-white rounded-2xl p-8 flex flex-col items-center gap-3 transition-all bg-zinc-50 dark:bg-zinc-900 hover:bg-white dark:hover:bg-zinc-950 group disabled:opacity-60 disabled:pointer-events-none"
                               >
-                                <div className="h-12 w-12 rounded-xl bg-white border border-zinc-200 shadow-sm flex items-center justify-center group-hover:bg-zinc-950 group-hover:border-zinc-950 transition-all">
+                                <div className="h-12 w-12 rounded-xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 shadow-sm flex items-center justify-center group-hover:bg-zinc-950 dark:group-hover:bg-white group-hover:border-zinc-950 dark:group-hover:border-white transition-all">
                                   {imageUploading ? (
-                                    <div className="h-5 w-5 border-2 border-zinc-300 border-t-zinc-700 rounded-full animate-spin" />
+                                    <div className="h-5 w-5 border-2 border-zinc-300 dark:border-zinc-700 border-t-zinc-700 dark:border-t-zinc-200 rounded-full animate-spin" />
                                   ) : (
-                                    <Upload className="h-5 w-5 text-zinc-400 group-hover:text-white transition-colors" />
+                                    <Upload className="h-5 w-5 text-zinc-400 dark:text-zinc-500 group-hover:text-white dark:group-hover:text-zinc-950 transition-colors" />
                                   )}
                                 </div>
                                 <div className="text-center">
-                                  <p className="text-xs font-black text-zinc-800">{imageUploading ? "Uploading…" : "Tap to upload photos"}</p>
-                                  <p className="text-[10px] text-zinc-400 font-bold mt-1">JPEG or PNG · max 6 photos · min 1 required</p>
+                                  <p className="text-xs font-black text-zinc-800 dark:text-zinc-200">{imageUploading ? "Uploading…" : "Tap to upload photos"}</p>
+                                  <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-bold mt-1">JPEG or PNG · up to 6 photos · optional</p>
                                 </div>
                               </motion.button>
 
                               {images.length > 0 && (
                                 <div className="grid grid-cols-3 gap-2">
                                   {images.map((img, i) => (
-                                    <div key={i} className="relative aspect-square rounded-xl overflow-hidden border border-zinc-200 group">
+                                    <div key={i} className="relative aspect-square rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800 group">
                                       <img src={img.previewUrl} alt={`Preview ${i + 1}`} className="w-full h-full object-cover" />
                                       <button
                                         onClick={() => setImages(prev => prev.filter((_, idx) => idx !== i))}
@@ -1590,7 +1626,7 @@ export default function TradeInPage() {
                                     <button
                                       onClick={() => fileInputRef.current?.click()}
                                       disabled={imageUploading}
-                                      className="aspect-square rounded-xl border-2 border-dashed border-zinc-200 hover:border-zinc-950 bg-zinc-50 flex items-center justify-center transition-colors text-zinc-400 hover:text-zinc-900 disabled:opacity-50"
+                                      className="aspect-square rounded-xl border-2 border-dashed border-zinc-200 dark:border-zinc-800 hover:border-zinc-950 dark:hover:border-white bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center transition-colors text-zinc-400 hover:text-zinc-900 dark:hover:text-white disabled:opacity-50"
                                     >
                                       <Plus className="h-5 w-5" />
                                     </button>
@@ -1599,14 +1635,14 @@ export default function TradeInPage() {
                               )}
                             </div>
 
-                            <div className="pt-6 border-t border-zinc-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
+                            <div className="pt-6 border-t border-zinc-100 dark:border-zinc-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
                               <button
                                 onClick={fetchAiPrice}
-                                disabled={images.length === 0 || imageUploading}
-                                className="w-full sm:w-auto h-12 px-8 bg-zinc-950 text-white hover:bg-zinc-800 disabled:opacity-50 disabled:pointer-events-none rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 shadow-lg shrink-0"
+                                disabled={imageUploading}
+                                className="w-full sm:w-auto h-12 px-8 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:opacity-50 disabled:pointer-events-none rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 shadow-lg shrink-0"
                               >
-                                <Sparkles className="h-4 w-4 fill-white shrink-0" />
-                                <span className="whitespace-nowrap">Calculate Cash Offer</span>
+                                <Sparkles className="h-4 w-4 fill-white dark:fill-zinc-950 shrink-0" />
+                                <span className="whitespace-nowrap">Get My Cash Offer</span>
                               </button>
                             </div>
                           </div>
@@ -1617,50 +1653,50 @@ export default function TradeInPage() {
                           <div className="space-y-6 flex-1 flex flex-col justify-between animate-fade-in">
                             <div className="text-center space-y-4">
                               <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 text-emerald-700 border border-emerald-500/25 px-3 py-1 text-[10px] font-black uppercase tracking-wider mb-2">
-                                <Zap className="h-3.5 w-3.5 fill-emerald-600 text-emerald-600" />
+                                <Zap className="h-3.5 w-3.5 fill-emerald-600 text-emerald-600 dark:text-emerald-400" />
                                 Instant Offer Generated
                               </div>
 
-                              <div className="bg-linear-to-b from-emerald-500/5 to-emerald-500/10 border border-emerald-500/20 rounded-3xl p-8 relative overflow-hidden max-w-sm mx-auto shadow-sm">
+                              <div className="bg-gradient-to-b from-emerald-500/5 to-emerald-500/10 border border-emerald-500/20 rounded-3xl p-8 relative overflow-hidden max-w-sm mx-auto shadow-sm">
                                 <div className="absolute -top-12 -right-12 w-24 h-24 bg-emerald-400/25 rounded-full blur-2xl pointer-events-none" />
                                 <div className="absolute -bottom-12 -left-12 w-24 h-24 bg-emerald-400/25 rounded-full blur-2xl pointer-events-none" />
-                                <div className="text-[10px] font-black uppercase tracking-widest text-emerald-700 relative z-10">Guaranteed Offer</div>
-                                <div className="text-6xl font-black font-mono text-zinc-950 my-2 relative z-10">
+                                <div className="text-[10px] font-black uppercase tracking-widest text-emerald-700 dark:text-emerald-400 relative z-10">Guaranteed Offer</div>
+                                <div className="text-6xl font-black font-mono text-zinc-950 dark:text-white my-2 relative z-10">
                                   <AnimatedPrice value={aiPrice} />
                                 </div>
-                                <div className="text-[10px] font-bold text-emerald-600 flex items-center justify-center gap-1 relative z-10">
+                                <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1 relative z-10">
                                   <Clock className="h-3.5 w-3.5" /> Price locked for 14 days
                                 </div>
                               </div>
 
                               {/* Price adjustment breakdown details */}
-                              <div className="max-w-md mx-auto bg-zinc-50 border border-zinc-200 rounded-2xl p-5 text-left space-y-3">
+                              <div className="max-w-md mx-auto bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-5 text-left space-y-3">
                                 <div className="flex justify-between items-center text-xs">
                                   <span className="font-extrabold text-zinc-400 uppercase tracking-wide">Device Model</span>
-                                  <span className="font-black text-zinc-900">{state.model}</span>
+                                  <span className="font-black text-zinc-900 dark:text-zinc-100">{state.model}</span>
                                 </div>
-                                <div className="h-px bg-zinc-200/60" />
+                                <div className="h-px bg-zinc-200/60 dark:bg-zinc-800" />
                                 <div className="flex justify-between items-center text-xs">
                                   <span className="font-extrabold text-zinc-400 uppercase tracking-wide">Specs selected</span>
-                                  <span className="font-black text-zinc-900">
+                                  <span className="font-black text-zinc-900 dark:text-zinc-100">
                                     {Object.entries(state.specs).map(([lbl, val]) => `${val}`).join(" · ")}
                                   </span>
                                 </div>
-                                <div className="h-px bg-zinc-200/60" />
+                                <div className="h-px bg-zinc-200/60 dark:bg-zinc-800" />
                                 <div className="flex justify-between items-center text-xs">
                                   <span className="font-extrabold text-zinc-400 uppercase tracking-wide">Grade</span>
-                                  <span className="font-black text-zinc-900">{state.condition}</span>
+                                  <span className="font-black text-zinc-900 dark:text-zinc-100">{state.condition}</span>
                                 </div>
                                 {Object.entries(state.answers).some(([k, v]) => v.toLowerCase().includes("crack") || v.toLowerCase().includes("faulty") || v.toLowerCase().includes("issue") || v.toLowerCase().includes("no")) && (
                                   <>
-                                    <div className="h-px bg-zinc-200/60" />
+                                    <div className="h-px bg-zinc-200/60 dark:bg-zinc-800" />
                                     <div className="space-y-1.5">
                                       <span className="text-[10px] font-black uppercase tracking-widest text-red-500 block">Condition Adjustments</span>
                                       <div className="flex flex-wrap gap-1.5">
                                         {Object.entries(state.answers).map(([qid, ans]) => {
                                           if (ans.toLowerCase().includes("crack") || ans.toLowerCase().includes("faulty") || ans.toLowerCase().includes("issue") || ans.toLowerCase().includes("no")) {
                                             return (
-                                              <span key={qid} className="inline-block bg-red-50 border border-red-100 text-red-600 font-bold text-[9px] px-2 py-0.5 rounded-md">
+                                              <span key={qid} className="inline-block bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30 text-red-650 dark:text-red-400 font-bold text-[9px] px-2 py-0.5 rounded-md">
                                                 {ans}
                                               </span>
                                             );
@@ -1674,16 +1710,16 @@ export default function TradeInPage() {
                               </div>
                             </div>
 
-                            <div className="pt-6 border-t border-zinc-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
+                            <div className="pt-6 border-t border-zinc-100 dark:border-zinc-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
                               <button
                                 onClick={() => { setAiPrice(null); setAiError(false); setImages([]); setBatchId(crypto.randomUUID()); }}
-                                className="w-full sm:w-auto h-12 px-6 border border-zinc-200 rounded-xl font-bold text-xs text-zinc-600 hover:border-zinc-950 hover:text-zinc-950 transition-colors flex items-center justify-center shrink-0"
+                                className="w-full sm:w-auto h-12 px-6 border border-zinc-200 dark:border-zinc-800 rounded-xl font-bold text-xs text-zinc-600 dark:text-zinc-400 hover:border-zinc-950 dark:hover:border-white hover:text-zinc-950 dark:hover:text-white transition-colors flex items-center justify-center shrink-0"
                               >
                                 <span className="whitespace-nowrap">Recalculate</span>
                               </button>
                               <button
                                 onClick={() => goToPhase(5)}
-                                className="w-full sm:w-auto h-12 px-8 bg-zinc-950 text-white hover:bg-zinc-800 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 shadow-lg shrink-0"
+                                className="w-full sm:w-auto h-12 px-8 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-200 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 shadow-lg shrink-0"
                               >
                                 <span className="whitespace-nowrap">Accept Cash Offer</span>
                                 <ArrowRight className="h-4 w-4 shrink-0" />
@@ -1766,18 +1802,18 @@ export default function TradeInPage() {
                                         onClick={() => setState(s => ({ ...s, fulfillment: m.id }))}
                                         className={`p-5 rounded-2xl border text-left transition-all flex items-start gap-4 ${
                                           isSelected
-                                            ? "border-zinc-950 bg-zinc-950 text-white shadow-md"
-                                            : "border-zinc-200 bg-white hover:border-zinc-400 text-zinc-800 hover:bg-zinc-50"
+                                            ? "border-zinc-950 bg-zinc-950 text-white shadow-md dark:border-white dark:bg-white dark:text-zinc-950"
+                                            : "border-zinc-200 bg-white hover:border-zinc-400 text-zinc-800 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-white"
                                         }`}
                                       >
-                                        <div className={`h-11 w-11 rounded-xl flex items-center justify-center border shrink-0 ${isSelected ? "bg-white/10 border-white/20 text-white" : "bg-zinc-50 border-zinc-200 text-zinc-600"}`}>
+                                        <div className={`h-11 w-11 rounded-xl flex items-center justify-center border shrink-0 ${isSelected ? "bg-white/10 border-white/20 text-white dark:bg-zinc-950/20 dark:text-zinc-950 dark:border-zinc-950" : "bg-zinc-50 border-zinc-200 text-zinc-600 dark:bg-zinc-950 dark:border-zinc-800 dark:text-zinc-400"}`}>
                                           <Icon className="h-5 w-5" strokeWidth={1.6} />
                                         </div>
                                         <div className="space-y-1">
                                           <p className="text-xs font-black">{m.title}</p>
-                                          <p className={`text-[10px] leading-normal ${isSelected ? "text-white/70" : "text-zinc-500"}`}>{m.desc}</p>
+                                          <p className={`text-[10px] leading-normal ${isSelected ? "text-white/70 dark:text-zinc-950/70" : "text-zinc-500 dark:text-zinc-400"}`}>{m.desc}</p>
                                           <span className={`inline-block text-[9px] font-extrabold px-2 py-0.5 rounded-full border mt-2 ${
-                                            isSelected ? "bg-white/10 text-white border-white/20" : "bg-zinc-100 text-zinc-700 border-zinc-200"
+                                            isSelected ? "bg-white/10 text-white border-white/20 dark:bg-zinc-950/30 dark:text-zinc-950 dark:border-zinc-950/30" : "bg-zinc-100 text-zinc-700 border-zinc-200 dark:bg-zinc-950 dark:text-zinc-400 dark:border-zinc-800"
                                           }`}>
                                             {m.badge}
                                           </span>
@@ -1790,7 +1826,7 @@ export default function TradeInPage() {
 
                               {/* Store picker — shown when dropoff is selected */}
                               {state.fulfillment === "dropoff" && (
-                                <div className="space-y-3 pt-4 border-t border-zinc-100 animate-fade-in">
+                                <div className="space-y-3 pt-4 border-t border-zinc-100 dark:border-zinc-800 animate-fade-in">
                                   <span className="text-xs font-black uppercase tracking-widest text-zinc-400 block">Select Your Nearest Store</span>
                                   {storesLoading ? (
                                     <div className="flex items-center gap-2 text-xs text-zinc-400 py-3">
@@ -1810,20 +1846,20 @@ export default function TradeInPage() {
                                             onClick={() => setState(s => ({ ...s, storeId: store.id }))}
                                             className={`p-4 rounded-2xl border text-left transition-all flex items-start gap-3 ${
                                               isSelected
-                                                ? "border-zinc-950 bg-zinc-950 text-white shadow-md"
-                                                : "border-zinc-200 bg-white hover:border-zinc-400 text-zinc-800"
+                                                ? "border-zinc-950 bg-zinc-950 text-white shadow-md dark:border-white dark:bg-white dark:text-zinc-950"
+                                                : "border-zinc-200 bg-white hover:border-zinc-400 text-zinc-800 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-white"
                                             }`}
                                           >
-                                            <div className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 border ${isSelected ? "bg-white/10 border-white/20 text-white" : "bg-zinc-50 border-zinc-200 text-zinc-500"}`}>
+                                            <div className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 border ${isSelected ? "bg-white/10 border-white/20 text-white dark:bg-zinc-950/20 dark:text-zinc-950" : "bg-zinc-50 border-zinc-200 text-zinc-500 dark:bg-zinc-950 dark:border-zinc-800 dark:text-zinc-400"}`}>
                                               <MapPin className="h-4 w-4" strokeWidth={1.8} />
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                              <p className="text-xs font-black leading-tight">{store.name}</p>
-                                              <p className={`text-[11px] mt-0.5 ${isSelected ? "text-white/70" : "text-zinc-500"}`}>{store.address}, {store.city}, {store.postcode}</p>
-                                              {store.phone && <p className={`text-[11px] mt-0.5 ${isSelected ? "text-white/60" : "text-zinc-400"}`}>{store.phone}</p>}
-                                              {store.openingHours && <p className={`text-[11px] mt-0.5 ${isSelected ? "text-white/60" : "text-zinc-400"}`}>{store.openingHours}</p>}
+                                              <p className={`text-xs font-black leading-tight ${isSelected ? "text-white dark:text-zinc-950" : "text-zinc-900 dark:text-zinc-100"}`}>{store.name}</p>
+                                              <p className={`text-[11px] mt-0.5 ${isSelected ? "text-white/70 dark:text-zinc-950/70" : "text-zinc-500 dark:text-zinc-400"}`}>{store.address}, {store.city}, {store.postcode}</p>
+                                              {store.phone && <p className={`text-[11px] mt-0.5 ${isSelected ? "text-white/60 dark:text-zinc-950/60" : "text-zinc-400 dark:text-zinc-500"}`}>{store.phone}</p>}
+                                              {store.openingHours && <p className={`text-[11px] mt-0.5 ${isSelected ? "text-white/60 dark:text-zinc-950/60" : "text-zinc-400 dark:text-zinc-500"}`}>{store.openingHours}</p>}
                                             </div>
-                                            {isSelected && <Check className="h-4 w-4 text-white shrink-0 mt-0.5" />}
+                                            {isSelected && <Check className="h-4 w-4 text-white dark:text-zinc-950 shrink-0 mt-0.5" />}
                                           </button>
                                         );
                                       })}
@@ -1834,17 +1870,17 @@ export default function TradeInPage() {
 
                               {/* Contact Form Details */}
                               {state.fulfillment && (
-                                <div className="space-y-4 pt-4 border-t border-zinc-100 animate-fade-in">
+                                <div className="space-y-4 pt-4 border-t border-zinc-100 dark:border-zinc-800 animate-fade-in">
                                   <span className="text-xs font-black uppercase tracking-widest text-zinc-400 block">Personal Details</span>
 
                                   {user ? (
-                                    <div className="flex items-center gap-2.5 bg-emerald-50 border border-emerald-200 rounded-2xl px-4 py-3">
-                                      <div className="h-8 w-8 rounded-full bg-emerald-100 border border-emerald-200 flex items-center justify-center font-black text-xs text-emerald-700 shrink-0">
+                                    <div className="flex items-center gap-2.5 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/30 rounded-2xl px-4 py-3">
+                                      <div className="h-8 w-8 rounded-full bg-emerald-100 dark:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-900/30 flex items-center justify-center font-black text-xs text-emerald-700 dark:text-emerald-400 shrink-0">
                                         {user.name[0]}
                                       </div>
                                       <div className="flex-1 min-w-0">
-                                        <p className="text-xs font-black text-emerald-900 truncate">{user.name}</p>
-                                        <p className="text-[10px] font-bold text-emerald-600">Details filled from your account</p>
+                                        <p className="text-xs font-black text-emerald-900 dark:text-emerald-400 truncate">{user.name}</p>
+                                        <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-555">Details filled from your account</p>
                                       </div>
                                     </div>
                                   ) : (
@@ -1852,15 +1888,15 @@ export default function TradeInPage() {
                                       <a
                                         href={`${API_URL}/auth/google`}
                                         onClick={() => { /* auto-save handles sessionStorage */ }}
-                                        className="w-full h-12 bg-white border-2 border-zinc-200 rounded-2xl font-bold transition-all hover:scale-[1.02] hover:border-zinc-400 active:scale-[0.98] flex items-center justify-center gap-3 text-sm text-zinc-700 shadow-sm"
+                                        className="w-full h-12 bg-white dark:bg-zinc-900 border-2 border-zinc-200 dark:border-zinc-800 rounded-2xl font-bold transition-all hover:scale-[1.02] hover:border-zinc-400 active:scale-[0.98] flex items-center justify-center gap-3 text-sm text-zinc-700 dark:text-zinc-300 shadow-sm"
                                       >
                                         <GoogleIcon />
                                         Continue with Google
                                       </a>
                                       <div className="flex items-center gap-3">
-                                        <div className="flex-1 h-px bg-zinc-200" />
+                                        <div className="flex-1 h-px bg-zinc-200 dark:bg-zinc-800" />
                                         <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">or fill manually</span>
-                                        <div className="flex-1 h-px bg-zinc-200" />
+                                        <div className="flex-1 h-px bg-zinc-200 dark:bg-zinc-800" />
                                       </div>
                                     </div>
                                   )}
@@ -1881,7 +1917,7 @@ export default function TradeInPage() {
                                       <div className="grid gap-4 sm:grid-cols-2">
                                         {visibleFields.map((inp) => (
                                           <div key={inp.key} className={inp.span ? "sm:col-span-2" : ""}>
-                                            <label className="text-xs font-bold text-zinc-700 block mb-1.5">{inp.label}</label>
+                                            <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 block mb-1.5">{inp.label}</label>
                                             <input
                                               type={inp.type}
                                               required
@@ -1891,7 +1927,7 @@ export default function TradeInPage() {
                                                 ...s,
                                                 contact: { ...s.contact, [inp.key]: e.target.value }
                                               }))}
-                                              className="h-12 w-full rounded-xl border border-zinc-300 px-4 text-xs font-semibold outline-none focus:border-accent transition-colors"
+                                              className="h-12 w-full rounded-xl border border-zinc-300 dark:border-zinc-800 px-4 text-xs font-semibold outline-none focus:border-accent transition-colors bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white"
                                             />
                                           </div>
                                         ))}
@@ -1902,42 +1938,42 @@ export default function TradeInPage() {
                               )}
 
                               {submitError && (
-                                <p className="text-xs font-bold text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3">{submitError}</p>
+                                <p className="text-xs font-bold text-red-600 bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30 rounded-xl px-4 py-3">{submitError}</p>
                               )}
                             </div>
 
                             {/* Right Column: Sticky Summary Card */}
                             <div className="lg:col-span-1 lg:sticky lg:top-6 space-y-4">
-                              <div className="bg-zinc-50 border border-zinc-200 rounded-2xl p-5 text-left space-y-4 shadow-sm">
+                              <div className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-5 text-left space-y-4 shadow-sm">
                                 <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400 block">Trade-In Summary</span>
                                 
                                 <div className="space-y-1">
                                   <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-wide block">Device</span>
-                                  <p className="text-sm font-black text-zinc-900">{state.brand} {state.model}</p>
-                                  <span className="inline-block bg-zinc-200/60 text-zinc-700 font-bold text-[9px] px-2 py-0.5 rounded-md mt-0.5">
+                                  <p className="text-sm font-black text-zinc-900 dark:text-zinc-100">{state.brand} {state.model}</p>
+                                  <span className="inline-block bg-zinc-200/60 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-bold text-[9px] px-2 py-0.5 rounded-md mt-0.5">
                                     {state.category}
                                   </span>
                                 </div>
 
-                                <div className="h-px bg-zinc-200/60" />
+                                <div className="h-px bg-zinc-200/60 dark:bg-zinc-800" />
 
                                 <div className="space-y-1">
                                   <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-wide block">Specifications</span>
                                   <div className="flex flex-wrap gap-1 mt-1">
                                     {Object.entries(state.specs).map(([lbl, val]) => (
-                                      <span key={lbl} className="bg-white border border-zinc-200 text-zinc-800 text-[10px] font-bold px-2 py-0.5 rounded-md">
+                                      <span key={lbl} className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-805 text-zinc-800 dark:text-zinc-300 text-[10px] font-bold px-2 py-0.5 rounded-md">
                                         {val}
                                       </span>
                                     ))}
                                   </div>
                                 </div>
 
-                                <div className="h-px bg-zinc-200/60" />
+                                <div className="h-px bg-zinc-200/60 dark:bg-zinc-800" />
 
                                 <div className="space-y-1">
                                   <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-wide block">Condition Grade</span>
-                                  <p className="text-xs font-black text-emerald-700 flex items-center gap-1">
-                                    <span className="inline-block bg-emerald-50 border border-emerald-100 text-emerald-700 font-bold text-[10px] px-2 py-0.5 rounded-md">
+                                  <p className="text-xs font-black text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
+                                    <span className="inline-block bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-bold text-[10px] px-2 py-0.5 rounded-md">
                                       Grade {state.condition}
                                     </span>
                                   </p>
@@ -1948,7 +1984,7 @@ export default function TradeInPage() {
                                         {Object.entries(state.answers).map(([qid, ans]) => {
                                           if (ans.toLowerCase().includes("crack") || ans.toLowerCase().includes("faulty") || ans.toLowerCase().includes("issue") || ans.toLowerCase().includes("no")) {
                                             return (
-                                              <span key={qid} className="inline-block bg-red-50 border border-red-100 text-red-600 font-bold text-[9px] px-2 py-0.5 rounded-md">
+                                              <span key={qid} className="inline-block bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30 text-red-600 dark:text-red-400 font-bold text-[9px] px-2 py-0.5 rounded-md">
                                                 {ans}
                                               </span>
                                             );
@@ -1962,17 +1998,17 @@ export default function TradeInPage() {
 
                                 {state.fulfillment && (
                                   <>
-                                    <div className="h-px bg-zinc-200/60" />
+                                    <div className="h-px bg-zinc-200/60 dark:bg-zinc-800" />
                                     <div className="space-y-1">
                                       <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-wide block">Fulfillment Method</span>
-                                      <p className="text-xs font-bold text-zinc-900 flex items-center gap-1.5 mt-1">
+                                      <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5 mt-1">
                                         {state.fulfillment === "ship" ? (
                                           <>
-                                            <Truck className="h-4 w-4 text-zinc-500" /> Free Insured Shipping
+                                            <Truck className="h-4 w-4 text-zinc-500 dark:text-zinc-400" /> Free Insured Shipping
                                           </>
                                         ) : (
                                           <>
-                                            <MapPin className="h-4 w-4 text-zinc-500" /> Store Drop off (Leicester)
+                                            <MapPin className="h-4 w-4 text-zinc-500 dark:text-zinc-400" /> Store Drop off (Leicester)
                                           </>
                                         )}
                                       </p>
@@ -1980,12 +2016,12 @@ export default function TradeInPage() {
                                   </>
                                 )}
 
-                                <div className="h-px bg-zinc-200/60" />
+                                <div className="h-px bg-zinc-200/60 dark:bg-zinc-800" />
 
-                                <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3.5 text-center">
-                                  <span className="text-[9px] font-black uppercase tracking-widest text-emerald-800 block">Total Offer Value</span>
-                                  <p className="text-3xl font-black font-mono text-emerald-950 mt-1">£{aiPrice}</p>
-                                  <div className="text-[9px] font-bold text-emerald-600 flex items-center justify-center gap-1 mt-1">
+                                <div className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 rounded-xl p-3.5 text-center">
+                                  <span className="text-[9px] font-black uppercase tracking-widest text-emerald-800 dark:text-emerald-400 block">Total Offer Value</span>
+                                  <p className="text-3xl font-black font-mono text-emerald-950 dark:text-emerald-400 mt-1">£{aiPrice}</p>
+                                  <div className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1 mt-1">
                                     <Clock className="h-3 w-3" /> Locked for 14 days
                                   </div>
                                 </div>
@@ -1993,13 +2029,13 @@ export default function TradeInPage() {
                             </div>
                           </div>
 
-                          <div className="pt-6 border-t border-zinc-100 flex flex-col sm:flex-row sm:justify-end">
+                          <div className="pt-6 border-t border-zinc-100 dark:border-zinc-800 flex flex-col sm:flex-row sm:justify-end">
                             <motion.button
                               whileHover={{ y: -2 }}
                               whileTap={{ scale: 0.98 }}
                               type="submit"
                               disabled={submitting || !state.fulfillment || (state.fulfillment === "dropoff" && !state.storeId)}
-                              className="w-full sm:w-auto h-12 px-8 bg-zinc-950 text-white hover:bg-zinc-800 disabled:opacity-50 disabled:pointer-events-none rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 shadow-lg shrink-0"
+                              className="w-full sm:w-auto h-12 px-8 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:opacity-50 disabled:pointer-events-none rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 shadow-lg shrink-0"
                             >
                               {submitting ? (
                                 <span className="whitespace-nowrap">Submitting Trade-In...</span>
@@ -2015,20 +2051,20 @@ export default function TradeInPage() {
                           {/* Missing profile details modal */}
                           {missingDetailsOpen && (
                             <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-                              <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setMissingDetailsOpen(false)} />
-                              <div className="relative bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full space-y-4">
+                              <div className="absolute inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm" onClick={() => setMissingDetailsOpen(false)} />
+                              <div className="relative bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl p-6 max-w-sm w-full space-y-4">
                                 <div className="flex items-start justify-between">
                                   <div>
-                                    <h3 className="text-base font-black text-zinc-950">Complete your profile first</h3>
-                                    <p className="text-xs text-zinc-500 font-medium mt-1">We need a few more details before you can submit.</p>
+                                    <h3 className="text-base font-black text-zinc-950 dark:text-white">Complete your profile first</h3>
+                                    <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-1">We need a few more details before you can submit.</p>
                                   </div>
-                                  <button onClick={() => setMissingDetailsOpen(false)} className="text-zinc-400 hover:text-zinc-700 transition-colors ml-4 mt-0.5">
+                                  <button onClick={() => setMissingDetailsOpen(false)} className="text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-white transition-colors ml-4 mt-0.5">
                                     <X className="h-4 w-4" />
                                   </button>
                                 </div>
                                 <ul className="space-y-2">
                                   {missingFields.map(f => (
-                                    <li key={f} className="flex items-center gap-2 text-sm font-semibold text-zinc-700">
+                                    <li key={f} className="flex items-center gap-2 text-sm font-semibold text-zinc-700 dark:text-zinc-300">
                                       <span className="h-1.5 w-1.5 rounded-full bg-red-500 shrink-0" />
                                       {f} is missing
                                     </li>
@@ -2039,7 +2075,7 @@ export default function TradeInPage() {
                                     setMissingDetailsOpen(false);
                                     router.push("/account/settings");
                                   }}
-                                  className="w-full h-11 bg-black text-white rounded-xl text-sm font-black hover:bg-zinc-800 transition-colors"
+                                  className="w-full h-11 bg-black dark:bg-white text-white dark:text-zinc-950 rounded-xl text-sm font-black hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors"
                                 >
                                   Go to Account Settings →
                                 </button>
@@ -2064,18 +2100,18 @@ export default function TradeInPage() {
                           </motion.div>
 
                           <div className="space-y-2">
-                            <h2 className="font-sans text-3xl font-extrabold tracking-tight text-zinc-950">Valuation Confirmed!</h2>
+                            <h2 className="font-sans text-3xl font-extrabold tracking-tight text-zinc-950 dark:text-white">Valuation Confirmed!</h2>
                             <p className="text-xs font-semibold text-zinc-400 uppercase tracking-widest">
-                              Reference ID: <strong className="text-zinc-800 font-mono font-black">{submitRef}</strong>
+                              Reference ID: <strong className="text-zinc-800 dark:text-zinc-200 font-mono font-black">{submitRef}</strong>
                             </p>
-                            <p className="text-sm font-semibold text-zinc-500 max-w-md mx-auto leading-relaxed pt-2">
-                              Your device is registered for buyback. We have locked in a trade offer value of <strong className="text-zinc-950 font-black">£{serverOfferPrice ?? aiPrice}</strong>.
+                            <p className="text-sm font-semibold text-zinc-500 dark:text-zinc-400 max-w-md mx-auto leading-relaxed pt-2">
+                              Your device is registered for buyback. We have locked in a trade offer value of <strong className="text-zinc-950 dark:text-white font-black">£{serverOfferPrice ?? aiPrice}</strong>.
                             </p>
                           </div>
 
                           {/* Interactive Vertical Roadmap Steps */}
-                          <div className="max-w-md mx-auto bg-zinc-50 border border-zinc-200/80 rounded-2xl overflow-hidden text-left">
-                            <div className="px-5 py-3 border-b border-zinc-200 bg-zinc-100/50 flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-zinc-500">
+                          <div className="max-w-md mx-auto bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 rounded-2xl overflow-hidden text-left">
+                            <div className="px-5 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-100/50 dark:bg-zinc-950/50 flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-zinc-500">
                               <span>Your Checklist</span>
                               {state.fulfillment === "ship" ? <Truck className="h-4 w-4" /> : <MapPin className="h-4 w-4" />}
                             </div>
@@ -2090,12 +2126,12 @@ export default function TradeInPage() {
                                 { step: "3", title: "Instant Bank / Cash payout", desc: "Collect your payment immediately after inspection." },
                               ]).map((item) => (
                                 <div key={item.step} className="flex gap-4">
-                                  <div className="h-8 w-8 rounded-lg bg-zinc-950 text-white font-mono font-black flex items-center justify-center shrink-0 text-xs shadow-sm">
+                                  <div className="h-8 w-8 rounded-lg bg-zinc-950 dark:bg-zinc-800 text-white dark:text-zinc-200 font-mono font-black flex items-center justify-center shrink-0 text-xs shadow-sm">
                                     {item.step}
                                   </div>
                                   <div>
-                                    <p className="text-xs font-black text-zinc-900">{item.title}</p>
-                                    <p className="text-[10px] font-bold text-zinc-400 leading-relaxed mt-0.5">{item.desc}</p>
+                                    <p className="text-xs font-black text-zinc-900 dark:text-zinc-100">{item.title}</p>
+                                    <p className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 leading-relaxed mt-0.5">{item.desc}</p>
                                   </div>
                                 </div>
                               ))}
@@ -2107,7 +2143,7 @@ export default function TradeInPage() {
                         <div className="pt-6 border-t border-zinc-100 flex items-center justify-center">
                           <button
                             onClick={() => { closeWizard(); setPhase(1); setImages([]); setAiPrice(null); setBatchId(crypto.randomUUID()); }}
-                            className="h-12 w-full max-w-xs bg-zinc-950 text-white hover:bg-zinc-800 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 shadow-lg"
+                            className="h-12 w-full max-w-xs bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-200 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 shadow-lg"
                           >
                             Return to Homepage <ArrowRight className="h-4 w-4" />
                           </button>
