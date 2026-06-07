@@ -113,7 +113,7 @@ export interface SeedResult {
     banners: number;
     promoSlides: number;
     deviceCatalog: number;
-    others: number;
+    others: { created: number; updated: number; errors: string[] };
     categories: number;
     brands: number;
     brandCategories: number;
