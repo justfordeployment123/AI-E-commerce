@@ -108,7 +108,7 @@ export class ScraperService implements OnApplicationBootstrap {
         });
         this.logger.log(`Found ${devices.length} active devices in catalog.`);
 
-        const searchItems: { brand: string; model: string; storage: string; fullName: string }[] = [];
+        const searchItems: { brand: string; model: string; storage: string; fullName: string; cexOnly?: boolean }[] = [];
         for (const dev of devices) {
             const brandName = dev.brandCategory.brand.name;
             const options = dev.storageOptions?.length ? dev.storageOptions : [''];
@@ -121,6 +121,28 @@ export class ScraperService implements OnApplicationBootstrap {
                 });
             }
         }
+
+        // Also scrape active "other" products (accessories, games, cables, etc.) — CeX only
+        const otherProducts = await this.prisma.product.findMany({
+            where:   { otherBrandId: { not: null }, isActive: true },
+            include: { otherBrand: true },
+            orderBy: { name: 'asc' },
+        });
+        const seenOthers = new Set<string>();
+        for (const p of otherProducts) {
+            const brandName = p.otherBrand!.name;
+            const key = `${brandName}|||${p.name}`;
+            if (seenOthers.has(key)) continue;
+            seenOthers.add(key);
+            searchItems.push({
+                brand:    brandName,
+                model:    p.name,
+                storage:  '',
+                fullName: `${brandName} ${p.name}`,
+                cexOnly:  true,
+            });
+        }
+        if (seenOthers.size > 0) this.logger.log(`Added ${seenOthers.size} other products to scrape queue.`);
 
         // Skip devices already completed in the interrupted run (resume support)
         const filteredItems = skipKeys && skipKeys.size > 0
@@ -168,9 +190,10 @@ export class ScraperService implements OnApplicationBootstrap {
         const p = (v: number | null) => v ? `£${v}` : '--';
         const SEP = '-'.repeat(80);
 
+        const othersCount = itemsToScrape.filter(i => i.cexOnly).length;
         console.log(`\n${SEP}`);
         console.log(`  SCRAPER RUN STARTED`);
-        console.log(`  Devices : ${total}${isResume ? `  (resume — ${skipKeys!.size} already done, skipped)` : ''}`);
+        console.log(`  Devices : ${total - othersCount} catalog variants + ${othersCount} other products = ${total} total${isResume ? `  (resume — ${skipKeys!.size} skipped)` : ''}`);
         console.log(`  Started : ${ts()}`);
         console.log(`${SEP}\n`);
 
@@ -199,11 +222,12 @@ export class ScraperService implements OnApplicationBootstrap {
                 }
                 await this.delay(500);
                 const ref = cex?.sellPrice ?? undefined;
-                const backMarket  = await this.scrapeBackMarket(context, item.fullName, item.storage, ref);
+                const SKIP: JinaResult = { price: null, reason: 'not-found' };
+                const backMarket  = item.cexOnly ? SKIP : await this.scrapeBackMarket(context, item.fullName, item.storage, ref);
                 await this.delay(500);
-                const musicMagpie = await this.scrapeMusicMagpie(context, item.fullName, item.storage, ref);
+                const musicMagpie = item.cexOnly ? SKIP : await this.scrapeMusicMagpie(context, item.fullName, item.storage, ref);
                 await this.delay(500);
-                const envirofone  = await this.scrapeEnvirofone(item.brand, item.model, item.storage, ref);
+                const envirofone  = item.cexOnly ? SKIP : await this.scrapeEnvirofone(item.brand, item.model, item.storage, ref);
 
                 results[item.fullName] = { cex, backMarket, musicMagpie, envirofone };
                 const marketPrice = cex?.sellPrice ?? backMarket.price ?? musicMagpie.price ?? envirofone.price ?? null;

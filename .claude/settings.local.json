@@ -109,7 +109,8 @@
       "Bash(npx jest *)",
       "mcp__playwright__browser_fill_form",
       "mcp__playwright__browser_click",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(xargs grep -l \"seed\\\\|Seed\\\\|scraper\\\\|Scraper\")"
     ],
     "additionalDirectories": [
       "d:\\CODE\\Projects\\Markhor Systems Projects\\Ai-Ecommerce\\apps\\web\\app\\account\\repairs",

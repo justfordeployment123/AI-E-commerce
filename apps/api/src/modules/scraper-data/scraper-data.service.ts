@@ -61,26 +61,46 @@ export class ScraperDataService {
         const running = runs.find(r => r.status === 'RUNNING');
         if (!running) return runs.map(r => ({ ...r, currentProgress: null as number | null, totalVariants: null as number | null }));
 
-        // Count how many ScrapedPrice rows written since this run started (= items done)
-        const currentProgress = await this.prisma.scrapedPrice.count({
-            where: { scrapedAt: { gte: running.startedAt } },
-        });
-
-        // Count total variants the scraper will process = sum of storageOptions per active device
-        // (devices with no storage options count as 1 variant)
+        // Count catalog variants (sum of storageOptions per active device)
         const catalogDevices = await this.prisma.deviceCatalog.findMany({
             where:  { isActive: true },
             select: { storageOptions: true },
         });
-        const totalVariants = catalogDevices.reduce(
+        const totalCatalog = catalogDevices.reduce(
             (sum, d) => sum + Math.max((d.storageOptions as string[]).length, 1),
             0,
         );
 
+        // Build the set of "other" deviceKeys (brand + name, same format as scraper)
+        const otherProducts = await this.prisma.product.findMany({
+            where:  { otherBrandId: { not: null }, isActive: true },
+            select: { name: true, otherBrand: { select: { name: true } } },
+        });
+        const otherDeviceKeys = [...new Set(
+            otherProducts.map(p => `${p.otherBrand!.name} ${p.name}`)
+        )];
+        const totalOthers = otherDeviceKeys.length;
+        const totalVariants = totalCatalog + totalOthers;
+
+        // Split progress: rows written since run start, partitioned by type
+        const since = running.startedAt;
+        const [catalogProgress, othersProgress] = await Promise.all([
+            this.prisma.scrapedPrice.count({
+                where: { scrapedAt: { gte: since }, deviceKey: { notIn: otherDeviceKeys } },
+            }),
+            this.prisma.scrapedPrice.count({
+                where: { scrapedAt: { gte: since }, deviceKey: { in: otherDeviceKeys } },
+            }),
+        ]);
+
         return runs.map(r => ({
             ...r,
-            currentProgress: r.id === running.id ? currentProgress : null,
-            totalVariants:   r.id === running.id ? totalVariants   : null,
+            currentProgress:  r.id === running.id ? catalogProgress + othersProgress : null,
+            totalVariants:    r.id === running.id ? totalVariants    : null,
+            totalCatalog:     r.id === running.id ? totalCatalog     : null,
+            totalOthers:      r.id === running.id ? totalOthers      : null,
+            catalogProgress:  r.id === running.id ? catalogProgress  : null,
+            othersProgress:   r.id === running.id ? othersProgress   : null,
         }));
     }
 

@@ -44,6 +44,8 @@ interface PurgeResult {
     scraperRuns: number;
     scrapedPrices: number;
     products: number;
+    otherBrands: number;
+    otherSubcategories: number;
     deviceCatalog: number;
     brandCategories: number;
     categories: number;
@@ -335,6 +337,14 @@ export default function SeedPage() {
                 <div className="flex items-center justify-between px-5 py-2.5">
                   <span className="text-sm text-zinc-500">Products</span>
                   <span className="font-bold text-sm text-red-600">{purgeResult.counts.products}</span>
+                </div>
+                <div className="flex items-center justify-between px-5 py-2.5">
+                  <span className="text-sm text-zinc-500">Other Brands</span>
+                  <span className="font-bold text-sm text-red-600">{purgeResult.counts.otherBrands}</span>
+                </div>
+                <div className="flex items-center justify-between px-5 py-2.5">
+                  <span className="text-sm text-zinc-500">Other Subcategories</span>
+                  <span className="font-bold text-sm text-red-600">{purgeResult.counts.otherSubcategories}</span>
                 </div>
                 <div className="flex items-center justify-between px-5 py-2.5">
                   <span className="text-sm text-zinc-500">Device Catalog Entries</span>

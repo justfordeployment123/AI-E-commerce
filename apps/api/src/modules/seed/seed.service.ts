@@ -207,6 +207,8 @@ export class SeedService {
             scraperRuns: number;
             scrapedPrices: number;
             products: number;
+            otherBrands: number;
+            otherSubcategories: number;
             deviceCatalog: number;
             brandCategories: number;
             categories: number;
@@ -258,6 +260,8 @@ export class SeedService {
         const scraperRuns = await this.prisma.scraperRun.deleteMany({});
         const scrapedPrices = await this.prisma.scrapedPrice.deleteMany({});
         const productsDeleted = await this.prisma.product.deleteMany({});
+        const otherBrandsDeleted = await this.prisma.otherBrand.deleteMany({});
+        const otherSubcategoriesDeleted = await this.prisma.otherSubcategory.deleteMany({});
         const deviceCatalogDeleted = await this.prisma.deviceCatalog.deleteMany({});
         const brandCategoriesDeleted = await this.prisma.brandCategory.deleteMany({});
         const categoriesDeleted = await this.prisma.category.deleteMany({});
@@ -275,6 +279,8 @@ export class SeedService {
                 scraperRuns: scraperRuns.count,
                 scrapedPrices: scrapedPrices.count,
                 products: productsDeleted.count,
+                otherBrands: otherBrandsDeleted.count,
+                otherSubcategories: otherSubcategoriesDeleted.count,
                 deviceCatalog: deviceCatalogDeleted.count,
                 brandCategories: brandCategoriesDeleted.count,
                 categories: categoriesDeleted.count,
@@ -634,22 +640,23 @@ export class SeedService {
                     }
 
                     const productData = {
+                        catalogId:     null,
                         otherBrandId,
                         otherSubcategoryId,
                         name:          item.name,
                         slug:          item.id,
                         condition:     'Pristine',
                         storage:       '',
-                        price:         0,
-                        comparePrice:  null,
+                        price:         typeof item.price === 'number' ? item.price : 0,
+                        comparePrice:  typeof item.comparePrice === 'number' ? item.comparePrice : null,
                         stock:         10,
                         images:        s3ImageKey ? [s3ImageKey] : [],
                         specs:         {},
                         description:   '',
                         rating:        0,
                         reviewCount:   0,
-                        pricingStatus: 'no_data',
-                        isActive:      false,
+                        pricingStatus: 'manual',
+                        isActive:      true,
                     };
 
                     const existing = await this.prisma.product.findUnique({ where: { slug: item.id } });

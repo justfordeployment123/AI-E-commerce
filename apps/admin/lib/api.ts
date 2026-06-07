@@ -225,6 +225,10 @@ export interface ScraperRun {
   errorMessage: string | null;
   currentProgress: number | null;
   totalVariants: number | null;
+  totalCatalog: number | null;
+  totalOthers: number | null;
+  catalogProgress: number | null;
+  othersProgress: number | null;
 }
 
 export interface ScrapedPricesSnapshot {
