@@ -11,22 +11,7 @@ import {
   Award, Info, Camera, X, Send, Loader2, MessageSquare
 } from "lucide-react";
 import Footer from "../../../../components/Footer";
-
-const GRADE_COLORS: Record<string, string> = {
-  Pristine: "border-black bg-black text-white",
-  Excellent: "border-black bg-black text-white",
-  "Very Good": "border-black bg-black text-white",
-  Good: "border-black bg-black text-white",
-  Fair: "border-black bg-black text-white",
-};
-
-const GRADE_DESC: Record<string, string> = {
-  Pristine: "Flawless condition — looks and works like new.",
-  Excellent: "Tiny hairline marks only visible under bright light.",
-  "Very Good": "Light surface scratches, fully functional.",
-  Good: "Visible wear, scratches or minor dents.",
-  Fair: "Heavy wear or cosmetic damage, 100% functional.",
-};
+import { getGradeConfig } from "../../../../lib/grades";
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -283,14 +268,22 @@ export default function ProductDetailPage() {
               {/* Condition badge */}
               <div className="mb-6">
                 <p className="text-xs font-bold uppercase tracking-widest text-zinc-400 mb-2">Condition</p>
-                <span className={`inline-flex items-center px-4 py-2 rounded-full font-bold text-sm border ${GRADE_COLORS[product.condition] ?? "border-zinc-200 bg-zinc-100 text-zinc-900"}`}>
-                  {product.condition}
-                </span>
-                {GRADE_DESC[product.condition] && (
-                  <p className="text-xs text-zinc-500 mt-2 font-medium flex items-center gap-1.5">
-                    <Info className="h-3.5 w-3.5" /> {GRADE_DESC[product.condition]}
-                  </p>
-                )}
+                {(() => {
+                  const grade = getGradeConfig(product.condition ?? '');
+                  return (
+                    <>
+                      <span className={`inline-flex items-center px-4 py-2 rounded-full font-bold text-sm border ${grade.badgeClass}`}>
+                        {grade.label}
+                        {grade.forParts && <span className="ml-1 text-xs font-normal opacity-80">· For Parts</span>}
+                      </span>
+                      {grade.desc && (
+                        <p className="text-xs text-zinc-500 mt-2 font-medium flex items-center gap-1.5">
+                          <Info className="h-3.5 w-3.5" /> {grade.desc}
+                        </p>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
 
               {/* Price */}
