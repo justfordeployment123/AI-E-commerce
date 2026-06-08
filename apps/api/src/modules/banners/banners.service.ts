@@ -78,6 +78,7 @@ export class BannersService {
             bgGlow:      s.bgGlow,
             btnText:     s.btnText,
             btnLink:     s.btnLink,
+            layoutTheme: s.layoutTheme,
         };
     }
 
@@ -99,7 +100,7 @@ export class BannersService {
         titleItalic: string; title: string; subtitle: string; badgeA?: string;
         badgeB?: string; specs?: string[]; themeColor: string; bgGlow: string;
         btnText: string; btnLink: string; order?: number; isActive?: boolean;
-        imageUrl?: string;
+        imageUrl?: string; layoutTheme?: string;
     }) {
         const slide = await this.prisma.promoSlide.create({
             data: {
@@ -119,6 +120,7 @@ export class BannersService {
                 btnLink:     data.btnLink,
                 order:       data.order ?? 0,
                 isActive:    data.isActive ?? true,
+                layoutTheme: data.layoutTheme ?? 'system',
                 imgKey:      data.imageUrl ?? null,
             },
         });
@@ -130,7 +132,7 @@ export class BannersService {
         titleItalic?: string; title?: string; subtitle?: string; badgeA?: string;
         badgeB?: string; specs?: string[]; themeColor?: string; bgGlow?: string;
         btnText?: string; btnLink?: string; order?: number; isActive?: boolean;
-        imageUrl?: string;
+        imageUrl?: string; layoutTheme?: string;
     }) {
         const update: any = { ...data };
         if (data.specs !== undefined) update.specs = data.specs.join(',');

@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAdminAuth } from "../context/auth-context";
 import Sidebar from "./Sidebar";
+import GlobalJobsBadge from "./GlobalJobsBadge";
 
 export default function LayoutShell({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAdminAuth();
@@ -36,6 +37,7 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
     <>
       <Sidebar />
       <div className="flex-1 overflow-auto">{children}</div>
+      <GlobalJobsBadge />
     </>
   );
 }

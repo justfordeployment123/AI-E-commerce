@@ -99,6 +99,21 @@ export default function ProductsPage() {
       .catch(() => {});
   }, []);
 
+  // On mount: resume progress indicator if a pricing job is already running
+  useEffect(() => {
+    productPricingApi.status().then(job => {
+      if (job.running) {
+        setAutoPricing(true);
+        setAutoPriceJob(job);
+        startPricePolling();
+      }
+    }).catch(() => {});
+    return () => {
+      if (autoPriceIntervalRef.current) clearInterval(autoPriceIntervalRef.current);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   async function toggleShowUnpriced() {
     setSavingUnpriced(true);
     const next = !showUnpriced;
@@ -218,36 +233,36 @@ export default function ProductsPage() {
     setDeleteId(null);
   }
 
+  function startPricePolling() {
+    if (autoPriceIntervalRef.current) clearInterval(autoPriceIntervalRef.current);
+    autoPriceIntervalRef.current = setInterval(async () => {
+      try {
+        const job = await productPricingApi.status();
+        setAutoPriceJob(job);
+        if (!job.running) {
+          clearInterval(autoPriceIntervalRef.current!);
+          autoPriceIntervalRef.current = null;
+          setAutoPricing(false);
+          if (job.result) {
+            setAutoPriceResult(job.result);
+            loadProducts();
+            setTimeout(() => { setAutoPriceResult(null); setAutoPriceJob(null); }, 8000);
+          } else if (job.error) {
+            alert(`Auto-pricing failed: ${job.error}`);
+            setAutoPriceJob(null);
+          }
+        }
+      } catch {}
+    }, 4000);
+  }
+
   async function handleAutoPrice() {
     setAutoPricing(true);
     setAutoPriceResult(null);
     setAutoPriceJob(null);
     try {
-      const res = await productPricingApi.run();
-      if (!res.started && res.alreadyRunning) {
-        // Job already running — just start polling
-      }
-      // Poll every 4s until done
-      if (autoPriceIntervalRef.current) clearInterval(autoPriceIntervalRef.current);
-      autoPriceIntervalRef.current = setInterval(async () => {
-        try {
-          const job = await productPricingApi.status();
-          setAutoPriceJob(job);
-          if (!job.running) {
-            clearInterval(autoPriceIntervalRef.current!);
-            autoPriceIntervalRef.current = null;
-            setAutoPricing(false);
-            if (job.result) {
-              setAutoPriceResult(job.result);
-              loadProducts();
-              setTimeout(() => { setAutoPriceResult(null); setAutoPriceJob(null); }, 8000);
-            } else if (job.error) {
-              alert(`Auto-pricing failed: ${job.error}`);
-              setAutoPriceJob(null);
-            }
-          }
-        } catch {}
-      }, 4000);
+      await productPricingApi.run();
+      startPricePolling();
     } catch (e: any) {
       setAutoPricing(false);
       alert(e.message ?? "Auto-pricing failed");
@@ -509,202 +524,73 @@ export default function ProductsPage() {
         )}
       </div>
 
-      {/* Add / Edit Modal */}
+      {/* ── EDIT: right slide-over drawer ── */}
       <AnimatePresence>
-        {showModal && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            onClick={e => { if (e.target === e.currentTarget) { setShowModal(false); setEstimate(null); } }}
-          >
+        {showModal && editProduct && (
+          <>
             <motion.div
-              initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 300, damping: 25 }}
-              className="bg-white rounded-4xl p-8 w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto"
+              key="edit-backdrop"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/20 z-40"
+              onClick={() => { setShowModal(false); setEstimate(null); }}
+            />
+            <motion.div
+              key="edit-panel"
+              initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 28, stiffness: 280 }}
+              className="fixed right-0 top-0 bottom-0 w-[480px] max-w-full bg-white z-50 shadow-2xl flex flex-col"
             >
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold">{editProduct ? "Edit product" : "Add new product"}</h2>
-                <button onClick={() => { setShowModal(false); setEstimate(null); }} className="h-9 w-9 rounded-full hover:bg-zinc-100 flex items-center justify-center transition-colors">
+              {/* Product header — shown instantly, no loading */}
+              <div className="flex items-center gap-4 px-6 py-5 border-b border-zinc-100 shrink-0">
+                {editProduct.images?.[0] ? (
+                  <img src={editProduct.images[0]} alt={editProduct.name}
+                    className="h-14 w-14 rounded-2xl object-cover border border-zinc-100 shrink-0" />
+                ) : (
+                  <div className="h-14 w-14 rounded-2xl bg-zinc-100 flex items-center justify-center shrink-0">
+                    <ImageIcon className="h-5 w-5 text-zinc-300" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-base truncate">{editProduct.name}</p>
+                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                    <span className="text-xs text-zinc-400">{editProduct.brand}</span>
+                    <span className="text-zinc-200">·</span>
+                    <span className="text-xs text-zinc-400 capitalize">{editProduct.category}</span>
+                    {editProduct.storage && <><span className="text-zinc-200">·</span><span className="text-xs text-zinc-400">{editProduct.storage}</span></>}
+                    <span className="text-zinc-200">·</span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      editProduct.pricingStatus === 'auto_priced' ? 'bg-blue-50 text-blue-600' :
+                      editProduct.pricingStatus === 'flagged'     ? 'bg-amber-50 text-amber-600' :
+                      'bg-zinc-100 text-zinc-500'
+                    }`}>{editProduct.pricingStatus ?? 'unpriced'}</span>
+                  </div>
+                  {editProduct.price != null && (
+                    <p className="text-sm font-bold mt-1">
+                      £{editProduct.price}
+                      {editProduct.comparePrice && <span className="text-zinc-300 line-through ml-2 font-normal text-xs">£{editProduct.comparePrice}</span>}
+                    </p>
+                  )}
+                </div>
+                <button
+                  onClick={() => { setShowModal(false); setEstimate(null); }}
+                  className="h-8 w-8 rounded-full hover:bg-zinc-100 flex items-center justify-center shrink-0 transition-colors"
+                >
                   <X className="h-4 w-4" />
                 </button>
               </div>
 
-              <div className="space-y-4">
+              {/* Scrollable form fields */}
+              <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
 
-                {/* ── ADD MODE: Device picker from catalog ──────────────────── */}
-                {!editProduct && (
-                  <div className="flex flex-col gap-1.5" ref={pickerRef}>
-                    <label className="text-xs font-bold uppercase tracking-widest text-zinc-400">
-                      Device <span className="text-zinc-300 font-normal normal-case tracking-normal">(from Device Catalog)</span>
-                    </label>
-                    <div className="relative">
-                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
-                      <input
-                        type="text"
-                        placeholder="Search catalog — e.g. iPhone 15 Pro"
-                        value={deviceQuery}
-                        onChange={e => {
-                          setDeviceQuery(e.target.value);
-                          setPickerOpen(true);
-                          setSelectedDevice(null);
-                          setFormData(f => ({ ...f, brand: "", model: "" }));
-                        }}
-                        onFocus={() => setPickerOpen(true)}
-                        className="h-12 w-full rounded-[0.875rem] border-2 border-zinc-200 pl-10 pr-10 text-sm font-medium outline-none focus:border-black transition-colors"
-                      />
-                      {selectedDevice && (
-                        <Check className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-500 pointer-events-none" />
-                      )}
-                      {!selectedDevice && deviceQuery && (
-                        <button
-                          type="button"
-                          onClick={() => { setDeviceQuery(""); setSelectedDevice(null); setPickerOpen(false); setFormData(f => ({ ...f, brand: "", model: "" })); }}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-300 hover:text-zinc-500"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      )}
-
-                      {/* Dropdown */}
-                      <AnimatePresence>
-                        {pickerOpen && (
-                          <motion.div
-                            initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
-                            transition={{ duration: 0.12 }}
-                            className="absolute z-20 left-0 right-0 top-[calc(100%+4px)] bg-white border border-zinc-200 rounded-2xl shadow-xl overflow-hidden"
-                          >
-                            {filteredCatalog.length === 0 ? (
-                              <div className="px-4 py-5 text-center">
-                                <p className="text-sm font-bold text-zinc-500 mb-1">Not in catalog</p>
-                                <p className="text-xs text-zinc-400 mb-3">Devices must be registered in the catalog before listing them as products.</p>
-                                <a
-                                  href="/catalog"
-                                  target="_blank"
-                                  className="inline-flex items-center gap-1.5 text-xs font-bold text-black underline underline-offset-2"
-                                >
-                                  Go to Device Catalog <ExternalLink className="h-3 w-3" />
-                                </a>
-                              </div>
-                            ) : (
-                              <div className="max-h-52 overflow-y-auto">
-                                {filteredCatalog.slice(0, 30).map(dev => (
-                                  <button
-                                    key={dev.id}
-                                    type="button"
-                                    onMouseDown={e => { e.preventDefault(); selectCatalogDevice(dev); }}
-                                    className="w-full text-left px-4 py-3 text-sm hover:bg-zinc-50 flex items-center gap-3 border-b border-zinc-50 last:border-0"
-                                  >
-                                    <div className="flex-1 min-w-0">
-                                      <span className="font-bold text-zinc-900">{dev.brandCategory.brand.name}</span>{" "}
-                                      <span className="text-zinc-700">{dev.model}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2 shrink-0">
-                                      <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">{dev.brandCategory.category.slug}</span>
-                                      {!dev.isActive && (
-                                        <span className="text-[10px] font-bold uppercase tracking-widest text-amber-500 bg-amber-50 px-1.5 py-0.5 rounded">inactive</span>
-                                      )}
-                                    </div>
-                                  </button>
-                                ))}
-                              </div>
-                            )}
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-
-                    {/* Selected device info badge */}
-                    {selectedDevice ? (
-                      <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 border border-emerald-100 rounded-xl text-xs">
-                        <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                        <span className="font-bold text-emerald-800">{selectedDevice.brandCategory.brand.name} {selectedDevice.model}</span>
-                        <span className="text-emerald-600">· {selectedDevice.brandCategory.category.name}</span>
-                        <span className="text-emerald-500 ml-auto">{selectedDevice.storageOptions.length} storage option{selectedDevice.storageOptions.length !== 1 ? "s" : ""}</span>
-                      </div>
-                    ) : (
-                      <p className="text-xs text-zinc-400">
-                        Device not in the catalog?{" "}
-                        <a href="/catalog" target="_blank" className="font-bold text-zinc-600 hover:text-black underline underline-offset-2 inline-flex items-center gap-0.5">
-                          Register it first <ExternalLink className="h-3 w-3" />
-                        </a>
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {/* ── EDIT MODE: show device info read-only ──────────────── */}
-                {editProduct && (
-                  <div className="px-4 py-3 bg-zinc-50 rounded-xl border border-zinc-100 text-sm">
-                    <span className="font-bold text-zinc-700">{editProduct.brand} {editProduct.model}</span>
-                    <span className="text-zinc-400 ml-2">· {editProduct.category}</span>
-                    <p className="text-xs text-zinc-400 mt-0.5">Device catalog entry — edit from the Device Catalog page.</p>
-                  </div>
-                )}
-
-                {/* Product name */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold uppercase tracking-widest text-zinc-400">Product name</label>
-                  <input
-                    type="text"
-                    placeholder="iPhone 14 Pro 256GB"
-                    value={formData.name}
-                    onChange={e => setFormData(f => ({ ...f, name: e.target.value }))}
-                    className="h-12 rounded-[0.875rem] border-2 border-zinc-200 px-4 text-sm font-medium outline-none focus:border-black transition-colors"
-                  />
-                  {!editProduct && selectedDevice && (
-                    <p className="text-xs text-zinc-400">Auto-filled from device selection — edit as needed.</p>
-                  )}
-                </div>
-
-                {/* Storage */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold uppercase tracking-widest text-zinc-400">Storage / Spec</label>
-                  {!editProduct && selectedDevice ? (
-                    <div className="relative">
-                      <select
-                        value={formData.storage ?? ""}
-                        onChange={e => {
-                          const newStorage = e.target.value;
-                          setFormData(f => ({
-                            ...f,
-                            storage: newStorage,
-                            name: `${selectedDevice.brandCategory.brand.name} ${selectedDevice.model}${newStorage ? ` ${newStorage}` : ""}`,
-                          }));
-                          loadEstimate(selectedDevice.brandCategory.brand.name, selectedDevice.model, newStorage, formData.condition);
-                        }}
-                        className="h-12 w-full rounded-[0.875rem] border-2 border-zinc-200 pl-4 pr-10 text-sm font-medium outline-none focus:border-black transition-colors bg-white appearance-none"
-                      >
-                        {selectedDevice.storageOptions.map(s => (
-                          <option key={s} value={s}>{s}</option>
-                        ))}
-                      </select>
-                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
-                    </div>
-                  ) : (
-                    <input
-                      type="text"
-                      placeholder="256 GB"
-                      value={formData.storage ?? ""}
-                      onChange={e => setFormData(f => ({ ...f, storage: e.target.value }))}
-                      className="h-12 rounded-[0.875rem] border-2 border-zinc-200 px-4 text-sm font-medium outline-none focus:border-black transition-colors"
-                    />
-                  )}
-                </div>
-
-                {/* ── Pricing Intelligence Panel (catalog products only) ── */}
-                {(editProduct?.catalogId || selectedDevice) && (
+                {/* Pricing Intelligence */}
+                {editProduct.catalogId && (
                   <div className="rounded-2xl border-2 border-zinc-100 bg-zinc-50 p-4 space-y-3">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Pricing Intelligence</p>
-
                     {loadingEstimate && (
                       <div className="flex items-center gap-2 text-xs text-zinc-400">
-                        <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                        Loading competitor prices…
+                        <RefreshCw className="h-3.5 w-3.5 animate-spin" /> Loading competitor prices…
                       </div>
                     )}
-
-                    {/* Scraped competitor prices table */}
                     {estimate?.scrapedPrices && (
                       <div>
                         <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1.5">
@@ -727,8 +613,6 @@ export default function ProductsPage() {
                         </div>
                       </div>
                     )}
-
-                    {/* AI estimate range bar */}
                     {estimate && (
                       <div>
                         <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1.5">
@@ -737,71 +621,45 @@ export default function ProductsPage() {
                         <div className="flex items-center gap-3">
                           <span className="text-sm font-bold text-zinc-600">£{estimate.low}</span>
                           <div className="flex-1 h-2 bg-zinc-200 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-emerald-400 rounded-full"
-                              style={{
-                                marginLeft: `${Math.min(90, Math.max(0,
-                                  ((estimate.suggested - estimate.low) / Math.max(1, estimate.high - estimate.low)) * 80
-                                ))}%`,
-                                width: '10%',
-                              }}
-                            />
+                            <div className="h-full bg-emerald-400 rounded-full" style={{
+                              marginLeft: `${Math.min(90, Math.max(0, ((estimate.suggested - estimate.low) / Math.max(1, estimate.high - estimate.low)) * 80))}%`,
+                              width: '10%',
+                            }} />
                           </div>
                           <span className="text-sm font-bold text-zinc-600">£{estimate.high}</span>
-                          <button
-                            type="button"
-                            onClick={() => setFormData(f => ({ ...f, price: estimate.suggested }))}
-                            className="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors shrink-0"
-                          >
-                            <Zap className="h-3 w-3" />
-                            Auto-fill £{estimate.suggested}
+                          <button type="button" onClick={() => setFormData(f => ({ ...f, price: estimate.suggested }))}
+                            className="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors shrink-0">
+                            <Zap className="h-3 w-3" /> £{estimate.suggested}
                           </button>
                         </div>
                       </div>
                     )}
-
-                    {/* Auto-price this product button (edit mode only) */}
-                    {editProduct?.id && (
-                      <button
-                        type="button"
-                        disabled={pricingProductId === editProduct.id}
-                        onClick={async () => {
-                          setPricingProductId(editProduct.id);
-                          try {
-                            const result = await productPricingApi.priceOne(editProduct.id);
-                            if (result.candidatePrice !== undefined) {
-                              setFormData(f => ({ ...f, price: result.candidatePrice! }));
-                            }
-                            await loadEstimate(
-                              editProduct.brand, editProduct.model,
-                              editProduct.storage ?? '', editProduct.condition,
-                            );
-                          } catch (e: any) {
-                            alert(e.message ?? 'Pricing failed');
-                          } finally {
-                            setPricingProductId(null);
-                          }
-                        }}
-                        className="flex items-center gap-1.5 text-xs font-bold text-zinc-600 bg-white border border-zinc-200 hover:border-zinc-400 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 w-fit"
-                      >
-                        {pricingProductId === editProduct.id
-                          ? <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                          : <Zap className="h-3.5 w-3.5" />
-                        }
-                        Auto-price this product
-                      </button>
-                    )}
+                    <button type="button" disabled={pricingProductId === editProduct.id}
+                      onClick={async () => {
+                        setPricingProductId(editProduct.id);
+                        try {
+                          const result = await productPricingApi.priceOne(editProduct.id);
+                          if (result.candidatePrice !== undefined) setFormData(f => ({ ...f, price: result.candidatePrice! }));
+                          await loadEstimate(editProduct.brand, editProduct.model, editProduct.storage ?? '', editProduct.condition);
+                        } catch (e: any) { alert(e.message ?? 'Pricing failed'); }
+                        finally { setPricingProductId(null); }
+                      }}
+                      className="flex items-center gap-1.5 text-xs font-bold text-zinc-600 bg-white border border-zinc-200 hover:border-zinc-400 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 w-fit"
+                    >
+                      {pricingProductId === editProduct.id ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Zap className="h-3.5 w-3.5" />}
+                      Auto-price this product
+                    </button>
                   </div>
                 )}
 
-                {/* Inline AI range feedback on price input */}
+                {/* AI range inline feedback */}
                 {estimate && formData.price != null && formData.price > 0 && (
                   formData.price >= estimate.low && formData.price <= estimate.high ? (
-                    <p className="text-xs font-bold text-emerald-600 flex items-center gap-1 -mt-1">
+                    <p className="text-xs font-bold text-emerald-600 flex items-center gap-1">
                       <Check className="h-3 w-3" /> Within AI range (£{estimate.low}–£{estimate.high})
                     </p>
                   ) : (
-                    <p className="text-xs font-bold text-amber-600 flex items-center gap-1 -mt-1">
+                    <p className="text-xs font-bold text-amber-600 flex items-center gap-1">
                       <AlertTriangle className="h-3 w-3" /> Outside AI range (£{estimate.low}–£{estimate.high}) — you can still save
                     </p>
                   )
@@ -815,9 +673,7 @@ export default function ProductsPage() {
                   ].map(({ key, label, placeholder }) => (
                     <div key={key} className="flex flex-col gap-1.5">
                       <label className="text-xs font-bold uppercase tracking-widest text-zinc-400">{label}</label>
-                      <input
-                        type="number"
-                        placeholder={placeholder}
+                      <input type="number" placeholder={placeholder}
                         value={(formData[key as keyof CreateProductPayload] as number | undefined) ?? ""}
                         onChange={e => setFormData(f => ({ ...f, [key]: e.target.value === "" ? undefined : Number(e.target.value) }))}
                         className="h-12 rounded-[0.875rem] border-2 border-zinc-200 px-4 text-sm font-medium outline-none focus:border-black transition-colors"
@@ -829,23 +685,8 @@ export default function ProductsPage() {
                 {/* Stock */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-bold uppercase tracking-widest text-zinc-400">Stock quantity</label>
-                  <input
-                    type="number"
-                    placeholder="3"
-                    value={formData.stock ?? ""}
+                  <input type="number" placeholder="3" value={formData.stock ?? ""}
                     onChange={e => setFormData(f => ({ ...f, stock: e.target.value === "" ? 0 : Number(e.target.value) }))}
-                    className="h-12 rounded-[0.875rem] border-2 border-zinc-200 px-4 text-sm font-medium outline-none focus:border-black transition-colors"
-                  />
-                </div>
-
-                {/* Description */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold uppercase tracking-widest text-zinc-400">Description (optional)</label>
-                  <input
-                    type="text"
-                    placeholder="Brief description..."
-                    value={formData.description ?? ""}
-                    onChange={e => setFormData(f => ({ ...f, description: e.target.value }))}
                     className="h-12 rounded-[0.875rem] border-2 border-zinc-200 px-4 text-sm font-medium outline-none focus:border-black transition-colors"
                   />
                 </div>
@@ -854,16 +695,12 @@ export default function ProductsPage() {
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-bold uppercase tracking-widest text-zinc-400">Condition</label>
                   <div className="relative">
-                    <select
-                      value={formData.condition}
+                    <select value={formData.condition}
                       onChange={e => {
-                        const newCondition = e.target.value;
-                        setFormData(f => ({ ...f, condition: newCondition }));
-                        if (selectedDevice) {
-                          loadEstimate(selectedDevice.brandCategory.brand.name, selectedDevice.model, formData.storage ?? '', newCondition);
-                        } else if (editProduct?.catalogId && editProduct.brand && editProduct.model) {
-                          loadEstimate(editProduct.brand, editProduct.model, formData.storage ?? '', newCondition);
-                        }
+                        const c = e.target.value;
+                        setFormData(f => ({ ...f, condition: c }));
+                        if (editProduct?.catalogId && editProduct.brand && editProduct.model)
+                          loadEstimate(editProduct.brand, editProduct.model, formData.storage ?? '', c);
                       }}
                       className="h-12 w-full rounded-[0.875rem] border-2 border-zinc-200 pl-4 pr-10 text-sm font-medium outline-none focus:border-black transition-colors bg-white appearance-none"
                     >
@@ -873,12 +710,305 @@ export default function ProductsPage() {
                   </div>
                 </div>
 
+                {/* Product name */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold uppercase tracking-widest text-zinc-400">Product name</label>
+                  <input type="text" placeholder="iPhone 14 Pro 256GB" value={formData.name}
+                    onChange={e => setFormData(f => ({ ...f, name: e.target.value }))}
+                    className="h-12 rounded-[0.875rem] border-2 border-zinc-200 px-4 text-sm font-medium outline-none focus:border-black transition-colors"
+                  />
+                </div>
+
+                {/* Description */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold uppercase tracking-widest text-zinc-400">Description (optional)</label>
+                  <input type="text" placeholder="Brief description..." value={formData.description ?? ""}
+                    onChange={e => setFormData(f => ({ ...f, description: e.target.value }))}
+                    className="h-12 rounded-[0.875rem] border-2 border-zinc-200 px-4 text-sm font-medium outline-none focus:border-black transition-colors"
+                  />
+                </div>
+
                 {/* Active toggle */}
                 <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => setFormData(f => ({ ...f, isActive: !f.isActive }))}
-                    className={`h-6 w-10 rounded-full transition-colors relative shrink-0 ${formData.isActive ? "bg-black" : "bg-zinc-200"}`}
-                  >
+                  <button onClick={() => setFormData(f => ({ ...f, isActive: !f.isActive }))}
+                    className={`h-6 w-10 rounded-full transition-colors relative shrink-0 ${formData.isActive ? "bg-black" : "bg-zinc-200"}`}>
+                    <span className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${formData.isActive ? "translate-x-5" : "translate-x-1"}`} />
+                  </button>
+                  <label className="text-sm font-medium">{formData.isActive ? "Active (visible on site)" : "Hidden (not visible)"}</label>
+                </div>
+
+                {error && <p className="text-sm font-bold text-red-500 bg-red-50 rounded-xl px-4 py-3">{error}</p>}
+              </div>
+
+              {/* Fixed footer */}
+              <div className="px-6 py-4 border-t border-zinc-100 flex gap-3 shrink-0">
+                <button onClick={() => { setShowModal(false); setEstimate(null); }}
+                  className="flex-1 h-12 rounded-2xl border-2 border-zinc-200 font-bold text-sm hover:bg-zinc-50 transition-colors">
+                  Cancel
+                </button>
+                <button onClick={saveProduct} disabled={saving}
+                  className="flex-1 h-12 rounded-2xl bg-black text-white font-bold text-sm hover:bg-zinc-800 transition-colors flex items-center justify-center gap-2 disabled:opacity-40">
+                  {saving ? <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Check className="h-4 w-4" />}
+                  Save changes
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* ── ADD: center modal ── */}
+      <AnimatePresence>
+        {showModal && !editProduct && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={e => { if (e.target === e.currentTarget) { setShowModal(false); setEstimate(null); } }}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              className="bg-white rounded-4xl p-8 w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold">Add new product</h2>
+                <button onClick={() => { setShowModal(false); setEstimate(null); }} className="h-9 w-9 rounded-full hover:bg-zinc-100 flex items-center justify-center transition-colors">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {/* Device picker from catalog */}
+                <div className="flex flex-col gap-1.5" ref={pickerRef}>
+                  <label className="text-xs font-bold uppercase tracking-widest text-zinc-400">
+                    Device <span className="text-zinc-300 font-normal normal-case tracking-normal">(from Device Catalog)</span>
+                  </label>
+                  <div className="relative">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+                    <input
+                      type="text"
+                      placeholder="Search catalog — e.g. iPhone 15 Pro"
+                      value={deviceQuery}
+                      onChange={e => {
+                        setDeviceQuery(e.target.value);
+                        setPickerOpen(true);
+                        setSelectedDevice(null);
+                        setFormData(f => ({ ...f, brand: "", model: "" }));
+                      }}
+                      onFocus={() => setPickerOpen(true)}
+                      className="h-12 w-full rounded-[0.875rem] border-2 border-zinc-200 pl-10 pr-10 text-sm font-medium outline-none focus:border-black transition-colors"
+                    />
+                    {selectedDevice && <Check className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-500 pointer-events-none" />}
+                    {!selectedDevice && deviceQuery && (
+                      <button type="button" onClick={() => { setDeviceQuery(""); setSelectedDevice(null); setPickerOpen(false); setFormData(f => ({ ...f, brand: "", model: "" })); }}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-300 hover:text-zinc-500">
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
+                    <AnimatePresence>
+                      {pickerOpen && (
+                        <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
+                          transition={{ duration: 0.12 }}
+                          className="absolute z-20 left-0 right-0 top-[calc(100%+4px)] bg-white border border-zinc-200 rounded-2xl shadow-xl overflow-hidden">
+                          {filteredCatalog.length === 0 ? (
+                            <div className="px-4 py-5 text-center">
+                              <p className="text-sm font-bold text-zinc-500 mb-1">Not in catalog</p>
+                              <p className="text-xs text-zinc-400 mb-3">Devices must be registered in the catalog before listing them as products.</p>
+                              <a href="/catalog" target="_blank" className="inline-flex items-center gap-1.5 text-xs font-bold text-black underline underline-offset-2">
+                                Go to Device Catalog <ExternalLink className="h-3 w-3" />
+                              </a>
+                            </div>
+                          ) : (
+                            <div className="max-h-52 overflow-y-auto">
+                              {filteredCatalog.slice(0, 30).map(dev => (
+                                <button key={dev.id} type="button" onMouseDown={e => { e.preventDefault(); selectCatalogDevice(dev); }}
+                                  className="w-full text-left px-4 py-3 text-sm hover:bg-zinc-50 flex items-center gap-3 border-b border-zinc-50 last:border-0">
+                                  <div className="flex-1 min-w-0">
+                                    <span className="font-bold text-zinc-900">{dev.brandCategory.brand.name}</span>{" "}
+                                    <span className="text-zinc-700">{dev.model}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2 shrink-0">
+                                    <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">{dev.brandCategory.category.slug}</span>
+                                    {!dev.isActive && <span className="text-[10px] font-bold uppercase tracking-widest text-amber-500 bg-amber-50 px-1.5 py-0.5 rounded">inactive</span>}
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                  {selectedDevice ? (
+                    <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 border border-emerald-100 rounded-xl text-xs">
+                      <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                      <span className="font-bold text-emerald-800">{selectedDevice.brandCategory.brand.name} {selectedDevice.model}</span>
+                      <span className="text-emerald-600">· {selectedDevice.brandCategory.category.name}</span>
+                      <span className="text-emerald-500 ml-auto">{selectedDevice.storageOptions.length} storage option{selectedDevice.storageOptions.length !== 1 ? "s" : ""}</span>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-zinc-400">
+                      Device not in the catalog?{" "}
+                      <a href="/catalog" target="_blank" className="font-bold text-zinc-600 hover:text-black underline underline-offset-2 inline-flex items-center gap-0.5">
+                        Register it first <ExternalLink className="h-3 w-3" />
+                      </a>
+                    </p>
+                  )}
+                </div>
+
+                {/* Product name */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold uppercase tracking-widest text-zinc-400">Product name</label>
+                  <input type="text" placeholder="iPhone 14 Pro 256GB" value={formData.name}
+                    onChange={e => setFormData(f => ({ ...f, name: e.target.value }))}
+                    className="h-12 rounded-[0.875rem] border-2 border-zinc-200 px-4 text-sm font-medium outline-none focus:border-black transition-colors"
+                  />
+                  {selectedDevice && <p className="text-xs text-zinc-400">Auto-filled from device selection — edit as needed.</p>}
+                </div>
+
+                {/* Storage */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold uppercase tracking-widest text-zinc-400">Storage / Spec</label>
+                  {selectedDevice ? (
+                    <div className="relative">
+                      <select value={formData.storage ?? ""}
+                        onChange={e => {
+                          const s = e.target.value;
+                          setFormData(f => ({ ...f, storage: s, name: `${selectedDevice.brandCategory.brand.name} ${selectedDevice.model}${s ? ` ${s}` : ""}` }));
+                          loadEstimate(selectedDevice.brandCategory.brand.name, selectedDevice.model, s, formData.condition);
+                        }}
+                        className="h-12 w-full rounded-[0.875rem] border-2 border-zinc-200 pl-4 pr-10 text-sm font-medium outline-none focus:border-black transition-colors bg-white appearance-none">
+                        {selectedDevice.storageOptions.map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+                    </div>
+                  ) : (
+                    <input type="text" placeholder="256 GB" value={formData.storage ?? ""}
+                      onChange={e => setFormData(f => ({ ...f, storage: e.target.value }))}
+                      className="h-12 rounded-[0.875rem] border-2 border-zinc-200 px-4 text-sm font-medium outline-none focus:border-black transition-colors"
+                    />
+                  )}
+                </div>
+
+                {/* Pricing Intelligence (add mode) */}
+                {selectedDevice && (
+                  <div className="rounded-2xl border-2 border-zinc-100 bg-zinc-50 p-4 space-y-3">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Pricing Intelligence</p>
+                    {loadingEstimate && (
+                      <div className="flex items-center gap-2 text-xs text-zinc-400">
+                        <RefreshCw className="h-3.5 w-3.5 animate-spin" /> Loading competitor prices…
+                      </div>
+                    )}
+                    {estimate?.scrapedPrices && (
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1.5">
+                          Competitor prices · {new Date(estimate.scrapedPrices.scrapedAt).toLocaleDateString('en-GB')}
+                        </p>
+                        <div className="grid grid-cols-4 gap-2">
+                          {([
+                            { label: "CeX Sell",   value: estimate.scrapedPrices.cexSellPrice },
+                            { label: "CeX Cash",   value: estimate.scrapedPrices.cexCashPrice },
+                            { label: "Envirofone", value: estimate.scrapedPrices.envirofonePrice },
+                            { label: "Best",       value: estimate.scrapedPrices.marketPrice },
+                          ] as { label: string; value: number | null }[]).map(({ label, value }) => (
+                            <div key={label} className="bg-white rounded-xl border border-zinc-200 px-3 py-2 text-center">
+                              <p className="text-[10px] font-bold text-zinc-400">{label}</p>
+                              <p className="text-sm font-bold text-zinc-800 mt-0.5">
+                                {value !== null ? `£${value.toFixed(0)}` : <span className="text-zinc-300">—</span>}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {estimate && (
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1.5">AI estimate range · {formData.condition}</p>
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm font-bold text-zinc-600">£{estimate.low}</span>
+                          <div className="flex-1 h-2 bg-zinc-200 rounded-full overflow-hidden">
+                            <div className="h-full bg-emerald-400 rounded-full" style={{
+                              marginLeft: `${Math.min(90, Math.max(0, ((estimate.suggested - estimate.low) / Math.max(1, estimate.high - estimate.low)) * 80))}%`,
+                              width: '10%',
+                            }} />
+                          </div>
+                          <span className="text-sm font-bold text-zinc-600">£{estimate.high}</span>
+                          <button type="button" onClick={() => setFormData(f => ({ ...f, price: estimate.suggested }))}
+                            className="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors shrink-0">
+                            <Zap className="h-3 w-3" /> Auto-fill £{estimate.suggested}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* AI range feedback */}
+                {estimate && formData.price != null && formData.price > 0 && (
+                  formData.price >= estimate.low && formData.price <= estimate.high ? (
+                    <p className="text-xs font-bold text-emerald-600 flex items-center gap-1 -mt-1"><Check className="h-3 w-3" /> Within AI range (£{estimate.low}–£{estimate.high})</p>
+                  ) : (
+                    <p className="text-xs font-bold text-amber-600 flex items-center gap-1 -mt-1"><AlertTriangle className="h-3 w-3" /> Outside AI range (£{estimate.low}–£{estimate.high}) — you can still save</p>
+                  )
+                )}
+
+                {/* Price + Compare Price */}
+                <div className="grid grid-cols-2 gap-4">
+                  {[
+                    { key: "price", label: "Price (£)", placeholder: "579" },
+                    { key: "comparePrice", label: "Compare price (£)", placeholder: "Optional" },
+                  ].map(({ key, label, placeholder }) => (
+                    <div key={key} className="flex flex-col gap-1.5">
+                      <label className="text-xs font-bold uppercase tracking-widest text-zinc-400">{label}</label>
+                      <input type="number" placeholder={placeholder}
+                        value={(formData[key as keyof CreateProductPayload] as number | undefined) ?? ""}
+                        onChange={e => setFormData(f => ({ ...f, [key]: e.target.value === "" ? undefined : Number(e.target.value) }))}
+                        className="h-12 rounded-[0.875rem] border-2 border-zinc-200 px-4 text-sm font-medium outline-none focus:border-black transition-colors"
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                {/* Stock */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold uppercase tracking-widest text-zinc-400">Stock quantity</label>
+                  <input type="number" placeholder="3" value={formData.stock ?? ""}
+                    onChange={e => setFormData(f => ({ ...f, stock: e.target.value === "" ? 0 : Number(e.target.value) }))}
+                    className="h-12 rounded-[0.875rem] border-2 border-zinc-200 px-4 text-sm font-medium outline-none focus:border-black transition-colors"
+                  />
+                </div>
+
+                {/* Description */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold uppercase tracking-widest text-zinc-400">Description (optional)</label>
+                  <input type="text" placeholder="Brief description..." value={formData.description ?? ""}
+                    onChange={e => setFormData(f => ({ ...f, description: e.target.value }))}
+                    className="h-12 rounded-[0.875rem] border-2 border-zinc-200 px-4 text-sm font-medium outline-none focus:border-black transition-colors"
+                  />
+                </div>
+
+                {/* Condition */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold uppercase tracking-widest text-zinc-400">Condition</label>
+                  <div className="relative">
+                    <select value={formData.condition}
+                      onChange={e => {
+                        const c = e.target.value;
+                        setFormData(f => ({ ...f, condition: c }));
+                        if (selectedDevice) loadEstimate(selectedDevice.brandCategory.brand.name, selectedDevice.model, formData.storage ?? '', c);
+                      }}
+                      className="h-12 w-full rounded-[0.875rem] border-2 border-zinc-200 pl-4 pr-10 text-sm font-medium outline-none focus:border-black transition-colors bg-white appearance-none">
+                      {CONDITIONS.map(c => <option key={c}>{c}</option>)}
+                    </select>
+                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+                  </div>
+                </div>
+
+                {/* Active toggle */}
+                <div className="flex items-center gap-3">
+                  <button onClick={() => setFormData(f => ({ ...f, isActive: !f.isActive }))}
+                    className={`h-6 w-10 rounded-full transition-colors relative shrink-0 ${formData.isActive ? "bg-black" : "bg-zinc-200"}`}>
                     <span className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${formData.isActive ? "translate-x-5" : "translate-x-1"}`} />
                   </button>
                   <label className="text-sm font-medium">{formData.isActive ? "Active (visible on site)" : "Hidden (not visible)"}</label>
@@ -891,13 +1021,10 @@ export default function ProductsPage() {
                 <button onClick={() => { setShowModal(false); setEstimate(null); }} className="flex-1 h-12 rounded-2xl border-2 border-zinc-200 font-bold text-sm hover:bg-zinc-50 transition-colors">
                   Cancel
                 </button>
-                <button
-                  onClick={saveProduct}
-                  disabled={saving || (!editProduct && !formData.catalogId)}
-                  className="flex-1 h-12 rounded-2xl bg-black text-white font-bold text-sm hover:bg-zinc-800 transition-colors flex items-center justify-center gap-2 disabled:opacity-40"
-                >
+                <button onClick={saveProduct} disabled={saving || !formData.catalogId}
+                  className="flex-1 h-12 rounded-2xl bg-black text-white font-bold text-sm hover:bg-zinc-800 transition-colors flex items-center justify-center gap-2 disabled:opacity-40">
                   {saving ? <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Check className="h-4 w-4" />}
-                  {editProduct ? "Save changes" : "Add product"}
+                  Add product
                 </button>
               </div>
             </motion.div>

@@ -348,16 +348,6 @@ export default function TradeInPage() {
     idleElectronics: 5000000000,
   });
 
-  // Fetch dynamic system-wide stats
-  useEffect(() => {
-    tradeInsApi.stats()
-      .then(res => {
-        if (res) {
-          setStats(res);
-        }
-      })
-      .catch(() => {});
-  }, []);
 
   // Pre-fill contact from logged-in user profile
   useEffect(() => {

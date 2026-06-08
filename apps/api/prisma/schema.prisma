@@ -421,6 +421,7 @@ model PromoSlide {
   btnLink     String   @default("/")
   order       Int      @default(0)
   isActive    Boolean  @default(true)
+  layoutTheme String   @default("system")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

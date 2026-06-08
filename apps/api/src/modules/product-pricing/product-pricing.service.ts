@@ -50,14 +50,15 @@ export class ProductPricingService {
     ): Promise<EstimateResult> {
         const configs        = await this.getAllConfigs();
         const multiplierKey  = conditionToMultiplierKey(condition);
-        const conditionMult  = configs[multiplierKey] ?? 0.82;
-        const marginPct      = configs['margin_pct']  ?? 30;
+        const conditionMult  = configs[multiplierKey]           ?? 0.82;
+        const sellMargin     = configs['sell_margin_pct']       ?? 0;
+        const sellDiscount   = configs['sell_discount_pct']     ?? 0;
 
         const scrapedPrices  = await this.getScrapedSnapshot(brand, model, storage);
         const marketPrice    = scrapedPrices?.marketPrice ?? null;
 
         const candidatePrice = marketPrice
-            ? computeCandidatePrice(marketPrice, conditionMult, marginPct)
+            ? computeCandidatePrice(marketPrice, conditionMult, sellMargin, sellDiscount)
             : null;
 
         const aiRange        = await this.getAiRange(brand, model, storage, condition, marketPrice, candidatePrice);
@@ -98,12 +99,13 @@ export class ProductPricingService {
             return { productId, status: 'no_data', reason: 'no_scraped_price' };
         }
 
-        const configs       = await this.getAllConfigs();
-        const multiplierKey = conditionToMultiplierKey(product.condition);
-        const conditionMult = configs[multiplierKey] ?? 0.82;
-        const marginPct     = configs['margin_pct']  ?? 30;
+        const configs        = await this.getAllConfigs();
+        const multiplierKey  = conditionToMultiplierKey(product.condition);
+        const conditionMult  = configs[multiplierKey]           ?? 0.82;
+        const sellMargin     = configs['sell_margin_pct']       ?? 0;
+        const sellDiscount   = configs['sell_discount_pct']     ?? 0;
 
-        const candidatePrice = computeCandidatePrice(marketPrice, conditionMult, marginPct);
+        const candidatePrice = computeCandidatePrice(marketPrice, conditionMult, sellMargin, sellDiscount);
         const aiRange        = await this.getAiRange(brand, model, storage, product.condition, marketPrice, candidatePrice);
 
         const withinRange = candidatePrice >= aiRange.low && candidatePrice <= aiRange.high;
@@ -122,12 +124,13 @@ export class ProductPricingService {
         const images   = product.images as string[];
         const isActive = evaluateActive(candidatePrice, images, 'auto_priced');
 
+        // comparePrice = actual competitor market price (shown as "was £X" on storefront)
         await this.prisma.product.update({
             where: { id: productId },
-            data:  { price: candidatePrice, pricingStatus: 'auto_priced', isActive },
+            data:  { price: candidatePrice, comparePrice: marketPrice, pricingStatus: 'auto_priced', isActive },
         });
 
-        this.logger.log(`Priced ${brand} ${model} ${storage}: £${candidatePrice} (active: ${isActive})`);
+        this.logger.log(`Priced ${brand} ${model} ${storage}: £${candidatePrice} (market £${marketPrice}, active: ${isActive})`);
         return { productId, status: 'applied', candidatePrice, aiRange };
     }
 
@@ -187,11 +190,12 @@ export class ProductPricingService {
     async getTradeInAnchor(
         brand: string, model: string, storage: string, condition: string,
     ): Promise<number | null> {
-        const configs       = await this.getAllConfigs();
-        const tradeInRatio  = configs['tradein_ratio'] ?? 0.5;
-        const multiplierKey = conditionToMultiplierKey(condition);
-        const conditionMult = configs[multiplierKey]  ?? 0.82;
-        const marginPct     = configs['margin_pct']   ?? 30;
+        const configs          = await this.getAllConfigs();
+        const tradeInRatio     = configs['tradein_ratio']      ?? 0.5;
+        const tradeInMargin    = configs['tradein_margin_pct'] ?? 0;
+        const multiplierKey    = conditionToMultiplierKey(condition);
+        const conditionMult    = configs[multiplierKey]        ?? 0.82;
+        const sellMargin       = configs['sell_margin_pct']    ?? 0;
 
         // Priority 1: catalog product resale price
         const product = await this.prisma.product.findFirst({
@@ -210,17 +214,19 @@ export class ProductPricingService {
         });
 
         if (product) {
-            const offer = computeTradeInOffer(product.price, tradeInRatio);
-            this.logger.log(`Trade-in anchor (catalog): £${product.price} × ${tradeInRatio} = £${offer}`);
+            const rawOffer = computeTradeInOffer(product.price, tradeInRatio);
+            const offer    = round5(rawOffer * (1 - tradeInMargin / 100));
+            this.logger.log(`Trade-in anchor (catalog): £${product.price} × ${tradeInRatio} − ${tradeInMargin}% = £${offer}`);
             return offer;
         }
 
         // Priority 2: scraped market price
         const marketPrice = await this.scraperData.lookupPrice(brand, model, storage);
         if (marketPrice) {
-            const resalePrice = computeCandidatePrice(marketPrice, conditionMult, marginPct);
-            const offer       = computeTradeInOffer(resalePrice, tradeInRatio);
-            this.logger.log(`Trade-in anchor (scraped): market £${marketPrice} → resale £${resalePrice} × ${tradeInRatio} = £${offer}`);
+            const resalePrice  = computeCandidatePrice(marketPrice, conditionMult, sellMargin);
+            const rawOffer     = computeTradeInOffer(resalePrice, tradeInRatio);
+            const offer        = round5(rawOffer * (1 - tradeInMargin / 100));
+            this.logger.log(`Trade-in anchor (scraped): market £${marketPrice} → resale £${resalePrice} × ${tradeInRatio} − ${tradeInMargin}% margin = £${offer}`);
             return offer;
         }
 

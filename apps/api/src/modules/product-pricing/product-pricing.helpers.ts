@@ -5,14 +5,21 @@ export function round5(x: number): number {
 
 /**
  * Computes the candidate resale price.
- * formula: marketPrice × conditionMultiplier × (1 - marginPct/100), rounded to £5
+ * formula: market × multiplier × (1 + margin/100) × (1 - discount/100)
+ *   sellMarginPct : additive markup (+) or markdown (-), range -50..50
+ *   sellDiscountPct: promotional discount always reduces price, range 0..50
  */
 export function computeCandidatePrice(
     marketPrice: number,
     conditionMultiplier: number,
-    marginPct: number,
+    sellMarginPct  = 0,
+    sellDiscountPct = 0,
 ): number {
-    return round5(marketPrice * conditionMultiplier * (1 - marginPct / 100));
+    return round5(
+        marketPrice * conditionMultiplier
+        * (1 + sellMarginPct  / 100)
+        * (1 - sellDiscountPct / 100),
+    );
 }
 
 /**
@@ -36,11 +43,11 @@ export function evaluateActive(price: number | null, images: string[], pricingSt
 
 /**
  * Maps a product condition string to its PricingConfig multiplier key.
- * Product conditions: Pristine, Excellent, Very Good, Good, Fair
+ * Product conditions: Pristine, Mint, Excellent, Very Good, Good, Fair, Refurbished
  */
 export function conditionToMultiplierKey(condition: string): string {
     const c = condition.toLowerCase();
-    if (c === 'pristine' || c === 'excellent') return 'multiplier_mint';
-    if (c === 'very good' || c === 'good')     return 'multiplier_good';
-    return 'multiplier_used'; // Fair, damaged, or unknown
+    if (c === 'pristine' || c === 'mint' || c === 'excellent') return 'multiplier_mint';
+    if (c === 'very good' || c === 'good')                     return 'multiplier_good';
+    return 'multiplier_used'; // Fair, Refurbished, damaged, or unknown
 }

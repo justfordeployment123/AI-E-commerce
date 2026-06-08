@@ -83,6 +83,7 @@ export default function ScraperPage() {
   const [loadingTable, setLoadingTable] = useState(false);
   const [refreshingTable, setRefreshingTable] = useState(false);
   const tableHasData = useRef(false);
+  const prevRunsRef  = useRef<ScraperRun[]>([]);
   const [running, setRunning] = useState(false);
   const [runMsg, setRunMsg] = useState("");
   const [stopping, setStopping] = useState(false);
@@ -145,8 +146,11 @@ export default function ScraperPage() {
     loadStats();
     loadRuns();
     loadSchedule();
-    checkServiceHealth();
-  }, [loadStats, loadRuns, loadSchedule, checkServiceHealth, router]);
+    // checkServiceHealth is called by the polling interval (every 8/30s).
+    // Calling it immediately on mount pings the scraper service while it may
+    // be mid-run and busy, which can cause the Docker health check to fail and
+    // trigger a container restart.
+  }, [loadStats, loadRuns, loadSchedule, router]);
 
   useEffect(() => {
     if (!SCRAPER_ENABLED) return;
@@ -155,19 +159,35 @@ export default function ScraperPage() {
     loadPrices();
   }, [loadPrices]);
 
-  // Auto-poll: 8s while a run is active, 30s when idle
+  // Detect full-run completion → refresh the price table exactly once.
+  // This avoids calling loadPrices() on every poll tick (which re-fetches
+  // 2000 rows and causes the whole table to re-render/flicker).
+  useEffect(() => {
+    if (!SCRAPER_ENABLED) return;
+    const wasRunning = prevRunsRef.current.some(r => r.status === "RUNNING");
+    const isRunning  = runs.some(r => r.status === "RUNNING");
+    if (wasRunning && !isRunning) {
+      loadPrices(); // run just finished — refresh table once
+    }
+    prevRunsRef.current = runs;
+  }, [runs, loadPrices]);
+
+  // Auto-poll: 8s while a run is active, 30s when idle.
+  // Health check runs less often (every 3rd tick) to avoid stressing the
+  // scraper service while it is mid-run.
+  const pollCountRef = useRef(0);
   useEffect(() => {
     if (!SCRAPER_ENABLED) return;
     const isRunning = runs.some(r => r.status === "RUNNING");
     const tick = () => {
+      pollCountRef.current += 1;
       loadStats();
       loadRuns();
-      checkServiceHealth();
-      if (isRunning) loadPrices();
+      if (pollCountRef.current % 3 === 0) checkServiceHealth();
     };
     const id = setInterval(tick, isRunning ? 8_000 : 30_000);
     return () => clearInterval(id);
-  }, [runs, loadStats, loadRuns, loadPrices, checkServiceHealth]);
+  }, [runs, loadStats, loadRuns, checkServiceHealth]);
 
   // Cleanup per-row scrape interval on unmount
   useEffect(() => {

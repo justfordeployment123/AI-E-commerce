@@ -2,14 +2,19 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { UpsertPricingConfigDto } from './dto/upsert-pricing-config.dto';
 
-// Default condition multipliers seeded on first read
+// Default condition multipliers seeded on first read.
+// Formula: price = marketPrice × conditionMultiplier × (1 - margin_pct/100)
+// Set multipliers to reflect how our condition compares to market (e.g. CEX).
+// Keep margin_pct small (5-15%) — it's a competitive edge, NOT a profit margin.
 const DEFAULTS: { key: string; value: number; label: string }[] = [
-    { key: 'multiplier_mint',    value: 1.0,  label: 'Mint condition multiplier' },
-    { key: 'multiplier_good',    value: 0.82, label: 'Good condition multiplier' },
-    { key: 'multiplier_used',    value: 0.62, label: 'Used condition multiplier' },
-    { key: 'multiplier_damaged', value: 0.3,  label: 'Damaged condition multiplier' },
-    { key: 'margin_pct',         value: 30,   label: 'Resale margin percentage' },
+    { key: 'multiplier_mint',    value: 1.10, label: 'Mint condition multiplier (% of market price)' },
+    { key: 'multiplier_good',    value: 0.90, label: 'Good condition multiplier (% of market price)' },
+    { key: 'multiplier_used',    value: 0.78, label: 'Used/Refurbished condition multiplier (% of market price)' },
+    { key: 'multiplier_damaged', value: 0.45, label: 'Damaged condition multiplier (% of market price)' },
+    { key: 'sell_margin_pct',    value: 0,    label: 'Sell margin % added on top of multiplier price (+/-)' },
+    { key: 'sell_discount_pct', value: 0,    label: 'Sell discount % deducted from final price (0-50)' },
     { key: 'tradein_ratio',      value: 0.50, label: 'Trade-in offer ratio (% of resale price)' },
+    { key: 'tradein_margin_pct', value: 0,    label: 'Trade-in margin % deducted from offer (+/-)' },
 ];
 
 @Injectable()

@@ -101,6 +101,7 @@ function PromoCarouselBanner() {
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const [slides, setSlides] = useState<import('../lib/api').PromoSlide[]>([]);
   const [loadingSlides, setLoadingSlides] = useState(true);
+  const tabContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bannersApi.promoSlides()
@@ -127,6 +128,19 @@ function PromoCarouselBanner() {
     }, 5000);
     return () => clearInterval(timer);
   }, [slides.length]);
+
+  // Auto-scroll active tab into view on mobile/horizontal scroll
+  useEffect(() => {
+    if (!tabContainerRef.current) return;
+    const activeTab = tabContainerRef.current.querySelector('[data-active="true"]');
+    if (activeTab) {
+      activeTab.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "center"
+      });
+    }
+  }, [safeIdx]);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -333,13 +347,14 @@ function PromoCarouselBanner() {
       {/* Bottom Floating Navigation Dock */}
       <div className="mx-auto w-full max-w-[1500px] px-4 sm:px-6 lg:px-12 mt-6 relative z-20">
         <div className="flex justify-center">
-          <div className="flex items-center gap-1 p-1.5 rounded-3xl bg-white/70 dark:bg-zinc-900/70 backdrop-blur-md border border-zinc-200/50 dark:border-zinc-800/50 shadow-lg overflow-x-auto scrollbar-hide max-w-full">
+          <div ref={tabContainerRef} className="flex items-center gap-1 p-1.5 rounded-3xl bg-white/70 dark:bg-zinc-900/70 backdrop-blur-md border border-zinc-200/50 dark:border-zinc-800/50 shadow-lg overflow-x-auto scrollbar-hide max-w-full">
             {slides.map((s, i) => {
               const isActive = safeIdx === i;
               return (
                 <button
                   key={s.id}
                   onClick={() => setIdx(i)}
+                  data-active={isActive}
                   className={`relative flex items-center gap-2 px-3.5 h-10 rounded-2xl transition-all duration-350 cursor-pointer whitespace-nowrap ${
                     isActive
                       ? "bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 shadow-md font-bold"
@@ -711,8 +726,8 @@ function Hero() {
             <div className="relative z-10 p-8 w-full max-w-[540px]">
               {showcase[0] && (() => {
                 const p = showcase[0];
-                const comparePrice = p.comparePrice ?? Math.round(p.price * 1.4);
-                const saving = comparePrice - p.price;
+                const comparePrice = (p.comparePrice && p.comparePrice > p.price) ? p.comparePrice : null;
+                const saving = comparePrice ? comparePrice - p.price : 0;
                 const gradeClr = p.condition === "Pristine" ? "text-emerald-700 bg-emerald-50" : p.condition === "Good" ? "text-amber-700 bg-amber-50" : "text-sky-700 bg-sky-50";
                 return (
                   <Link href={`/shop/${p.category.toLowerCase()}/${p.slug}`} className="block">
@@ -736,7 +751,7 @@ function Hero() {
                             {p.price > 0 ? (
                               <>
                                 <span className="text-2xl font-black text-zinc-950">£{p.price}</span>
-                                <span className="text-sm text-zinc-300 line-through font-medium">£{comparePrice}</span>
+                                {comparePrice && <span className="text-sm text-zinc-300 line-through font-medium">£{comparePrice}</span>}
                               </>
                             ) : (
                               <span className="text-lg font-bold text-zinc-400 italic">Price on request</span>
@@ -752,8 +767,8 @@ function Hero() {
               {/* Two smaller cards */}
               <div className="grid grid-cols-2 gap-4">
                 {showcase.slice(1, 3).map((p, i) => {
-                  const comparePrice = p.comparePrice ?? Math.round(p.price * 1.4);
-                  const pct = Math.round((1 - p.price / comparePrice) * 100);
+                  const comparePrice = (p.comparePrice && p.comparePrice > p.price) ? p.comparePrice : null;
+                  const pct = comparePrice ? Math.round((1 - p.price / comparePrice) * 100) : 0;
                   const gradeClr = p.condition === "Pristine" ? "text-emerald-700 bg-emerald-50" : p.condition === "Good" ? "text-amber-700 bg-amber-50" : "text-sky-700 bg-sky-50";
                   return (
                     <Link key={i} href={`/shop/${p.category.toLowerCase()}/${p.slug}`} className="block">
@@ -770,7 +785,7 @@ function Hero() {
                           {p.price > 0 ? (
                             <>
                               <span className="text-lg font-black text-zinc-950">£{p.price}</span>
-                              <span className={`text-[10px] font-black px-2 py-1 rounded-full ${gradeClr}`}>-{pct}%</span>
+                              {pct > 0 && <span className={`text-[10px] font-black px-2 py-1 rounded-full ${gradeClr}`}>-{pct}%</span>}
                             </>
                           ) : (
                             <span className="text-sm font-bold text-zinc-400 italic">Price on request</span>
@@ -805,7 +820,7 @@ function Hero() {
             >
               <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Saved vs new</p>
               <p className="text-xl font-black text-white tracking-tight">
-                - £{showcase[0] ? (showcase[0].comparePrice ?? Math.round(showcase[0].price * 1.4)) - showcase[0].price : 340}
+                - £{showcase[0]?.comparePrice && showcase[0].comparePrice > showcase[0].price ? showcase[0].comparePrice - showcase[0].price : "—"}
               </p>
             </motion.div>
 
@@ -1499,7 +1514,7 @@ function ShopByBudget() {
           type: p.brand,
           spec: String((p.specs as Record<string, unknown>)?.storage ?? p.model ?? "—"),
           price: `£${p.price ?? 0}`,
-          was: `£${p.comparePrice ?? Math.round((p.price ?? 0) * 1.4)}`,
+          was: (p.comparePrice && p.comparePrice > (p.price ?? 0)) ? `£${p.comparePrice}` : null,
           grade: p.condition,
           img: p.images?.[0] ?? "",
           link: `/shop/${p.category.toLowerCase()}/${p.slug}`,
@@ -1708,7 +1723,7 @@ function BestDealsSplit() {
             <div ref={scrollRef} className="flex gap-4 overflow-x-auto scrollbar-hide pb-4 flex-nowrap">
               {filtered.map((p) => {
                 const priceStr = (p.price ?? 0).toFixed(2);
-                const was = "£" + (p.comparePrice ?? (p.price ?? 0) * 1.3).toFixed(2) + " new";
+                const was = (p.comparePrice && p.comparePrice > (p.price ?? 0)) ? `£${p.comparePrice} new` : null;
                 const [pWhole, pDec] = priceStr.split(".");
                 const added = addedIds.has(p.id);
                 return (
@@ -2215,7 +2230,7 @@ function SavingsComparison() {
     .filter(p => p.price != null && p.price > 0)
     .map(p => ({
       device: p.name,
-      newPrice: p.comparePrice ?? Math.round(p.price * 1.4),
+      newPrice: (p.comparePrice && p.comparePrice > p.price) ? p.comparePrice : null,
       ourPrice: p.price as number,
       grade: p.condition,
       img: p.images?.[0] ?? "",
@@ -2303,7 +2318,7 @@ function SavingsComparison() {
 // ─── Shared product card ──────────────────────────────────────────────────────
 interface PCard {
   name: string; type: string; spec: string;
-  price: string; was: string; grade: string; img: string; index?: number;
+  price: string; was?: string | null; grade: string; img: string; index?: number;
   link?: string;
 }
 const GRADE_STYLE: Record<string, string> = {
@@ -2314,7 +2329,8 @@ const GRADE_STYLE: Record<string, string> = {
 function ProductCard({ name, type, spec, price, was, grade, img, index = 0, link = "/shop/phones" }: PCard) {
   const numericPrice = Number(price.replace(/[^0-9.]/g, ""));
   const isUnpriced = !numericPrice;
-  const pct = isUnpriced ? 0 : Math.round((1 - numericPrice / Number(was.replace(/[^0-9.]/g, ""))) * 100);
+  const numericWas = was ? Number(was.replace(/[^0-9.]/g, "")) : 0;
+  const pct = isUnpriced || !numericWas ? 0 : Math.round((1 - numericPrice / numericWas) * 100);
   return (
     <Link href={link} className="block group">
       <motion.div
@@ -2326,7 +2342,7 @@ function ProductCard({ name, type, spec, price, was, grade, img, index = 0, link
         <div className="relative aspect-square rounded-2xl bg-image-light overflow-hidden mb-3 ring-1 ring-zinc-200/10 group-hover:ring-transparent group-hover:shadow-xl transition-all duration-300">
           <img src={img} alt={name} className="h-full w-full object-contain p-4 mix-blend-multiply group-hover:scale-105 transition-transform duration-500" />
           <div className={`absolute top-3 left-3 px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest ${GRADE_STYLE[grade] ?? "bg-zinc-100 text-zinc-600"}`}>{grade}</div>
-          {!isUnpriced && <div className="absolute top-3 right-3 px-2 py-1 rounded-full bg-accent text-white text-[9px] font-bold">-{pct}%</div>}
+          {!isUnpriced && pct > 0 && <div className="absolute top-3 right-3 px-2 py-1 rounded-full bg-accent text-white text-[9px] font-bold">-{pct}%</div>}
           <button className="absolute bottom-3 right-3 h-10 w-10 rounded-full bg-zinc-950 text-white flex items-center justify-center opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 shadow-lg">
             <ShoppingCart className="h-4 w-4" />
           </button>
@@ -2339,8 +2355,8 @@ function ProductCard({ name, type, spec, price, was, grade, img, index = 0, link
         ) : (
           <div className="flex items-baseline gap-2">
             <span className="text-lg font-bold text-zinc-950">{price}</span>
-            <span className="text-xs text-zinc-400 line-through">{was}</span>
-            <span className="text-xs font-bold text-emerald-600">-{pct}%</span>
+            {was && <span className="text-xs text-zinc-400 line-through">{was}</span>}
+            {pct > 0 && <span className="text-xs font-bold text-emerald-600">-{pct}%</span>}
           </div>
         )}
       </motion.div>
@@ -2390,7 +2406,7 @@ function FeaturedShop() {
           type: p.brand,
           spec: String((p.specs as Record<string, unknown>)?.storage ?? p.model ?? "—"),
           price: `£${p.price ?? 0}`,
-          was: `£${p.comparePrice ?? Math.round((p.price ?? 0) * 1.4)}`,
+          was: (p.comparePrice && p.comparePrice > (p.price ?? 0)) ? `£${p.comparePrice}` : null,
           grade: p.condition,
           img: p.images?.[0] ?? "",
           link: `/shop/${active}/${p.slug}`,
@@ -2656,7 +2672,7 @@ function TopBrandsSplit() {
                     </div>
                   ))
                 ) : products.map((p, i) => {
-                  const comparePrice = p.comparePrice ?? Math.round(p.price * 1.4);
+                  const comparePrice = (p.comparePrice && p.comparePrice > p.price) ? p.comparePrice : null;
                   const ratingFilled = Math.round(p.rating ?? 4);
                   return (
                     <Link
@@ -2717,7 +2733,7 @@ function DiscoverMore() {
       type: p.brand,
       spec: String((p.specs as any)?.storage ?? p.model ?? p.condition),
       price: `£${p.price ?? 0}`,
-      was: `£${p.comparePrice ?? Math.round((p.price ?? 0) * 1.4)}`,
+      was: (p.comparePrice && p.comparePrice > (p.price ?? 0)) ? `£${p.comparePrice}` : null,
       grade: p.condition,
       img: p.images?.[0] ?? "",
       link: `/shop/${p.category.toLowerCase()}/${p.slug}`,
@@ -2782,7 +2798,7 @@ function DiscoverMore() {
                     {Number(p.price.replace(/[^0-9.]/g, "")) > 0 ? (
                       <div className="flex items-baseline gap-2">
                         <span className="text-base font-bold text-zinc-950">{p.price}</span>
-                        <span className="text-[11px] text-zinc-400 line-through">{p.was}</span>
+                        {p.was && <span className="text-[11px] text-zinc-400 line-through">{p.was}</span>}
                       </div>
                     ) : (
                       <span className="text-sm font-bold text-zinc-400 italic">Price on request</span>
@@ -2821,7 +2837,7 @@ function BudgetPicks() {
       type: p.brand,
       spec: String((p.specs as any)?.storage ?? p.model ?? p.condition),
       price: `£${p.price ?? 0}`,
-      was: `£${p.comparePrice ?? Math.round((p.price ?? 0) * 1.4)}`,
+      was: (p.comparePrice && p.comparePrice > (p.price ?? 0)) ? `£${p.comparePrice}` : null,
       grade: p.condition,
       img: p.images?.[0] ?? "",
       link: `/shop/${p.category.toLowerCase()}/${p.slug}`,
