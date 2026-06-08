@@ -123,7 +123,15 @@
       "Bash(git -C \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\" add .github/workflows/db-migration-check.yml)",
       "Bash(git -C \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\" add apps/api/src/modules/seed/seed.service.ts apps/api/prisma/seed/products/products.json)",
       "Bash(git -C \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\" add apps/admin/app/scraper/page.tsx)",
-      "Bash(git -C \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\" add apps/api/src/modules/product-pricing/product-pricing.service.ts apps/api/src/modules/product-pricing/product-pricing.controller.ts apps/admin/lib/api.ts apps/admin/app/products/page.tsx)"
+      "Bash(git -C \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\" add apps/api/src/modules/product-pricing/product-pricing.service.ts apps/api/src/modules/product-pricing/product-pricing.controller.ts apps/admin/lib/api.ts apps/admin/app/products/page.tsx)",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('scripts',{}\\), indent=2\\)\\)\")",
+      "Bash(docker exec *)",
+      "Bash(grep -v \"//\\\\|dto\\\\.\\\\|@Is\")",
+      "Bash(echo \"Exit code: $?\")",
+      "Bash(echo \"Exit: $?\")",
+      "Bash(node -e \"const bcrypt = require\\('./node_modules/bcrypt'\\); bcrypt.hash\\('password', 10\\).then\\(h => console.log\\(h\\)\\)\")",
+      "Bash(node -e \"const bcrypt = require\\('d:/CODE/Projects/Markhor Systems Projects/Ai-Ecommerce/node_modules/bcrypt'\\); bcrypt.hash\\('password', 10\\).then\\(h => console.log\\(h\\)\\)\")",
+      "Bash(node -e \"const b = require\\('D:/CODE/Projects/Markhor Systems Projects/Ai-Ecommerce/node_modules/bcryptjs'\\); b.hash\\('password', 10, \\(e,h\\) => console.log\\(h\\)\\)\")"
     ],
     "additionalDirectories": [
       "d:\\CODE\\Projects\\Markhor Systems Projects\\Ai-Ecommerce\\apps\\web\\app\\account\\repairs",
