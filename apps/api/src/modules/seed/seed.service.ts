@@ -41,11 +41,11 @@ function categoryFlags(slug: string) {
 }
 
 const PRICING_DEFAULTS = [
-    { key: 'margin_pct', value: 30.0, label: 'Default Profit Margin (%)' },
-    { key: 'multiplier_mint', value: 1.0, label: 'Mint Condition Multiplier' },
-    { key: 'multiplier_good', value: 0.85, label: 'Good Condition Multiplier' },
-    { key: 'multiplier_used', value: 0.70, label: 'Used Condition Multiplier' },
-    { key: 'multiplier_damaged', value: 0.40, label: 'Damaged Condition Multiplier' },
+    { key: 'multiplier_new', value: 1.20, label: 'New condition multiplier (% of market price)' },
+    { key: 'multiplier_a',   value: 1.05, label: 'A Grade multiplier — used but like new (% of market price)' },
+    { key: 'multiplier_b',   value: 0.85, label: 'B Grade multiplier — minor signs of use (% of market price)' },
+    { key: 'multiplier_c',   value: 0.65, label: 'C Grade multiplier — heavy scratches/marks (% of market price)' },
+    { key: 'multiplier_f',   value: 0.25, label: 'F Grade multiplier — non-working, parts only (% of market price)' },
     { key: 'show_unpriced_products', value: 0, label: 'Show unpriced products on storefront (0=hide, 1=show)' },
 ];
 
