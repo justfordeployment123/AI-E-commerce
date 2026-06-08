@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useAuth } from "../../../context/auth-context";
 import { tradeInsApi, type TradeIn } from "../../../lib/api";
 import { statusCfg, fmtDate } from "../_utils";
-import { getGradeConfig } from "../../../lib/grades";
+import { GradeBadge } from "../../../components/GradeBadge";
 
 export default function TradeInsPage() {
   const { user } = useAuth();
@@ -67,14 +67,7 @@ export default function TradeInsPage() {
                   <div>
                     <p className="text-xs text-zinc-400 font-medium flex items-center gap-1.5">
                       Condition:{" "}
-                      {(() => {
-                        const grade = getGradeConfig(t.condition ?? "");
-                        return (
-                          <span className={`inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full border ${grade.badgeClass}`}>
-                            {grade.label}
-                          </span>
-                        );
-                      })()}
+                      <GradeBadge condition={t.condition ?? ""} />
                     </p>
                     <p className="font-bold text-lg mt-0.5">
                       £{t.counterOffer ?? t.offerPrice}

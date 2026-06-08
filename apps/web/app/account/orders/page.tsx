@@ -7,7 +7,7 @@ import { ordersApi, reviewsApi, uploadsApi, type Order } from "../../../lib/api"
 
 type MarkingId = string | null;
 import { statusCfg, fmtDate } from "../_utils";
-import { getGradeConfig } from "../../../lib/grades";
+import { GradeBadge } from "../../../components/GradeBadge";
 
 interface ReviewModal {
   productId: string;
@@ -166,14 +166,7 @@ export default function OrdersPage() {
                     <div key={item.id} className="flex items-center justify-between gap-3">
                       <p className="text-sm font-medium text-zinc-600">
                         {item.product.name} —{" "}
-                        {(() => {
-                          const grade = getGradeConfig(item.product.condition ?? "");
-                          return (
-                            <span className={`inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full border ${grade.badgeClass}`}>
-                              {grade.label}
-                            </span>
-                          );
-                        })()}{" "}
+                        <GradeBadge condition={item.product.condition ?? ""} />{" "}
                         × {item.quantity}
                       </p>
                       {isDelivered && (

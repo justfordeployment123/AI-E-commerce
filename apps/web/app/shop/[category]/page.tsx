@@ -15,6 +15,7 @@ import {
 import Footer from "../../../components/Footer";
 import { catalogApi } from "../../../lib/api";
 import { GradeKey, GRADE_CONFIG, getGradeConfig } from "../../../lib/grades";
+import { GradeBadge } from "../../../components/GradeBadge";
 
 // ─── Scroll Buttons ───────────────────────────────────────────────────────────
 function ScrollButtons({ scrollRef }: { scrollRef: React.RefObject<HTMLElement | null> }) {
@@ -784,15 +785,7 @@ export default function CategoryPage() {
 
                         <div className="relative aspect-square rounded-[24px] bg-[#f5f5f7] mb-5 overflow-hidden flex items-center justify-center p-5">
                           <div className="absolute top-4 left-4 z-10 flex flex-col gap-1.5">
-                            {(() => {
-                              const grade = getGradeConfig(product.grade);
-                              return (
-                                <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border ${grade.badgeClass}`}>
-                                  {grade.label}
-                                  {grade.forParts && <span className="text-[10px] font-normal opacity-80">· For Parts</span>}
-                                </span>
-                              );
-                            })()}
+                            <GradeBadge condition={product.grade} />
                             {product.stock > 0 && product.stock <= 2 && (
                               <span className="inline-flex px-2.5 py-1 rounded-full bg-amber-500 text-[10px] font-bold text-white uppercase tracking-wider">
                                 Only {product.stock} left

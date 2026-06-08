@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import Footer from "../../../../components/Footer";
 import { getGradeConfig } from "../../../../lib/grades";
+import { GradeBadge } from "../../../../components/GradeBadge";
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -272,10 +273,7 @@ export default function ProductDetailPage() {
                   const grade = getGradeConfig(product.condition ?? '');
                   return (
                     <>
-                      <span className={`inline-flex items-center px-4 py-2 rounded-full font-bold text-sm border ${grade.badgeClass}`}>
-                        {grade.label}
-                        {grade.forParts && <span className="ml-1 text-xs font-normal opacity-80">· For Parts</span>}
-                      </span>
+                      <GradeBadge condition={product.condition ?? ''} size="lg" />
                       {grade.desc && (
                         <p className="text-xs text-zinc-500 mt-2 font-medium flex items-center gap-1.5">
                           <Info className="h-3.5 w-3.5" /> {grade.desc}

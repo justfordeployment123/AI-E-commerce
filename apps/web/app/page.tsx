@@ -82,6 +82,7 @@ import dynamic from "next/dynamic";
 import { productsApi, reviewsApi, bannersApi, catalogApi } from "../lib/api";
 import type { CatalogBrand } from "../lib/api";
 import { getGradeConfig } from "../lib/grades";
+import { GradeBadge } from "../components/GradeBadge";
 import { useCart } from "../context/cart-context";
 const Footer = dynamic(() => import("../components/Footer"));
 
@@ -748,10 +749,7 @@ function Hero() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between mb-3">
-                            <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border ${gradeConf.badgeClass}`}>
-                              {gradeConf.label}
-                              {gradeConf.forParts && <span className="text-[10px] font-normal opacity-80">· For Parts</span>}
-                            </span>
+                            <GradeBadge condition={p.condition ?? ''} />
                             {saving > 0 && <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2.5 py-1.5 rounded-full">Save £{saving}</span>}
                           </div>
                           <h3 className="font-bold text-xl text-zinc-950 mb-1 truncate">{p.name}</h3>
@@ -1753,15 +1751,7 @@ function BestDealsSplit() {
                       <p className="font-semibold text-zinc-950 text-[12.5px] leading-snug mb-1 line-clamp-2 hover:underline min-h-[36px]">{p.name}</p>
                     </Link>
                     <div className="flex items-center justify-between mb-2">
-                      {(() => {
-                        const grade = getGradeConfig(p.condition ?? '');
-                        return (
-                          <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border ${grade.badgeClass}`}>
-                            {grade.label}
-                            {grade.forParts && <span className="text-[10px] font-normal opacity-80">· For Parts</span>}
-                          </span>
-                        );
-                      })()}
+                      <GradeBadge condition={p.condition ?? ''} />
                       <div className="flex items-center gap-0.5 text-zinc-950">
                         <Star className="h-3 w-3 fill-zinc-950 text-zinc-950" />
                         <span className="text-[10px] font-bold">{p.rating?.toFixed(1)}</span>
@@ -1840,15 +1830,7 @@ function NewArrivals() {
                 alt={item.name}
                 className={`h-full w-full ${isOtherProduct(item.category, item.images?.[0]) ? 'object-contain mix-blend-multiply' : 'object-cover'} group-hover:scale-105 transition-transform duration-500`}
               />
-              {(() => {
-                const grade = getGradeConfig(item.condition ?? '');
-                return (
-                  <span className={`inline-flex items-center gap-1 absolute top-3 left-3 text-xs font-semibold px-2 py-0.5 rounded-full border ${grade.badgeClass}`}>
-                    {grade.label}
-                    {grade.forParts && <span className="text-[10px] font-normal opacity-80">· For Parts</span>}
-                  </span>
-                );
-              })()}
+              <GradeBadge condition={item.condition ?? ''} className="absolute top-3 left-3" />
               <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-zinc-950 text-white text-[9px] font-bold uppercase tracking-widest">
                 New
               </div>
@@ -2352,15 +2334,7 @@ function ProductCard({ name, type, spec, price, was, grade, img, index = 0, link
       >
         <div className="relative aspect-square rounded-2xl bg-image-light overflow-hidden mb-3 ring-1 ring-zinc-200/10 group-hover:ring-transparent group-hover:shadow-xl transition-all duration-300">
           <img src={img} alt={name} className="h-full w-full object-contain p-4 mix-blend-multiply group-hover:scale-105 transition-transform duration-500" />
-          {(() => {
-            const gradeConf = getGradeConfig(grade ?? '');
-            return (
-              <span className={`inline-flex items-center gap-1 absolute top-3 left-3 text-xs font-semibold px-2 py-0.5 rounded-full border ${gradeConf.badgeClass}`}>
-                {gradeConf.label}
-                {gradeConf.forParts && <span className="text-[10px] font-normal opacity-80">· For Parts</span>}
-              </span>
-            );
-          })()}
+          <GradeBadge condition={grade ?? ''} className="absolute top-3 left-3" />
           {!isUnpriced && pct > 0 && <div className="absolute top-3 right-3 px-2 py-1 rounded-full bg-accent text-white text-[9px] font-bold">-{pct}%</div>}
           <button className="absolute bottom-3 right-3 h-10 w-10 rounded-full bg-zinc-950 text-white flex items-center justify-center opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 shadow-lg">
             <ShoppingCart className="h-4 w-4" />
@@ -2810,15 +2784,7 @@ function DiscoverMore() {
                         alt={p.name}
                         className={`h-full w-full ${isOtherProduct(p.type, p.img) ? 'object-contain mix-blend-multiply' : 'object-cover'} group-hover:scale-105 transition-transform duration-500`}
                       />
-                      {(() => {
-                        const gradeConf = getGradeConfig(p.grade ?? '');
-                        return (
-                          <span className={`inline-flex items-center gap-1 absolute top-2.5 left-2.5 text-xs font-semibold px-2 py-0.5 rounded-full border ${gradeConf.badgeClass}`}>
-                            {gradeConf.label}
-                            {gradeConf.forParts && <span className="text-[10px] font-normal opacity-80">· For Parts</span>}
-                          </span>
-                        );
-                      })()}
+                      <GradeBadge condition={p.grade ?? ''} className="absolute top-2.5 left-2.5" />
                     </div>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-0.5">{p.type}</p>
                     <p className="font-bold text-zinc-950 text-xs leading-tight truncate mb-1.5">{p.name}</p>
@@ -2909,15 +2875,7 @@ function BudgetPicks() {
                     alt={p.name}
                     className={`h-full w-full ${isOtherProduct(p.type, p.img) ? 'object-contain mix-blend-multiply' : 'object-cover'} group-hover:scale-105 transition-transform duration-500`}
                   />
-                  {(() => {
-                    const gradeConf = getGradeConfig(p.grade ?? '');
-                    return (
-                      <span className={`inline-flex items-center gap-1 absolute top-2.5 left-2.5 text-xs font-semibold px-2 py-0.5 rounded-full border ${gradeConf.badgeClass}`}>
-                        {gradeConf.label}
-                        {gradeConf.forParts && <span className="text-[10px] font-normal opacity-80">· For Parts</span>}
-                      </span>
-                    );
-                  })()}
+                  <GradeBadge condition={p.grade ?? ''} className="absolute top-2.5 left-2.5" />
                   <button className="absolute bottom-2.5 right-2.5 h-9 w-9 rounded-full bg-zinc-950 text-white flex items-center justify-center opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
                     <ShoppingCart className="h-3.5 w-3.5" />
                   </button>
