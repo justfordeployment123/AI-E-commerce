@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Condition } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import { StorageService } from '../../common/services/storage.service';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -164,7 +165,7 @@ export class ProductsService {
             }
         }
 
-        if (condition) where.condition = condition;
+        if (condition) where.condition = condition as Condition;
         if (minPrice !== undefined || maxPrice !== undefined) {
             where.price = { gte: minPrice, lte: maxPrice };
         }

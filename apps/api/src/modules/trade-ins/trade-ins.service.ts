@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import OpenAI from 'openai';
+import { Condition } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import { StorageService } from '../../common/services/storage.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -51,7 +52,7 @@ export class TradeInsService {
                 brand: dto.brand,
                 model: dto.model,
                 specs: dto.specs,
-                condition: dto.condition,
+                condition: dto.condition as Condition,
                 answers: dto.answers,
                 fulfillment: dto.fulfillment,
                 offerPrice: dto.offerPrice,

@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import OpenAI from 'openai';
+import { Condition } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import { ScraperDataService } from '../scraper-data/scraper-data.service';
 import { PricingConfigService } from '../pricing-config/pricing-config.service';
@@ -205,7 +206,7 @@ export class ProductPricingService {
                     model: { equals: model, mode: 'insensitive' },
                 },
                 storage:       { equals: storage,   mode: 'insensitive' },
-                condition:     { equals: condition, mode: 'insensitive' },
+                condition:     condition as Condition,
                 price:         { gt: 0 },
                 pricingStatus: { not: 'flagged' },
             },
