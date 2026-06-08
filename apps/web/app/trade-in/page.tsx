@@ -128,10 +128,10 @@ const SPECS: Record<string, { label: string; options: string[] }[]> = {
 };
 
 const CONDITIONS = [
-  { id: "Mint", label: "Mint", desc: "Like new, no marks or scuffs", color: "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200/60 dark:border-emerald-500/20", dot: "bg-emerald-400", descColor: "text-zinc-500 dark:text-emerald-400/70", multiplier: 1.0 },
-  { id: "Good", label: "Good", desc: "Minor scuffs, fully working", color: "bg-blue-50 dark:bg-blue-950/30 border-blue-200/60 dark:border-blue-500/20", dot: "bg-blue-400", descColor: "text-zinc-500 dark:text-blue-400/70", multiplier: 0.82 },
-  { id: "Used", label: "Used", desc: "Moderate wear, fully working", color: "bg-amber-50 dark:bg-amber-950/30 border-amber-200/60 dark:border-amber-500/20", dot: "bg-amber-400", descColor: "text-zinc-500 dark:text-amber-400/70", multiplier: 0.62 },
-  { id: "Damaged", label: "Damaged", desc: "Cracked screen or body damage", color: "bg-red-50 dark:bg-red-950/30 border-red-200/60 dark:border-red-500/20", dot: "bg-red-400", descColor: "text-zinc-500 dark:text-red-400/70", multiplier: 0.3 },
+  { id: "A", label: "A Grade", desc: "Used but like new — zero visible marks.",  color: "border-emerald-500 bg-emerald-50", dot: "bg-emerald-500", descColor: "text-emerald-700" },
+  { id: "B", label: "B Grade", desc: "Minor signs of usage, small scratches.",   color: "border-blue-500 bg-blue-50",      dot: "bg-blue-500",    descColor: "text-blue-700" },
+  { id: "C", label: "C Grade", desc: "Heavy scratches or marks, fully working.", color: "border-amber-500 bg-amber-50",    dot: "bg-amber-500",   descColor: "text-amber-700" },
+  { id: "F", label: "F Grade", desc: "Non-working — for parts or repair only.",  color: "border-red-500 bg-red-50",        dot: "bg-red-500",     descColor: "text-red-700" },
 ];
 
 const CONDITION_QUESTIONS: Record<string, { id: string; question: string; options: string[] }[]> = {
