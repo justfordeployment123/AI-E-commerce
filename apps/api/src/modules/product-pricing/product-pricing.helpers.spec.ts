@@ -46,16 +46,16 @@ describe('evaluateActive', () => {
 });
 
 describe('conditionToMultiplierKey', () => {
-    it('Pristine → multiplier_mint', () =>
-        expect(conditionToMultiplierKey('Pristine')).toBe('multiplier_mint'));
-    it('Excellent → multiplier_mint', () =>
-        expect(conditionToMultiplierKey('Excellent')).toBe('multiplier_mint'));
-    it('Very Good → multiplier_good', () =>
-        expect(conditionToMultiplierKey('Very Good')).toBe('multiplier_good'));
-    it('Good → multiplier_good', () =>
-        expect(conditionToMultiplierKey('Good')).toBe('multiplier_good'));
-    it('Fair → multiplier_used', () =>
-        expect(conditionToMultiplierKey('Fair')).toBe('multiplier_used'));
-    it('unknown → multiplier_used (safe fallback)', () =>
-        expect(conditionToMultiplierKey('Unknown')).toBe('multiplier_used'));
+    it('NEW → multiplier_new', () =>
+        expect(conditionToMultiplierKey('NEW')).toBe('multiplier_new'));
+    it('A → multiplier_a', () =>
+        expect(conditionToMultiplierKey('A')).toBe('multiplier_a'));
+    it('B → multiplier_b', () =>
+        expect(conditionToMultiplierKey('B')).toBe('multiplier_b'));
+    it('C → multiplier_c', () =>
+        expect(conditionToMultiplierKey('C')).toBe('multiplier_c'));
+    it('F → multiplier_f', () =>
+        expect(conditionToMultiplierKey('F')).toBe('multiplier_f'));
+    it('unknown → multiplier_b (safe fallback)', () =>
+        expect(conditionToMultiplierKey('Unknown')).toBe('multiplier_b'));
 });

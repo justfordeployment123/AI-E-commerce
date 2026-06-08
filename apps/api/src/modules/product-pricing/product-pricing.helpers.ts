@@ -42,12 +42,16 @@ export function evaluateActive(price: number | null, images: string[], pricingSt
 }
 
 /**
- * Maps a product condition string to its PricingConfig multiplier key.
- * Product conditions: Pristine, Mint, Excellent, Very Good, Good, Fair, Refurbished
+ * Maps a product condition enum value to its PricingConfig multiplier key.
+ * Condition enum values: NEW, A, B, C, F
  */
 export function conditionToMultiplierKey(condition: string): string {
-    const c = condition.toLowerCase();
-    if (c === 'pristine' || c === 'mint' || c === 'excellent') return 'multiplier_mint';
-    if (c === 'very good' || c === 'good')                     return 'multiplier_good';
-    return 'multiplier_used'; // Fair, Refurbished, damaged, or unknown
+    switch (condition) {
+        case 'NEW': return 'multiplier_new';
+        case 'A':   return 'multiplier_a';
+        case 'B':   return 'multiplier_b';
+        case 'C':   return 'multiplier_c';
+        case 'F':   return 'multiplier_f';
+        default:    return 'multiplier_b';
+    }
 }
