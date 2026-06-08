@@ -489,7 +489,7 @@ function BrandsBar() {
 
 // ─── Hero ─────────────────────────────────────────────────────────────────────
 function Hero() {
-  const grades = ["Pristine", "Excellent", "Good"];
+  const grades = ["New", "A Grade", "B Grade", "C Grade", "F Grade"];
   const [gradeIdx, setGradeIdx] = useState(0);
   const [heroSearchQuery, setHeroSearchQuery] = useState("");
   const [isHeroSearchFocused, setIsHeroSearchFocused] = useState(false);
@@ -1369,9 +1369,9 @@ function AppPreview() {
                     {/* Product list */}
                     <div className="flex-1 px-4 space-y-2 overflow-hidden">
                       {[
-                        { name: "MacBook Air M2", price: "£849", grade: "Pristine", seed: "mbp2" },
-                        { name: "AirPods Pro 2",  price: "£149", grade: "Good",     seed: "app2" },
-                        { name: "iPad Air 5",     price: "£399", grade: "Excellent", seed: "iap5" },
+                        { name: "MacBook Air M2", price: "£849", grade: "A", seed: "mbp2" },
+                        { name: "AirPods Pro 2",  price: "£149", grade: "C",     seed: "app2" },
+                        { name: "iPad Air 5",     price: "£399", grade: "B", seed: "iap5" },
                       ].map((p, j) => (
                         <div key={j} className="flex items-center gap-3 bg-zinc-50 rounded-xl p-2">
                           <img
@@ -1857,9 +1857,9 @@ function NewArrivals() {
 }
 
 // ─── Grade Guide ──────────────────────────────────────────────────────────────
-function ConditionMeter({ level, barClass }: { level: 0 | 1 | 2; barClass: string }) {
+function ConditionMeter({ level, barClass }: { level: 0 | 1 | 2 | 3 | 4; barClass: string }) {
   const bars = 5;
-  const filled = level === 0 ? 5 : level === 1 ? 4 : 3;
+  const filled = [5, 5, 4, 3, 1][level];
   return (
     <div className="flex gap-1.5 items-end h-6">
       {[...Array(bars)].map((_, k) => (
@@ -1873,7 +1873,7 @@ function ConditionMeter({ level, barClass }: { level: 0 | 1 | 2; barClass: strin
   );
 }
 
-function PhoneSketch({ level }: { level: 0 | 1 | 2 }) {
+function PhoneSketch({ level }: { level: 0 | 1 | 2 | 3 }) {
   return (
     <svg viewBox="0 0 110 190" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-44 w-auto drop-shadow-2xl">
       {/* Phone body */}
@@ -1898,7 +1898,7 @@ function PhoneSketch({ level }: { level: 0 | 1 | 2 }) {
       <rect x="18" y="158" width="74" height="20" rx="10" fill="white" fillOpacity="0.08" stroke="white" strokeOpacity="0.12" strokeWidth="1"/>
       {[0,1,2,3].map(k => <rect key={k} x={26 + k * 18} y={163} width="12" height="12" rx="3" fill="white" fillOpacity="0.12"/>)}
 
-      {/* ── Pristine: green verified badge ── */}
+      {/* ── NEW / A Grade: verified badge ── */}
       {level === 0 && (
         <g>
           <circle cx="88" cy="44" r="14" fill="#10b981" fillOpacity="0.9"/>
@@ -1906,7 +1906,7 @@ function PhoneSketch({ level }: { level: 0 | 1 | 2 }) {
         </g>
       )}
 
-      {/* ── Excellent: one faint scratch + magnifier callout ── */}
+      {/* ── B Grade: one faint scratch + magnifier callout ── */}
       {level === 1 && (
         <>
           <line x1="30" y1="52" x2="72" y2="94" stroke="white" strokeOpacity="0.4" strokeWidth="1.5" strokeLinecap="round"/>
@@ -1918,7 +1918,7 @@ function PhoneSketch({ level }: { level: 0 | 1 | 2 }) {
         </>
       )}
 
-      {/* ── Good: multiple prominent scratches + warning badge ── */}
+      {/* ── C Grade: multiple prominent scratches + warning badge ── */}
       {level === 2 && (
         <>
           <line x1="24" y1="60" x2="68" y2="96"  stroke="white" strokeOpacity="0.55" strokeWidth="2.5" strokeLinecap="round"/>
@@ -1930,58 +1930,95 @@ function PhoneSketch({ level }: { level: 0 | 1 | 2 }) {
           <text x="88" y="50" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold">!</text>
         </>
       )}
+
+      {/* ── F Grade: large X + red broken circle ── */}
+      {level === 3 && (
+        <>
+          <line x1="22" y1="52" x2="88" y2="138" stroke="white" strokeOpacity="0.6" strokeWidth="3.5" strokeLinecap="round"/>
+          <line x1="88" y1="52" x2="22" y2="138" stroke="white" strokeOpacity="0.6" strokeWidth="3.5" strokeLinecap="round"/>
+          <line x1="30" y1="40" x2="52" y2="66"  stroke="white" strokeOpacity="0.2" strokeWidth="1.5" strokeLinecap="round"/>
+          <line x1="60" y1="118" x2="82" y2="148" stroke="white" strokeOpacity="0.2" strokeWidth="1.5" strokeLinecap="round"/>
+          {/* Red X badge */}
+          <circle cx="88" cy="44" r="14" fill="#b91c1c" fillOpacity="0.9"/>
+          <line x1="82" y1="38" x2="94" y2="50" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+          <line x1="94" y1="38" x2="82" y2="50" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+        </>
+      )}
     </svg>
   );
 }
 
 function GradeGuide() {
-  const [gradeImgs, setGradeImgs] = useState<(string | null)[]>([null, null, null]);
+  const [gradeImgs, setGradeImgs] = useState<(string | null)[]>([null, null, null, null, null]);
   useEffect(() => {
-    bannersApi.random(3).then(b => setGradeImgs(b.map(x => x.url ?? null))).catch(() => {});
+    bannersApi.random(5).then(b => setGradeImgs(b.map(x => x.url ?? null))).catch(() => {});
   }, []);
 
   const grades: {
     num: string; name: string; tagline: string;
     battery: number; saving: number; fromPrice: string;
     rating: number; reviewCount: string;
-    conditionLabel: string; sketchLevel: 0 | 1 | 2; featured: boolean;
+    conditionLabel: string; sketchLevel: 0 | 1 | 2 | 3; conditionLevel: 0 | 1 | 2 | 3 | 4;
+    featured: boolean; partsOnly: boolean;
     img: string | null; features: string[];
     products: { name: string; price: string }[];
-    barClass: string; textClass: string; glowColor: string;
+    barClass: string; textClass: string;
     chipBg: string; featuredRing: string;
   }[] = [
     {
-      num: "01", name: "Pristine", tagline: "Zero cosmetic flaws. Like opening a new box.",
-      battery: 95, saving: 30, fromPrice: "From £199",
-      rating: 4.9, reviewCount: "4,200", conditionLabel: "Zero marks",
-      sketchLevel: 0, featured: false,
+      num: "01", name: "New", tagline: "Brand new, sealed or equivalent.",
+      battery: 100, saving: 10, fromPrice: "From £329",
+      rating: 5.0, reviewCount: "1,200", conditionLabel: "Sealed box",
+      sketchLevel: 0, conditionLevel: 0, featured: false, partsOnly: false,
       img: gradeImgs[0],
-      features: ["Flawless screen — zero scratches", "Original or equivalent accessories", "25/25 inspection points passed", "Near-sealed condition packaging"],
+      features: ["Brand new in original sealed packaging", "Full manufacturer warranty included", "All original accessories in box", "25/25 inspection points passed"],
+      products: [{ name: "iPhone 15", price: "£729" }, { name: "MacBook Air M3", price: "£1,099" }, { name: "Galaxy S24", price: "£799" }],
+      barClass: "bg-zinc-400", textClass: "text-zinc-300",
+      chipBg: "bg-white/10", featuredRing: "",
+    },
+    {
+      num: "02", name: "A Grade", tagline: "Used but like new — zero visible marks.",
+      battery: 95, saving: 20, fromPrice: "From £249",
+      rating: 4.9, reviewCount: "4,200", conditionLabel: "Zero marks",
+      sketchLevel: 0, conditionLevel: 1, featured: true, partsOnly: false,
+      img: gradeImgs[1],
+      features: ["No visible marks — like new appearance", "Battery 95%+ certified by engineers", "All ports, cameras & buttons tested", "25/25 inspection points passed"],
       products: [{ name: "iPhone 15 Pro", price: "£739" }, { name: "MacBook Pro M3", price: "£1,699" }, { name: "Galaxy S24 Ultra", price: "£899" }],
       barClass: "bg-emerald-500", textClass: "text-emerald-400",
-      glowColor: "#10b981", chipBg: "bg-emerald-500/20", featuredRing: "",
+      chipBg: "bg-emerald-500/20", featuredRing: "ring-2 ring-emerald-500/40 ring-offset-2 ring-offset-zinc-950",
     },
     {
-      num: "02", name: "Excellent", tagline: "Micro-marks invisible in everyday light.",
-      battery: 85, saving: 45, fromPrice: "From £129",
-      rating: 4.8, reviewCount: "12,400", conditionLabel: "Micro-scratches",
-      sketchLevel: 1, featured: true,
-      img: gradeImgs[1],
-      features: ["Micro-scratches not visible in use", "Battery 85%+ certified by engineers", "All ports, cameras & buttons tested", "Thoroughly cleaned and sanitised"],
-      products: [{ name: "iPhone 14 Pro", price: "£549" }, { name: "MacBook Air M2", price: "£849" }, { name: "Samsung S23", price: "£429" }],
-      barClass: "bg-sky-400", textClass: "text-sky-400",
-      glowColor: "#38bdf8", chipBg: "bg-sky-500/20", featuredRing: "ring-2 ring-accent ring-offset-2 ring-offset-zinc-950",
-    },
-    {
-      num: "03", name: "Good", tagline: "Visible wear — every function 100% working.",
-      battery: 80, saving: 60, fromPrice: "From £69",
-      rating: 4.7, reviewCount: "8,900", conditionLabel: "Visible wear",
-      sketchLevel: 2, featured: false,
+      num: "03", name: "B Grade", tagline: "Minor signs of usage, small scratches.",
+      battery: 85, saving: 35, fromPrice: "From £149",
+      rating: 4.7, reviewCount: "12,400", conditionLabel: "Minor scratches",
+      sketchLevel: 1, conditionLevel: 2, featured: false, partsOnly: false,
       img: gradeImgs[2],
-      features: ["Visible scratches or scuffs on body", "Battery 80%+ certified by engineers", "All features 100% working", "Best price-to-performance on TechStop"],
+      features: ["Minor scratches not visible in normal use", "Battery 85%+ certified by engineers", "All ports, cameras & buttons tested", "Thoroughly cleaned and sanitised"],
+      products: [{ name: "iPhone 14 Pro", price: "£549" }, { name: "MacBook Air M2", price: "£849" }, { name: "Samsung S23", price: "£429" }],
+      barClass: "bg-blue-500", textClass: "text-blue-400",
+      chipBg: "bg-blue-500/20", featuredRing: "",
+    },
+    {
+      num: "04", name: "C Grade", tagline: "Heavy scratches or marks, fully working.",
+      battery: 75, saving: 50, fromPrice: "From £99",
+      rating: 4.5, reviewCount: "8,900", conditionLabel: "Visible marks",
+      sketchLevel: 2, conditionLevel: 3, featured: false, partsOnly: false,
+      img: gradeImgs[3],
+      features: ["Visible scratches or scuffs on body", "Battery 75%+ certified by engineers", "All features 100% working", "Best price-to-performance ratio"],
       products: [{ name: "iPhone 13", price: "£299" }, { name: "MacBook Air M1", price: "£649" }, { name: "Pixel 7 Pro", price: "£349" }],
       barClass: "bg-amber-500", textClass: "text-amber-400",
-      glowColor: "#f59e0b", chipBg: "bg-amber-500/20", featuredRing: "",
+      chipBg: "bg-amber-500/20", featuredRing: "",
+    },
+    {
+      num: "05", name: "F Grade", tagline: "Non-working — for parts or repair only.",
+      battery: 0, saving: 70, fromPrice: "From £29",
+      rating: 4.3, reviewCount: "2,100", conditionLabel: "For Parts",
+      sketchLevel: 3, conditionLevel: 4, featured: false, partsOnly: true,
+      img: gradeImgs[4],
+      features: ["Non-functional — sold as-is, no warranty", "Ideal for spares, repairs & DIY", "Heavily discounted for quick resale", "Full description of known faults listed"],
+      products: [{ name: "iPhone 12 (Parts)", price: "£59" }, { name: "Samsung S21 (Parts)", price: "£49" }, { name: "Pixel 6 (Parts)", price: "£39" }],
+      barClass: "bg-red-700", textClass: "text-red-400",
+      chipBg: "bg-red-700/20", featuredRing: "",
     },
   ];
 
@@ -2002,7 +2039,7 @@ function GradeGuide() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-4 items-stretch">
           {grades.map((g, i) => (
             <motion.div
               key={i}
@@ -2048,13 +2085,15 @@ function GradeGuide() {
 
                 {/* Floating glassmorphism chips (left side) */}
                 <div className="absolute left-5 top-1/2 -translate-y-1/2 flex flex-col gap-2">
-                  <div className={`${g.chipBg} backdrop-blur-md border border-white/10 rounded-xl px-3 py-2`}>
-                    <p className="text-[8px] text-white/50 font-bold uppercase tracking-widest mb-0.5">Battery</p>
-                    <p className={`text-sm font-bold ${g.textClass}`}>{g.battery}%+</p>
-                  </div>
-                  <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-xl px-3 py-2">
+                  {!g.partsOnly && (
+                    <div className={`${g.chipBg} backdrop-blur-md border border-white/10 rounded-xl px-3 py-2`}>
+                      <p className="text-[8px] text-white/50 font-bold uppercase tracking-widest mb-0.5">Battery</p>
+                      <p className={`text-sm font-bold ${g.textClass}`}>{g.battery}%+</p>
+                    </div>
+                  )}
+                  <div className={`${g.partsOnly ? g.chipBg : 'bg-white/10'} backdrop-blur-md border border-white/10 rounded-xl px-3 py-2`}>
                     <p className="text-[8px] text-white/50 font-bold uppercase tracking-widest mb-0.5">Condition</p>
-                    <p className="text-sm font-bold text-white">{g.conditionLabel}</p>
+                    <p className={`text-sm font-bold ${g.partsOnly ? g.textClass : 'text-white'}`}>{g.conditionLabel}</p>
                   </div>
                 </div>
 
@@ -2087,7 +2126,7 @@ function GradeGuide() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-500 mb-2">Condition score</p>
-                    <ConditionMeter level={g.sketchLevel} barClass={g.barClass} />
+                    <ConditionMeter level={g.conditionLevel} barClass={g.barClass} />
                   </div>
                   <div className="text-right">
                     <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-500 mb-1">Inspection</p>
@@ -2101,24 +2140,31 @@ function GradeGuide() {
                 </div>
 
                 {/* Battery segments */}
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-500">Battery health</p>
-                    <p className={`text-xs font-bold ${g.textClass}`}>{g.battery}%+</p>
+                {g.partsOnly ? (
+                  <div className="flex items-center gap-2 py-1">
+                    <div className={`h-2 w-2 rounded-full flex-shrink-0 ${g.barClass}`} />
+                    <p className={`text-[10px] font-black uppercase tracking-widest ${g.textClass}`}>Non-working — parts &amp; repair only</p>
                   </div>
-                  <div className="flex gap-1">
-                    {[...Array(10)].map((_, k) => (
-                      <motion.div
-                        key={k}
-                        initial={{ scaleY: 0 }}
-                        whileInView={{ scaleY: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: i * 0.1 + k * 0.04 + 0.3 }}
-                        className={`h-2.5 flex-1 rounded-sm origin-bottom ${k < Math.round(g.battery / 10) ? g.barClass : "bg-zinc-800"}`}
-                      />
-                    ))}
+                ) : (
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-500">Battery health</p>
+                      <p className={`text-xs font-bold ${g.textClass}`}>{g.battery}%+</p>
+                    </div>
+                    <div className="flex gap-1">
+                      {[...Array(10)].map((_, k) => (
+                        <motion.div
+                          key={k}
+                          initial={{ scaleY: 0 }}
+                          whileInView={{ scaleY: 1 }}
+                          viewport={{ once: true }}
+                          transition={{ delay: i * 0.1 + k * 0.04 + 0.3 }}
+                          className={`h-2.5 flex-1 rounded-sm origin-bottom ${k < Math.round(g.battery / 10) ? g.barClass : "bg-zinc-800"}`}
+                        />
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Popular devices */}
                 <div>
