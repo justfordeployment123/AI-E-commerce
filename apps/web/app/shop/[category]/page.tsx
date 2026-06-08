@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import Footer from "../../../components/Footer";
 import { catalogApi } from "../../../lib/api";
+import { GradeKey, GRADE_CONFIG, getGradeConfig } from "../../../lib/grades";
 
 // ─── Scroll Buttons ───────────────────────────────────────────────────────────
 function ScrollButtons({ scrollRef }: { scrollRef: React.RefObject<HTMLElement | null> }) {
@@ -137,7 +138,7 @@ const CATEGORY_META: Record<string, {
 };
 
 
-const GRADES = ["Pristine", "Excellent", "Very Good", "Good"];
+const GRADES: GradeKey[] = ['NEW', 'A', 'B', 'C', 'F'];
 
 const SORT_OPTIONS = [
   { id: "featured",   label: "Featured" },
@@ -557,7 +558,7 @@ export default function CategoryPage() {
                                 {product.title}
                               </h3>
                               <span className="text-[10px] font-semibold text-zinc-400 block mb-1">
-                                {product.brand} • {product.storage} • {product.grade}
+                                {product.brand} • {product.storage} • {getGradeConfig(product.grade).label}
                               </span>
                               
                               {/* Rating stars */}
@@ -700,7 +701,7 @@ export default function CategoryPage() {
                               : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-400 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-zinc-600"
                           }`}
                         >
-                          {g}
+                          {GRADE_CONFIG[g].label}
                         </button>
                       );
                     })}
@@ -783,9 +784,15 @@ export default function CategoryPage() {
 
                         <div className="relative aspect-square rounded-[24px] bg-[#f5f5f7] mb-5 overflow-hidden flex items-center justify-center p-5">
                           <div className="absolute top-4 left-4 z-10 flex flex-col gap-1.5">
-                            <span className="inline-flex px-2.5 py-1 rounded-full bg-white text-[10px] font-bold text-black border border-zinc-200 shadow-sm uppercase tracking-wider">
-                              {product.grade}
-                            </span>
+                            {(() => {
+                              const grade = getGradeConfig(product.grade);
+                              return (
+                                <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border ${grade.badgeClass}`}>
+                                  {grade.label}
+                                  {grade.forParts && <span className="text-[10px] font-normal opacity-80">· For Parts</span>}
+                                </span>
+                              );
+                            })()}
                             {product.stock > 0 && product.stock <= 2 && (
                               <span className="inline-flex px-2.5 py-1 rounded-full bg-amber-500 text-[10px] font-bold text-white uppercase tracking-wider">
                                 Only {product.stock} left
@@ -1119,7 +1126,7 @@ export default function CategoryPage() {
                         <div onClick={() => toggleFilter(g, activeGrades, setActiveGrades)} className={`h-6 w-6 rounded border-2 flex items-center justify-center ${activeGrades.includes(g) ? "border-black bg-black" : "border-zinc-300"}`}>
                           {activeGrades.includes(g) && <Check className="h-4 w-4 text-white" strokeWidth={3} />}
                         </div>
-                        <span className="font-bold">{g}</span>
+                        <span className="font-bold">{GRADE_CONFIG[g].label}</span>
                       </label>
                     ))}
                   </div>
