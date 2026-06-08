@@ -134,7 +134,8 @@
       "Bash(node -e \"const b = require\\('D:/CODE/Projects/Markhor Systems Projects/Ai-Ecommerce/node_modules/bcryptjs'\\); b.hash\\('password', 10, \\(e,h\\) => console.log\\(h\\)\\)\")",
       "Bash(node -e \"const p=require\\('./apps/api/prisma/seed/products/products.json'\\); const r=p.filter\\(x=>['iPhone 15','iPhone 15 Pro','Galaxy S24','Galaxy S24 Ultra','MacBook Air M2 \\(2022\\)','iPad Pro 11-inch M2','PlayStation 5 Disc Edition','Xbox Series X','AirPods Pro 2','Pixel 8 Pro','WH-1000XM5'].includes\\(x.model\\)\\); console.log\\(r.map\\(x=>'['+x.condition+'] '+x.model+' '+JSON.stringify\\(x.specs?.Storage||''\\)+'  £'+x.price+'/£'+x.comparePrice\\).join\\('\\\\n'\\)\\)\")",
       "Bash(node -e \"const p=require\\('./apps/api/prisma/seed/products/products.json'\\); console.log\\('Last index slug:',p[p.length-1].slug\\); console.log\\('Total count:',p.length\\)\")",
-      "Bash(node add-new-products.js)"
+      "Bash(node add-new-products.js)",
+      "Bash(git -C 'd:/CODE/Projects/Markhor Systems Projects/Ai-Ecommerce' commit -m ' *)"
     ],
     "additionalDirectories": [
       "d:\\CODE\\Projects\\Markhor Systems Projects\\Ai-Ecommerce\\apps\\web\\app\\account\\repairs",
