@@ -20,10 +20,11 @@ interface Modifier {
 
 // ── Condition multipliers ────────────────────────────────────────────────────
 const CONDITION_SCHEMA: Omit<Modifier, "value">[] = [
-  { label: "Mint / Pristine", key: "mint",         backendKey: "multiplier_mint",    min: 50,  max: 130, step: 1, unit: "%", desc: "Set above 100% to price above market. 110% = 10% above CEX.", isDecimalBackend: true },
-  { label: "Good",            key: "good",         backendKey: "multiplier_good",    min: 50,  max: 110, step: 1, unit: "%", desc: "Minor cosmetic wear. Typically 5–20% below competitor.", isDecimalBackend: true },
-  { label: "Refurbished",     key: "used",         backendKey: "multiplier_used",    min: 30,  max: 100, step: 1, unit: "%", desc: "Tested & working, visible wear. Typically 20–35% below competitor.", isDecimalBackend: true },
-  { label: "Damaged",         key: "damaged",      backendKey: "multiplier_damaged", min: 10,  max:  70, step: 1, unit: "%", desc: "Cracked screen or body damage. Parts value pricing.", isDecimalBackend: true },
+  { label: "New",     key: "new",  backendKey: "multiplier_new", min: 80, max: 150, step: 1, unit: "%", desc: "Brand new, sealed or equivalent. Set above 100% to price above market.", isDecimalBackend: true },
+  { label: "A Grade", key: "a",    backendKey: "multiplier_a",   min: 70, max: 130, step: 1, unit: "%", desc: "Used but like new — zero visible marks. Typically at or slightly above market.", isDecimalBackend: true },
+  { label: "B Grade", key: "b",    backendKey: "multiplier_b",   min: 50, max: 110, step: 1, unit: "%", desc: "Minor signs of usage, small scratches. Typically 10–20% below market.", isDecimalBackend: true },
+  { label: "C Grade", key: "c",    backendKey: "multiplier_c",   min: 30, max:  90, step: 1, unit: "%", desc: "Heavy scratches or marks, fully working. Typically 30–45% below market.", isDecimalBackend: true },
+  { label: "F Grade", key: "f",    backendKey: "multiplier_f",   min: 10, max:  50, step: 1, unit: "%", desc: "Non-working — parts only. Very low value.", isDecimalBackend: true },
   { label: "Sell margin",    key: "sell_margin",    backendKey: "sell_margin_pct",    min: -50, max: 50, step: 1, unit: "%", desc: "Added on top of multiplier. +10% = 10% more, −10% = 10% less. 0 = no effect.", isDecimalBackend: false },
   { label: "Sell discount",  key: "sell_discount",  backendKey: "sell_discount_pct",  min:   0, max: 50, step: 1, unit: "%", desc: "Promotional discount deducted from final price. 20% off = set to 20. 0 = no discount.", isDecimalBackend: false },
 ];
@@ -39,7 +40,7 @@ const TRADEIN_SCHEMA: Omit<Modifier, "value">[] = [
 ];
 
 const DEFAULTS: Record<string, number> = {
-  mint: 110, good: 90, used: 78, damaged: 45, sell_margin: 0, sell_discount: 0,
+  new: 120, a: 105, b: 85, c: 65, f: 25, sell_margin: 0, sell_discount: 0,
   tradein_ratio: 50, tradein_margin: 0, cracked_screen: 25, battery: 15, charging: 12, ai_buffer: 15,
 };
 
@@ -129,10 +130,11 @@ export default function PricingPage() {
   }
 
   const CONDITIONS = [
-    { key: "mint",    label: "Mint / Pristine", color: "text-emerald-700 bg-emerald-50 border-emerald-100" },
-    { key: "good",    label: "Good",            color: "text-blue-700 bg-blue-50 border-blue-100" },
-    { key: "used",    label: "Refurbished",     color: "text-amber-700 bg-amber-50 border-amber-100" },
-    { key: "damaged", label: "Damaged",         color: "text-red-700 bg-red-50 border-red-100" },
+    { key: "new", label: "New",     color: "text-zinc-900 bg-zinc-100 border-zinc-200" },
+    { key: "a",   label: "A Grade", color: "text-emerald-700 bg-emerald-50 border-emerald-100" },
+    { key: "b",   label: "B Grade", color: "text-blue-700 bg-blue-50 border-blue-100" },
+    { key: "c",   label: "C Grade", color: "text-amber-700 bg-amber-50 border-amber-100" },
+    { key: "f",   label: "F Grade", color: "text-red-700 bg-red-50 border-red-100" },
   ];
 
   const filteredDevices = scrapedDevices
@@ -191,9 +193,9 @@ export default function PricingPage() {
             </div>
             <div className="mt-6 rounded-xl bg-zinc-950 text-white p-4 font-mono text-xs leading-relaxed">
               <span className="text-zinc-400">sell = market × multiplier% × (1 + margin%) × (1 − discount%)</span><br />
-              <span className="text-zinc-400">e.g. £{previewPrice} × {get("mint")}% × (1+{get("sell_margin")}%) × (1−{get("sell_discount")}%) = </span>
-              <strong>£{sellPrice("mint")}</strong>
-              <span className="text-zinc-400"> (Mint) · was £{previewPrice}</span>
+              <span className="text-zinc-400">e.g. £{previewPrice} × {get("new")}% × (1+{get("sell_margin")}%) × (1−{get("sell_discount")}%) = </span>
+              <strong>£{sellPrice("new")}</strong>
+              <span className="text-zinc-400"> (New) · was £{previewPrice}</span>
             </div>
           </div>
 
@@ -223,8 +225,8 @@ export default function PricingPage() {
             </div>
             <div className="mt-6 rounded-xl bg-zinc-950 text-white p-4 font-mono text-xs leading-relaxed">
               <span className="text-zinc-400">trade_in = sell_price × ratio% × (1 − trade_margin%)</span><br />
-              <span className="text-zinc-400">e.g. £{sellPrice("used")} (Refurb) × {get("tradein_ratio")}% × (1 − {get("tradein_margin")}%) = </span>
-              <strong>£{tradeOffer("used")}</strong>
+              <span className="text-zinc-400">e.g. £{sellPrice("b")} (B Grade) × {get("tradein_ratio")}% × (1 − {get("tradein_margin")}%) = </span>
+              <strong>£{tradeOffer("b")}</strong>
               <span className="text-zinc-400"> offered to customer</span>
             </div>
           </div>
