@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { ShoppingCart, Search, Package } from "lucide-react";
 import Footer from "../../../components/Footer";
 import { productsApi } from "../../../lib/api";
+import { GradeBadge } from "../../../components/GradeBadge";
 import { useCart } from "../../../context/cart-context";
 
 
@@ -177,6 +178,7 @@ function ProductGridCard({ p, i, handleAddToCart, addedIds }: { p: Product; i: n
           ) : (
             <Package className="h-10 w-10 text-zinc-200" />
           )}
+          <GradeBadge condition={p.condition ?? ''} className="absolute top-2 left-2" />
           {saving > 0 && (
             <span className="absolute top-2 right-2 bg-accent text-white text-[9px] font-black px-2 py-0.5 rounded-full">
               -{saving}%
