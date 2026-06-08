@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { tradeInsApi, type TradeInDetail } from "../../../../lib/api";
 import { useAuth } from "../../../../context/auth-context";
 import { fmtDate } from "../../_utils";
+import { getGradeConfig } from "../../../../lib/grades";
 
 const CONDITION_QUESTIONS: Record<string, { id: string; question: string }[]> = {
   Phone: [
@@ -217,7 +218,14 @@ export default function TradeInDetailPage() {
           </div>
           <div className="rounded-2xl bg-zinc-50 border border-zinc-100 p-4">
             <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1">Condition</p>
-            <p className="font-bold text-sm">{tradeIn.condition}</p>
+            {(() => {
+              const grade = getGradeConfig(tradeIn.condition ?? "");
+              return (
+                <span className={`inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full border ${grade.badgeClass}`}>
+                  {grade.label}
+                </span>
+              );
+            })()}
           </div>
           <div className="rounded-2xl bg-zinc-50 border border-zinc-100 p-4 col-span-2">
             <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1">Fulfilment</p>

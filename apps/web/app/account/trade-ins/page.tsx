@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useAuth } from "../../../context/auth-context";
 import { tradeInsApi, type TradeIn } from "../../../lib/api";
 import { statusCfg, fmtDate } from "../_utils";
+import { getGradeConfig } from "../../../lib/grades";
 
 export default function TradeInsPage() {
   const { user } = useAuth();
@@ -64,7 +65,17 @@ export default function TradeInsPage() {
                 </div>
                 <div className="flex items-center justify-between pt-4 border-t border-zinc-100">
                   <div>
-                    <p className="text-xs text-zinc-400 font-medium">Condition: {t.condition}</p>
+                    <p className="text-xs text-zinc-400 font-medium flex items-center gap-1.5">
+                      Condition:{" "}
+                      {(() => {
+                        const grade = getGradeConfig(t.condition ?? "");
+                        return (
+                          <span className={`inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full border ${grade.badgeClass}`}>
+                            {grade.label}
+                          </span>
+                        );
+                      })()}
+                    </p>
                     <p className="font-bold text-lg mt-0.5">
                       £{t.counterOffer ?? t.offerPrice}
                       {t.counterOffer && t.counterOffer !== t.offerPrice && (
