@@ -24,8 +24,7 @@ export class CreateTradeInDto {
     @IsObject()
     specs!: Record<string, string>;
 
-    @IsString()
-    @IsNotEmpty()
+    @IsIn(['NEW', 'A', 'B', 'C', 'F'])
     condition!: string;
 
     @IsObject()

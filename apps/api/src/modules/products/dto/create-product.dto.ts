@@ -1,6 +1,7 @@
 import {
     IsArray,
     IsBoolean,
+    IsIn,
     IsNotEmpty,
     IsNumber,
     IsObject,
@@ -30,8 +31,7 @@ export class CreateProductDto {
     @IsNotEmpty()
     name!: string;
 
-    @IsString()
-    @IsNotEmpty()
+    @IsIn(['NEW', 'A', 'B', 'C', 'F'])
     condition!: string;
 
     @IsString()

@@ -1,10 +1,10 @@
-import { IsString, IsNotEmpty } from 'class-validator';
+import { IsIn, IsString, IsNotEmpty } from 'class-validator';
 
 export class PriceEstimateDto {
     @IsString() @IsNotEmpty() brand!: string;
     @IsString() @IsNotEmpty() model!: string;
     @IsString() storage!: string;
-    @IsString() @IsNotEmpty() condition!: string;
+    @IsIn(['NEW', 'A', 'B', 'C', 'F']) condition!: string;
 }
 
 export interface PricingDetail {
