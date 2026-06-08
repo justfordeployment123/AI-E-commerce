@@ -13,13 +13,19 @@ import {
   type Product, type CreateProductPayload, type OtherBrand, type OtherSubcategory,
 } from "../../../lib/api";
 
-const CONDITIONS = ["Pristine", "Excellent", "Very Good", "Good", "Fair"];
+const CONDITIONS = [
+  { value: 'NEW', label: 'New' },
+  { value: 'A',   label: 'A Grade' },
+  { value: 'B',   label: 'B Grade' },
+  { value: 'C',   label: 'C Grade' },
+  { value: 'F',   label: 'F Grade' },
+];
 
 const EMPTY_FORM: CreateProductPayload = {
   otherBrandId: "",
   otherSubcategoryId: "",
   name: "",
-  condition: "Pristine",
+  condition: "A",
   storage: "",
   price: 0,
   comparePrice: undefined,
@@ -502,7 +508,7 @@ export default function OtherProductsPage() {
                   <div className="relative">
                     <select value={formData.condition} onChange={e => setFormData(f => ({ ...f, condition: e.target.value }))}
                       className="h-12 w-full rounded-[0.875rem] border-2 border-zinc-200 pl-4 pr-10 text-sm font-medium outline-none focus:border-black transition-colors bg-white appearance-none">
-                      {CONDITIONS.map(c => <option key={c}>{c}</option>)}
+                      {CONDITIONS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
                     </select>
                     <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
                   </div>

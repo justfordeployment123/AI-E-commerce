@@ -8,7 +8,13 @@ import {
 } from "lucide-react";
 import { productsApi, ordersApi, catalogCategoriesApi, type Product } from "../../../lib/api";
 
-const CONDITIONS = ["Pristine", "Excellent", "Very Good", "Good", "Fair"];
+const CONDITIONS = [
+  { value: 'NEW', label: 'New' },
+  { value: 'A',   label: 'A Grade' },
+  { value: 'B',   label: 'B Grade' },
+  { value: 'C',   label: 'C Grade' },
+  { value: 'F',   label: 'F Grade' },
+];
 const CATEGORIES = ["Phones", "Tablets", "Consoles", "Laptops", "Audio", "Accessories"];
 
 const STATUS_STYLES: Record<string, string> = {
@@ -60,7 +66,7 @@ export default function ProductDetailPage() {
 
   // form state mirrors product fields
   const [form, setForm] = useState({
-    name: "", brand: "", model: "", category: "Phones", condition: "Excellent",
+    name: "", brand: "", model: "", category: "Phones", condition: "A",
     price: null as number | null, comparePrice: undefined as number | undefined,
     stock: 0, description: "", isActive: true,
     storage: "",
@@ -340,7 +346,7 @@ export default function ProductDetailPage() {
                     onChange={e => setForm(f => ({ ...f, condition: e.target.value }))}
                     className="h-11 rounded-2xl border-2 border-zinc-200 px-4 text-sm font-medium outline-none focus:border-black transition-colors bg-white"
                   >
-                    {CONDITIONS.map(c => <option key={c}>{c}</option>)}
+                    {CONDITIONS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
                   </select>
                 </div>
 

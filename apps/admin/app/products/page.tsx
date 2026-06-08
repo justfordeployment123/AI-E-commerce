@@ -11,7 +11,13 @@ import { productsApi, deviceCatalogApi, productPricingApi, pricingConfigApi,
   type Product, type CreateProductPayload, type DeviceCatalogItem,
   type PricingRunResult, type PricingJobStatus } from "../../lib/api";
 
-const CONDITIONS = ["Pristine", "Excellent", "Very Good", "Good", "Fair"];
+const CONDITIONS = [
+  { value: 'NEW', label: 'New' },
+  { value: 'A',   label: 'A Grade' },
+  { value: 'B',   label: 'B Grade' },
+  { value: 'C',   label: 'C Grade' },
+  { value: 'F',   label: 'F Grade' },
+];
 
 // These categories belong to Other Products page — excluded from main Products
 // Includes both slugs AND display names (p.category returns the name from the API)
@@ -27,7 +33,7 @@ const OTHERS_SLUGS = new Set([
 ]);
 
 const EMPTY_FORM: CreateProductPayload = {
-  catalogId: "", name: "", condition: "Excellent",
+  catalogId: "", name: "", condition: "A",
   storage: "", price: 0, comparePrice: undefined,
   stock: 0, description: "", isActive: true,
 };
@@ -704,7 +710,7 @@ export default function ProductsPage() {
                       }}
                       className="h-12 w-full rounded-[0.875rem] border-2 border-zinc-200 pl-4 pr-10 text-sm font-medium outline-none focus:border-black transition-colors bg-white appearance-none"
                     >
-                      {CONDITIONS.map(c => <option key={c}>{c}</option>)}
+                      {CONDITIONS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
                     </select>
                     <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
                   </div>
@@ -999,7 +1005,7 @@ export default function ProductsPage() {
                         if (selectedDevice) loadEstimate(selectedDevice.brandCategory.brand.name, selectedDevice.model, formData.storage ?? '', c);
                       }}
                       className="h-12 w-full rounded-[0.875rem] border-2 border-zinc-200 pl-4 pr-10 text-sm font-medium outline-none focus:border-black transition-colors bg-white appearance-none">
-                      {CONDITIONS.map(c => <option key={c}>{c}</option>)}
+                      {CONDITIONS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
                     </select>
                     <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
                   </div>
