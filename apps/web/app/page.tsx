@@ -129,15 +129,20 @@ function PromoCarouselBanner() {
     return () => clearInterval(timer);
   }, [slides.length]);
 
-  // Auto-scroll active tab into view on mobile/horizontal scroll
+  // Auto-scroll active tab into view on mobile/horizontal scroll without vertical page scrolling
   useEffect(() => {
     if (!tabContainerRef.current) return;
-    const activeTab = tabContainerRef.current.querySelector('[data-active="true"]');
+    const container = tabContainerRef.current;
+    const activeTab = container.querySelector('[data-active="true"]') as HTMLElement;
     if (activeTab) {
-      activeTab.scrollIntoView({
-        behavior: "smooth",
-        block: "nearest",
-        inline: "center"
+      const containerWidth = container.clientWidth;
+      const tabWidth = activeTab.offsetWidth;
+      const tabLeft = activeTab.offsetLeft;
+      const targetScrollLeft = tabLeft - (containerWidth / 2) + (tabWidth / 2);
+      
+      container.scrollTo({
+        left: targetScrollLeft,
+        behavior: "smooth"
       });
     }
   }, [safeIdx]);
