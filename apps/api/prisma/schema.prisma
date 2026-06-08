@@ -48,6 +48,14 @@ enum ScraperRunStatus {
   FAILED
 }
 
+enum Condition {
+  NEW
+  A
+  B
+  C
+  F
+}
+
 // ─── Models ───────────────────────────────────────────────────────────────────
 
 model User {
@@ -88,7 +96,7 @@ model Product {
 
   name         String
   slug         String    @unique
-  condition    String
+  condition    Condition
   storage      String    @default("")
   price        Float?
   comparePrice Float?
@@ -161,7 +169,7 @@ model TradeIn {
   brand           String
   model           String
   specs           Json          @default("{}")
-  condition       String
+  condition       Condition
   answers         Json          @default("{}")
   fulfillment     String        // ship | dropoff
   offerPrice      Float
