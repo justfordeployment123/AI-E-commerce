@@ -2311,7 +2311,7 @@ function SavingsComparison() {
       const main = r.items
         .filter(p =>
           !isOtherProduct(p.category, p.images?.[0]) &&
-          p.price > 0 &&
+          p.price != null && p.price > 0 &&
           p.comparePrice && p.comparePrice > p.price
         )
         .sort(() => Math.random() - 0.5)
