@@ -2307,9 +2307,13 @@ function SavingsComparison() {
 
   useEffect(() => {
     if (trigger === 0) return;
-    productsApi.list({ limit: 40 }).then(r => {
+    productsApi.list({ limit: 100 }).then(r => {
       const main = r.items
-        .filter(p => !isOtherProduct(p.category, p.images?.[0]))
+        .filter(p =>
+          !isOtherProduct(p.category, p.images?.[0]) &&
+          p.price > 0 &&
+          p.comparePrice && p.comparePrice > p.price
+        )
         .sort(() => Math.random() - 0.5)
         .slice(0, 6);
       setRawProducts(main);
@@ -2317,10 +2321,10 @@ function SavingsComparison() {
   }, [trigger]);
 
   const items = rawProducts
-    .filter(p => p.price != null && p.price > 0)
+    .filter(p => p.price != null && p.price > 0 && p.comparePrice && p.comparePrice > p.price)
     .map(p => ({
       device: p.name,
-      newPrice: (p.comparePrice && p.comparePrice > p.price) ? p.comparePrice : null,
+      newPrice: p.comparePrice as number,
       ourPrice: p.price as number,
       grade: p.condition,
       img: p.images?.[0] ?? "",
