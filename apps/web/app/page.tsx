@@ -81,6 +81,7 @@ import {
 import dynamic from "next/dynamic";
 import { productsApi, reviewsApi, bannersApi, catalogApi } from "../lib/api";
 import type { CatalogBrand } from "../lib/api";
+import { getGradeConfig } from "../lib/grades";
 import { useCart } from "../context/cart-context";
 const Footer = dynamic(() => import("../components/Footer"));
 
@@ -733,7 +734,7 @@ function Hero() {
                 const p = showcase[0];
                 const comparePrice = (p.comparePrice && p.comparePrice > p.price) ? p.comparePrice : null;
                 const saving = comparePrice ? comparePrice - p.price : 0;
-                const gradeClr = p.condition === "Pristine" ? "text-emerald-700 bg-emerald-50" : p.condition === "Good" ? "text-amber-700 bg-amber-50" : "text-sky-700 bg-sky-50";
+                const gradeConf = getGradeConfig(p.condition ?? '');
                 return (
                   <Link href={`/shop/${p.category.toLowerCase()}/${p.slug}`} className="block">
                     <div className="bg-white rounded-[2.5rem] p-6 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.08)] mb-4 ring-1 ring-zinc-100 group cursor-pointer hover:shadow-[0_48px_80px_-16px_rgba(0,0,0,0.12)] transition-all duration-500">
@@ -747,7 +748,10 @@ function Hero() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between mb-3">
-                            <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full ${gradeClr}`}>{p.condition} Grade</span>
+                            <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border ${gradeConf.badgeClass}`}>
+                              {gradeConf.label}
+                              {gradeConf.forParts && <span className="text-[10px] font-normal opacity-80">· For Parts</span>}
+                            </span>
                             {saving > 0 && <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2.5 py-1.5 rounded-full">Save £{saving}</span>}
                           </div>
                           <h3 className="font-bold text-xl text-zinc-950 mb-1 truncate">{p.name}</h3>
@@ -774,7 +778,7 @@ function Hero() {
                 {showcase.slice(1, 3).map((p, i) => {
                   const comparePrice = (p.comparePrice && p.comparePrice > p.price) ? p.comparePrice : null;
                   const pct = comparePrice ? Math.round((1 - p.price / comparePrice) * 100) : 0;
-                  const gradeClr = p.condition === "Pristine" ? "text-emerald-700 bg-emerald-50" : p.condition === "Good" ? "text-amber-700 bg-amber-50" : "text-sky-700 bg-sky-50";
+                  const gradeConf = getGradeConfig(p.condition ?? '');
                   return (
                     <Link key={i} href={`/shop/${p.category.toLowerCase()}/${p.slug}`} className="block">
                       <div className="bg-white rounded-[2rem] p-5 shadow-[0_20px_40px_-12px_rgba(0,0,0,0.06)] ring-1 ring-zinc-100 group cursor-pointer hover:shadow-[0_32px_50px_-12px_rgba(0,0,0,0.1)] transition-all duration-500">
@@ -790,7 +794,7 @@ function Hero() {
                           {p.price > 0 ? (
                             <>
                               <span className="text-lg font-black text-zinc-950">£{p.price}</span>
-                              {pct > 0 && <span className={`text-[10px] font-black px-2 py-1 rounded-full ${gradeClr}`}>-{pct}%</span>}
+                              {pct > 0 && <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border ${gradeConf.badgeClass}`}>-{pct}%</span>}
                             </>
                           ) : (
                             <span className="text-sm font-bold text-zinc-400 italic">Price on request</span>
@@ -1021,13 +1025,6 @@ function TrendingDeals() {
   const featured = apiProducts[0] ?? null;
   const secondary = apiProducts.slice(1, 5);
 
-  const gradeDot: Record<string, string> = {
-    Pristine:   "bg-emerald-500",
-    Excellent:  "bg-blue-500",
-    "Very Good":"bg-violet-500",
-    Good:       "bg-amber-500",
-  };
-
   return (
     <section ref={sectionRef} className="py-24 overflow-hidden min-h-[200px]">
       {featured && (
@@ -1061,10 +1058,16 @@ function TrendingDeals() {
                 <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/80 via-zinc-950/20 to-transparent" />
 
                 {/* Grade badge */}
-                <div className="absolute top-6 left-6 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/90 backdrop-blur-sm text-[10px] font-bold uppercase tracking-widest shadow-sm">
-                  <span className={`h-2 w-2 rounded-full ${gradeDot[featured.condition]}`} />
-                  {featured.condition}
-                </div>
+                {(() => {
+                  const grade = getGradeConfig(featured.condition ?? '');
+                  return (
+                    <div className="absolute top-6 left-6 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/90 backdrop-blur-sm text-[10px] font-bold uppercase tracking-widest shadow-sm">
+                      <span className={`h-2 w-2 rounded-full ${grade.dotClass}`} />
+                      {grade.label}
+                      {grade.forParts && <span className="text-[10px] font-normal opacity-80">· For Parts</span>}
+                    </div>
+                  );
+                })()}
 
                 {/* Save pct badge */}
                 {featured.comparePrice && (
@@ -1112,10 +1115,16 @@ function TrendingDeals() {
                       className={`h-full w-full ${isOtherProduct(deal.category, deal.images?.[0]) ? 'object-contain mix-blend-multiply' : 'object-cover'} group-hover:scale-105 transition-transform duration-700`}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    <div className="absolute top-2 left-2 sm:top-3 sm:left-3 flex items-center gap-1 px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-white/90 backdrop-blur-sm text-[8px] sm:text-[9px] font-bold uppercase tracking-widest shadow-sm">
-                      <span className={`h-1 sm:h-1.5 w-1 sm:w-1.5 rounded-full ${gradeDot[deal.condition]}`} />
-                      {deal.condition}
-                    </div>
+                    {(() => {
+                      const grade = getGradeConfig(deal.condition ?? '');
+                      return (
+                        <div className="absolute top-2 left-2 sm:top-3 sm:left-3 flex items-center gap-1 px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-white/90 backdrop-blur-sm text-[8px] sm:text-[9px] font-bold uppercase tracking-widest shadow-sm">
+                          <span className={`h-1 sm:h-1.5 w-1 sm:w-1.5 rounded-full ${grade.dotClass}`} />
+                          {grade.label}
+                          {grade.forParts && <span className="text-[10px] font-normal opacity-80">· For Parts</span>}
+                        </div>
+                      );
+                    })()}
                     {deal.comparePrice && (
                       <span className="absolute top-2 right-2 sm:top-3 sm:right-3 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full bg-accent text-[8px] sm:text-[9px] font-bold shadow-sm">
                         -{Math.round((1 - deal.price / deal.comparePrice) * 100)}%
@@ -1744,7 +1753,15 @@ function BestDealsSplit() {
                       <p className="font-semibold text-zinc-950 text-[12.5px] leading-snug mb-1 line-clamp-2 hover:underline min-h-[36px]">{p.name}</p>
                     </Link>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-[10px] font-medium text-zinc-500 bg-zinc-50 border border-zinc-100 px-1.5 py-0.5 rounded">{p.condition}</span>
+                      {(() => {
+                        const grade = getGradeConfig(p.condition ?? '');
+                        return (
+                          <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border ${grade.badgeClass}`}>
+                            {grade.label}
+                            {grade.forParts && <span className="text-[10px] font-normal opacity-80">· For Parts</span>}
+                          </span>
+                        );
+                      })()}
                       <div className="flex items-center gap-0.5 text-zinc-950">
                         <Star className="h-3 w-3 fill-zinc-950 text-zinc-950" />
                         <span className="text-[10px] font-bold">{p.rating?.toFixed(1)}</span>
@@ -1797,12 +1814,6 @@ function NewArrivals() {
     productsApi.list({ limit: 20 }).then(r => setItems(r.items)).catch(() => {});
   }, [trigger]);
 
-  const gradeColor: Record<string, string> = {
-    Pristine:  "bg-emerald-50 text-emerald-700",
-    Excellent: "bg-sky-50 text-sky-700",
-    Good:      "bg-amber-50 text-amber-700",
-  };
-
   return (
     <section ref={sectionRef} className="py-10 md:py-14 overflow-hidden">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-6">
@@ -1829,9 +1840,15 @@ function NewArrivals() {
                 alt={item.name}
                 className={`h-full w-full ${isOtherProduct(item.category, item.images?.[0]) ? 'object-contain mix-blend-multiply' : 'object-cover'} group-hover:scale-105 transition-transform duration-500`}
               />
-              <div className={`absolute top-3 left-3 px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest ${gradeColor[item.condition]}`}>
-                {item.condition}
-              </div>
+              {(() => {
+                const grade = getGradeConfig(item.condition ?? '');
+                return (
+                  <span className={`inline-flex items-center gap-1 absolute top-3 left-3 text-xs font-semibold px-2 py-0.5 rounded-full border ${grade.badgeClass}`}>
+                    {grade.label}
+                    {grade.forParts && <span className="text-[10px] font-normal opacity-80">· For Parts</span>}
+                  </span>
+                );
+              })()}
               <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-zinc-950 text-white text-[9px] font-bold uppercase tracking-widest">
                 New
               </div>
@@ -2243,12 +2260,6 @@ function SavingsComparison() {
       category: p.category,
     }));
 
-  const gradeClr: Record<string, string> = {
-    Pristine: "text-emerald-700",
-    Excellent: "text-sky-700",
-    Good: "text-amber-700",
-  };
-
   return (
     <section ref={sectionRef} className="py-24 bg-white border-t border-zinc-100 min-h-[200px]">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -2290,7 +2301,7 @@ function SavingsComparison() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-bold text-zinc-950 text-xs sm:text-sm truncate">{item.device}</p>
-                        <p className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mt-0.5 ${gradeClr[item.grade] ?? "text-zinc-500"}`}>{item.grade} · Certified</p>
+                        <p className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mt-0.5 ${getGradeConfig(item.grade ?? '').textClass}`}>{getGradeConfig(item.grade ?? '').label} · Certified</p>
                       </div>
                       <div className="hidden sm:block text-right flex-shrink-0 min-w-[80px]">
                         <p className="text-zinc-300 line-through text-sm font-bold">£{item.newPrice.toLocaleString()}</p>
@@ -2326,11 +2337,6 @@ interface PCard {
   price: string; was?: string | null; grade: string; img: string; index?: number;
   link?: string;
 }
-const GRADE_STYLE: Record<string, string> = {
-  Pristine:  "bg-emerald-50 text-emerald-700",
-  Excellent: "bg-sky-50 text-sky-700",
-  Good:      "bg-amber-50 text-amber-700",
-};
 function ProductCard({ name, type, spec, price, was, grade, img, index = 0, link = "/shop/phones" }: PCard) {
   const numericPrice = Number(price.replace(/[^0-9.]/g, ""));
   const isUnpriced = !numericPrice;
@@ -2346,7 +2352,15 @@ function ProductCard({ name, type, spec, price, was, grade, img, index = 0, link
       >
         <div className="relative aspect-square rounded-2xl bg-image-light overflow-hidden mb-3 ring-1 ring-zinc-200/10 group-hover:ring-transparent group-hover:shadow-xl transition-all duration-300">
           <img src={img} alt={name} className="h-full w-full object-contain p-4 mix-blend-multiply group-hover:scale-105 transition-transform duration-500" />
-          <div className={`absolute top-3 left-3 px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest ${GRADE_STYLE[grade] ?? "bg-zinc-100 text-zinc-600"}`}>{grade}</div>
+          {(() => {
+            const gradeConf = getGradeConfig(grade ?? '');
+            return (
+              <span className={`inline-flex items-center gap-1 absolute top-3 left-3 text-xs font-semibold px-2 py-0.5 rounded-full border ${gradeConf.badgeClass}`}>
+                {gradeConf.label}
+                {gradeConf.forParts && <span className="text-[10px] font-normal opacity-80">· For Parts</span>}
+              </span>
+            );
+          })()}
           {!isUnpriced && pct > 0 && <div className="absolute top-3 right-3 px-2 py-1 rounded-full bg-accent text-white text-[9px] font-bold">-{pct}%</div>}
           <button className="absolute bottom-3 right-3 h-10 w-10 rounded-full bg-zinc-950 text-white flex items-center justify-center opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 shadow-lg">
             <ShoppingCart className="h-4 w-4" />
@@ -2796,7 +2810,15 @@ function DiscoverMore() {
                         alt={p.name}
                         className={`h-full w-full ${isOtherProduct(p.type, p.img) ? 'object-contain mix-blend-multiply' : 'object-cover'} group-hover:scale-105 transition-transform duration-500`}
                       />
-                      <div className={`absolute top-2.5 left-2.5 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest ${GRADE_STYLE[p.grade] ?? "bg-zinc-100 text-zinc-600"}`}>{p.grade}</div>
+                      {(() => {
+                        const gradeConf = getGradeConfig(p.grade ?? '');
+                        return (
+                          <span className={`inline-flex items-center gap-1 absolute top-2.5 left-2.5 text-xs font-semibold px-2 py-0.5 rounded-full border ${gradeConf.badgeClass}`}>
+                            {gradeConf.label}
+                            {gradeConf.forParts && <span className="text-[10px] font-normal opacity-80">· For Parts</span>}
+                          </span>
+                        );
+                      })()}
                     </div>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-0.5">{p.type}</p>
                     <p className="font-bold text-zinc-950 text-xs leading-tight truncate mb-1.5">{p.name}</p>
@@ -2887,7 +2909,15 @@ function BudgetPicks() {
                     alt={p.name}
                     className={`h-full w-full ${isOtherProduct(p.type, p.img) ? 'object-contain mix-blend-multiply' : 'object-cover'} group-hover:scale-105 transition-transform duration-500`}
                   />
-                  <div className={`absolute top-2.5 left-2.5 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest ${GRADE_STYLE[p.grade] ?? "bg-zinc-100 text-zinc-600"}`}>{p.grade}</div>
+                  {(() => {
+                    const gradeConf = getGradeConfig(p.grade ?? '');
+                    return (
+                      <span className={`inline-flex items-center gap-1 absolute top-2.5 left-2.5 text-xs font-semibold px-2 py-0.5 rounded-full border ${gradeConf.badgeClass}`}>
+                        {gradeConf.label}
+                        {gradeConf.forParts && <span className="text-[10px] font-normal opacity-80">· For Parts</span>}
+                      </span>
+                    );
+                  })()}
                   <button className="absolute bottom-2.5 right-2.5 h-9 w-9 rounded-full bg-zinc-950 text-white flex items-center justify-center opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
                     <ShoppingCart className="h-3.5 w-3.5" />
                   </button>
