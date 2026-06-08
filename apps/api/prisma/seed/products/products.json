@@ -2594,5 +2594,303 @@
     "images": [
       "sony-headphones-2.png"
     ]
+  },
+  {
+    "name": "Apple iPhone 15 128GB (New)",
+    "slug": "apple-iphone-15-128gb-new-0",
+    "category": "Phones",
+    "brand": "Apple",
+    "model": "iPhone 15",
+    "condition": "NEW",
+    "price": 729,
+    "comparePrice": 799,
+    "stock": 5,
+    "specs": {
+      "Storage": "128GB",
+      "Brand": "Apple",
+      "Model": "iPhone 15",
+      "Color": "Black",
+      "Warranty": "12 Months"
+    },
+    "description": "Brand new Apple iPhone 15 in original sealed packaging. Fully functional with 12-month warranty, all original accessories included, and free UK delivery.",
+    "rating": 5,
+    "reviewCount": 3,
+    "isActive": true,
+    "images": [
+      "apple-iphone-15.png"
+    ]
+  },
+  {
+    "name": "Apple iPhone 15 Pro 256GB (New)",
+    "slug": "apple-iphone-15-pro-256gb-new-0",
+    "category": "Phones",
+    "brand": "Apple",
+    "model": "iPhone 15 Pro",
+    "condition": "NEW",
+    "price": 1029,
+    "comparePrice": 1099,
+    "stock": 4,
+    "specs": {
+      "Storage": "256GB",
+      "Brand": "Apple",
+      "Model": "iPhone 15 Pro",
+      "Color": "Natural Titanium",
+      "Warranty": "12 Months"
+    },
+    "description": "Brand new Apple iPhone 15 Pro in original sealed packaging. Fully functional with 12-month warranty, all original accessories included, and free UK delivery.",
+    "rating": 5,
+    "reviewCount": 2,
+    "isActive": true,
+    "images": [
+      "apple-iphone-15-pro.png"
+    ]
+  },
+  {
+    "name": "Apple iPhone 15 Pro Max 256GB (New)",
+    "slug": "apple-iphone-15-pro-max-256gb-new-0",
+    "category": "Phones",
+    "brand": "Apple",
+    "model": "iPhone 15 Pro Max",
+    "condition": "NEW",
+    "price": 1179,
+    "comparePrice": 1249,
+    "stock": 3,
+    "specs": {
+      "Storage": "256GB",
+      "Brand": "Apple",
+      "Model": "iPhone 15 Pro Max",
+      "Color": "Natural Titanium",
+      "Warranty": "12 Months"
+    },
+    "description": "Brand new Apple iPhone 15 Pro Max in original sealed packaging. Fully functional with 12-month warranty, all original accessories included, and free UK delivery.",
+    "rating": 5,
+    "reviewCount": 2,
+    "isActive": true,
+    "images": [
+      "apple-iphone-15-pro-max.png"
+    ]
+  },
+  {
+    "name": "Samsung Galaxy S24 256GB (New)",
+    "slug": "samsung-galaxy-s24-256gb-new-0",
+    "category": "Phones",
+    "brand": "Samsung",
+    "model": "Galaxy S24",
+    "condition": "NEW",
+    "price": 769,
+    "comparePrice": 799,
+    "stock": 6,
+    "specs": {
+      "Storage": "256GB",
+      "Brand": "Samsung",
+      "Model": "Galaxy S24",
+      "Color": "Onyx Black",
+      "Warranty": "12 Months"
+    },
+    "description": "Brand new Samsung Galaxy S24 in original sealed packaging. Fully functional with 12-month warranty, all original accessories included, and free UK delivery.",
+    "rating": 5,
+    "reviewCount": 4,
+    "isActive": true,
+    "images": [
+      "samsung-galaxy-s24.png"
+    ]
+  },
+  {
+    "name": "Samsung Galaxy S24 Ultra 256GB (New)",
+    "slug": "samsung-galaxy-s24-ultra-256gb-new-0",
+    "category": "Phones",
+    "brand": "Samsung",
+    "model": "Galaxy S24 Ultra",
+    "condition": "NEW",
+    "price": 1199,
+    "comparePrice": 1299,
+    "stock": 3,
+    "specs": {
+      "Storage": "256GB",
+      "Brand": "Samsung",
+      "Model": "Galaxy S24 Ultra",
+      "Color": "Titanium Black",
+      "Warranty": "12 Months"
+    },
+    "description": "Brand new Samsung Galaxy S24 Ultra in original sealed packaging. Fully functional with 12-month warranty, all original accessories included, and free UK delivery.",
+    "rating": 5,
+    "reviewCount": 2,
+    "isActive": true,
+    "images": [
+      "samsung-galaxy-s24-ultra.png"
+    ]
+  },
+  {
+    "name": "Google Pixel 8 Pro 256GB (New)",
+    "slug": "google-pixel-8-pro-256gb-new-0",
+    "category": "Phones",
+    "brand": "Google",
+    "model": "Pixel 8 Pro",
+    "condition": "NEW",
+    "price": 949,
+    "comparePrice": 999,
+    "stock": 4,
+    "specs": {
+      "Storage": "256GB",
+      "Brand": "Google",
+      "Model": "Pixel 8 Pro",
+      "Color": "Obsidian",
+      "Warranty": "12 Months"
+    },
+    "description": "Brand new Google Pixel 8 Pro in original sealed packaging. Fully functional with 12-month warranty, all original accessories included, and free UK delivery.",
+    "rating": 5,
+    "reviewCount": 3,
+    "isActive": true,
+    "images": [
+      "google-pixel-8-pro.png"
+    ]
+  },
+  {
+    "name": "Apple MacBook Air M2 256GB (New)",
+    "slug": "apple-macbook-air-m2-2022-256gb-new-0",
+    "category": "Laptops",
+    "brand": "Apple",
+    "model": "MacBook Air M2 (2022)",
+    "condition": "NEW",
+    "price": 1199,
+    "comparePrice": 1299,
+    "stock": 4,
+    "specs": {
+      "Storage": "256GB",
+      "Brand": "Apple",
+      "Model": "MacBook Air M2 (2022)",
+      "Color": "Midnight",
+      "Warranty": "12 Months"
+    },
+    "description": "Brand new Apple MacBook Air M2 (2022) in original sealed packaging. Fully functional with 12-month warranty, all original accessories included, and free UK delivery.",
+    "rating": 5,
+    "reviewCount": 2,
+    "isActive": true,
+    "images": [
+      "apple-macbook-air-m2.png"
+    ]
+  },
+  {
+    "name": "Apple iPad Pro 11-inch M2 256GB (New)",
+    "slug": "apple-ipad-pro-11-inch-m2-256gb-new-0",
+    "category": "Tablets",
+    "brand": "Apple",
+    "model": "iPad Pro 11-inch M2",
+    "condition": "NEW",
+    "price": 849,
+    "comparePrice": 899,
+    "stock": 5,
+    "specs": {
+      "Storage": "256GB",
+      "Brand": "Apple",
+      "Model": "iPad Pro 11-inch M2",
+      "Color": "Space Grey",
+      "Warranty": "12 Months"
+    },
+    "description": "Brand new Apple iPad Pro 11-inch M2 in original sealed packaging. Fully functional with 12-month warranty, all original accessories included, and free UK delivery.",
+    "rating": 5,
+    "reviewCount": 2,
+    "isActive": true,
+    "images": [
+      "apple-ipad-pro-11.png"
+    ]
+  },
+  {
+    "name": "Apple AirPods Pro 2 (New)",
+    "slug": "apple-airpods-pro-2-new-0",
+    "category": "Audio",
+    "brand": "Apple",
+    "model": "AirPods Pro 2",
+    "condition": "NEW",
+    "price": 229,
+    "comparePrice": 249,
+    "stock": 8,
+    "specs": {
+      "Brand": "Apple",
+      "Model": "AirPods Pro 2",
+      "Color": "White",
+      "Warranty": "12 Months"
+    },
+    "description": "Brand new Apple AirPods Pro 2 in original sealed packaging. Fully functional with 12-month warranty, all original accessories included, and free UK delivery.",
+    "rating": 5,
+    "reviewCount": 5,
+    "isActive": true,
+    "images": [
+      "apple-airpods-pro-2.png"
+    ]
+  },
+  {
+    "name": "Sony WH-1000XM5 (New)",
+    "slug": "sony-wh-1000xm5-new-0",
+    "category": "Audio",
+    "brand": "Sony",
+    "model": "WH-1000XM5",
+    "condition": "NEW",
+    "price": 329,
+    "comparePrice": 350,
+    "stock": 6,
+    "specs": {
+      "Brand": "Sony",
+      "Model": "WH-1000XM5",
+      "Color": "Black",
+      "Warranty": "12 Months"
+    },
+    "description": "Brand new Sony WH-1000XM5 in original sealed packaging. Fully functional with 12-month warranty, all original accessories included, and free UK delivery.",
+    "rating": 5,
+    "reviewCount": 4,
+    "isActive": true,
+    "images": [
+      "sony-wh-1000xm5.png"
+    ]
+  },
+  {
+    "name": "Sony PlayStation 5 Disc Edition 1TB (New)",
+    "slug": "sony-playstation-5-disc-edition-1tb-new-0",
+    "category": "Gaming",
+    "brand": "Sony",
+    "model": "PlayStation 5 Disc Edition",
+    "condition": "NEW",
+    "price": 449,
+    "comparePrice": 479,
+    "stock": 5,
+    "specs": {
+      "Storage": "1TB",
+      "Brand": "Sony",
+      "Model": "PlayStation 5 Disc Edition",
+      "Color": "White",
+      "Warranty": "12 Months"
+    },
+    "description": "Brand new Sony PlayStation 5 Disc Edition in original sealed packaging. Fully functional with 12-month warranty, all original accessories included, and free UK delivery.",
+    "rating": 5,
+    "reviewCount": 6,
+    "isActive": true,
+    "images": [
+      "sony-playstation-5.png"
+    ]
+  },
+  {
+    "name": "Microsoft Xbox Series X 1TB (New)",
+    "slug": "microsoft-xbox-series-x-1tb-new-0",
+    "category": "Gaming",
+    "brand": "Microsoft",
+    "model": "Xbox Series X",
+    "condition": "NEW",
+    "price": 449,
+    "comparePrice": 479,
+    "stock": 5,
+    "specs": {
+      "Storage": "1TB",
+      "Brand": "Microsoft",
+      "Model": "Xbox Series X",
+      "Color": "Black",
+      "Warranty": "12 Months"
+    },
+    "description": "Brand new Microsoft Xbox Series X in original sealed packaging. Fully functional with 12-month warranty, all original accessories included, and free UK delivery.",
+    "rating": 5,
+    "reviewCount": 4,
+    "isActive": true,
+    "images": [
+      "microsoft-xbox-series-x.png"
+    ]
   }
 ]
