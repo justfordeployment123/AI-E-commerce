@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --port 3000",
+    "dev": "node ../../scripts/kill-port-start.mjs 3000 dev --port 3000",
     "build": "next build",
-    "start": "next start",
+    "start": "node ../../scripts/kill-port-start.mjs 3000 start --port 3000",
     "lint": "eslint",
     "typecheck": "tsc --noEmit"
   },
