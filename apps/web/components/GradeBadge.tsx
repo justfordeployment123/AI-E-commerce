@@ -1,4 +1,6 @@
+import React from 'react';
 import { getGradeConfig } from '../lib/grades';
+import { Sparkles, ShieldCheck, CheckCircle2, Wrench, HelpCircle } from 'lucide-react';
 
 interface GradeBadgeProps {
   condition: string;
@@ -7,19 +9,30 @@ interface GradeBadgeProps {
   className?: string;
 }
 
+const getGradeIcon = (condition: string) => {
+  const norm = condition.toUpperCase();
+  if (norm.includes('NEW')) return Sparkles;
+  if (norm === 'A' || norm.includes('A GRADE') || norm.includes('PRISTINE')) return ShieldCheck;
+  if (norm === 'B' || norm.includes('B GRADE') || norm.includes('EXCELLENT')) return CheckCircle2;
+  if (norm === 'C' || norm.includes('C GRADE') || norm.includes('GOOD')) return CheckCircle2;
+  if (norm === 'F' || norm.includes('F GRADE') || norm.includes('PARTS')) return Wrench;
+  return HelpCircle;
+};
+
 export function GradeBadge({ condition, size = 'sm', className = '' }: GradeBadgeProps) {
   const grade = getGradeConfig(condition);
+  const Icon = getGradeIcon(condition);
 
   if (size === 'lg') {
     return (
       <span
-        className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full border font-black text-xs uppercase tracking-widest ${grade.badgeClass} ${className}`}
+        className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl border font-bold text-xs uppercase tracking-wider transition-all duration-300 hover:scale-[1.03] active:scale-95 cursor-default ${grade.badgeClass} ${className}`}
       >
-        <span className={`w-2 h-2 rounded-full shrink-0 ${grade.dotClass}`} />
-        {grade.label}
+        <Icon className="w-4 h-4 shrink-0 opacity-90" />
+        <span>{grade.label}</span>
         {grade.forParts && (
-          <span className="ml-0.5 font-medium normal-case tracking-normal text-[10px] opacity-70">
-            · For Parts
+          <span className="ml-1 font-semibold normal-case tracking-normal text-[10px] opacity-80 bg-rose-500/10 dark:bg-rose-500/20 px-1.5 py-0.5 rounded border border-rose-500/20">
+            For Parts
           </span>
         )}
       </span>
@@ -28,11 +41,14 @@ export function GradeBadge({ condition, size = 'sm', className = '' }: GradeBadg
 
   return (
     <span
-      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border font-black text-[10px] uppercase tracking-widest ${grade.badgeClass} ${className}`}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border font-bold text-[10px] uppercase tracking-wider transition-all duration-300 hover:scale-[1.03] active:scale-95 cursor-default ${grade.badgeClass} ${className}`}
     >
-      {grade.label}
+      <Icon className="w-3.5 h-3.5 shrink-0 opacity-90" />
+      <span>{grade.label}</span>
       {grade.forParts && (
-        <span className="font-medium normal-case tracking-normal opacity-70">· Parts</span>
+        <span className="font-semibold normal-case tracking-normal text-[8px] opacity-80 bg-rose-500/10 dark:bg-rose-500/20 px-1 rounded">
+          Parts
+        </span>
       )}
     </span>
   );

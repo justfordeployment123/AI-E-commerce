@@ -490,7 +490,7 @@ async function seedOtherProducts() {
                         otherSubcategoryId: subcat.id,
                         name:               prod.name,
                         slug,
-                        condition:          'Good',
+                        condition:          'C',
                         storage:            '',
                         price:              Number(prod.price),
                         comparePrice:       prod.comparePrice ? Number(prod.comparePrice) : null,

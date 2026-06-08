@@ -2767,7 +2767,7 @@
     "reviewCount": 2,
     "isActive": true,
     "images": [
-      "apple-macbook-air-m2.png"
+      "apple-macbook-air-m2-2022.png"
     ]
   },
   {
@@ -2792,7 +2792,7 @@
     "reviewCount": 2,
     "isActive": true,
     "images": [
-      "apple-ipad-pro-11.png"
+      "apple-ipad-pro-11-inch-m2.png"
     ]
   },
   {
@@ -2816,7 +2816,7 @@
     "reviewCount": 5,
     "isActive": true,
     "images": [
-      "apple-airpods-pro-2.png"
+      "airpods-pro.png"
     ]
   },
   {
@@ -2840,7 +2840,7 @@
     "reviewCount": 4,
     "isActive": true,
     "images": [
-      "sony-wh-1000xm5.png"
+      "sony-wh1000xm5.png"
     ]
   },
   {
@@ -2865,7 +2865,7 @@
     "reviewCount": 6,
     "isActive": true,
     "images": [
-      "sony-playstation-5.png"
+      "sony-playstation-5-disc-edition.png"
     ]
   },
   {
@@ -2891,6 +2891,55 @@
     "isActive": true,
     "images": [
       "microsoft-xbox-series-x.png"
+    ]
+  },
+  {
+    "name": "Apple iPhone 12 64GB (F Grade - Broken)",
+    "slug": "apple-iphone-12-64gb-f-grade-broken",
+    "category": "Phones",
+    "brand": "Apple",
+    "model": "iPhone 12",
+    "condition": "F",
+    "price": 89,
+    "comparePrice": 149,
+    "stock": 3,
+    "specs": {
+      "Storage": "64GB",
+      "Brand": "Apple",
+      "Model": "iPhone 12",
+      "Color": "Black",
+      "Warranty": "No Warranty (For Parts)"
+    },
+    "description": "This Apple iPhone 12 is graded F Grade (non-working, for parts or repair only). It features a heavily cracked front screen and outer casing, showing no display activity. Ideal for salvaging genuine OEM parts, logic board extraction, or repair practice. Sold strictly as-is.",
+    "rating": 3.2,
+    "reviewCount": 2,
+    "isActive": true,
+    "images": [
+      "broken-iphone.png"
+    ]
+  },
+  {
+    "name": "Sony DualSense Wireless Controller (F Grade - Broken)",
+    "slug": "sony-dualsense-controller-f-grade-broken",
+    "category": "Gaming",
+    "brand": "Sony",
+    "model": "DualSense Controller",
+    "condition": "F",
+    "price": 15,
+    "comparePrice": 45,
+    "stock": 5,
+    "specs": {
+      "Brand": "Sony",
+      "Model": "DualSense Controller",
+      "Color": "White",
+      "Warranty": "No Warranty (For Parts)"
+    },
+    "description": "This Sony DualSense Wireless Controller is graded F Grade (non-working, for parts or repair only). The controller is partially disassembled and is missing one analog joystick. Great source for shell replacement, buttons, trigger springs, or motherboard component extraction. Sold strictly as-is.",
+    "rating": 3.0,
+    "reviewCount": 1,
+    "isActive": true,
+    "images": [
+      "broken-controller.png"
     ]
   }
 ]

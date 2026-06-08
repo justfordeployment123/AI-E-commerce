@@ -551,6 +551,7 @@ export default function CategoryPage() {
                             {/* Centered Image */}
                             <div className="relative aspect-square rounded-[18px] bg-[#f5f5f7] mb-3 overflow-hidden flex items-center justify-center p-4">
                               {product.image && <img src={product.image} alt={product.title} className="max-h-full max-w-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform" />}
+                              <GradeBadge condition={product.grade ?? ''} className="absolute top-2 left-2" />
                             </div>
 
                             {/* Product Info */}

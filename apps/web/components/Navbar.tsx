@@ -104,46 +104,35 @@ export default function Navbar() {
       'other', 'others',
     ]);
 
-    Promise.all([
-      catalogApi.listCategories(),
-      otherSubcategoriesApi.list(),
-    ]).then(([cats, subcats]) => {
-      const mainCats = cats
-        .filter(c => !OTHERS_SLUGS.has(c.slug))
-        .map(c => ({
-          label: c.name,
-          href: `/shop/${c.slug}`,
-          slug: c.slug,
-          icon: SLUG_ICON_MAP[c.slug] ?? MoreHorizontal,
-        }));
+    const loadCategories = (retries = 3) => {
+      catalogApi.listCategories()
+        .then(cats => {
+          const mainCats = cats
+            .filter(c => !OTHERS_SLUGS.has(c.slug))
+            .map(c => ({
+              label: c.name,
+              href: `/shop/${c.slug}`,
+              slug: c.slug,
+              icon: SLUG_ICON_MAP[c.slug] ?? MoreHorizontal,
+            }));
+          mainCats.push({ label: "Others", href: `/shop/others`, slug: "other", icon: MoreHorizontal });
+          setShopCategories(mainCats);
+          cats
+            .filter(c => !OTHERS_SLUGS.has(c.slug))
+            .forEach(c => {
+              productsApi.brands(c.name)
+                .then(brands => setCategoryBrands(prev => ({ ...prev, [c.slug]: brands.map(b => b.brand) })))
+                .catch(() => {});
+            });
+        })
+        .catch(() => { if (retries > 0) setTimeout(() => loadCategories(retries - 1), 1500); });
+    };
 
-      // Always show the Others tab
-      mainCats.push({
-        label: "Others",
-        href: `/shop/others`,
-        slug: "other",
-        icon: MoreHorizontal,
-      });
+    loadCategories();
 
-      setShopCategories(mainCats);
-
-      // Populate Others dropdown with real OtherSubcategory names
-      setOtherSubcats(subcats.map(s => ({ label: s.name, slug: s.id })));
-
-      // Pre-fetch brands for each main category
-      cats
-        .filter(c => !OTHERS_SLUGS.has(c.slug))
-        .forEach(c => {
-          productsApi.brands(c.name)
-            .then(brands => {
-              setCategoryBrands(prev => ({
-                ...prev,
-                [c.slug]: brands.map(b => b.brand),
-              }));
-            })
-            .catch(() => {});
-        });
-    }).catch(() => {});
+    otherSubcategoriesApi.list()
+      .then(subcats => setOtherSubcats(subcats.map(s => ({ label: s.name, slug: s.id }))))
+      .catch(() => {});
   }, []);
 
   const toggleTheme = () => {

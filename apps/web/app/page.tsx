@@ -1950,86 +1950,111 @@ function PhoneSketch({ level }: { level: 0 | 1 | 2 | 3 }) {
 
 function GradeGuide() {
   const [gradeImgs, setGradeImgs] = useState<(string | null)[]>([null, null, null, null, null]);
+  const [gradeProducts, setGradeProducts] = useState<Record<string, { name: string; price: string; link: string }[]>>({});
+  const [sectionRef, trigger] = useLazyFetchTrigger();
+
   useEffect(() => {
+    if (trigger === 0) return;
     bannersApi.random(5).then(b => setGradeImgs(b.map(x => x.url ?? null))).catch(() => {});
-  }, []);
+    for (const condition of ["NEW", "A", "B", "C", "F"]) {
+      productsApi.list({ condition, limit: 3 })
+        .then(res => {
+          if (res.items.length === 0) return;
+          setGradeProducts(prev => ({
+            ...prev,
+            [condition]: res.items.map(p => ({
+              name: p.name,
+              price: p.price != null ? `£${p.price}` : "POA",
+              link: `/shop/${p.category.toLowerCase()}/${p.slug}`,
+            })),
+          }));
+        })
+        .catch(() => {});
+    }
+  }, [trigger]);
 
   const grades: {
+    condition: string;
     num: string; name: string; tagline: string;
     battery: number; saving: number; fromPrice: string;
     rating: number; reviewCount: string;
     conditionLabel: string; sketchLevel: 0 | 1 | 2 | 3; conditionLevel: 0 | 1 | 2 | 3 | 4;
     featured: boolean; partsOnly: boolean;
     img: string | null; features: string[];
-    products: { name: string; price: string }[];
+    products: { name: string; price: string; link: string }[];
     barClass: string; textClass: string;
     chipBg: string; featuredRing: string;
   }[] = [
     {
+      condition: "NEW",
       num: "01", name: "New", tagline: "Brand new, sealed or equivalent.",
       battery: 100, saving: 10, fromPrice: "From £329",
       rating: 5.0, reviewCount: "1,200", conditionLabel: "Sealed box",
       sketchLevel: 0, conditionLevel: 0, featured: false, partsOnly: false,
       img: gradeImgs[0],
       features: ["Brand new in original sealed packaging", "Full manufacturer warranty included", "All original accessories in box", "25/25 inspection points passed"],
-      products: [{ name: "iPhone 15", price: "£729" }, { name: "MacBook Air M3", price: "£1,099" }, { name: "Galaxy S24", price: "£799" }],
+      products: [{ name: "iPhone 15", price: "£729", link: "/shop/phones" }, { name: "MacBook Air M3", price: "£1,099", link: "/shop/laptops" }, { name: "Galaxy S24", price: "£799", link: "/shop/phones" }],
       barClass: "bg-zinc-400", textClass: "text-zinc-300",
       chipBg: "bg-white/10", featuredRing: "",
     },
     {
+      condition: "A",
       num: "02", name: "A Grade", tagline: "Used but like new — zero visible marks.",
       battery: 95, saving: 20, fromPrice: "From £249",
       rating: 4.9, reviewCount: "4,200", conditionLabel: "Zero marks",
       sketchLevel: 0, conditionLevel: 1, featured: true, partsOnly: false,
       img: gradeImgs[1],
       features: ["No visible marks — like new appearance", "Battery 95%+ certified by engineers", "All ports, cameras & buttons tested", "25/25 inspection points passed"],
-      products: [{ name: "iPhone 15 Pro", price: "£739" }, { name: "MacBook Pro M3", price: "£1,699" }, { name: "Galaxy S24 Ultra", price: "£899" }],
+      products: [{ name: "iPhone 15 Pro", price: "£739", link: "/shop/phones" }, { name: "MacBook Pro M3", price: "£1,699", link: "/shop/laptops" }, { name: "Galaxy S24 Ultra", price: "£899", link: "/shop/phones" }],
       barClass: "bg-emerald-500", textClass: "text-emerald-400",
-      chipBg: "bg-emerald-500/20", featuredRing: "ring-2 ring-emerald-500/40 ring-offset-2 ring-offset-zinc-950",
+      chipBg: "bg-emerald-500/20", featuredRing: "border-emerald-500/60 shadow-[0_0_30px_rgba(16,185,129,0.15)] ring-1 ring-emerald-500/20",
     },
     {
+      condition: "B",
       num: "03", name: "B Grade", tagline: "Minor signs of usage, small scratches.",
       battery: 85, saving: 35, fromPrice: "From £149",
       rating: 4.7, reviewCount: "12,400", conditionLabel: "Minor scratches",
       sketchLevel: 1, conditionLevel: 2, featured: false, partsOnly: false,
       img: gradeImgs[2],
       features: ["Minor scratches not visible in normal use", "Battery 85%+ certified by engineers", "All ports, cameras & buttons tested", "Thoroughly cleaned and sanitised"],
-      products: [{ name: "iPhone 14 Pro", price: "£549" }, { name: "MacBook Air M2", price: "£849" }, { name: "Samsung S23", price: "£429" }],
+      products: [{ name: "iPhone 14 Pro", price: "£549", link: "/shop/phones" }, { name: "MacBook Air M2", price: "£849", link: "/shop/laptops" }, { name: "Samsung S23", price: "£429", link: "/shop/phones" }],
       barClass: "bg-blue-500", textClass: "text-blue-400",
       chipBg: "bg-blue-500/20", featuredRing: "",
     },
     {
+      condition: "C",
       num: "04", name: "C Grade", tagline: "Heavy scratches or marks, fully working.",
       battery: 75, saving: 50, fromPrice: "From £99",
       rating: 4.5, reviewCount: "8,900", conditionLabel: "Visible marks",
       sketchLevel: 2, conditionLevel: 3, featured: false, partsOnly: false,
       img: gradeImgs[3],
       features: ["Visible scratches or scuffs on body", "Battery 75%+ certified by engineers", "All features 100% working", "Best price-to-performance ratio"],
-      products: [{ name: "iPhone 13", price: "£299" }, { name: "MacBook Air M1", price: "£649" }, { name: "Pixel 7 Pro", price: "£349" }],
+      products: [{ name: "iPhone 13", price: "£299", link: "/shop/phones" }, { name: "MacBook Air M1", price: "£649", link: "/shop/laptops" }, { name: "Pixel 7 Pro", price: "£349", link: "/shop/phones" }],
       barClass: "bg-amber-500", textClass: "text-amber-400",
       chipBg: "bg-amber-500/20", featuredRing: "",
     },
     {
+      condition: "F",
       num: "05", name: "F Grade", tagline: "Non-working — for parts or repair only.",
       battery: 0, saving: 70, fromPrice: "From £29",
       rating: 4.3, reviewCount: "2,100", conditionLabel: "For Parts",
       sketchLevel: 3, conditionLevel: 4, featured: false, partsOnly: true,
       img: gradeImgs[4],
       features: ["Non-functional — sold as-is, no warranty", "Ideal for spares, repairs & DIY", "Heavily discounted for quick resale", "Full description of known faults listed"],
-      products: [{ name: "iPhone 12 (Parts)", price: "£59" }, { name: "Samsung S21 (Parts)", price: "£49" }, { name: "Pixel 6 (Parts)", price: "£39" }],
+      products: [{ name: "iPhone 12 (Parts)", price: "£59", link: "/shop/phones" }, { name: "Samsung S21 (Parts)", price: "£49", link: "/shop/phones" }, { name: "Pixel 6 (Parts)", price: "£39", link: "/shop/phones" }],
       barClass: "bg-red-700", textClass: "text-red-400",
       chipBg: "bg-red-700/20", featuredRing: "",
     },
   ];
 
   return (
-    <section className="py-24 bg-zinc-950 overflow-hidden">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section ref={sectionRef} className="py-24 bg-zinc-950 overflow-hidden">
+      <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
 
         {/* Section header */}
         <div className="mb-16 flex flex-col lg:flex-row lg:items-end justify-between gap-6">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-550 mb-2.5">How grading works</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-2.5">How grading works</p>
             <h2 className="font-sans text-3xl md:text-4xl lg:text-5xl font-extrabold text-white leading-none tracking-tight">
               What does each grade mean?
             </h2>
@@ -2039,7 +2064,7 @@ function GradeGuide() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-4 items-stretch">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 items-stretch">
           {grades.map((g, i) => (
             <motion.div
               key={i}
@@ -2047,7 +2072,19 @@ function GradeGuide() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.12 }}
-              className={`relative rounded-[2rem] overflow-hidden flex flex-col group hover:-translate-y-1.5 transition-all duration-300 ${g.featuredRing}`}
+              className={`relative rounded-[2rem] overflow-hidden flex flex-col group hover:-translate-y-1.5 transition-all duration-300 border bg-zinc-950/40 backdrop-blur-sm ${
+                g.featured
+                  ? g.featuredRing
+                  : g.condition === "NEW"
+                  ? "border-zinc-800/80 hover:border-zinc-600/80"
+                  : g.condition === "B"
+                  ? "border-zinc-800/80 hover:border-blue-500/50"
+                  : g.condition === "C"
+                  ? "border-zinc-800/80 hover:border-amber-500/50"
+                  : g.condition === "F"
+                  ? "border-zinc-800/80 hover:border-rose-500/50"
+                  : "border-zinc-800/80 hover:border-zinc-700/80"
+              }`}
             >
               {/* ── Photo panel ── */}
               <div className="relative h-[380px] overflow-hidden flex-shrink-0">
@@ -2099,7 +2136,7 @@ function GradeGuide() {
 
                 {/* Phone sketch — centred */}
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="opacity-90 group-hover:opacity-100 transition-opacity mt-6 hidden lg:block">
+                  <div className="opacity-90 group-hover:opacity-100 transition-opacity mt-6 block">
                     <PhoneSketch level={g.sketchLevel} />
                   </div>
                 </div>
@@ -2108,6 +2145,9 @@ function GradeGuide() {
                 <div className="absolute bottom-0 left-0 right-0 p-6">
                   <div className="flex items-end justify-between">
                     <div>
+                      <div className="mb-2.5">
+                        <GradeBadge condition={g.condition} />
+                      </div>
                       <p className="font-sans text-3xl font-extrabold text-white leading-none tracking-tight">{g.name}</p>
                       <p className="text-white/50 text-xs font-medium mt-1.5">{g.tagline}</p>
                     </div>
@@ -2120,7 +2160,7 @@ function GradeGuide() {
               </div>
 
               {/* ── Dark body panel ── */}
-              <div className="bg-zinc-900 flex-1 p-6 flex flex-col gap-4 border border-zinc-800 rounded-b-[2rem]">
+              <div className="bg-zinc-900/60 flex-1 p-6 flex flex-col gap-4 border-t border-zinc-800/60 rounded-b-[2rem]">
 
                 {/* Condition meter */}
                 <div className="flex items-center justify-between">
@@ -2170,14 +2210,14 @@ function GradeGuide() {
                 <div>
                   <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-500 mb-2">Popular in {g.name}</p>
                   <div className="flex flex-col gap-1.5">
-                    {g.products.map((p, j) => (
-                      <div key={j} className="flex items-center justify-between bg-zinc-800/60 rounded-xl px-3 py-2">
+                    {(gradeProducts[g.condition] ?? g.products).map((p, j) => (
+                      <Link key={j} href={p.link} className="flex items-center justify-between bg-zinc-800/60 rounded-xl px-3 py-2 hover:bg-zinc-700/60 transition-colors cursor-pointer">
                         <div className="flex items-center gap-2">
                           <div className={`h-1.5 w-1.5 rounded-full ${g.barClass}`} />
-                          <span className="text-xs font-medium text-zinc-300">{p.name}</span>
+                          <span className="text-xs font-medium text-zinc-300 truncate max-w-[120px]">{p.name}</span>
                         </div>
-                        <span className={`text-xs font-bold ${g.textClass}`}>{p.price}</span>
-                      </div>
+                        <span className={`text-xs font-bold ${g.textClass} flex-shrink-0 ml-2`}>{p.price}</span>
+                      </Link>
                     ))}
                   </div>
                 </div>
@@ -2325,7 +2365,7 @@ function SavingsComparison() {
                       className="group flex items-center gap-3 md:gap-6 p-3 md:p-5 rounded-2xl border border-zinc-100 hover:shadow-md hover:border-zinc-200 transition-all cursor-pointer"
                     >
                       <div className="h-12 w-12 md:h-16 md:w-16 rounded-2xl bg-image-light flex-shrink-0 overflow-hidden">
-                        <img src={item.img} alt={item.device} className="h-full w-full object-contain mix-blend-multiply" />
+                        {item.img && <img src={item.img} alt={item.device} className="h-full w-full object-contain mix-blend-multiply" />}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-bold text-zinc-950 text-xs sm:text-sm truncate">{item.device}</p>
@@ -2379,7 +2419,7 @@ function ProductCard({ name, type, spec, price, was, grade, img, index = 0, link
         className="cursor-pointer"
       >
         <div className="relative aspect-square rounded-2xl bg-image-light overflow-hidden mb-3 ring-1 ring-zinc-200/10 group-hover:ring-transparent group-hover:shadow-xl transition-all duration-300">
-          <img src={img} alt={name} className="h-full w-full object-contain p-4 mix-blend-multiply group-hover:scale-105 transition-transform duration-500" />
+          {img && <img src={img} alt={name} className="h-full w-full object-contain p-4 mix-blend-multiply group-hover:scale-105 transition-transform duration-500" />}
           <GradeBadge condition={grade ?? ''} className="absolute top-3 left-3" />
           {!isUnpriced && pct > 0 && <div className="absolute top-3 right-3 px-2 py-1 rounded-full bg-accent text-white text-[9px] font-bold">-{pct}%</div>}
           <button className="absolute bottom-3 right-3 h-10 w-10 rounded-full bg-zinc-950 text-white flex items-center justify-center opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 shadow-lg">
@@ -2719,8 +2759,9 @@ function TopBrandsSplit() {
                       href={`/shop/${CAT_SLUG[p.category] ?? p.category.toLowerCase()}/${p.slug}`}
                       className="w-[220px] flex-shrink-0 bg-white rounded-xl p-4 border border-zinc-200/60 shadow-sm hover:shadow-md transition-shadow flex flex-col group cursor-pointer"
                     >
-                      <div className="h-40 w-full rounded-xl mb-3 overflow-hidden flex items-center justify-center bg-image-light p-2">
-                        <img src={p.images?.[0]} alt={p.name} className="h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-500" />
+                      <div className="relative h-40 w-full rounded-xl mb-3 overflow-hidden flex items-center justify-center bg-image-light p-2">
+                        {p.images?.[0] && <img src={p.images[0]} alt={p.name} className="h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-500" />}
+                        <GradeBadge condition={p.condition ?? ''} className="absolute top-2 left-2" />
                       </div>
                       <p className="font-semibold text-zinc-950 text-[13px] leading-snug mb-2 line-clamp-2">{p.name}</p>
                       <div className="flex items-center gap-1 mb-auto">
@@ -2825,11 +2866,13 @@ function DiscoverMore() {
                     className="w-full"
                   >
                     <div className={`relative aspect-square rounded-2xl bg-zinc-100 overflow-hidden mb-3 group-hover:shadow-lg transition-shadow duration-300 flex items-center justify-center ${isOtherProduct(p.type, p.img) ? 'p-4' : ''}`}>
-                      <img
-                        src={p.img}
-                        alt={p.name}
-                        className={`h-full w-full ${isOtherProduct(p.type, p.img) ? 'object-contain mix-blend-multiply' : 'object-cover'} group-hover:scale-105 transition-transform duration-500`}
-                      />
+                      {p.img && (
+                        <img
+                          src={p.img}
+                          alt={p.name}
+                          className={`h-full w-full ${isOtherProduct(p.type, p.img) ? 'object-contain mix-blend-multiply' : 'object-cover'} group-hover:scale-105 transition-transform duration-500`}
+                        />
+                      )}
                       <GradeBadge condition={p.grade ?? ''} className="absolute top-2.5 left-2.5" />
                     </div>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-0.5">{p.type}</p>
@@ -2916,11 +2959,13 @@ function BudgetPicks() {
                 className="w-full"
               >
                 <div className={`relative aspect-square rounded-2xl bg-zinc-100 overflow-hidden mb-3 group-hover:shadow-lg transition-shadow duration-300 flex items-center justify-center ${isOtherProduct(p.type, p.img) ? 'p-4' : ''}`}>
-                  <img
-                    src={p.img}
-                    alt={p.name}
-                    className={`h-full w-full ${isOtherProduct(p.type, p.img) ? 'object-contain mix-blend-multiply' : 'object-cover'} group-hover:scale-105 transition-transform duration-500`}
-                  />
+                  {p.img && (
+                    <img
+                      src={p.img}
+                      alt={p.name}
+                      className={`h-full w-full ${isOtherProduct(p.type, p.img) ? 'object-contain mix-blend-multiply' : 'object-cover'} group-hover:scale-105 transition-transform duration-500`}
+                    />
+                  )}
                   <GradeBadge condition={p.grade ?? ''} className="absolute top-2.5 left-2.5" />
                   <button className="absolute bottom-2.5 right-2.5 h-9 w-9 rounded-full bg-zinc-950 text-white flex items-center justify-center opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
                     <ShoppingCart className="h-3.5 w-3.5" />

@@ -45,12 +45,11 @@ jobs:
 
       - name: Check schema is in sync with migrations
         env:
-          SHADOW_DATABASE_URL: postgresql://prisma:prisma@localhost:5432/shadow
+          DATABASE_URL: postgresql://prisma:prisma@localhost:5432/shadow
         run: |
           npx prisma migrate diff \
             --from-migrations ./prisma/migrations \
             --to-schema ./prisma/schema.prisma \
-            --shadow-database-url "$SHADOW_DATABASE_URL" \
             --exit-code
         # Exit code 2 means there are differences (schema ahead of migrations).
         # This means someone edited schema.prisma without running prisma migrate dev.
