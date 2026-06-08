@@ -19,6 +19,7 @@ export class HealthService {
         redis: boolean;
         garage: boolean;
         openAi: boolean;
+        openAiQuotaOk: boolean;
         scraper: boolean;
         postgresError?: string;
         redisError?: string;
@@ -50,6 +51,7 @@ export class HealthService {
             redis: redisCheck.ok,
             garage: garageCheck.ok,
             openAi: openAiCheck.ok,
+            openAiQuotaOk: openAiCheck.quotaOk,
             scraper: scraperCheck.ok,
             postgresError: postgresCheck.error,
             redisError: redisCheck.error,
@@ -119,18 +121,33 @@ export class HealthService {
         }
     }
 
-    private async checkOpenAi(): Promise<{ ok: boolean; error?: string }> {
+    private async checkOpenAi(): Promise<{ ok: boolean; quotaOk: boolean; error?: string }> {
         const apiKey = process.env.OPENAI_API_KEY;
         if (!apiKey) {
-            return { ok: false, error: 'OPENAI_API_KEY not configured' };
+            return { ok: false, quotaOk: false, error: 'OPENAI_API_KEY not configured' };
         }
         try {
             const openai = new OpenAI({ apiKey });
-            // List models is the lightest call — no tokens consumed, just auth check
-            await openai.models.list();
-            return { ok: true };
-        } catch (error) {
-            return { ok: false, error: this.sanitizeError(error) };
+            // 1-token completion is the only call that exercises the quota path
+            await openai.chat.completions.create({
+                model: 'gpt-4o-mini',
+                messages: [{ role: 'user', content: '.' }],
+                max_tokens: 1,
+            });
+            return { ok: true, quotaOk: true };
+        } catch (error: any) {
+            const code: string = error?.code ?? error?.error?.code ?? '';
+            const isQuotaExhausted =
+                code === 'insufficient_quota' ||
+                code === 'billing_hard_limit_reached' ||
+                (error?.status === 429 && code !== 'rate_limit_exceeded');
+
+            if (isQuotaExhausted) {
+                return { ok: false, quotaOk: false, error: 'API quota / billing limit exceeded' };
+            }
+            // Key valid but other error (e.g. transient rate-limit) — key itself is ok
+            const keyValid = error?.status !== 401 && error?.status !== 403;
+            return { ok: false, quotaOk: keyValid, error: this.sanitizeError(error) };
         }
     }
 
