@@ -643,7 +643,7 @@ export class SeedService {
                         otherSubcategoryId,
                         name:          item.name,
                         slug:          item.id,
-                        condition:     'Pristine',
+                        condition:     'A',
                         storage:       '',
                         price:         typeof item.price === 'number' ? item.price : null,
                         comparePrice:  typeof item.comparePrice === 'number' ? item.comparePrice : null,
