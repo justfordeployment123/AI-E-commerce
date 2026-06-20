@@ -2,9 +2,9 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "next/navigation";
-import { Search, ShoppingBag, Eye, X, Truck, Check, Clock, MapPin, Package, Mail, Phone, Trash2 } from "lucide-react";
+import { Search, ShoppingBag, Eye, X, Truck, Check, Clock, MapPin, Package, Mail, Phone, Trash2, CreditCard } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ordersApi, type Order } from "../../lib/api";
+import { ordersApi, paymentSettingsApi, type Order } from "../../lib/api";
 
 type OrderStatus = "PENDING" | "CONFIRMED" | "SHIPPED" | "DELIVERED" | "CANCELLED";
 
@@ -13,7 +13,9 @@ const STATUS_CFG: Record<string, { label: string; cls: string; icon: React.Eleme
   CONFIRMED: { label: "Confirmed",  cls: "bg-violet-100 text-violet-700", icon: Check },
   SHIPPED:   { label: "Dispatched", cls: "bg-violet-100 text-violet-700", icon: Truck },
   DELIVERED: { label: "Delivered",  cls: "bg-emerald-100 text-emerald-700", icon: Check },
-  CANCELLED: { label: "Cancelled",  cls: "bg-red-100 text-red-500",       icon: X },
+  CANCELLED:           { label: "Cancelled",      cls: "bg-red-100 text-red-500",       icon: X },
+  REFUNDED:           { label: "Refunded",           cls: "bg-orange-100 text-orange-600", icon: CreditCard },
+  PARTIALLY_REFUNDED: { label: "Part. Refunded",      cls: "bg-orange-100 text-orange-600", icon: CreditCard },
 };
 
 export default function OrdersPage() {
@@ -30,6 +32,10 @@ export default function OrdersPage() {
   const autoSelected = useRef(false);
   const [purging, setPurging] = useState(false);
   const [confirmPurge, setConfirmPurge] = useState(false);
+  const [refunding, setRefunding] = useState(false);
+  const [showRefundDialog, setShowRefundDialog] = useState(false);
+  const [refundAmount, setRefundAmount] = useState("");
+  const [refundError, setRefundError] = useState("");
 
   async function handlePurgeAll() {
     setPurging(true);
@@ -62,6 +68,12 @@ export default function OrdersPage() {
       autoSelected.current = true;
     }
   }, [orders, deepLinkId]);
+
+  useEffect(() => {
+    setShowRefundDialog(false);
+    setRefundAmount("");
+    setRefundError("");
+  }, [selected?.id]);
 
   const filtered = orders.filter(o => {
     const customerName = o.user?.name ?? o.shippingAddress?.name ?? "";
@@ -101,6 +113,34 @@ export default function OrdersPage() {
       setSelected(updated);
     } catch { /* ignore */ }
     finally { setSaving(false); }
+  }
+
+  async function handleRefund(orderId: string) {
+    const amount = parseFloat(refundAmount);
+    if (isNaN(amount) || amount <= 0) {
+      setRefundError("Enter a valid amount greater than 0.");
+      return;
+    }
+    const maxAmount = selected?.total ?? 0;
+    if (amount > maxAmount) {
+      setRefundError(`Amount cannot exceed order total of £${maxAmount.toFixed(2)}.`);
+      return;
+    }
+    setRefunding(true);
+    setRefundError("");
+    try {
+      await paymentSettingsApi.refund(orderId, amount);
+      const res = await ordersApi.list({ limit: 100 });
+      setOrders(res.items);
+      const refreshed = res.items.find(o => o.id === orderId) ?? null;
+      setSelected(refreshed);
+      setShowRefundDialog(false);
+      setRefundAmount("");
+    } catch (err: any) {
+      setRefundError(err?.message ?? "Refund failed. Check Stripe dashboard.");
+    } finally {
+      setRefunding(false);
+    }
   }
 
   const customerName = (o: Order) => o.user?.name ?? o.shippingAddress?.name ?? "Guest";
@@ -321,6 +361,61 @@ export default function OrdersPage() {
                   >
                     <X className="h-4 w-4" /> Cancel order
                   </button>
+                )}
+                {/* Refund button */}
+                {["CONFIRMED", "SHIPPED", "DELIVERED"].includes(selected.status) &&
+                  selected.paymentMethod === "stripe" &&
+                  selected.paymentIntentId &&
+                  !selected.refundId && (
+                  <div>
+                    {!showRefundDialog ? (
+                      <button
+                        onClick={() => {
+                          setRefundAmount(String(selected.total));
+                          setRefundError("");
+                          setShowRefundDialog(true);
+                        }}
+                        className="w-full h-11 rounded-2xl border border-orange-200 text-orange-600 font-bold text-sm hover:bg-orange-50 transition-colors flex items-center justify-center gap-2"
+                      >
+                        <CreditCard className="h-4 w-4" /> Issue Refund
+                      </button>
+                    ) : (
+                      <div className="rounded-2xl border-2 border-orange-200 bg-orange-50 p-4 space-y-3">
+                        <p className="text-xs font-bold text-orange-700 uppercase tracking-widest">Issue Refund</p>
+                        <p className="text-xs text-orange-600">Order total: £{selected.total.toFixed(2)}</p>
+                        <div>
+                          <label className="text-xs font-semibold text-zinc-600 block mb-1">Amount to refund (£)</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0.01"
+                            max={selected.total}
+                            value={refundAmount}
+                            onChange={e => setRefundAmount(e.target.value)}
+                            className="w-full h-10 px-3 rounded-xl border-2 border-orange-200 focus:border-orange-400 font-mono text-sm outline-none bg-white"
+                          />
+                        </div>
+                        {refundError && (
+                          <p className="text-xs text-red-600 font-medium">{refundError}</p>
+                        )}
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => { setShowRefundDialog(false); setRefundError(""); }}
+                            className="flex-1 h-9 rounded-xl border border-zinc-200 text-xs font-bold text-zinc-600 hover:bg-white transition-colors"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={() => handleRefund(selected.id)}
+                            disabled={refunding}
+                            className="flex-1 h-9 rounded-xl bg-orange-500 text-white text-xs font-bold hover:bg-orange-600 transition-colors disabled:opacity-60"
+                          >
+                            {refunding ? "Processing…" : "Confirm Refund"}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             </motion.div>
