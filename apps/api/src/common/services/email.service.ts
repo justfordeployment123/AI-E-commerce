@@ -179,4 +179,31 @@ export class EmailService {
             this.logger.error(`Failed to send shipping label email to ${opts.to}`, err);
         }
     }
+
+    async sendAdminPaymentAlert(opts: {
+        paymentIntentId: string;
+        amountPounds: string;
+        customerEmail: string;
+    }) {
+        const adminEmail = process.env.SMTP_USER;
+        if (!adminEmail) return;
+        try {
+            await this.transporter.sendMail({
+                from: `"TechStop Leicester" <${adminEmail}>`,
+                to: adminEmail,
+                subject: `[URGENT] Payment received but no order found — £${opts.amountPounds}`,
+                text: [
+                    'A Stripe payment succeeded but no matching order was found in the database.',
+                    '',
+                    `Payment Intent ID: ${opts.paymentIntentId}`,
+                    `Amount: £${opts.amountPounds}`,
+                    `Customer email: ${opts.customerEmail}`,
+                    '',
+                    'Action required: check the Stripe dashboard and manually create or investigate this order.',
+                ].join('\n'),
+            });
+        } catch (err) {
+            this.logger.error('Failed to send admin payment alert', err);
+        }
+    }
 }
