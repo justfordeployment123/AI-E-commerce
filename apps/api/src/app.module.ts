@@ -33,11 +33,13 @@ import { CatalogModule } from './modules/catalog/catalog.module';
 import { OtherCatalogModule } from './modules/other-catalog/other-catalog.module';
 import { BannersModule } from './modules/banners/banners.module';
 import { ProductPricingModule } from './modules/product-pricing/product-pricing.module';
+import { SettingsModule } from './modules/settings/settings.module';
 
 @Module({
   imports: [
     ConfigModule,
     DatabaseModule,
+    SettingsModule,
     CacheModule,
     HealthModule,
     ScheduleModule.forRoot(),
