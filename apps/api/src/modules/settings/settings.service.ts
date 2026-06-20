@@ -48,7 +48,17 @@ export class SettingsService implements OnModuleInit {
 
         const row = await this.prisma.appSetting.findUnique({ where: { key } });
         if (row) {
-            const value = PLAINTEXT_KEYS.has(key) ? row.encryptedValue : this.decrypt(row.encryptedValue);
+            let value: string;
+            if (PLAINTEXT_KEYS.has(key)) {
+                value = row.encryptedValue;
+            } else {
+                try {
+                    value = this.decrypt(row.encryptedValue);
+                } catch (err) {
+                    this.logger.error(`Failed to decrypt setting "${key}" — row may be corrupted`, err);
+                    return null;
+                }
+            }
             this.cache.set(key, value);
             return value;
         }
