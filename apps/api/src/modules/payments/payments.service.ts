@@ -131,6 +131,9 @@ export class PaymentsService {
         if (!order.paymentIntentId) throw new BadRequestException('Order has no Stripe payment intent');
         if (order.paymentMethod !== 'stripe') throw new BadRequestException('Order was not paid via Stripe');
         if (order.refundId) throw new BadRequestException('Order has already been refunded');
+        if (amountPounds !== undefined && amountPounds > order.total) {
+            throw new BadRequestException(`Refund amount £${amountPounds} exceeds order total £${order.total}`);
+        }
 
         const stripe = await this.getStripe();
         if (!stripe) throw new BadRequestException('Stripe is not configured');
