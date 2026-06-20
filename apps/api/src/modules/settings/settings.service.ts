@@ -8,7 +8,7 @@ const PLAINTEXT_KEYS = new Set(['STRIPE_MODE']);
 export class SettingsService implements OnModuleInit {
     private readonly logger = new Logger(SettingsService.name);
     private readonly cache = new Map<string, string>();
-    private encKey: Buffer;
+    private encKey: Buffer = Buffer.alloc(32);
 
     constructor(private readonly prisma: PrismaService) {}
 
@@ -31,7 +31,10 @@ export class SettingsService implements OnModuleInit {
     }
 
     private decrypt(stored: string): string {
-        const [ivHex, authTagHex, ctHex] = stored.split(':');
+        const parts = stored.split(':');
+        const ivHex = parts[0] ?? '';
+        const authTagHex = parts[1] ?? '';
+        const ctHex = parts[2] ?? '';
         const iv = Buffer.from(ivHex, 'hex');
         const authTag = Buffer.from(authTagHex, 'hex');
         const ct = Buffer.from(ctHex, 'hex');
