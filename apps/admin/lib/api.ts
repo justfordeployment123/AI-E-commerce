@@ -53,7 +53,7 @@ export const deviceCatalogApi = {
     apiFetch<DeviceCatalogItem>(`/device-catalog/${id}`, { auth: false }),
   create: (data: { brandCategoryId: string; model: string; storageOptions: string[]; isActive?: boolean }) =>
     apiFetch<DeviceCatalogItem>('/device-catalog', { method: 'POST', body: JSON.stringify(data) }),
-  update: (id: string, data: Partial<{ brandCategoryId: string; model: string; storageOptions: string[]; isActive: boolean }>) =>
+  update: (id: string, data: Partial<{ brandCategoryId: string; model: string; storageOptions: string[]; isActive: boolean; tradeInEnabled: boolean; manualMarketPrice: number | null }>) =>
     apiFetch<DeviceCatalogItem>(`/device-catalog/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   remove: (id: string) =>
     apiFetch<void>(`/device-catalog/${id}`, { method: 'DELETE' }),
@@ -423,6 +423,33 @@ export const ordersApi = {
     apiFetch<{ deleted: number }>('/orders/purge', { method: 'DELETE' }),
 };
 
+// ── Payment Settings ──────────────────────────────────────────────────────────
+export interface PaymentSettings {
+  mode: 'test' | 'live';
+  stripeSecretKeyTest: string | null;
+  stripeSecretKeyLive: string | null;
+  stripeWebhookSecretTest: string | null;
+  stripeWebhookSecretLive: string | null;
+}
+
+export const paymentSettingsApi = {
+  get: () => apiFetch<PaymentSettings>('/payments/settings'),
+  update: (data: Partial<{
+    mode: string;
+    stripeSecretKeyTest: string;
+    stripeSecretKeyLive: string;
+    stripeWebhookSecretTest: string;
+    stripeWebhookSecretLive: string;
+  }>) =>
+    apiFetch<PaymentSettings>('/payments/settings', { method: 'PUT', body: JSON.stringify(data) }),
+  test: () => apiFetch<{ ok: boolean; accountId: string }>('/payments/settings/test', { method: 'POST' }),
+  refund: (orderId: string, amountPounds?: number) =>
+    apiFetch<{ refundId: string; amount: number; status: string }>('/payments/refund', {
+      method: 'POST',
+      body: JSON.stringify({ orderId, ...(amountPounds !== undefined ? { amountPounds } : {}) }),
+    }),
+};
+
 // ── Trade-ins ─────────────────────────────────────────────────────────────────
 export const tradeInsApi = {
   list: (params?: { status?: string; page?: number; limit?: number }) => {
@@ -536,7 +563,12 @@ export interface Order {
   total: number;
   subtotal: number;
   shipping: number;
+  discount?: number;
   shippingAddress: Record<string, string>;
+  paymentMethod?: string;
+  paymentIntentId?: string;
+  refundId?: string;
+  refundAmount?: number;
   trackingNumber?: string;
   createdAt: string;
   user?: { id: string; name: string; email: string };
@@ -612,6 +644,8 @@ export interface DeviceCatalogItem {
   model: string;
   storageOptions: string[];
   isActive: boolean;
+  tradeInEnabled: boolean;
+  manualMarketPrice: number | null;
   createdAt: string;
   updatedAt: string;
 }
