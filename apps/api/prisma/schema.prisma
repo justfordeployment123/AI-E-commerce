@@ -21,6 +21,7 @@ enum OrderStatus {
   DELIVERED
   CANCELLED
   REFUNDED
+  PARTIALLY_REFUNDED
 }
 
 enum TradeInStatus {
@@ -134,6 +135,8 @@ model Order {
   shippingAddress Json
   paymentMethod   String?
   paymentIntentId String?
+  refundId        String?
+  refundAmount    Float?
   discount        Float   @default(0)
   trackingNumber  String?
   notes           String?
@@ -310,8 +313,10 @@ model DeviceCatalog {
   brandCategory   BrandCategory @relation(fields: [brandCategoryId], references: [id])
   model           String
   storageOptions  String[]
-  isActive        Boolean       @default(true)
-  createdAt       DateTime      @default(now())
+  isActive           Boolean       @default(true)
+  tradeInEnabled     Boolean       @default(true)
+  manualMarketPrice  Float?
+  createdAt          DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   products        Product[]
 
@@ -466,4 +471,12 @@ model OtherSubcategory {
   products  Product[]
 
   @@map("other_subcategories")
+}
+
+model AppSetting {
+  key            String   @id
+  encryptedValue String
+  updatedAt      DateTime @updatedAt
+
+  @@map("app_settings")
 }
