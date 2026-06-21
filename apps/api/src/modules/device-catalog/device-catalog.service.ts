@@ -10,9 +10,16 @@ export class DeviceCatalogService {
         private readonly storage: StorageService,
     ) {}
 
-    findAll(params?: { categorySlug?: string; brandSlug?: string; search?: string; isActive?: boolean }) {
+    async findAll(params?: {
+        categorySlug?: string;
+        brandSlug?: string;
+        search?: string;
+        isActive?: boolean;
+        forTradeIn?: boolean;
+    }) {
         const where: Record<string, unknown> = {};
         if (params?.isActive !== undefined) where.isActive = params.isActive;
+        if (params?.forTradeIn) where.tradeInEnabled = true;
         if (params?.categorySlug || params?.brandSlug) {
             const bc: Record<string, unknown> = {};
             if (params?.categorySlug) bc.category = { slug: params.categorySlug };
@@ -22,11 +29,37 @@ export class DeviceCatalogService {
         if (params?.search) {
             where.model = { contains: params.search, mode: 'insensitive' };
         }
-        return this.prisma.deviceCatalog.findMany({
+
+        const entries = await this.prisma.deviceCatalog.findMany({
             where,
             include: { brandCategory: { include: { brand: true, category: true } } },
             orderBy: { model: 'asc' },
         });
+
+        // Augment with tradeInMode only when forTradeIn is requested (avoids extra queries otherwise)
+        if (!params?.forTradeIn) return entries;
+
+        const augmented = await Promise.all(entries.map(async (entry) => {
+            // Only real scraped market data counts as 'auto' — AI-estimated product prices do not
+            const hasScrapedPrice = await this.prisma.scrapedPrice.findFirst({
+                where: {
+                    brand: { equals: entry.brandCategory.brand.name, mode: 'insensitive' },
+                    model: { equals: entry.model,                    mode: 'insensitive' },
+                    marketPrice: { gt: 0 },
+                },
+                select: { id: true },
+            });
+
+            const tradeInMode = hasScrapedPrice
+                ? 'auto'
+                : (entry as any).manualMarketPrice
+                ? 'manual_price'
+                : 'unpriced';
+
+            return { ...entry, tradeInMode: tradeInMode as 'auto' | 'manual_price' | 'unpriced' };
+        }));
+
+        return augmented;
     }
 
     create(dto: UpsertDeviceDto) {

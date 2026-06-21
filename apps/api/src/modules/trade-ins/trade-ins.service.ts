@@ -155,9 +155,13 @@ export class TradeInsService {
         if (!['SUBMITTED', 'UNDER_REVIEW', 'COUNTER_OFFERED'].includes(tradeIn.status)) {
             throw new BadRequestException(`Cannot approve a trade-in with status ${tradeIn.status}`);
         }
+        const finalPrice = tradeIn.counterOffer ?? tradeIn.offerPrice;
+        if (finalPrice <= 0) {
+            throw new BadRequestException('Set an offer price for this trade-in before approving it');
+        }
         const updated = await this.prisma.tradeIn.update({
             where: { id },
-            data: { status: 'APPROVED', adminNotes: dto.adminNotes },
+            data: { status: 'APPROVED', offerPrice: finalPrice, adminNotes: dto.adminNotes },
         });
         if (tradeIn.userId) {
             await this.notifications.create(
@@ -165,7 +169,7 @@ export class TradeInsService {
                 'trade_in_approved',
                 'Trade-in Approved!',
                 `Your ${tradeIn.brand} ${tradeIn.model} trade-in has been approved. We'll be in touch shortly to arrange collection.`,
-                { tradeInId: id, reference: tradeIn.reference, price: tradeIn.offerPrice },
+                { tradeInId: id, reference: tradeIn.reference, price: finalPrice },
             );
         }
 

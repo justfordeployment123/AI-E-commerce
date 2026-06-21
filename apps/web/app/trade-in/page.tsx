@@ -191,6 +191,7 @@ interface TradeInState {
   category: string;
   brand: string;
   model: string;
+  tradeInMode: 'auto' | 'manual_price' | 'unpriced';
   specs: Record<string, string>;
   condition: string;
   answers: Record<string, string>;
@@ -333,7 +334,7 @@ export default function TradeInPage() {
   const [phase, setPhase] = useState(1);
   const [dir, setDir] = useState(1);
   const [state, setState] = useState<TradeInState>({
-    category: "", brand: "", model: "", specs: {}, condition: "",
+    category: "", brand: "", model: "", tradeInMode: "auto", specs: {}, condition: "",
     answers: {}, fulfillment: "", storeId: "",
     contact: { name: "", email: "", phone: "", address: "", postcode: "" },
   });
@@ -382,10 +383,10 @@ export default function TradeInPage() {
     Laptop: "laptops", Audio: "audio", Smartwatch: "smartwatches",
   };
   const [dynamicBrands, setDynamicBrands] = useState<string[]>([]);
-  const [dynamicModels, setDynamicModels] = useState<string[]>([]);
+  const [dynamicModelData, setDynamicModelData] = useState<{ model: string; tradeInMode: 'auto' | 'manual_price' | 'unpriced' }[]>([]);
 
   useEffect(() => {
-    setDynamicBrands([]); setDynamicModels([]);
+    setDynamicBrands([]); setDynamicModelData([]);
     const slug = CATEGORY_SLUG_MAP[state.category];
     if (!slug) return;
     productsApi.brands(slug)
@@ -396,13 +397,15 @@ export default function TradeInPage() {
   }, [state.category]);
 
   useEffect(() => {
-    setDynamicModels([]);
+    setDynamicModelData([]);
     const catSlug = CATEGORY_SLUG_MAP[state.category];
     if (!catSlug || !state.brand) return;
     const brandSlug = state.brand.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-    fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002"}/device-catalog?categorySlug=${catSlug}&brandSlug=${brandSlug}`)
+    fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002"}/device-catalog?forTradeIn=true&categorySlug=${catSlug}&brandSlug=${brandSlug}`)
       .then(r => r.json())
-      .then((entries: { model: string }[]) => setDynamicModels(entries.map(e => e.model)))
+      .then((entries: { model: string; tradeInMode?: 'auto' | 'manual_price' | 'unpriced' }[]) =>
+        setDynamicModelData(entries.map(e => ({ model: e.model, tradeInMode: e.tradeInMode ?? 'unpriced' })))
+      )
       .catch(() => {});
   }, [state.category, state.brand]);
 
@@ -520,6 +523,7 @@ export default function TradeInPage() {
       category: catId,
       brand: "",
       model: "",
+      tradeInMode: "auto",
       specs: {},
       answers: {},
     }));
@@ -532,6 +536,7 @@ export default function TradeInPage() {
       ...s,
       brand: brandName,
       model: "",
+      tradeInMode: "auto",
       specs: {},
       answers: {},
     }));
@@ -636,6 +641,7 @@ export default function TradeInPage() {
         category: catId ?? "",
         brand: "",
         model: "",
+        tradeInMode: "auto",
         specs: {},
         condition: "",
         answers: {},
@@ -655,6 +661,7 @@ export default function TradeInPage() {
         category: suggestion.category,
         brand: suggestion.brand,
         model: suggestion.name,
+        tradeInMode: "auto",
         specs: {},
         condition: "",
         answers: {},
@@ -1320,20 +1327,40 @@ export default function TradeInPage() {
                               </div>
 
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-72 overflow-y-auto pr-1 custom-scrollbar">
-                                {(dynamicModels.length > 0 ? dynamicModels : (MODELS[state.category]?.[state.brand] ?? []))
-                                  .filter(m => m.toLowerCase().includes(wizardModelSearch.toLowerCase()))
-                                  .map((model) => (
+                                {(dynamicModelData.length > 0
+                                  ? dynamicModelData
+                                  : (MODELS[state.category]?.[state.brand] ?? []).map(m => ({ model: m, tradeInMode: 'unpriced' as const }))
+                                )
+                                  .filter(({ model }) => model.toLowerCase().includes(wizardModelSearch.toLowerCase()))
+                                  .map(({ model, tradeInMode }) => (
                                     <motion.button
                                       key={model}
                                       whileHover={{ x: 4 }}
                                       onClick={() => {
-                                        setState(s => ({ ...s, model }));
+                                        setState(s => ({ ...s, model, tradeInMode }));
                                         goToPhase(2);
                                       }}
                                       className="flex items-center justify-between px-5 py-4 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:border-zinc-950 dark:hover:border-white hover:bg-zinc-50 dark:hover:bg-zinc-950 bg-white dark:bg-zinc-900 text-xs font-bold text-left transition-all hover:shadow-sm group text-zinc-800 dark:text-zinc-200"
                                     >
                                       <span>{model}</span>
-                                      <ChevronRight className="h-4 w-4 text-zinc-400 group-hover:text-zinc-950 dark:group-hover:text-white group-hover:translate-x-0.5 transition-all" />
+                                      <div className="flex items-center gap-2 shrink-0">
+                                        {tradeInMode === 'auto' && (
+                                          <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                                            Auto-price
+                                          </span>
+                                        )}
+                                        {tradeInMode === 'manual_price' && (
+                                          <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                                            Manual Price
+                                          </span>
+                                        )}
+                                        {tradeInMode === 'unpriced' && (
+                                          <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+                                            Manual Review
+                                          </span>
+                                        )}
+                                        <ChevronRight className="h-4 w-4 text-zinc-400 group-hover:text-zinc-950 dark:group-hover:text-white group-hover:translate-x-0.5 transition-all" />
+                                      </div>
                                     </motion.button>
                                   ))
                                 }
@@ -1540,7 +1567,108 @@ export default function TradeInPage() {
                     {/* ── PHASE 4: Valuation & Offer ── */}
                     {phase === 4 && (
                       <div className="space-y-6 flex-1 flex flex-col justify-between">
-                        
+
+                        {/* Manual Review Path — no pricing data available for this model */}
+                        {state.tradeInMode === 'unpriced' && (
+                          <div className="flex-1 flex flex-col justify-between animate-fade-in">
+                            <div className="space-y-6">
+                              <div className="flex flex-col items-center text-center gap-4 pt-4">
+                                <div className="h-16 w-16 rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40 flex items-center justify-center">
+                                  <Clock className="h-8 w-8 text-amber-500" />
+                                </div>
+                                <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 text-amber-700 border border-amber-500/25 px-3 py-1 text-[10px] font-black uppercase tracking-wider">
+                                  Manual Review Required
+                                </div>
+                                <h3 className="text-xl font-black text-zinc-950 dark:text-white leading-snug max-w-xs">
+                                  We'll personally assess your {state.model}
+                                </h3>
+                                <p className="text-sm font-semibold text-zinc-500 dark:text-zinc-400 max-w-sm leading-relaxed">
+                                  We don't have live market pricing for this model yet. Add a few photos so our team can assess the condition, then submit and we'll send you a custom cash offer within 24 hours.
+                                </p>
+                              </div>
+
+                              <div className="max-w-md mx-auto w-full space-y-3">
+                                <span className="text-xs font-black uppercase tracking-widest text-zinc-400 block">Device Photos <span className="text-amber-600 dark:text-amber-400">(Recommended)</span></span>
+
+                                <motion.button
+                                  whileHover={{ scale: 1.01 }}
+                                  whileTap={{ scale: 0.99 }}
+                                  onClick={() => fileInputRef.current?.click()}
+                                  disabled={imageUploading}
+                                  className="w-full border-2 border-dashed border-zinc-300 dark:border-zinc-800 hover:border-zinc-950 dark:hover:border-white rounded-2xl p-6 flex flex-col items-center gap-3 transition-all bg-zinc-50 dark:bg-zinc-900 hover:bg-white dark:hover:bg-zinc-950 group disabled:opacity-60 disabled:pointer-events-none"
+                                >
+                                  <div className="h-11 w-11 rounded-xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 shadow-sm flex items-center justify-center group-hover:bg-zinc-950 dark:group-hover:bg-white group-hover:border-zinc-950 dark:group-hover:border-white transition-all">
+                                    {imageUploading ? (
+                                      <div className="h-5 w-5 border-2 border-zinc-300 dark:border-zinc-700 border-t-zinc-700 dark:border-t-zinc-200 rounded-full animate-spin" />
+                                    ) : (
+                                      <Upload className="h-5 w-5 text-zinc-400 dark:text-zinc-500 group-hover:text-white dark:group-hover:text-zinc-950 transition-colors" />
+                                    )}
+                                  </div>
+                                  <div className="text-center">
+                                    <p className="text-xs font-black text-zinc-800 dark:text-zinc-200">{imageUploading ? "Uploading…" : "Tap to upload photos"}</p>
+                                    <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-bold mt-1">JPEG or PNG · up to 6 photos · helps us assess your device</p>
+                                  </div>
+                                </motion.button>
+
+                                {images.length > 0 && (
+                                  <div className="grid grid-cols-3 gap-2">
+                                    {images.map((img, i) => (
+                                      <div key={i} className="relative aspect-square rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800 group">
+                                        <img src={img.previewUrl} alt={`Preview ${i + 1}`} className="w-full h-full object-cover" />
+                                        <button
+                                          onClick={() => setImages(prev => prev.filter((_, idx) => idx !== i))}
+                                          className="absolute top-1.5 right-1.5 h-6 w-6 bg-zinc-950/80 hover:bg-red-500 rounded-full flex items-center justify-center transition-colors"
+                                        >
+                                          <X className="h-3.5 w-3.5 text-white" />
+                                        </button>
+                                      </div>
+                                    ))}
+                                    {images.length < 6 && (
+                                      <button
+                                        onClick={() => fileInputRef.current?.click()}
+                                        disabled={imageUploading}
+                                        className="aspect-square rounded-xl border-2 border-dashed border-zinc-200 dark:border-zinc-800 hover:border-zinc-950 dark:hover:border-white bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center transition-colors text-zinc-400 hover:text-zinc-900 dark:hover:text-white disabled:opacity-50"
+                                      >
+                                        <Plus className="h-5 w-5" />
+                                      </button>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="max-w-md mx-auto bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-5 text-left space-y-3">
+                                <div className="flex justify-between items-center text-xs">
+                                  <span className="font-extrabold text-zinc-400 uppercase tracking-wide">Device Model</span>
+                                  <span className="font-black text-zinc-900 dark:text-zinc-100">{state.model}</span>
+                                </div>
+                                <div className="h-px bg-zinc-200/60 dark:bg-zinc-800" />
+                                <div className="flex justify-between items-center text-xs">
+                                  <span className="font-extrabold text-zinc-400 uppercase tracking-wide">Grade</span>
+                                  <span className="font-black text-zinc-900 dark:text-zinc-100">{state.condition}</span>
+                                </div>
+                                <div className="h-px bg-zinc-200/60 dark:bg-zinc-800" />
+                                <div className="flex items-start gap-2 text-[10px] font-semibold text-amber-600 dark:text-amber-400 pt-1">
+                                  <Clock className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                                  Offer sent by email within 24 hours of submission
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="pt-6 border-t border-zinc-100 dark:border-zinc-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
+                              <button
+                                onClick={() => goToPhase(5)}
+                                className="w-full sm:w-auto h-12 px-8 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-200 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 shadow-lg shrink-0"
+                              >
+                                <span className="whitespace-nowrap">Submit for Review</span>
+                                <ArrowRight className="h-4 w-4 shrink-0" />
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Auto-price path */}
+                        {state.tradeInMode !== 'unpriced' && (
+                        <>
                         {/* Loading State */}
                         {aiLoading && (
                           <div className="flex-1 flex flex-col items-center justify-center py-12 text-center">
@@ -1717,6 +1845,7 @@ export default function TradeInPage() {
                             </div>
                           </div>
                         )}
+                        </> )}
                       </div>
                     )}
 
@@ -1747,7 +1876,8 @@ export default function TradeInPage() {
                               const result = await tradeInsApi.submit({
                                 category: state.category, brand: state.brand, model: state.model,
                                 specs: state.specs, condition: state.condition, answers: state.answers,
-                                fulfillment: state.fulfillment, offerPrice: aiPrice!,
+                                fulfillment: state.fulfillment,
+                                offerPrice: state.tradeInMode === 'unpriced' ? 0 : (aiPrice ?? 0),
                                 images: images.map(i => i.filePath),
                                 storeId: state.storeId || undefined,
                                 contact: state.contact,
@@ -2008,13 +2138,23 @@ export default function TradeInPage() {
 
                                 <div className="h-px bg-zinc-200/60 dark:bg-zinc-800" />
 
-                                <div className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 rounded-xl p-3.5 text-center">
-                                  <span className="text-[9px] font-black uppercase tracking-widest text-emerald-800 dark:text-emerald-400 block">Total Offer Value</span>
-                                  <p className="text-3xl font-black font-mono text-emerald-950 dark:text-emerald-400 mt-1">£{aiPrice}</p>
-                                  <div className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1 mt-1">
-                                    <Clock className="h-3 w-3" /> Locked for 14 days
+                                {state.tradeInMode === 'unpriced' ? (
+                                  <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30 rounded-xl p-3.5 text-center">
+                                    <span className="text-[9px] font-black uppercase tracking-widest text-amber-800 dark:text-amber-400 block">Offer Type</span>
+                                    <p className="text-sm font-black text-amber-900 dark:text-amber-300 mt-1">Manual Review</p>
+                                    <div className="text-[9px] font-bold text-amber-600 dark:text-amber-400 flex items-center justify-center gap-1 mt-1">
+                                      <Clock className="h-3 w-3" /> Offer sent within 24 hours
+                                    </div>
                                   </div>
-                                </div>
+                                ) : (
+                                  <div className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 rounded-xl p-3.5 text-center">
+                                    <span className="text-[9px] font-black uppercase tracking-widest text-emerald-800 dark:text-emerald-400 block">Total Offer Value</span>
+                                    <p className="text-3xl font-black font-mono text-emerald-950 dark:text-emerald-400 mt-1">£{aiPrice}</p>
+                                    <div className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1 mt-1">
+                                      <Clock className="h-3 w-3" /> Locked for 14 days
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -2090,12 +2230,17 @@ export default function TradeInPage() {
                           </motion.div>
 
                           <div className="space-y-2">
-                            <h2 className="font-sans text-3xl font-extrabold tracking-tight text-zinc-950 dark:text-white">Valuation Confirmed!</h2>
+                            <h2 className="font-sans text-3xl font-extrabold tracking-tight text-zinc-950 dark:text-white">
+                              {state.tradeInMode === 'unpriced' ? 'Trade-in Submitted!' : 'Valuation Confirmed!'}
+                            </h2>
                             <p className="text-xs font-semibold text-zinc-400 uppercase tracking-widest">
                               Reference ID: <strong className="text-zinc-800 dark:text-zinc-200 font-mono font-black">{submitRef}</strong>
                             </p>
                             <p className="text-sm font-semibold text-zinc-500 dark:text-zinc-400 max-w-md mx-auto leading-relaxed pt-2">
-                              Your device is registered for buyback. We have locked in a trade offer value of <strong className="text-zinc-950 dark:text-white font-black">£{serverOfferPrice ?? aiPrice}</strong>.
+                              {state.tradeInMode === 'unpriced'
+                                ? <>Your {state.brand} {state.model} has been registered for manual review. We'll send a custom cash offer to <strong className="text-zinc-950 dark:text-white">{state.contact.email}</strong> within 24 hours.</>
+                                : <>Your device is registered for buyback. We have locked in a trade offer value of <strong className="text-zinc-950 dark:text-white font-black">£{serverOfferPrice ?? aiPrice}</strong>.</>
+                              }
                             </p>
                           </div>
 

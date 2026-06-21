@@ -135,7 +135,19 @@
       "Bash(node -e \"const p=require\\('./apps/api/prisma/seed/products/products.json'\\); const r=p.filter\\(x=>['iPhone 15','iPhone 15 Pro','Galaxy S24','Galaxy S24 Ultra','MacBook Air M2 \\(2022\\)','iPad Pro 11-inch M2','PlayStation 5 Disc Edition','Xbox Series X','AirPods Pro 2','Pixel 8 Pro','WH-1000XM5'].includes\\(x.model\\)\\); console.log\\(r.map\\(x=>'['+x.condition+'] '+x.model+' '+JSON.stringify\\(x.specs?.Storage||''\\)+'  £'+x.price+'/£'+x.comparePrice\\).join\\('\\\\n'\\)\\)\")",
       "Bash(node -e \"const p=require\\('./apps/api/prisma/seed/products/products.json'\\); console.log\\('Last index slug:',p[p.length-1].slug\\); console.log\\('Total count:',p.length\\)\")",
       "Bash(node add-new-products.js)",
-      "Bash(git -C 'd:/CODE/Projects/Markhor Systems Projects/Ai-Ecommerce' commit -m ' *)"
+      "Bash(git -C 'd:/CODE/Projects/Markhor Systems Projects/Ai-Ecommerce' commit -m ' *)",
+      "Read(//c/Users/HP/.claude/plugins/cache/claude-plugins-official/superpowers/**)",
+      "Bash(git -C \"D:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\" diff 87f2348b3e2cfe0dffacc310a8be5a6e893ca2f2..9a012dc3d6620857c9c2a382951e78b7857b1a3e -- \"apps/api/prisma/schema.prisma\")",
+      "Bash(git -C \"D:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\" log --oneline 87f2348b3e2cfe0dffacc310a8be5a6e893ca2f2..9a012dc3d6620857c9c2a382951e78b7857b1a3e)",
+      "Bash(git -C \"D:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\" show 9a012dc3d6620857c9c2a382951e78b7857b1a3e --stat)",
+      "Bash(git -C \"D:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\" diff 87f2348b3e2cfe0dffacc310a8be5a6e893ca2f2..9a012dc3d6620857c9c2a382951e78b7857b1a3e)",
+      "PowerShell(ls \"D:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\api\\\\src\\\\modules\\\\\")",
+      "PowerShell(ls \"D:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\api\\\\src\\\\modules\\\\payments\\\\\")",
+      "PowerShell(ls \"D:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\api\\\\src\\\\common\\\\services\\\\\")",
+      "PowerShell(ls \"D:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\api\\\\src\\\\modules\\\\database\\\\\")",
+      "PowerShell(ls \"D:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\node_modules\\\\@prisma\\\\client\\\\\")",
+      "PowerShell(ls \"D:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\api\\\\node_modules\\\\.prisma\\\\client\\\\\" 2>&1)",
+      "PowerShell(ls \"D:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\node_modules\\\\.prisma\\\\client\\\\\")"
     ],
     "additionalDirectories": [
       "d:\\CODE\\Projects\\Markhor Systems Projects\\Ai-Ecommerce\\apps\\web\\app\\account\\repairs",

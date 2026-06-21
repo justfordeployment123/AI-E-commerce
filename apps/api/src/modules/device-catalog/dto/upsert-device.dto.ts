@@ -1,4 +1,4 @@
-import { IsArray, IsBoolean, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class UpsertDeviceDto {
     @IsString()
@@ -14,4 +14,12 @@ export class UpsertDeviceDto {
     @IsBoolean()
     @IsOptional()
     isActive?: boolean;
+
+    @IsBoolean()
+    @IsOptional()
+    tradeInEnabled?: boolean;
+
+    @IsNumber()
+    @IsOptional()
+    manualMarketPrice?: number | null;
 }

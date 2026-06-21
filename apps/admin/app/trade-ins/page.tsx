@@ -227,7 +227,13 @@ export default function TradeInsPage() {
                         <td className="px-4 py-4 hidden lg:table-cell">
                           <span className="rounded-full bg-zinc-100 px-3 py-1 text-[10px] font-bold uppercase">{t.condition}</span>
                         </td>
-                        <td className="px-4 py-4 text-right font-bold font-mono">£{t.offerPrice}</td>
+                        <td className="px-4 py-4 text-right font-bold font-mono">
+                          {t.offerPrice > 0
+                            ? `£${t.offerPrice}`
+                            : t.counterOffer
+                            ? <span className="text-violet-600 text-[10px] font-black uppercase tracking-wide">£{t.counterOffer} sent</span>
+                            : <span className="text-amber-500 text-[10px] font-black uppercase tracking-wide">Pending</span>}
+                        </td>
                         <td className="px-4 py-4 text-center">
                           <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${c.className}`}>{c.label}</span>
                         </td>
@@ -262,8 +268,22 @@ export default function TradeInsPage() {
               <div className="bg-zinc-950 text-white rounded-2xl px-5 py-4 mb-4">
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-1">AI Offer Price</p>
-                    <p className="text-4xl font-black font-mono tracking-tight">£{selected.offerPrice}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-1">
+                      {selected.offerPrice > 0 ? "Offer Price" : selected.counterOffer ? "Offer Sent" : "Offer Price"}
+                    </p>
+                    <p className="text-4xl font-black font-mono tracking-tight">
+                      {selected.offerPrice > 0
+                        ? `£${selected.offerPrice}`
+                        : selected.counterOffer
+                        ? <span className="text-violet-400">£{selected.counterOffer}</span>
+                        : <span className="text-amber-400 text-2xl">Pending review</span>}
+                    </p>
+                    {selected.offerPrice === 0 && selected.counterOffer && (
+                      <p className="text-xs text-white/40 mt-1">Awaiting customer response</p>
+                    )}
+                    {selected.offerPrice > 0 && selected.counterOffer && (
+                      <p className="text-xs text-white/40 mt-1">Counter offer: £{selected.counterOffer} (awaiting customer)</p>
+                    )}
                     {selected.finalPrice && selected.finalPrice !== selected.offerPrice && (
                       <p className="text-xs text-white/40 mt-1">Final: £{selected.finalPrice}</p>
                     )}
@@ -341,20 +361,38 @@ export default function TradeInsPage() {
               {/* Actions */}
               {["SUBMITTED", "UNDER_REVIEW", "COUNTER_OFFERED"].includes(selected.status) && (
                 <div className="space-y-2.5 pt-1">
-                  <div className="grid grid-cols-2 gap-2.5">
-                    <button onClick={() => openModal("approve", selected.id)} disabled={saving}
-                      className="h-11 rounded-2xl bg-approve text-approve-fg font-bold text-sm flex items-center justify-center gap-2 hover:bg-approve-hover active:scale-95 transition-all disabled:opacity-50">
-                      <Check className="h-4 w-4" /> Approve
-                    </button>
-                    <button onClick={() => openModal("reject", selected.id)} disabled={saving}
-                      className="h-11 rounded-2xl bg-reject text-reject-fg font-bold text-sm flex items-center justify-center gap-2 hover:bg-reject-hover active:scale-95 transition-all disabled:opacity-50">
-                      <X className="h-4 w-4" /> Reject
-                    </button>
-                  </div>
-                  <button onClick={() => openModal("counter", selected.id)} disabled={saving}
-                    className="w-full h-11 rounded-2xl border-2 border-zinc-200 font-bold text-sm hover:border-zinc-900 hover:bg-zinc-900 hover:text-white active:scale-95 transition-all flex items-center justify-center gap-2">
-                    <Minus className="h-4 w-4" /> {selected.counterOffer ? `Update offer (£${selected.counterOffer})` : "Counter offer"}
-                  </button>
+                  {selected.offerPrice === 0 && !selected.counterOffer ? (
+                    <>
+                      <div className="rounded-2xl bg-amber-50 border border-amber-100 px-4 py-3 text-xs text-amber-700 font-medium">
+                        No price set yet. Set an offer price to send to the customer, or reject this trade-in.
+                      </div>
+                      <button onClick={() => openModal("counter", selected.id)} disabled={saving}
+                        className="w-full h-11 rounded-2xl bg-black text-white font-bold text-sm hover:bg-zinc-800 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
+                        <Minus className="h-4 w-4" /> Set Offer Price
+                      </button>
+                      <button onClick={() => openModal("reject", selected.id)} disabled={saving}
+                        className="w-full h-11 rounded-2xl bg-reject text-reject-fg font-bold text-sm flex items-center justify-center gap-2 hover:bg-reject-hover active:scale-95 transition-all disabled:opacity-50">
+                        <X className="h-4 w-4" /> Reject
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-2 gap-2.5">
+                        <button onClick={() => openModal("approve", selected.id)} disabled={saving}
+                          className="h-11 rounded-2xl bg-approve text-approve-fg font-bold text-sm flex items-center justify-center gap-2 hover:bg-approve-hover active:scale-95 transition-all disabled:opacity-50">
+                          <Check className="h-4 w-4" /> Approve{selected.offerPrice === 0 && selected.counterOffer ? ` £${selected.counterOffer}` : ""}
+                        </button>
+                        <button onClick={() => openModal("reject", selected.id)} disabled={saving}
+                          className="h-11 rounded-2xl bg-reject text-reject-fg font-bold text-sm flex items-center justify-center gap-2 hover:bg-reject-hover active:scale-95 transition-all disabled:opacity-50">
+                          <X className="h-4 w-4" /> Reject
+                        </button>
+                      </div>
+                      <button onClick={() => openModal("counter", selected.id)} disabled={saving}
+                        className="w-full h-11 rounded-2xl border-2 border-zinc-200 font-bold text-sm hover:border-zinc-900 hover:bg-zinc-900 hover:text-white active:scale-95 transition-all flex items-center justify-center gap-2">
+                        <Minus className="h-4 w-4" /> {selected.counterOffer ? `Update offer (£${selected.counterOffer})` : "Counter offer"}
+                      </button>
+                    </>
+                  )}
                 </div>
               )}
               {selected.status === "APPROVED" && (
@@ -393,7 +431,7 @@ export default function TradeInsPage() {
               className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6"
             >
               <h3 className="text-lg font-bold mb-0.5">
-                {modal.type === "approve" ? "Approve Trade-In" : modal.type === "reject" ? "Reject Trade-In" : "Counter Offer"}
+                {modal.type === "approve" ? "Approve Trade-In" : modal.type === "reject" ? "Reject Trade-In" : (selected?.offerPrice === 0 && !selected?.counterOffer) ? "Set Offer Price" : "Counter Offer"}
               </h3>
               <p className="text-sm text-zinc-400 mb-5">
                 {selected?.brand} {selected?.model} · {selected?.reference}
@@ -402,7 +440,7 @@ export default function TradeInsPage() {
               {modal.type === "counter" && (
                 <div className="mb-4">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 block mb-1.5">
-                    Counter Amount (£)
+                    {(selected?.offerPrice === 0 && !selected?.counterOffer) ? "Offer Price (£)" : "Counter Amount (£)"}
                   </label>
                   <input
                     type="number"

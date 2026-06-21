@@ -31,6 +31,7 @@ export default function TradeInDetailPage() {
   const [counterInput, setCounterInput] = useState("");
   const [showCounter, setShowCounter] = useState(false);
   const [lightbox, setLightbox] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   useEffect(() => {
     tradeInsApi.getById(id)
@@ -41,12 +42,16 @@ export default function TradeInDetailPage() {
 
   async function act(fn: () => Promise<unknown>) {
     setSaving(true);
+    setActionError(null);
     try {
       await fn();
       const refreshed = await tradeInsApi.getById(id);
       setItem(refreshed);
-    } catch { /* ignore */ }
-    finally { setSaving(false); }
+      setShowCounter(false);
+      setCounterInput("");
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : "Action failed");
+    } finally { setSaving(false); }
   }
 
   if (loading) {
@@ -189,14 +194,27 @@ export default function TradeInDetailPage() {
 
             {/* Offer card */}
             <div className="bg-zinc-950 text-white rounded-3xl p-6 text-center">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-1">AI Offer Price</p>
-              <p className="text-5xl font-black font-mono tracking-tighter">£{item.offerPrice}</p>
-              {item.counterOffer && (
-                <p className="text-sm text-white/50 mt-2">Counter offer: £{item.counterOffer}</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-1">
+                {item.offerPrice > 0 ? "Offer Price" : item.counterOffer ? "Offer Sent" : "Offer Price"}
+              </p>
+              {item.offerPrice > 0 ? (
+                <p className="text-5xl font-black font-mono tracking-tighter">£{item.offerPrice}</p>
+              ) : item.counterOffer ? (
+                <>
+                  <p className="text-5xl font-black font-mono tracking-tighter text-violet-400">£{item.counterOffer}</p>
+                  <p className="text-xs text-white/50 mt-2">Sent to customer — awaiting response</p>
+                </>
+              ) : (
+                <p className="text-2xl font-black text-amber-400 mt-1">Pending Manual Review</p>
               )}
-              <div className="flex items-center justify-center gap-1.5 mt-3 text-[10px] text-white/40">
-                <Clock className="h-3 w-3" /> Price locked 14 days from submission
-              </div>
+              {item.offerPrice > 0 && item.counterOffer && (
+                <p className="text-sm text-white/50 mt-2">Counter offer: £{item.counterOffer} (awaiting customer)</p>
+              )}
+              {item.offerPrice > 0 && (
+                <div className="flex items-center justify-center gap-1.5 mt-3 text-[10px] text-white/40">
+                  <Clock className="h-3 w-3" /> Price locked 14 days from submission
+                </div>
+              )}
             </div>
 
             {/* Customer info */}
@@ -234,48 +252,87 @@ export default function TradeInDetailPage() {
             <div className="bg-white rounded-3xl border border-zinc-100 shadow-sm p-6">
               <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-400 mb-4">Actions</h2>
 
-              {item.status === "SUBMITTED" && (
+              {actionError && (
+                <div className="rounded-2xl bg-red-50 border border-red-100 p-3.5 text-xs text-red-600 font-medium mb-3">
+                  {actionError}
+                </div>
+              )}
+
+              {["SUBMITTED", "UNDER_REVIEW", "COUNTER_OFFERED"].includes(item.status) && (
                 <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      onClick={() => act(() => tradeInsApi.approve(item.id))}
-                      disabled={saving}
-                      className="h-12 rounded-2xl bg-approve text-approve-fg font-bold text-sm flex items-center justify-center gap-2 hover:bg-approve-hover active:scale-95 transition-all disabled:opacity-50"
-                    >
-                      <Check className="h-4 w-4" /> Approve
-                    </button>
-                    <button
-                      onClick={() => act(() => tradeInsApi.reject(item.id))}
-                      disabled={saving}
-                      className="h-12 rounded-2xl bg-reject text-reject-fg font-bold text-sm flex items-center justify-center gap-2 hover:bg-reject-hover active:scale-95 transition-all disabled:opacity-50"
-                    >
-                      <X className="h-4 w-4" /> Reject
-                    </button>
-                  </div>
-                  {!showCounter ? (
-                    <button
-                      onClick={() => setShowCounter(true)}
-                      className="w-full h-12 rounded-2xl border-2 border-zinc-200 font-bold text-sm hover:border-zinc-900 hover:bg-zinc-900 hover:text-white active:scale-95 transition-all flex items-center justify-center gap-2"
-                    >
-                      <Minus className="h-4 w-4" /> Counter offer
-                    </button>
-                  ) : (
-                    <div className="flex gap-2">
-                      <input
-                        type="number"
-                        placeholder="Counter amount (£)"
-                        value={counterInput}
-                        onChange={e => setCounterInput(e.target.value)}
-                        className="flex-1 h-12 rounded-2xl border-2 border-zinc-200 px-4 text-sm font-mono outline-none focus:border-black transition-colors"
-                      />
+                  {item.offerPrice === 0 && !item.counterOffer ? (
+                    <>
+                      <div className="rounded-2xl bg-amber-50 border border-amber-100 p-3.5 text-xs text-amber-700 font-medium">
+                        No price has been set for this device yet. Set an offer price to send to the customer, or reject this trade-in outright.
+                      </div>
+                      <div className="flex gap-2">
+                        <input
+                          type="number"
+                          placeholder="Offer price (£)"
+                          value={counterInput}
+                          onChange={e => setCounterInput(e.target.value)}
+                          className="flex-1 h-12 rounded-2xl border-2 border-zinc-200 px-4 text-sm font-mono outline-none focus:border-black transition-colors"
+                        />
+                        <button
+                          onClick={() => act(() => tradeInsApi.counterOffer(item.id, Number(counterInput)))}
+                          disabled={saving || !counterInput || Number(counterInput) <= 0}
+                          className="h-12 px-5 rounded-2xl bg-black text-white font-bold text-sm hover:bg-zinc-800 active:scale-95 transition-all disabled:opacity-50"
+                        >
+                          Send Offer
+                        </button>
+                      </div>
                       <button
-                        onClick={() => act(() => tradeInsApi.counterOffer(item.id, Number(counterInput)))}
-                        disabled={saving || !counterInput}
-                        className="h-12 px-5 rounded-2xl bg-black text-white font-bold text-sm hover:bg-zinc-800 active:scale-95 transition-all disabled:opacity-50"
+                        onClick={() => act(() => tradeInsApi.reject(item.id))}
+                        disabled={saving}
+                        className="w-full h-12 rounded-2xl bg-reject text-reject-fg font-bold text-sm flex items-center justify-center gap-2 hover:bg-reject-hover active:scale-95 transition-all disabled:opacity-50"
                       >
-                        Send
+                        <X className="h-4 w-4" /> Reject
                       </button>
-                    </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-2 gap-3">
+                        <button
+                          onClick={() => act(() => tradeInsApi.approve(item.id))}
+                          disabled={saving}
+                          className="h-12 rounded-2xl bg-approve text-approve-fg font-bold text-sm flex items-center justify-center gap-2 hover:bg-approve-hover active:scale-95 transition-all disabled:opacity-50"
+                        >
+                          <Check className="h-4 w-4" /> Approve{item.offerPrice === 0 && item.counterOffer ? ` £${item.counterOffer}` : ""}
+                        </button>
+                        <button
+                          onClick={() => act(() => tradeInsApi.reject(item.id))}
+                          disabled={saving}
+                          className="h-12 rounded-2xl bg-reject text-reject-fg font-bold text-sm flex items-center justify-center gap-2 hover:bg-reject-hover active:scale-95 transition-all disabled:opacity-50"
+                        >
+                          <X className="h-4 w-4" /> Reject
+                        </button>
+                      </div>
+                      {!showCounter ? (
+                        <button
+                          onClick={() => setShowCounter(true)}
+                          className="w-full h-12 rounded-2xl border-2 border-zinc-200 font-bold text-sm hover:border-zinc-900 hover:bg-zinc-900 hover:text-white active:scale-95 transition-all flex items-center justify-center gap-2"
+                        >
+                          <Minus className="h-4 w-4" /> {item.counterOffer ? "Update offer" : "Counter offer"}
+                        </button>
+                      ) : (
+                        <div className="flex gap-2">
+                          <input
+                            type="number"
+                            placeholder="Counter amount (£)"
+                            value={counterInput}
+                            onChange={e => setCounterInput(e.target.value)}
+                            className="flex-1 h-12 rounded-2xl border-2 border-zinc-200 px-4 text-sm font-mono outline-none focus:border-black transition-colors"
+                          />
+                          <button
+                            onClick={() => act(() => tradeInsApi.counterOffer(item.id, Number(counterInput)))}
+                            disabled={saving || !counterInput || Number(counterInput) <= 0}
+                            className="h-12 px-5 rounded-2xl bg-black text-white font-bold text-sm hover:bg-zinc-800 active:scale-95 transition-all disabled:opacity-50"
+                          >
+                            Send
+                          </button>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               )}
@@ -305,12 +362,6 @@ export default function TradeInDetailPage() {
               {item.status === "COMPLETED" && (
                 <div className="rounded-2xl bg-zinc-50 border border-zinc-100 p-4 text-sm text-zinc-500 font-medium">
                   <Check className="h-4 w-4 inline mr-2" /> Trade-in completed.
-                </div>
-              )}
-
-              {item.status === "COUNTER_OFFERED" && (
-                <div className="rounded-2xl bg-violet-50 border border-violet-100 p-4 text-sm text-violet-700 font-medium">
-                  Counter offer of £{item.counterOffer} sent to customer.
                 </div>
               )}
             </div>

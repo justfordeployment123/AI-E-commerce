@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft, ArrowUpRight, Laptop, Smartphone, Tablet, Gamepad2,
   Headphones, ShieldCheck, Database, Layers, TrendingUp, Clock,
-  RefreshCw, AlertCircle,
+  RefreshCw, AlertCircle, RefreshCcw, PoundSterling, Check, X as XIcon,
 } from "lucide-react";
 import {
   deviceCatalogApi, productsApi, scraperApi,
@@ -45,6 +45,28 @@ export default function CatalogDetailPage() {
   const [scraping, setScraping]   = useState(false);
   const [scrapeMsg, setScrapeMsg] = useState("");
 
+  // Trade-in toggle
+  const [togglingTradeIn, setTogglingTradeIn] = useState(false);
+
+  // Manual market price
+  const [manualPriceInput, setManualPriceInput] = useState<string>("");
+  const [savingManualPrice, setSavingManualPrice] = useState(false);
+  const [manualPriceSaved, setManualPriceSaved] = useState(false);
+  const [manualPriceError, setManualPriceError] = useState("");
+
+  async function handleToggleTradeIn() {
+    if (!device) return;
+    setTogglingTradeIn(true);
+    try {
+      const updated = await deviceCatalogApi.update(device.id, { tradeInEnabled: !device.tradeInEnabled });
+      setDevice(updated);
+    } catch (e: any) {
+      alert(e.message ?? "Failed to update trade-in availability");
+    } finally {
+      setTogglingTradeIn(false);
+    }
+  }
+
   useEffect(() => {
     if (!id) return;
     (async () => {
@@ -53,6 +75,7 @@ export default function CatalogDetailPage() {
       try {
         const devItem = await deviceCatalogApi.getById(id);
         setDevice(devItem);
+        setManualPriceInput(devItem.manualMarketPrice != null ? String(devItem.manualMarketPrice) : "");
 
         // Products and scraper prices are non-fatal
         productsApi.list({ limit: 200 })
@@ -96,6 +119,28 @@ export default function CatalogDetailPage() {
       setScrapeMsg(e.message ?? "Failed to start scraper");
     } finally {
       setScraping(false);
+    }
+  }
+
+  async function handleSaveManualPrice(clear = false) {
+    if (!device) return;
+    setManualPriceError("");
+    const parsed = clear ? null : parseFloat(manualPriceInput);
+    if (!clear && (isNaN(parsed!) || parsed! <= 0)) {
+      setManualPriceError("Enter a valid price above £0");
+      return;
+    }
+    setSavingManualPrice(true);
+    try {
+      const updated = await deviceCatalogApi.update(device.id, { manualMarketPrice: parsed });
+      setDevice(updated);
+      if (clear) setManualPriceInput("");
+      setManualPriceSaved(true);
+      setTimeout(() => setManualPriceSaved(false), 2500);
+    } catch (e: any) {
+      setManualPriceError(e.message ?? "Failed to save");
+    } finally {
+      setSavingManualPrice(false);
     }
   }
 
@@ -149,9 +194,26 @@ export default function CatalogDetailPage() {
               <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold ${meta.color}`}>
                 <Icon className="h-3.5 w-3.5" />{meta.label}
               </span>
-              <span className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${device.isActive ? "bg-emerald-100 text-emerald-800" : "bg-zinc-100 text-zinc-500"}`}>
-                {device.isActive ? "Active" : "Inactive"}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${device.isActive ? "bg-emerald-100 text-emerald-800" : "bg-zinc-100 text-zinc-500"}`}>
+                  {device.isActive ? "Active" : "Inactive"}
+                </span>
+                <button
+                  onClick={handleToggleTradeIn}
+                  disabled={togglingTradeIn}
+                  title={device.tradeInEnabled ? "Disable for trade-in" : "Enable for trade-in"}
+                  className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider border transition-colors disabled:opacity-50 ${
+                    device.tradeInEnabled
+                      ? "bg-sky-100 text-sky-800 border-sky-200 hover:bg-sky-200"
+                      : "bg-zinc-100 text-zinc-500 border-zinc-200 hover:bg-zinc-200"
+                  }`}
+                >
+                  {togglingTradeIn
+                    ? <RefreshCcw className="h-3 w-3 animate-spin" />
+                    : null}
+                  Trade-in: {device.tradeInEnabled ? "On" : "Off"}
+                </button>
+              </div>
             </div>
             <h1 className="text-3xl font-extrabold text-zinc-950 mb-1 leading-tight">{device.brandCategory.brand.name} {device.model}</h1>
             <p className="text-zinc-400 text-xs font-medium">Device Catalog ID: <span className="font-mono text-[10px]">{device.id}</span></p>
@@ -204,6 +266,61 @@ export default function CatalogDetailPage() {
             <span>Metrics calculated from active product listings matching this brand & model.</span>
           </div>
         </div>
+      </div>
+
+      {/* ── Manual Market Price ───────────────────────────────────────────────── */}
+      <div className="bg-white rounded-3xl border border-zinc-150 shadow-sm p-6 mb-6">
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <h2 className="text-base font-bold text-zinc-900 flex items-center gap-2">
+              <PoundSterling className="h-4 w-4 text-blue-500" />
+              Manual Market Price
+            </h2>
+            <p className="text-xs text-zinc-400 mt-0.5">
+              Set a market reference price when no scraper data exists. The trade-in offer is calculated from this value using the configured pricing rules.
+              {device.manualMarketPrice
+                ? <span className="ml-1 font-semibold text-blue-600">Currently set to £{device.manualMarketPrice}</span>
+                : <span className="ml-1 text-amber-500 font-semibold">Not set — this device shows as "Unpriced" in trade-in.</span>}
+            </p>
+          </div>
+          {device.manualMarketPrice != null && (
+            <button
+              onClick={() => handleSaveManualPrice(true)}
+              disabled={savingManualPrice}
+              className="flex items-center gap-1.5 text-xs font-bold text-zinc-400 hover:text-red-500 transition-colors disabled:opacity-50"
+            >
+              <XIcon className="h-3.5 w-3.5" /> Clear price
+            </button>
+          )}
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="relative flex-1 max-w-xs">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-zinc-400">£</span>
+            <input
+              type="number"
+              min={1}
+              step={1}
+              value={manualPriceInput}
+              onChange={e => setManualPriceInput(e.target.value)}
+              placeholder="e.g. 350"
+              className="w-full h-10 pl-7 pr-4 rounded-xl border border-zinc-200 text-sm font-mono font-bold focus:outline-none focus:border-blue-400 transition-colors"
+            />
+          </div>
+          <button
+            onClick={() => handleSaveManualPrice(false)}
+            disabled={savingManualPrice || !manualPriceInput}
+            className={`flex items-center gap-2 h-10 px-5 rounded-xl text-sm font-bold transition-all disabled:opacity-50 ${
+              manualPriceSaved ? "bg-emerald-500 text-white" : "bg-blue-600 hover:bg-blue-700 text-white"
+            }`}
+          >
+            {manualPriceSaved ? <><Check className="h-3.5 w-3.5" /> Saved!</> : "Save price"}
+          </button>
+        </div>
+        {manualPriceError && (
+          <p className="text-xs text-red-500 font-medium mt-2 flex items-center gap-1">
+            <AlertCircle className="h-3.5 w-3.5" /> {manualPriceError}
+          </p>
+        )}
       </div>
 
       {/* ── Competitor Prices ─────────────────────────────────────────────────── */}

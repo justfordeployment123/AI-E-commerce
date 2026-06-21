@@ -1,4 +1,4 @@
-import { ArrayMinSize, IsArray, IsIn, IsNotEmpty, IsNumber, IsObject, IsOptional, IsPositive, IsString } from 'class-validator';
+import { ArrayMinSize, IsArray, IsIn, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, Min } from 'class-validator';
 
 export class ContactDto {
     @IsString() @IsNotEmpty() name!: string;
@@ -35,7 +35,7 @@ export class CreateTradeInDto {
     fulfillment!: string;
 
     @IsNumber()
-    @IsPositive()
+    @Min(0)
     offerPrice!: number;
 
     @IsString()
@@ -44,7 +44,7 @@ export class CreateTradeInDto {
 
     @IsArray()
     @IsString({ each: true })
-    @ArrayMinSize(1)
+    @ArrayMinSize(0)
     images!: string[];
 
     @IsObject()

@@ -15,12 +15,14 @@ export class DeviceCatalogController {
         @Query('brandSlug') brandSlug?: string,
         @Query('search') search?: string,
         @Query('isActive') isActive?: string,
+        @Query('forTradeIn') forTradeIn?: string,
     ) {
         return this.service.findAll({
             categorySlug,
             brandSlug,
             search,
             isActive: isActive !== undefined ? isActive === 'true' : undefined,
+            forTradeIn: forTradeIn === 'true',
         });
     }
 

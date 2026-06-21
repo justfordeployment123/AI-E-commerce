@@ -57,6 +57,8 @@ export function useNotifications() {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const esRef = useRef<EventSource | null>(null);
+  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reconnectAttemptRef = useRef(0);
 
   // Request browser notification permission once authenticated
   useEffect(() => {
@@ -80,31 +82,47 @@ export function useNotifications() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Open SSE connection
+  // Open SSE connection with auto-reconnect (exponential backoff)
   useEffect(() => {
-    const token = getToken();
-    if (!token) return;
+    if (!getToken()) return;
+    let cancelled = false;
 
-    const es = new EventSource(`${API_BASE}/notifications/stream?token=${encodeURIComponent(token)}`);
-    esRef.current = es;
+    function connect() {
+      if (cancelled) return;
+      const token = getToken();
+      if (!token) return;
 
-    es.onmessage = (e) => {
-      try {
-        const notif: AppNotification = JSON.parse(e.data);
-        setNotifications(prev => [notif, ...prev]);
-        fireBrowserNotification(notif);
-      } catch {}
+      const es = new EventSource(`${API_BASE}/notifications/stream?token=${encodeURIComponent(token)}`);
+      esRef.current = es;
+
+      es.onopen = () => { reconnectAttemptRef.current = 0; };
+
+      es.onmessage = (e) => {
+        try {
+          const parsed = JSON.parse(e.data);
+          if (parsed.type === "__ping__") return; // heartbeat, not a real notification
+          const notif = parsed as AppNotification;
+          setNotifications(prev => [notif, ...prev]);
+          fireBrowserNotification(notif);
+        } catch {}
+      };
+
+      es.onerror = () => {
+        es.close();
+        if (cancelled) return;
+        const delay = Math.min(30_000, 1_000 * 2 ** reconnectAttemptRef.current);
+        reconnectAttemptRef.current += 1;
+        reconnectTimerRef.current = setTimeout(connect, delay);
+      };
+    }
+
+    connect();
+
+    return () => {
+      cancelled = true;
+      if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
+      esRef.current?.close();
     };
-
-    es.onerror = () => {
-      es.close();
-      // Reconnect after 5s if token still exists
-      setTimeout(() => {
-        if (getToken()) esRef.current = null; // trigger re-mount via cleanup
-      }, 5000);
-    };
-
-    return () => { es.close(); };
   }, []);
 
   const markRead = useCallback(async (id: string) => {
