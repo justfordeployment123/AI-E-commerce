@@ -115,3 +115,24 @@ body {
     animation: float 4s ease-in-out infinite;
   }
 }
+
+/* Custom Autofill Styles to prevent default browser styling overrides */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px var(--muted) inset !important;
+  -webkit-text-fill-color: var(--foreground) !important;
+  caret-color: var(--foreground) !important;
+}
+
+/* Dark mode / dark page specific autofill overrides (e.g. login page) */
+input.autofill-dark:-webkit-autofill,
+input.autofill-dark:-webkit-autofill:hover, 
+input.autofill-dark:-webkit-autofill:focus, 
+input.autofill-dark:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #18181b inset !important;
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #ffffff !important;
+}
+

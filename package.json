@@ -16,6 +16,7 @@
     "api:prisma:migrate:dev": "npm run --workspace @ai-ecommerce/api prisma:migrate:dev --",
     "studio": "npm run --workspace @ai-ecommerce/api prisma:studio --",
     "db:seed": "npm run --workspace @ai-ecommerce/api db:seed",
+    "db:seed:admin": "npm run --workspace @ai-ecommerce/api db:seed:admin",
     "web:dev": "npm run --workspace @ai-ecommerce/web dev",
     "web:start": "npm run --workspace @ai-ecommerce/web start",
     "admin:dev": "npm run --workspace @ai-ecommerce/admin dev",

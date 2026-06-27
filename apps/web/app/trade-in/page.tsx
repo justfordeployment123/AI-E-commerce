@@ -128,10 +128,10 @@ const SPECS: Record<string, { label: string; options: string[] }[]> = {
 };
 
 const CONDITIONS = [
-  { id: "A", label: "A Grade", desc: "Used but like new — zero visible marks.",  color: "border-emerald-500 bg-emerald-50", dot: "bg-emerald-500", descColor: "text-emerald-700" },
-  { id: "B", label: "B Grade", desc: "Minor signs of usage, small scratches.",   color: "border-blue-500 bg-blue-50",      dot: "bg-blue-500",    descColor: "text-blue-700" },
-  { id: "C", label: "C Grade", desc: "Heavy scratches or marks, fully working.", color: "border-amber-500 bg-amber-50",    dot: "bg-amber-500",   descColor: "text-amber-700" },
-  { id: "F", label: "F Grade", desc: "Non-working — for parts or repair only.",  color: "border-red-500 bg-red-50",        dot: "bg-red-500",     descColor: "text-red-700" },
+  { id: "A", label: "A Grade", desc: "Used but like new — zero visible marks.",  color: "border-emerald-500/40 bg-emerald-50 dark:border-emerald-500/30 dark:bg-emerald-950/20", dot: "bg-emerald-500", descColor: "text-emerald-700 dark:text-emerald-400" },
+  { id: "B", label: "B Grade", desc: "Minor signs of usage, small scratches.",   color: "border-blue-500/40 bg-blue-50 dark:border-blue-500/30 dark:bg-blue-950/20",      dot: "bg-blue-500",    descColor: "text-blue-700 dark:text-blue-400" },
+  { id: "C", label: "C Grade", desc: "Heavy scratches or marks, fully working.", color: "border-amber-500/40 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-950/20",    dot: "bg-amber-500",   descColor: "text-amber-700 dark:text-amber-400" },
+  { id: "F", label: "F Grade", desc: "Non-working — for parts or repair only.",  color: "border-red-500/40 bg-red-50 dark:border-red-500/30 dark:bg-red-950/20",        dot: "bg-red-500",     descColor: "text-red-700 dark:text-red-400" },
 ];
 
 const CONDITION_QUESTIONS: Record<string, { id: string; question: string; options: string[] }[]> = {

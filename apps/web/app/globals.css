@@ -204,6 +204,20 @@ html body select {
   color: var(--foreground) !important;
 }
 
+html[data-theme="dark"] body input,
+html[data-theme="dark"] body textarea,
+html[data-theme="dark"] body select {
+  background-color: var(--muted) !important;
+}
+
+/* Ensure background containers render properly in dark mode */
+html[data-theme="dark"] body .bg-zinc-100 {
+  background-color: var(--muted) !important;
+}
+html[data-theme="dark"] body .bg-zinc-200 {
+  background-color: var(--border) !important;
+}
+
 html body input::placeholder,
 html body textarea::placeholder {
   color: #94a3b8 !important; /* light slate-400 */
@@ -213,3 +227,14 @@ html[data-theme="dark"] body input::placeholder,
 html[data-theme="dark"] body textarea::placeholder {
   color: #64748b !important; /* dark slate-500 */
 }
+
+/* Custom Autofill Styles to prevent default browser styling overrides and maintain theme-aligned contrast */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px var(--muted) inset !important;
+  -webkit-text-fill-color: var(--foreground) !important;
+  caret-color: var(--foreground) !important;
+  transition: background-color 5000s ease-in-out 0s;
+}

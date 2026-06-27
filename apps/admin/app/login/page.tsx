@@ -108,7 +108,7 @@ export default function AdminLoginPage() {
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="admin@techstop.co.uk"
-                className="w-full h-12 rounded-xl bg-white/[0.06] border border-white/10 px-4 text-sm text-white placeholder-white/20 outline-none focus:border-accent/50 focus:bg-white/[0.08] transition-all"
+                className="w-full h-12 rounded-xl bg-white/[0.06] border border-white/10 px-4 text-sm text-white placeholder-white/20 outline-none focus:border-accent/50 focus:bg-white/[0.08] transition-all autofill-dark"
               />
             </div>
 
@@ -122,12 +122,12 @@ export default function AdminLoginPage() {
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full h-12 rounded-xl bg-white/[0.06] border border-white/10 px-4 pr-12 text-sm text-white placeholder-white/20 outline-none focus:border-accent/50 focus:bg-white/[0.08] transition-all"
+                  className="w-full h-12 rounded-xl bg-white/[0.06] border border-white/10 px-4 pr-12 text-sm text-white placeholder-white/20 outline-none focus:border-accent/50 focus:bg-white/[0.08] transition-all autofill-dark"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/25 hover:text-white/60 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 transition-colors"
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -165,6 +165,18 @@ export default function AdminLoginPage() {
           </p>
         </motion.div>
       </div>
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        input.autofill-dark:-webkit-autofill,
+        input.autofill-dark:-webkit-autofill:hover, 
+        input.autofill-dark:-webkit-autofill:focus, 
+        input.autofill-dark:-webkit-autofill:active {
+          -webkit-box-shadow: 0 0 0 1000px #18181b inset !important;
+          -webkit-text-fill-color: #ffffff !important;
+          caret-color: #ffffff !important;
+          transition: background-color 5000s ease-in-out 0s;
+        }
+      `}} />
     </div>
   );
 }

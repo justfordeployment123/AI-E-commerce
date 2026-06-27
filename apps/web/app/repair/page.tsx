@@ -303,7 +303,7 @@ export default function RepairPage() {
 
             <h1 className="font-sans text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tight text-zinc-950 mb-8 max-w-4xl mx-auto leading-none">
               Professional device repairs. <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-zinc-500 via-zinc-800 to-zinc-950">Done fast &amp; right.</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-zinc-500 via-zinc-800 to-zinc-950 dark:from-zinc-400 dark:via-zinc-200 dark:to-white">Done fast &amp; right.</span>
             </h1>
             <p className="max-w-2xl mx-auto text-zinc-500 font-semibold text-base md:text-lg mb-12 leading-relaxed">
               Certified technicians. Premium OEM-grade parts. 1-year warranty on all repairs. Same-day service in Leicester, or free mail-in postage UK-wide.
@@ -338,7 +338,7 @@ export default function RepairPage() {
                     setStep(3);
                     setIsWizardActive(true);
                   })}
-                  className="px-3.5 py-1.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 rounded-full transition-colors font-bold shadow-sm"
+                  className="px-3.5 py-1.5 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 rounded-full transition-colors font-bold shadow-sm"
                 >
                   {item.name}
                 </button>
@@ -368,7 +368,7 @@ export default function RepairPage() {
                       whileHover={{ y: -6, scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => guardedOpen(() => openWizardWithDevice(meta.oldId))}
-                      className={`flex flex-col rounded-3xl border border-zinc-200 bg-white shadow-sm hover:shadow-xl hover:border-zinc-950 transition-all group overflow-hidden w-full ${meta.glow}`}
+                      className={`flex flex-col rounded-3xl border border-zinc-200 bg-white shadow-sm hover:shadow-xl hover:border-zinc-950 dark:hover:border-white transition-all group overflow-hidden w-full ${meta.glow}`}
                     >
                       <div className="w-full aspect-[4/3] bg-gradient-to-b from-zinc-50 to-white border-b border-zinc-100 flex items-center justify-center p-4 relative overflow-hidden">
                         {img && (
@@ -579,7 +579,7 @@ export default function RepairPage() {
                                       <button
                                         key={brand}
                                         onClick={() => setState(s => ({ ...s, brand }))}
-                                        className={`px-5 py-3 rounded-[1rem] border-2 font-bold text-sm transition-all ${state.brand === brand ? "border-black bg-black text-white" : "border-zinc-200 hover:border-zinc-400"}`}
+                                        className={`px-5 py-3 rounded-[1rem] border-2 font-bold text-sm transition-all ${state.brand === brand ? "border-zinc-950 bg-zinc-950 text-white dark:border-white dark:bg-white dark:text-zinc-950" : "border-zinc-200 hover:border-zinc-400 dark:border-zinc-800 dark:hover:border-zinc-700 dark:text-zinc-300"}`}
                                       >
                                         {brand}
                                       </button>
@@ -632,17 +632,17 @@ export default function RepairPage() {
                                             ? s.issue.filter(i => i !== issue.id)
                                             : [...s.issue, issue.id],
                                         }))}
-                                        className={`w-full flex items-center gap-4 p-5 rounded-[1.5rem] border-2 text-left transition-all ${selected ? "border-black bg-black text-white" : "border-zinc-200 hover:border-zinc-400 hover:shadow-sm"}`}
+                                        className={`w-full flex items-center gap-4 p-5 rounded-[1.5rem] border-2 text-left transition-all ${selected ? "border-zinc-950 bg-zinc-950 text-white dark:border-white dark:bg-white dark:text-zinc-950 shadow-md" : "border-zinc-200 hover:border-zinc-400 dark:border-zinc-800 dark:hover:border-zinc-700 hover:shadow-sm text-zinc-800 dark:text-zinc-200"}`}
                                       >
-                                        <div className={`h-11 w-11 rounded-xl flex items-center justify-center shrink-0 ${selected ? "bg-white/10" : "bg-zinc-100"}`}>
+                                        <div className={`h-11 w-11 rounded-xl flex items-center justify-center shrink-0 ${selected ? "bg-white/10 text-white dark:bg-zinc-950/10 dark:text-zinc-950" : "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"}`}>
                                           <Icon className="h-5 w-5" />
                                         </div>
                                         <div className="flex-1">
                                           <p className="font-bold text-sm">{issue.label}</p>
-                                          <p className={`text-xs mt-0.5 ${selected ? "text-white/60" : "text-zinc-400"}`}>{issue.desc}</p>
+                                          <p className={`text-xs mt-0.5 ${selected ? "text-white/60 dark:text-zinc-950/60" : "text-zinc-400 dark:text-zinc-550"}`}>{issue.desc}</p>
                                         </div>
-                                        <div className={`h-6 w-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all ${selected ? "bg-white border-white" : "border-zinc-300"}`}>
-                                          {selected && <Check className="h-3.5 w-3.5 text-black" strokeWidth={3} />}
+                                        <div className={`h-6 w-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all ${selected ? "bg-white border-white dark:bg-zinc-950 dark:border-zinc-950" : "border-zinc-300 dark:border-zinc-700"}`}>
+                                          {selected && <Check className="h-3.5 w-3.5 text-black dark:text-white" strokeWidth={3} />}
                                         </div>
                                       </motion.button>
                                     );
@@ -673,17 +673,17 @@ export default function RepairPage() {
                                     type="button"
                                     onClick={() => fileInputRef.current?.click()}
                                     disabled={imageUploading || images.length >= 6}
-                                    className="w-full border-2 border-dashed border-zinc-200 hover:border-black rounded-[1.5rem] p-6 flex flex-col items-center gap-2 transition-all bg-zinc-50 hover:bg-white disabled:opacity-60 disabled:pointer-events-none group"
+                                    className="w-full border-2 border-dashed border-zinc-200 dark:border-zinc-800 hover:border-zinc-950 dark:hover:border-white rounded-[1.5rem] p-6 flex flex-col items-center gap-2 transition-all bg-zinc-50 dark:bg-zinc-900 hover:bg-white dark:hover:bg-zinc-950 group disabled:opacity-60 disabled:pointer-events-none"
                                   >
-                                    <div className="h-10 w-10 rounded-xl bg-white border border-zinc-200 flex items-center justify-center group-hover:bg-black group-hover:border-black transition-all">
+                                    <div className="h-10 w-10 rounded-xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center group-hover:bg-zinc-950 dark:group-hover:bg-white group-hover:border-zinc-950 dark:group-hover:border-white transition-all">
                                       {imageUploading ? (
-                                        <div className="h-4 w-4 border-2 border-zinc-300 border-t-zinc-700 rounded-full animate-spin" />
+                                        <div className="h-4 w-4 border-2 border-zinc-300 dark:border-zinc-700 border-t-zinc-700 dark:border-t-zinc-200 rounded-full animate-spin" />
                                       ) : (
-                                        <Upload className="h-4 w-4 text-zinc-400 group-hover:text-white transition-colors" />
+                                        <Upload className="h-4 w-4 text-zinc-400 dark:text-zinc-500 group-hover:text-white dark:group-hover:text-zinc-950 transition-colors" />
                                       )}
                                     </div>
-                                    <p className="text-xs font-bold text-zinc-700">{imageUploading ? "Uploading…" : "Upload photos of the damage"}</p>
-                                    <p className="text-[10px] text-zinc-400">JPEG or PNG · max 6</p>
+                                    <p className="text-xs font-bold text-zinc-700 dark:text-zinc-200">{imageUploading ? "Uploading…" : "Upload photos of the damage"}</p>
+                                    <p className="text-[10px] text-zinc-400 dark:text-zinc-500">JPEG or PNG · max 6</p>
                                   </button>
                                   {images.length > 0 && (
                                     <div className="grid grid-cols-3 gap-2">
@@ -704,7 +704,7 @@ export default function RepairPage() {
                                           type="button"
                                           onClick={() => fileInputRef.current?.click()}
                                           disabled={imageUploading}
-                                          className="aspect-square rounded-xl border-2 border-dashed border-zinc-200 hover:border-black bg-zinc-50 flex items-center justify-center transition-colors text-zinc-400 hover:text-black disabled:opacity-50"
+                                          className="aspect-square rounded-xl border-2 border-dashed border-zinc-200 dark:border-zinc-800 hover:border-zinc-950 dark:hover:border-white bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center transition-colors text-zinc-400 dark:text-zinc-500 hover:text-zinc-950 dark:hover:text-white disabled:opacity-50"
                                         >
                                           <Plus className="h-5 w-5" />
                                         </button>
@@ -735,8 +735,8 @@ export default function RepairPage() {
                               <p className="text-zinc-400 font-medium text-sm mb-8">Choose the most convenient option.</p>
                               <div className="space-y-4">
                                 {[
-                                  { id: "dropoff", label: "Drop off in store", desc: "Bring your device to TechStop Leicester. Our technician will diagnose it and give you a quote on the spot.", icon: MapPin, badge: "No postage needed", badgeColor: "bg-blue-100 text-blue-700" },
-                                  { id: "mail", label: "Send by post", desc: "We'll send you a prepaid shipping label. Pack your device and drop it at any post office.", icon: Truck, badge: "Free prepaid label", badgeColor: "bg-emerald-100 text-emerald-700" },
+                                  { id: "dropoff", label: "Drop off in store", desc: "Bring your device to TechStop Leicester. Our technician will diagnose it and give you a quote on the spot.", icon: MapPin, badge: "No postage needed", badgeColor: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
+                                  { id: "mail", label: "Send by post", desc: "We'll send you a prepaid shipping label. Pack your device and drop it at any post office.", icon: Truck, badge: "Free prepaid label", badgeColor: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" },
                                 ].map(opt => {
                                   const Icon = opt.icon;
                                   return (
@@ -744,16 +744,16 @@ export default function RepairPage() {
                                       key={opt.id}
                                       whileTap={{ scale: 0.98 }}
                                       onClick={() => { setState(s => ({ ...s, fulfillment: opt.id })); go(1); }}
-                                      className={`w-full rounded-[2rem] border-2 p-7 text-left transition-all ${state.fulfillment === opt.id ? "border-black bg-black text-white" : "border-zinc-200 bg-zinc-50 hover:border-zinc-400 hover:bg-white"}`}
+                                      className={`w-full rounded-[2rem] border-2 p-7 text-left transition-all ${state.fulfillment === opt.id ? "border-zinc-950 bg-zinc-950 text-white dark:border-white dark:bg-white dark:text-zinc-950 shadow-md" : "border-zinc-200 bg-zinc-50 dark:bg-zinc-900 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-700 hover:bg-white hover:dark:bg-zinc-900/60 text-zinc-800 dark:text-zinc-200"}`}
                                     >
                                       <div className="flex items-start gap-5">
-                                        <div className={`h-14 w-14 rounded-2xl flex items-center justify-center flex-shrink-0 ${state.fulfillment === opt.id ? "bg-white/10" : "bg-white shadow-sm"}`}>
+                                        <div className={`h-14 w-14 rounded-2xl flex items-center justify-center flex-shrink-0 ${state.fulfillment === opt.id ? "bg-white/10 text-white dark:bg-zinc-950/10 dark:text-zinc-950" : "bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 shadow-sm"}`}>
                                           <Icon className="h-7 w-7" strokeWidth={1.5} />
                                         </div>
                                         <div>
                                           <p className="font-bold text-lg mb-1">{opt.label}</p>
-                                          <p className={`text-sm leading-relaxed ${state.fulfillment === opt.id ? "text-white/70" : "text-zinc-500"}`}>{opt.desc}</p>
-                                          <span className={`mt-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-widest ${state.fulfillment === opt.id ? "bg-accent/20 text-accent" : opt.badgeColor}`}>
+                                          <p className={`text-sm leading-relaxed ${state.fulfillment === opt.id ? "text-white/70 dark:text-zinc-950/70" : "text-zinc-500 dark:text-zinc-450"}`}>{opt.desc}</p>
+                                          <span className={`mt-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-widest ${state.fulfillment === opt.id ? "bg-accent/20 text-accent dark:bg-accent/15" : opt.badgeColor}`}>
                                             {opt.badge}
                                           </span>
                                         </div>
