@@ -1,4 +1,5 @@
 import {
+    BadRequestException,
     Body,
     Controller,
     Delete,
@@ -50,12 +51,26 @@ export class CategoriesController {
         return this.catalog.updateCategory(id, dto);
     }
 
+    @Get(':id/image-presign')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('ADMIN')
+    presignImage(
+        @Param('id') id: string,
+        @Query('filename') filename: string,
+        @Query('contentType') contentType: string,
+    ) {
+        if (!filename || !contentType) throw new BadRequestException('filename and contentType required');
+        return this.catalog.presignCategoryImage(id, filename, contentType);
+    }
+
     @Post(':id/image')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles('ADMIN')
     @UseInterceptors(FileInterceptor('file'))
-    uploadImage(@Param('id') id: string, @UploadedFile() file: any) {
-        return this.catalog.uploadCategoryImage(id, file);
+    uploadImage(@Param('id') id: string, @UploadedFile() file: any, @Body('key') key?: string) {
+        if (key) return this.catalog.saveCategoryImageKey(id, key);
+        if (file) return this.catalog.uploadCategoryImage(id, file);
+        throw new BadRequestException('Provide a file or a key');
     }
 
     @Delete(':id')
@@ -101,12 +116,26 @@ export class BrandsController {
         return this.catalog.updateBrand(id, dto);
     }
 
+    @Get(':id/logo-presign')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('ADMIN')
+    presignLogo(
+        @Param('id') id: string,
+        @Query('filename') filename: string,
+        @Query('contentType') contentType: string,
+    ) {
+        if (!filename || !contentType) throw new BadRequestException('filename and contentType required');
+        return this.catalog.presignBrandLogo(id, filename, contentType);
+    }
+
     @Post(':id/logo')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles('ADMIN')
     @UseInterceptors(FileInterceptor('file'))
-    uploadLogo(@Param('id') id: string, @UploadedFile() file: any) {
-        return this.catalog.uploadBrandLogo(id, file);
+    uploadLogo(@Param('id') id: string, @UploadedFile() file: any, @Body('key') key?: string) {
+        if (key) return this.catalog.saveBrandLogoKey(id, key);
+        if (file) return this.catalog.uploadBrandLogo(id, file);
+        throw new BadRequestException('Provide a file or a key');
     }
 
     @Delete(':id')
@@ -151,12 +180,26 @@ export class BrandCategoriesController {
         return this.catalog.updateBrandCategory(id, dto);
     }
 
+    @Get(':id/image-presign')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('ADMIN')
+    presignImage(
+        @Param('id') id: string,
+        @Query('filename') filename: string,
+        @Query('contentType') contentType: string,
+    ) {
+        if (!filename || !contentType) throw new BadRequestException('filename and contentType required');
+        return this.catalog.presignBrandCategoryImage(id, filename, contentType);
+    }
+
     @Post(':id/images')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles('ADMIN')
     @UseInterceptors(FileInterceptor('file'))
-    uploadImage(@Param('id') id: string, @UploadedFile() file: any) {
-        return this.catalog.uploadBrandCategoryImage(id, file);
+    uploadImage(@Param('id') id: string, @UploadedFile() file: any, @Body('key') key?: string) {
+        if (key) return this.catalog.saveBrandCategoryImageKey(id, key);
+        if (file) return this.catalog.uploadBrandCategoryImage(id, file);
+        throw new BadRequestException('Provide a file or a key');
     }
 
     @Delete(':id/images/:imageKey')

@@ -1,4 +1,4 @@
-import { BadRequestException, Controller, Post, Query, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Controller, Get, Post, Query, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -9,7 +9,66 @@ import { StorageService } from '../../common/services/storage.service';
 export class UploadsController {
     constructor(private readonly storage: StorageService) {}
 
-    // Admin only — product images
+    // ── Presign (direct browser → Garage upload) ─────────────────────────────
+
+    @Get('presign-image')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('ADMIN')
+    async presignImage(@Query('filename') filename: string, @Query('contentType') contentType: string) {
+        if (!filename || !contentType) throw new BadRequestException('filename and contentType required');
+        const key = this.storage.buildKey('device-images', filename);
+        const [uploadUrl, viewUrl] = await Promise.all([
+            this.storage.presignPut(key, contentType),
+            this.storage.generatePresignedUrl(key),
+        ]);
+        return { uploadUrl, key, viewUrl };
+    }
+
+    @Get('presign-trade-in-image')
+    @UseGuards(JwtAuthGuard)
+    async presignTradeInImage(
+        @Query('filename') filename: string,
+        @Query('contentType') contentType: string,
+        @Query('groupId') groupId?: string,
+    ) {
+        if (!filename || !contentType) throw new BadRequestException('filename and contentType required');
+        const key = this.storage.buildKey('trade-in-images', filename, groupId);
+        const [uploadUrl, viewUrl] = await Promise.all([
+            this.storage.presignPut(key, contentType),
+            this.storage.generatePresignedUrl(key),
+        ]);
+        return { uploadUrl, key, viewUrl };
+    }
+
+    @Get('presign-repair-image')
+    @UseGuards(JwtAuthGuard)
+    async presignRepairImage(
+        @Query('filename') filename: string,
+        @Query('contentType') contentType: string,
+        @Query('groupId') groupId?: string,
+    ) {
+        if (!filename || !contentType) throw new BadRequestException('filename and contentType required');
+        const key = this.storage.buildKey('repair-images', filename, groupId);
+        const [uploadUrl, viewUrl] = await Promise.all([
+            this.storage.presignPut(key, contentType),
+            this.storage.generatePresignedUrl(key),
+        ]);
+        return { uploadUrl, key, viewUrl };
+    }
+
+    @Get('presign-review-image')
+    async presignReviewImage(@Query('filename') filename: string, @Query('contentType') contentType: string) {
+        if (!filename || !contentType) throw new BadRequestException('filename and contentType required');
+        const key = this.storage.buildKey('review-images', filename);
+        const [uploadUrl, viewUrl] = await Promise.all([
+            this.storage.presignPut(key, contentType),
+            this.storage.generatePresignedUrl(key),
+        ]);
+        return { uploadUrl, key, viewUrl };
+    }
+
+    // ── Legacy multipart (kept for backward compat) ───────────────────────────
+
     @Post('image')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles('ADMIN')
@@ -19,7 +78,6 @@ export class UploadsController {
         return this.storage.uploadFile(file, 'device-images');
     }
 
-    // Any authenticated user — trade-in device photos
     @Post('trade-in-image')
     @UseGuards(JwtAuthGuard)
     @UseInterceptors(FileInterceptor('file'))
@@ -28,7 +86,6 @@ export class UploadsController {
         return this.storage.uploadFile(file, 'trade-in-images', groupId);
     }
 
-    // Any authenticated user — repair device photos
     @Post('repair-image')
     @UseGuards(JwtAuthGuard)
     @UseInterceptors(FileInterceptor('file'))
@@ -37,7 +94,6 @@ export class UploadsController {
         return this.storage.uploadFile(file, 'repair-images', groupId);
     }
 
-    // Public — review photos (customers and guests)
     @Post('review-image')
     @UseInterceptors(FileInterceptor('file'))
     async uploadReviewImage(@UploadedFile() file: any) {

@@ -126,33 +126,36 @@ export const ordersApi = {
 };
 
 // ── Uploads ───────────────────────────────────────────────────────────────────
-async function uploadFile(endpoint: string, file: File, groupId?: string): Promise<{ filePath: string; presignedUrl: string }> {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('ts_token') : null;
-  const formData = new FormData();
-  formData.append('file', file);
-  const headers: Record<string, string> = {};
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-  const url = groupId ? `${API_BASE}${endpoint}?groupId=${encodeURIComponent(groupId)}` : `${API_BASE}${endpoint}`;
-  const res = await fetch(url, { method: 'POST', headers, body: formData });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({ message: res.statusText }));
-    throw new Error(body?.message ?? res.statusText);
-  }
-  return res.json();
+async function presignedUpload(
+  presignPath: string,
+  file: File,
+  extraQuery: Record<string, string> = {},
+): Promise<{ filePath: string; presignedUrl: string }> {
+  const q = new URLSearchParams({
+    filename: file.name,
+    contentType: file.type || 'application/octet-stream',
+    ...extraQuery,
+  });
+  const token = getToken();
+  const presignRes = await fetch(`${API_BASE}${presignPath}?${q}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!presignRes.ok) throw new Error('Failed to get upload URL');
+  const { uploadUrl, key, viewUrl } = await presignRes.json();
+  const putRes = await fetch(uploadUrl, {
+    method: 'PUT',
+    headers: { 'Content-Type': file.type || 'application/octet-stream' },
+    body: file,
+  });
+  if (!putRes.ok) throw new Error('Upload to storage failed');
+  return { filePath: key, presignedUrl: viewUrl };
 }
 
 export const uploadsApi = {
-  // Admin-only: product images → device-images/
-  image: (file: File) => uploadFile('/uploads/image', file),
-
-  // Customer: trade-in device photos → trade-in-images/{groupId}/
-  tradeInImage: (file: File, groupId: string) => uploadFile('/uploads/trade-in-image', file, groupId),
-
-  // Customer: repair device photos → repair-images/{groupId}/
-  repairImage: (file: File, groupId: string) => uploadFile('/uploads/repair-image', file, groupId),
-
-  // Public: review photos → review-images/
-  reviewImage: (file: File) => uploadFile('/uploads/review-image', file),
+  image: (file: File) => presignedUpload('/uploads/presign-image', file),
+  tradeInImage: (file: File, groupId: string) => presignedUpload('/uploads/presign-trade-in-image', file, { groupId }),
+  repairImage: (file: File, groupId: string) => presignedUpload('/uploads/presign-repair-image', file, { groupId }),
+  reviewImage: (file: File) => presignedUpload('/uploads/presign-review-image', file),
 };
 
 // ── Reviews ───────────────────────────────────────────────────────────────────
@@ -265,18 +268,17 @@ export const bannersApi = {
 
 // ── Catalog (admin + public) ──────────────────────────────────────────────────
 
-async function uploadFileAuthed(endpoint: string, file: File): Promise<any> {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('ts_token') : null;
-  const formData = new FormData();
-  formData.append('file', file);
-  const headers: Record<string, string> = {};
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-  const res = await fetch(`${API_BASE}${endpoint}`, { method: 'POST', headers, body: formData });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({ message: res.statusText }));
-    throw new Error(body?.message ?? res.statusText);
-  }
-  return res.json();
+async function presignAndSaveKey(presignPath: string, savePath: string, file: File): Promise<any> {
+  const q = new URLSearchParams({ filename: file.name, contentType: file.type || 'application/octet-stream' });
+  const token = getToken();
+  const r = await fetch(`${API_BASE}${presignPath}?${q}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!r.ok) throw new Error('Failed to get upload URL');
+  const { uploadUrl, key } = await r.json();
+  const put = await fetch(uploadUrl, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file });
+  if (!put.ok) throw new Error('Upload failed');
+  return apiFetch(savePath, { method: 'POST', auth: true, body: JSON.stringify({ key }) });
 }
 
 export const catalogApi = {
@@ -291,7 +293,7 @@ export const catalogApi = {
     apiFetch<CatalogCategory>(`/catalog/categories/${id}`, { method: 'PATCH', auth: true, body: JSON.stringify(data) }),
 
   uploadCategoryImage: (id: string, file: File) =>
-    uploadFileAuthed(`/catalog/categories/${id}/image`, file),
+    presignAndSaveKey(`/catalog/categories/${id}/image-presign`, `/catalog/categories/${id}/image`, file),
 
   deleteCategory: (id: string) =>
     apiFetch<void>(`/catalog/categories/${id}`, { method: 'DELETE', auth: true }),
@@ -310,7 +312,7 @@ export const catalogApi = {
     apiFetch<CatalogBrand>(`/catalog/brands/${id}`, { method: 'PATCH', auth: true, body: JSON.stringify(data) }),
 
   uploadBrandLogo: (id: string, file: File) =>
-    uploadFileAuthed(`/catalog/brands/${id}/logo`, file),
+    presignAndSaveKey(`/catalog/brands/${id}/logo-presign`, `/catalog/brands/${id}/logo`, file),
 
   deleteBrand: (id: string) =>
     apiFetch<void>(`/catalog/brands/${id}`, { method: 'DELETE', auth: true }),
@@ -327,7 +329,7 @@ export const catalogApi = {
     apiFetch<CatalogBrandCategory>('/catalog/brand-categories', { method: 'POST', auth: true, body: JSON.stringify(data) }),
 
   uploadBrandCategoryImage: (id: string, file: File) =>
-    uploadFileAuthed(`/catalog/brand-categories/${id}/images`, file),
+    presignAndSaveKey(`/catalog/brand-categories/${id}/image-presign`, `/catalog/brand-categories/${id}/images`, file),
 
   deleteBrandCategoryImage: (id: string, imageKey: string) =>
     apiFetch<CatalogBrandCategory>(

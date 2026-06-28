@@ -96,6 +96,20 @@ export class CatalogService {
         return this.prisma.category.update({ where: { id }, data: { image: filePath } });
     }
 
+    async presignCategoryImage(id: string, filename: string, contentType: string) {
+        const cat = await this.getCategory(id);
+        const key = this.storage.buildKey(`catalog/categories/${cat.slug}`, filename);
+        const [uploadUrl, viewUrl] = await Promise.all([
+            this.storage.presignPut(key, contentType),
+            this.storage.generatePresignedUrl(key),
+        ]);
+        return { uploadUrl, key, viewUrl };
+    }
+
+    async saveCategoryImageKey(id: string, key: string) {
+        return this.prisma.category.update({ where: { id }, data: { image: key } });
+    }
+
     async deleteCategory(id: string) {
         await this.getCategory(id);
         return this.prisma.category.delete({ where: { id } });
@@ -181,6 +195,20 @@ export class CatalogService {
         return this.prisma.brand.update({ where: { id }, data: { logo: filePath } });
     }
 
+    async presignBrandLogo(id: string, filename: string, contentType: string) {
+        const brand = await this.getBrand(id);
+        const key = this.storage.buildKey(`catalog/brands/${brand.slug}`, filename);
+        const [uploadUrl, viewUrl] = await Promise.all([
+            this.storage.presignPut(key, contentType),
+            this.storage.generatePresignedUrl(key),
+        ]);
+        return { uploadUrl, key, viewUrl };
+    }
+
+    async saveBrandLogoKey(id: string, key: string) {
+        return this.prisma.brand.update({ where: { id }, data: { logo: key } });
+    }
+
     async deleteBrand(id: string) {
         await this.getBrand(id);
         return this.prisma.brand.delete({ where: { id } });
@@ -248,12 +276,38 @@ export class CatalogService {
             throw new BadRequestException(`Maximum ${MAX_BRAND_CATEGORY_IMAGES} images allowed per brand-category`);
         }
         const { filePath } = await this.storage.uploadFile(file, `catalog/categories/${bc.category.slug}/${bc.brand.slug}`);
-        const updated = await this.prisma.brandCategory.update({
+        return this.prisma.brandCategory.update({
             where: { id },
             data: { images: [...images, filePath] },
             include: { brand: true, category: true },
         });
-        return updated;
+    }
+
+    async presignBrandCategoryImage(id: string, filename: string, contentType: string) {
+        const bc = await this.getBrandCategory(id);
+        const images = (bc.images as string[]) ?? [];
+        if (images.length >= MAX_BRAND_CATEGORY_IMAGES) {
+            throw new BadRequestException(`Maximum ${MAX_BRAND_CATEGORY_IMAGES} images allowed per brand-category`);
+        }
+        const key = this.storage.buildKey(`catalog/categories/${bc.category.slug}/${bc.brand.slug}`, filename);
+        const [uploadUrl, viewUrl] = await Promise.all([
+            this.storage.presignPut(key, contentType),
+            this.storage.generatePresignedUrl(key),
+        ]);
+        return { uploadUrl, key, viewUrl };
+    }
+
+    async saveBrandCategoryImageKey(id: string, key: string) {
+        const bc = await this.getBrandCategory(id);
+        const images = (bc.images as string[]) ?? [];
+        if (images.length >= MAX_BRAND_CATEGORY_IMAGES) {
+            throw new BadRequestException(`Maximum ${MAX_BRAND_CATEGORY_IMAGES} images allowed per brand-category`);
+        }
+        return this.prisma.brandCategory.update({
+            where: { id },
+            data: { images: [...images, key] },
+            include: { brand: true, category: true },
+        });
     }
 
     async deleteBrandCategoryImage(id: string, imageKey: string) {

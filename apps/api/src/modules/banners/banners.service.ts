@@ -50,6 +50,23 @@ export class BannersService {
         return { ...banner, url: presignedUrl };
     }
 
+    async presignBanner(filename: string, contentType: string) {
+        const key = this.storage.buildKey('banners', filename);
+        const [uploadUrl, viewUrl] = await Promise.all([
+            this.storage.presignPut(key, contentType),
+            this.storage.generatePresignedUrl(key),
+        ]);
+        return { uploadUrl, key, viewUrl };
+    }
+
+    async saveBannerKey(key: string, label?: string) {
+        const banner = await this.prisma.banner.create({
+            data: { key, label: label ?? null, isActive: true, order: 0 },
+        });
+        const url = await this.storage.generatePresignedUrl(key);
+        return { ...banner, url };
+    }
+
     async deleteBanner(id: string) {
         const banner = await this.prisma.banner.findUniqueOrThrow({ where: { id } });
         await this.storage.deleteFiles([banner.key]).catch(() => {});
@@ -166,6 +183,20 @@ export class BannersService {
     async uploadPromoSlideImage(id: string, file: any) {
         const { filePath } = await this.storage.uploadFile(file, 'banners/promo');
         const slide = await this.prisma.promoSlide.update({ where: { id }, data: { imgKey: filePath } });
+        return this.serializeSlide(slide);
+    }
+
+    async presignPromoSlideImage(filename: string, contentType: string) {
+        const key = this.storage.buildKey('banners/promo', filename);
+        const [uploadUrl, viewUrl] = await Promise.all([
+            this.storage.presignPut(key, contentType),
+            this.storage.generatePresignedUrl(key),
+        ]);
+        return { uploadUrl, key, viewUrl };
+    }
+
+    async savePromoSlideImageKey(id: string, key: string) {
+        const slide = await this.prisma.promoSlide.update({ where: { id }, data: { imgKey: key } });
         return this.serializeSlide(slide);
     }
 

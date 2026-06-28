@@ -5,6 +5,34 @@ export function getToken(): string | null {
   return localStorage.getItem('ts_admin_token');
 }
 
+// Upload a file directly to Garage via a presigned PUT URL.
+// presignUrl: full API path (e.g. '/uploads/presign-image')
+// extraQuery: additional query params (e.g. { groupId: 'abc' })
+export async function presignedUpload(
+  presignPath: string,
+  file: File,
+  extraQuery: Record<string, string> = {},
+): Promise<{ filePath: string; presignedUrl: string }> {
+  const q = new URLSearchParams({
+    filename: file.name,
+    contentType: file.type || 'application/octet-stream',
+    ...extraQuery,
+  });
+  const token = getToken();
+  const presignRes = await fetch(`${API_BASE}${presignPath}?${q}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!presignRes.ok) throw new Error('Failed to get upload URL');
+  const { uploadUrl, key, viewUrl } = await presignRes.json();
+  const putRes = await fetch(uploadUrl, {
+    method: 'PUT',
+    headers: { 'Content-Type': file.type || 'application/octet-stream' },
+    body: file,
+  });
+  if (!putRes.ok) throw new Error('Upload to storage failed');
+  return { filePath: key, presignedUrl: viewUrl };
+}
+
 export function setToken(t: string) {
   localStorage.setItem('ts_admin_token', t);
 }
@@ -82,13 +110,19 @@ export const catalogCategoriesApi = {
     apiFetch<CatalogCategoryItem>(`/catalog/categories/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   delete: (id: string) => apiFetch<void>(`/catalog/categories/${id}`, { method: 'DELETE' }),
   uploadImage: async (id: string, file: File) => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('ts_admin_token') : null;
-    const fd = new FormData(); fd.append('file', file);
-    const headers: Record<string, string> = {};
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-    const res = await fetch(`${API_BASE}/catalog/categories/${id}/image`, { method: 'POST', headers, body: fd });
-    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message ?? res.statusText);
-    return res.json();
+    const { key } = await (async () => {
+      const q = new URLSearchParams({ filename: file.name, contentType: file.type || 'application/octet-stream' });
+      const token = getToken();
+      const r = await fetch(`${API_BASE}/catalog/categories/${id}/image-presign?${q}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!r.ok) throw new Error('Failed to get upload URL');
+      const { uploadUrl, key } = await r.json();
+      const put = await fetch(uploadUrl, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file });
+      if (!put.ok) throw new Error('Upload failed');
+      return { key };
+    })();
+    return apiFetch(`/catalog/categories/${id}/image`, { method: 'POST', body: JSON.stringify({ key }) });
   },
 };
 
@@ -101,13 +135,16 @@ export const catalogBrandsApi = {
     apiFetch<CatalogBrandItem>(`/catalog/brands/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   delete: (id: string) => apiFetch<void>(`/catalog/brands/${id}`, { method: 'DELETE' }),
   uploadLogo: async (id: string, file: File) => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('ts_admin_token') : null;
-    const fd = new FormData(); fd.append('file', file);
-    const headers: Record<string, string> = {};
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-    const res = await fetch(`${API_BASE}/catalog/brands/${id}/logo`, { method: 'POST', headers, body: fd });
-    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message ?? res.statusText);
-    return res.json();
+    const q = new URLSearchParams({ filename: file.name, contentType: file.type || 'application/octet-stream' });
+    const token = getToken();
+    const r = await fetch(`${API_BASE}/catalog/brands/${id}/logo-presign?${q}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!r.ok) throw new Error('Failed to get upload URL');
+    const { uploadUrl, key } = await r.json();
+    const put = await fetch(uploadUrl, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file });
+    if (!put.ok) throw new Error('Upload failed');
+    return apiFetch(`/catalog/brands/${id}/logo`, { method: 'POST', body: JSON.stringify({ key }) });
   },
 };
 
@@ -124,13 +161,16 @@ export const catalogBrandCategoryApi = {
   deleteImage: (id: string, imageKey: string) =>
     apiFetch<BrandCategoryOption>(`/catalog/brand-categories/${id}/images/${encodeURIComponent(imageKey)}`, { method: 'DELETE' }),
   uploadImage: async (id: string, file: File) => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('ts_admin_token') : null;
-    const fd = new FormData(); fd.append('file', file);
-    const headers: Record<string, string> = {};
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-    const res = await fetch(`${API_BASE}/catalog/brand-categories/${id}/images`, { method: 'POST', headers, body: fd });
-    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message ?? res.statusText);
-    return res.json();
+    const q = new URLSearchParams({ filename: file.name, contentType: file.type || 'application/octet-stream' });
+    const token = getToken();
+    const r = await fetch(`${API_BASE}/catalog/brand-categories/${id}/image-presign?${q}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!r.ok) throw new Error('Failed to get upload URL');
+    const { uploadUrl, key } = await r.json();
+    const put = await fetch(uploadUrl, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file });
+    if (!put.ok) throw new Error('Upload failed');
+    return apiFetch(`/catalog/brand-categories/${id}/images`, { method: 'POST', body: JSON.stringify({ key }) });
   },
 };
 
@@ -374,18 +414,7 @@ export const productsApi = {
   getById: (id: string) =>
     apiFetch<Product>(`/products/by-id/${id}`),
 
-  uploadImage: async (file: File): Promise<{ filePath: string; presignedUrl: string }> => {
-    const token = getToken();
-    const body = new FormData();
-    body.append('file', file);
-    const res = await fetch(`${API_BASE}/uploads/image`, {
-      method: 'POST',
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-      body,
-    });
-    if (!res.ok) throw new Error('Image upload failed');
-    return res.json();
-  },
+  uploadImage: (file: File) => presignedUpload('/uploads/presign-image', file),
 
   create: (data: CreateProductPayload) =>
     apiFetch<Product>('/products', { method: 'POST', body: JSON.stringify(data) }),
@@ -734,15 +763,16 @@ export const bannerImagesApi = {
   toggle: (id: string) => apiFetch<BannerItem>(`/banners/${id}/toggle`, { method: 'PATCH' }),
   delete: (id: string) => apiFetch<void>(`/banners/${id}`, { method: 'DELETE' }),
   upload: async (file: File, label?: string) => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('ts_admin_token') : null;
-    const fd = new FormData();
-    fd.append('file', file);
-    if (label) fd.append('label', label);
-    const headers: Record<string, string> = {};
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-    const res = await fetch(`${API_BASE}/banners`, { method: 'POST', headers, body: fd });
-    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message ?? res.statusText);
-    return res.json() as Promise<BannerItem>;
+    const q = new URLSearchParams({ filename: file.name, contentType: file.type || 'application/octet-stream' });
+    const token = getToken();
+    const r = await fetch(`${API_BASE}/banners/presign-upload?${q}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!r.ok) throw new Error('Failed to get upload URL');
+    const { uploadUrl, key } = await r.json();
+    const put = await fetch(uploadUrl, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file });
+    if (!put.ok) throw new Error('Upload failed');
+    return apiFetch<BannerItem>('/banners', { method: 'POST', body: JSON.stringify({ key, label }) });
   },
 };
 
@@ -757,14 +787,16 @@ export const promoSlidesApi = {
   reorder: (items: { id: string; order: number }[]) =>
     apiFetch<void>('/banners/promo-slides/reorder', { method: 'PATCH', body: JSON.stringify({ items }) }),
   uploadImage: async (id: string, file: File) => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('ts_admin_token') : null;
-    const fd = new FormData();
-    fd.append('file', file);
-    const headers: Record<string, string> = {};
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-    const res = await fetch(`${API_BASE}/banners/promo-slides/${id}/image`, { method: 'POST', headers, body: fd });
-    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message ?? res.statusText);
-    return res.json() as Promise<PromoSlideItem>;
+    const q = new URLSearchParams({ filename: file.name, contentType: file.type || 'application/octet-stream' });
+    const token = getToken();
+    const r = await fetch(`${API_BASE}/banners/promo-slides/presign-image?${q}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!r.ok) throw new Error('Failed to get upload URL');
+    const { uploadUrl, key } = await r.json();
+    const put = await fetch(uploadUrl, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file });
+    if (!put.ok) throw new Error('Upload failed');
+    return apiFetch<PromoSlideItem>(`/banners/promo-slides/${id}/image`, { method: 'POST', body: JSON.stringify({ key }) });
   },
   deleteImage: (id: string) =>
     apiFetch<PromoSlideItem>(`/banners/promo-slides/${id}/image`, { method: 'DELETE' }),

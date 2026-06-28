@@ -6,6 +6,7 @@ import {
   CreateBucketCommand,
   HeadBucketCommand,
   DeleteObjectsCommand,
+  PutBucketCorsCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { v4 as uuidv4 } from 'uuid';
@@ -75,7 +76,27 @@ export class StorageService implements OnModuleInit {
       }
     }
 
-    // 2. Seed a .keep file in each folder so they appear in the console
+    // 2. Set CORS so browsers can PUT presigned URLs directly (skip gracefully on Garage)
+    try {
+      const origins = (process.env.CORS_ORIGINS || 'http://localhost:3000,http://localhost:3001').split(',').map(s => s.trim());
+      await this.s3Client.send(new PutBucketCorsCommand({
+        Bucket: this.bucketName,
+        CORSConfiguration: {
+          CORSRules: [{
+            AllowedOrigins: origins,
+            AllowedMethods: ['PUT', 'GET', 'HEAD'],
+            AllowedHeaders: ['*'],
+            ExposeHeaders: ['ETag'],
+            MaxAgeSeconds: 3000,
+          }],
+        },
+      }));
+      this.logger.log('Bucket CORS configured');
+    } catch (err: any) {
+      this.logger.warn(`CORS setup skipped (configure manually in Garage): ${err?.message}`);
+    }
+
+    // 3. Seed a .keep file in each folder so they appear in the console
     for (const folder of FOLDERS) {
       const key = `${folder}/.keep`;
       try {
@@ -90,6 +111,19 @@ export class StorageService implements OnModuleInit {
         this.logger.warn(`Could not seed folder "${folder}": ${err?.message}`);
       }
     }
+  }
+
+  buildKey(folder: string, filename: string, groupId?: string): string {
+    const prefix = groupId ? `${folder}/${groupId}` : folder;
+    return `${prefix}/${uuidv4()}-${filename}`;
+  }
+
+  async presignPut(key: string, contentType: string, expiresIn = 900): Promise<string> {
+    return getSignedUrl(
+      this.publicClient,
+      new PutObjectCommand({ Bucket: this.bucketName, Key: key, ContentType: contentType }),
+      { expiresIn },
+    );
   }
 
   async uploadFile(

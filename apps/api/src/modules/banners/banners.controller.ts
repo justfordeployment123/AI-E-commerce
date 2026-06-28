@@ -1,5 +1,5 @@
 import {
-    Body, Controller, Delete, Get, Param, Patch, Post,
+    BadRequestException, Body, Controller, Delete, Get, Param, Patch, Post,
     Query, UploadedFile, UseGuards, UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -26,12 +26,22 @@ export class BannersController {
         return this.banners.listAllBanners();
     }
 
+    @Get('presign-upload')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('ADMIN')
+    presignBanner(@Query('filename') filename: string, @Query('contentType') contentType: string) {
+        if (!filename || !contentType) throw new BadRequestException('filename and contentType required');
+        return this.banners.presignBanner(filename, contentType);
+    }
+
     @Post()
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles('ADMIN')
     @UseInterceptors(FileInterceptor('file'))
-    uploadBanner(@UploadedFile() file: any, @Body('label') label?: string) {
-        return this.banners.uploadBanner(file, label);
+    uploadBanner(@UploadedFile() file: any, @Body('label') label?: string, @Body('key') key?: string) {
+        if (key) return this.banners.saveBannerKey(key, label);
+        if (file) return this.banners.uploadBanner(file, label);
+        throw new BadRequestException('Provide a file or a key');
     }
 
     @Patch(':id/toggle')
@@ -98,12 +108,22 @@ export class BannersController {
         return this.banners.togglePromoSlide(id);
     }
 
+    @Get('promo-slides/presign-image')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('ADMIN')
+    presignPromoSlideImage(@Query('filename') filename: string, @Query('contentType') contentType: string) {
+        if (!filename || !contentType) throw new BadRequestException('filename and contentType required');
+        return this.banners.presignPromoSlideImage(filename, contentType);
+    }
+
     @Post('promo-slides/:id/image')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles('ADMIN')
     @UseInterceptors(FileInterceptor('file'))
-    uploadPromoSlideImage(@Param('id') id: string, @UploadedFile() file: any) {
-        return this.banners.uploadPromoSlideImage(id, file);
+    uploadPromoSlideImage(@Param('id') id: string, @UploadedFile() file: any, @Body('key') key?: string) {
+        if (key) return this.banners.savePromoSlideImageKey(id, key);
+        if (file) return this.banners.uploadPromoSlideImage(id, file);
+        throw new BadRequestException('Provide a file or a key');
     }
 
     @Delete('promo-slides/:id/image')
