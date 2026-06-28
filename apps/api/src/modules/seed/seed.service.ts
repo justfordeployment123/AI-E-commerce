@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
-import { S3Client, PutObjectCommand, DeleteObjectsCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectsCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -199,11 +199,14 @@ export class SeedService {
         };
     }
 
-    // ─── Purge: wipe all catalog + product data from DB and Garage ───────────
+    // ─── Purge: wipe ALL data from DB and every object in Garage ────────────
     async purgeAll(): Promise<{
         deleted: number;
         counts: {
             orderItems: number;
+            orders: number;
+            tradeIns: number;
+            repairs: number;
             reviews: number;
             scraperRuns: number;
             scrapedPrices: number;
@@ -219,77 +222,73 @@ export class SeedService {
             pricingConfigs: number;
         }
     }> {
-        // 1. Collect all S3 keys stored in the DB
-        const [products, brandCats, categories, brands, banners, promoSlides] = await Promise.all([
-            this.prisma.product.findMany({ select: { images: true } }),
-            this.prisma.brandCategory.findMany({ select: { images: true } }),
-            this.prisma.category.findMany({ select: { image: true } }),
-            this.prisma.brand.findMany({ select: { logo: true } }),
-            this.prisma.banner.findMany({ select: { key: true } }),
-            this.prisma.promoSlide.findMany({ select: { imgKey: true } }),
-        ]);
-
-        const s3Keys: string[] = [
-            ...products.flatMap(p => p.images as string[]),
-            ...brandCats.flatMap(bc => bc.images as string[]),
-            ...categories.map(c => c.image).filter((k): k is string => !!k),
-            ...brands.map(b => b.logo).filter((k): k is string => !!k),
-            ...banners.map(b => b.key).filter((k): k is string => !!k),
-            ...promoSlides.map(s => s.imgKey).filter((k): k is string => !!k),
-        ];
-
-        // 2. Delete S3 objects in batches of 1000
-        if (s3Keys.length > 0) {
-            const chunks: string[][] = [];
-            for (let i = 0; i < s3Keys.length; i += 1000) chunks.push(s3Keys.slice(i, i + 1000));
-            for (const chunk of chunks) {
-                try {
-                    await this.s3Client.send(new DeleteObjectsCommand({
-                        Bucket: this.bucketName,
-                        Delete: { Objects: chunk.map(k => ({ Key: k })), Quiet: true },
-                    }));
-                } catch (err: any) {
-                    this.logger.warn(`S3 bulk-delete warning: ${err?.message}`);
+        // 1. Nuclear Garage wipe — list every object in the bucket and delete all.
+        //    This is intentionally NOT keyed off DB records so orphaned files
+        //    (trade-in images, repair images, old seeds) are also removed.
+        let s3Deleted = 0;
+        let continuationToken: string | undefined;
+        do {
+            const listResult = await this.s3Client.send(new ListObjectsV2Command({
+                Bucket: this.bucketName,
+                ContinuationToken: continuationToken,
+                MaxKeys: 1000,
+            }));
+            const objects = listResult.Contents ?? [];
+            if (objects.length > 0) {
+                const deleteResult = await this.s3Client.send(new DeleteObjectsCommand({
+                    Bucket: this.bucketName,
+                    Delete: { Objects: objects.map(o => ({ Key: o.Key! })) },
+                }));
+                s3Deleted += objects.length;
+                for (const err of deleteResult.Errors ?? []) {
+                    this.logger.warn(`Garage delete error — key="${err.Key}" code=${err.Code}: ${err.Message}`);
                 }
             }
-            this.logger.log(`Deleted ${s3Keys.length} S3 objects`);
-        }
+            continuationToken = listResult.IsTruncated ? listResult.NextContinuationToken : undefined;
+        } while (continuationToken);
+        this.logger.log(`Garage purged — deleted ${s3Deleted} objects from bucket "${this.bucketName}"`);
 
-        // 3. Wipe DB in FK-safe order and track counts
-        const orderItems = await this.prisma.orderItem.deleteMany({});
-        const reviews = await this.prisma.review.deleteMany({});
-        const scraperRuns = await this.prisma.scraperRun.deleteMany({});
-        const scrapedPrices = await this.prisma.scrapedPrice.deleteMany({});
-        const productsDeleted = await this.prisma.product.deleteMany({});
-        const otherBrandsDeleted = await this.prisma.otherBrand.deleteMany({});
-        const otherSubcategoriesDeleted = await this.prisma.otherSubcategory.deleteMany({});
+        // 2. Wipe DB in FK-safe order and track counts
+        const orderItems           = await this.prisma.orderItem.deleteMany({});
+        const orders               = await this.prisma.order.deleteMany({});
+        const tradeIns             = await this.prisma.tradeIn.deleteMany({});
+        const repairs              = await this.prisma.repair.deleteMany({});
+        const reviews              = await this.prisma.review.deleteMany({});
+        const scraperRuns          = await this.prisma.scraperRun.deleteMany({});
+        const scrapedPrices        = await this.prisma.scrapedPrice.deleteMany({});
+        const productsDeleted      = await this.prisma.product.deleteMany({});
+        const otherBrandsDeleted   = await this.prisma.otherBrand.deleteMany({});
+        const otherSubsDeleted     = await this.prisma.otherSubcategory.deleteMany({});
         const deviceCatalogDeleted = await this.prisma.deviceCatalog.deleteMany({});
-        const brandCategoriesDeleted = await this.prisma.brandCategory.deleteMany({});
-        const categoriesDeleted = await this.prisma.category.deleteMany({});
-        const brandsDeleted = await this.prisma.brand.deleteMany({});
-        const bannersDeleted = await this.prisma.banner.deleteMany({});
-        const promoSlidesDeleted = await this.prisma.promoSlide.deleteMany({});
-        const pricingConfigsDeleted = await this.prisma.pricingConfig.deleteMany({});
+        const brandCatsDeleted     = await this.prisma.brandCategory.deleteMany({});
+        const categoriesDeleted    = await this.prisma.category.deleteMany({});
+        const brandsDeleted        = await this.prisma.brand.deleteMany({});
+        const bannersDeleted       = await this.prisma.banner.deleteMany({});
+        const promoSlidesDeleted   = await this.prisma.promoSlide.deleteMany({});
+        const pricingDeleted       = await this.prisma.pricingConfig.deleteMany({});
 
-        this.logger.log('Database purged — catalog, products, banners, pricing, scraper history all cleared');
+        this.logger.log('Database purged — all tables cleared');
         return {
-            deleted: s3Keys.length,
+            deleted: s3Deleted,
             counts: {
-                orderItems: orderItems.count,
-                reviews: reviews.count,
-                scraperRuns: scraperRuns.count,
-                scrapedPrices: scrapedPrices.count,
-                products: productsDeleted.count,
-                otherBrands: otherBrandsDeleted.count,
-                otherSubcategories: otherSubcategoriesDeleted.count,
-                deviceCatalog: deviceCatalogDeleted.count,
-                brandCategories: brandCategoriesDeleted.count,
-                categories: categoriesDeleted.count,
-                brands: brandsDeleted.count,
-                banners: bannersDeleted.count,
-                promoSlides: promoSlidesDeleted.count,
-                pricingConfigs: pricingConfigsDeleted.count,
-            }
+                orderItems:         orderItems.count,
+                orders:             orders.count,
+                tradeIns:           tradeIns.count,
+                repairs:            repairs.count,
+                reviews:            reviews.count,
+                scraperRuns:        scraperRuns.count,
+                scrapedPrices:      scrapedPrices.count,
+                products:           productsDeleted.count,
+                otherBrands:        otherBrandsDeleted.count,
+                otherSubcategories: otherSubsDeleted.count,
+                deviceCatalog:      deviceCatalogDeleted.count,
+                brandCategories:    brandCatsDeleted.count,
+                categories:         categoriesDeleted.count,
+                brands:             brandsDeleted.count,
+                banners:            bannersDeleted.count,
+                promoSlides:        promoSlidesDeleted.count,
+                pricingConfigs:     pricingDeleted.count,
+            },
         };
     }
 

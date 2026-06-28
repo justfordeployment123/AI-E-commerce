@@ -40,6 +40,9 @@ interface PurgeResult {
   deleted: number;
   counts: {
     orderItems: number;
+    orders: number;
+    tradeIns: number;
+    repairs: number;
     reviews: number;
     scraperRuns: number;
     scrapedPrices: number;
@@ -278,10 +281,10 @@ export default function SeedPage() {
               <p className="text-sm font-bold text-red-800">This is irreversible</p>
             </div>
             <ul className="text-xs text-red-700 space-y-1 list-disc list-inside">
+              <li>Wipes <strong>every file</strong> in Garage (S3) — products, banners, trade-in images, repair images, everything.</li>
               <li>Deletes all products, categories, brands, brand-categories, device catalog entries.</li>
-              <li>Deletes all banners and promo slides from database and Garage (S3).</li>
-              <li>Deletes all cart items, order items, and reviews that reference products.</li>
-              <li>Removes all pricing configs.</li>
+              <li>Deletes all orders, order items, trade-ins, repairs, and reviews.</li>
+              <li>Removes all pricing configs and scraper history.</li>
               <li>Use this before a full re-seed to start from a clean slate.</li>
             </ul>
           </div>
@@ -394,8 +397,20 @@ export default function SeedPage() {
                   <span className="font-bold text-sm text-red-600">{purgeResult.counts.pricingConfigs}</span>
                 </div>
                 <div className="flex items-center justify-between px-5 py-2.5">
-                  <span className="text-sm text-zinc-500">Cart & Order Items</span>
+                  <span className="text-sm text-zinc-500">Order Items</span>
                   <span className="font-bold text-sm text-red-600">{purgeResult.counts.orderItems}</span>
+                </div>
+                <div className="flex items-center justify-between px-5 py-2.5">
+                  <span className="text-sm text-zinc-500">Orders</span>
+                  <span className="font-bold text-sm text-red-600">{purgeResult.counts.orders}</span>
+                </div>
+                <div className="flex items-center justify-between px-5 py-2.5">
+                  <span className="text-sm text-zinc-500">Trade-Ins</span>
+                  <span className="font-bold text-sm text-red-600">{purgeResult.counts.tradeIns}</span>
+                </div>
+                <div className="flex items-center justify-between px-5 py-2.5">
+                  <span className="text-sm text-zinc-500">Repairs</span>
+                  <span className="font-bold text-sm text-red-600">{purgeResult.counts.repairs}</span>
                 </div>
                 <div className="flex items-center justify-between px-5 py-2.5">
                   <span className="text-sm text-zinc-500">Reviews</span>
