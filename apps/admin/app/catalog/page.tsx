@@ -5,26 +5,18 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Plus, Search, Trash2, Pencil, X, Check,
-  Smartphone, Tablet, Gamepad2, Laptop, Headphones, ChevronDown,
+  Plus, Search, Trash2, Pencil, X, Check, ChevronDown, Image,
   ToggleLeft, ToggleRight, RefreshCw, TrendingUp, CheckCircle2, AlertCircle, AlertTriangle,
 } from "lucide-react";
-import { deviceCatalogApi, catalogBrandCategoryApi, scraperApi, type DeviceCatalogItem, type BrandCategoryOption, type ScrapedPriceRow } from "../../lib/api";
+import {
+  deviceCatalogApi, catalogBrandCategoryApi, catalogBrandsApi, catalogCategoriesApi, scraperApi,
+  type DeviceCatalogItem, type BrandCategoryOption, type ScrapedPriceRow,
+  type CatalogBrandItem, type CatalogCategoryItem,
+} from "../../lib/api";
 
 const SCRAPER_ENABLED = process.env.NEXT_PUBLIC_SCRAPER_ENABLED === "true";
 
-const MAIN_CAT_SLUGS = ["phones", "laptops", "audio", "consoles", "tablets"];
-
-const CATEGORY_META: Record<string, { label: string; icon: React.ElementType; color: string }> = {
-  phones:      { label: "Phones",      icon: Smartphone, color: "bg-blue-500/10 text-blue-400" },
-  tablets:     { label: "Tablets",     icon: Tablet,     color: "bg-rose-500/10 text-rose-400" },
-  consoles:    { label: "Consoles",    icon: Gamepad2,   color: "bg-violet-500/10 text-violet-400" },
-  laptops:     { label: "Laptops",     icon: Laptop,     color: "bg-amber-500/10 text-amber-400" },
-  accessories: { label: "Accessories", icon: Headphones, color: "bg-emerald-500/10 text-emerald-400" },
-  audio:       { label: "Audio",       icon: Headphones, color: "bg-emerald-500/10 text-emerald-400" },
-};
-
-const EMPTY_FORM = { brandCategoryId: "", model: "", storageOptions: [""], isActive: true };
+const EMPTY_FORM = { categoryId: "", brandId: "", model: "", storageOptions: [""], isActive: true };
 
 function priceRange(prices: (number | null)[]): string | null {
   const valid = prices.filter((p): p is number => p !== null && p > 0);
@@ -56,6 +48,10 @@ export default function CatalogPage() {
   const [deletingAll, setDeletingAll] = useState(false);
   const [deleteAllError, setDeleteAllError] = useState("");
 
+  const [allCategories, setAllCategories] = useState<CatalogCategoryItem[]>([]);
+  const [allBrands, setAllBrands]         = useState<CatalogBrandItem[]>([]);
+  const [imageToast, setImageToast]       = useState<{ deviceId: string; label: string } | null>(null);
+
   const [priceMap, setPriceMap]   = useState<Map<string, number>>(new Map());
   const [scraping, setScraping]   = useState(false);
   const [scrapeMsg, setScrapeMsg] = useState("");
@@ -74,14 +70,16 @@ export default function CatalogPage() {
   async function load() {
     setLoading(true);
     try {
-      const [items, bcs] = await Promise.all([
+      const [items, bcs, cats, brands] = await Promise.all([
         deviceCatalogApi.list(),
         catalogBrandCategoryApi.list().catch(() => [] as BrandCategoryOption[]),
+        catalogCategoriesApi.list().catch(() => [] as CatalogCategoryItem[]),
+        catalogBrandsApi.list().catch(() => [] as CatalogBrandItem[]),
       ]);
-      const mainItems = items.filter(d => MAIN_CAT_SLUGS.includes(categorySlug(d).toLowerCase()));
-      const mainBcs = bcs.filter(bc => MAIN_CAT_SLUGS.includes(bc.category.slug.toLowerCase()));
-      setDevices(mainItems);
-      setBrandCategories(mainBcs);
+      setDevices(items);
+      setBrandCategories(bcs);
+      setAllCategories(cats.filter(c => c.isActive));
+      setAllBrands(brands.filter(b => b.isActive));
     } catch { /* ignore */ }
     finally { setLoading(false); }
   }
@@ -123,22 +121,39 @@ export default function CatalogPage() {
 
   function openEdit(d: DeviceCatalogItem) {
     setEditItem(d);
-    setForm({ brandCategoryId: d.brandCategoryId, model: d.model, storageOptions: [...d.storageOptions], isActive: d.isActive });
+    setForm({
+      categoryId: d.brandCategory?.category?.id ?? "",
+      brandId:    d.brandCategory?.brand?.id ?? "",
+      model:      d.model,
+      storageOptions: [...d.storageOptions],
+      isActive:   d.isActive,
+    });
     setModalOpen(true);
   }
   function closeModal() { setModalOpen(false); setEditItem(null); }
 
   async function saveModal() {
     const storageClean = form.storageOptions.map(s => s.trim()).filter(Boolean);
-    if (!form.brandCategoryId || !form.model.trim() || !storageClean.length) return;
+    if (!form.brandId || !form.categoryId || !form.model.trim() || !storageClean.length) return;
     setSaving(true);
     try {
+      // Find existing brand-category link or create it automatically
+      let bc = brandCategories.find(b => b.brandId === form.brandId && b.categoryId === form.categoryId);
+      if (!bc) {
+        bc = await catalogBrandCategoryApi.create({ brandId: form.brandId, categoryId: form.categoryId });
+        setBrandCategories(prev => [...prev, bc!]);
+      }
+
+      const payload = { brandCategoryId: bc.id, model: form.model, storageOptions: storageClean, isActive: form.isActive };
       if (editItem) {
-        const updated = await deviceCatalogApi.update(editItem.id, { ...form, storageOptions: storageClean });
+        const updated = await deviceCatalogApi.update(editItem.id, payload);
         setDevices(ds => ds.map(d => d.id === editItem.id ? updated : d));
       } else {
-        const created = await deviceCatalogApi.create({ ...form, storageOptions: storageClean });
+        const created = await deviceCatalogApi.create(payload);
         setDevices(ds => [...ds, created]);
+        const brand = allBrands.find(b => b.id === form.brandId);
+        setImageToast({ deviceId: created.id, label: `${brand?.name ?? ""} ${form.model}`.trim() });
+        setTimeout(() => setImageToast(null), 8000);
       }
       closeModal();
     } catch { /* ignore */ }
@@ -231,20 +246,17 @@ export default function CatalogPage() {
             onChange={e => setSearch(e.target.value)}
             className="h-10 w-full rounded-xl bg-white border border-zinc-200 pl-9 pr-4 text-sm outline-none focus:border-black transition-colors" />
         </div>
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide py-1 -my-1 max-w-full">
           <button onClick={() => setFilterCat("all")}
-            className={`h-10 px-4 rounded-xl text-xs font-bold transition-colors ${filterCat === "all" ? "bg-zinc-950 text-white" : "bg-white border border-zinc-200 text-zinc-500 hover:border-zinc-400"}`}>
+            className={`h-10 px-4 rounded-xl text-xs font-bold transition-colors shrink-0 ${filterCat === "all" ? "bg-zinc-950 text-white" : "bg-white border border-zinc-200 text-zinc-500 hover:border-zinc-400"}`}>
             All ({devices.length})
           </button>
-          {presentCategories.map(cat => {
-            const meta = CATEGORY_META[cat] ?? { label: cat, icon: Smartphone, color: "bg-zinc-100 text-zinc-500" };
-            return (
-              <button key={cat} onClick={() => setFilterCat(cat)}
-                className={`h-10 px-4 rounded-xl text-xs font-bold transition-colors ${filterCat === cat ? "bg-zinc-950 text-white" : "bg-white border border-zinc-200 text-zinc-500 hover:border-zinc-400"}`}>
-                {meta.label} ({devices.filter(d => categorySlug(d) === cat).length})
-              </button>
-            );
-          })}
+          {presentCategories.map(cat => (
+            <button key={cat} onClick={() => setFilterCat(cat)}
+              className={`h-10 px-4 rounded-xl text-xs font-bold transition-colors capitalize shrink-0 ${filterCat === cat ? "bg-zinc-950 text-white" : "bg-white border border-zinc-200 text-zinc-500 hover:border-zinc-400"}`}>
+              {cat} ({devices.filter(d => categorySlug(d) === cat).length})
+            </button>
+          ))}
         </div>
       </div>
 
@@ -271,8 +283,6 @@ export default function CatalogPage() {
                 </div>
               ) : filtered.map(device => {
                 const slug = categorySlug(device);
-                const meta = CATEGORY_META[slug] ?? { label: slug, icon: Smartphone, color: "bg-zinc-100 text-zinc-500" };
-                const Icon = meta.icon;
                 const range = devicePriceRange(device);
                 return (
                   <motion.div key={device.id} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -280,11 +290,7 @@ export default function CatalogPage() {
                     className={`grid ${SCRAPER_ENABLED ? "grid-cols-[2fr_3fr_1.5fr_2fr_1.5fr_auto_auto]" : "grid-cols-[2fr_3fr_1.5fr_2fr_auto_auto]"} items-center px-6 py-4 hover:bg-zinc-50/60 transition-colors cursor-pointer`}>
                     <span className="text-sm font-bold text-zinc-900">{brandName(device)}</span>
                     <span className="text-sm font-medium text-zinc-700">{device.model}</span>
-                    <span>
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold ${meta.color}`}>
-                        <Icon className="h-3 w-3" />{meta.label}
-                      </span>
-                    </span>
+                    <span className="text-sm text-zinc-500 font-medium capitalize">{slug}</span>
                     <div className="flex flex-wrap gap-1">
                       {device.storageOptions.map(s => (
                         <span key={s} className="px-2 py-0.5 bg-zinc-100 text-zinc-500 rounded-md text-[11px] font-medium">{s}</span>
@@ -341,24 +347,38 @@ export default function CatalogPage() {
               </div>
 
               <div className="space-y-5">
-                {/* Brand–Category picker */}
+                {/* Category */}
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold uppercase tracking-widest text-zinc-400">Brand – Category</label>
+                  <label className="text-[11px] font-bold uppercase tracking-widest text-zinc-400">Category</label>
                   <div className="relative">
-                    <select value={form.brandCategoryId}
-                      onChange={e => setForm(f => ({ ...f, brandCategoryId: e.target.value }))}
+                    <select value={form.categoryId}
+                      onChange={e => setForm(f => ({ ...f, categoryId: e.target.value }))}
                       className="h-10 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm outline-none focus:border-black appearance-none transition-colors">
-                      <option value="">Select brand–category…</option>
-                      {brandCategories.map(bc => (
-                        <option key={bc.id} value={bc.id}>
-                          {bc.brand.name} — {bc.category.name}
-                        </option>
+                      <option value="">Select category…</option>
+                      {allCategories.map(c => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
                       ))}
                     </select>
                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400 pointer-events-none" />
                   </div>
-                  {brandCategories.length === 0 && (
-                    <p className="text-[11px] text-amber-600">No brand-categories found. Create them first in the Catalog section.</p>
+                </div>
+
+                {/* Brand */}
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold uppercase tracking-widest text-zinc-400">Brand</label>
+                  <div className="relative">
+                    <select value={form.brandId}
+                      onChange={e => setForm(f => ({ ...f, brandId: e.target.value }))}
+                      className="h-10 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm outline-none focus:border-black appearance-none transition-colors">
+                      <option value="">Select brand…</option>
+                      {allBrands.map(b => (
+                        <option key={b.id} value={b.id}>{b.name}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400 pointer-events-none" />
+                  </div>
+                  {form.categoryId && form.brandId && !brandCategories.find(bc => bc.brandId === form.brandId && bc.categoryId === form.categoryId) && (
+                    <p className="text-[11px] text-blue-600 font-medium">New combination — the brand–category link will be created automatically.</p>
                   )}
                 </div>
 
@@ -442,6 +462,38 @@ export default function CatalogPage() {
                 </button>
               </div>
             </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Image reminder toast */}
+      <AnimatePresence>
+        {imageToast && (
+          <motion.div
+            initial={{ opacity: 0, y: 16, x: 16 }}
+            animate={{ opacity: 1, y: 0, x: 0 }}
+            exit={{ opacity: 0, y: 16, x: 16 }}
+            className="fixed bottom-6 right-6 z-50 flex items-start gap-3 bg-white border border-zinc-200 shadow-xl rounded-2xl p-4 max-w-xs"
+          >
+            <div className="h-9 w-9 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
+              <Image className="h-4 w-4 text-amber-500" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-zinc-900">Add images</p>
+              <p className="text-xs text-zinc-500 mt-0.5 truncate">
+                <span className="font-medium text-zinc-700">{imageToast.label}</span> was added — don&apos;t forget to upload images.
+              </p>
+              <Link
+                href={`/catalog/${imageToast.deviceId}`}
+                className="inline-block mt-2 text-xs font-bold text-blue-600 hover:underline"
+                onClick={() => setImageToast(null)}
+              >
+                Go to device →
+              </Link>
+            </div>
+            <button onClick={() => setImageToast(null)} className="text-zinc-300 hover:text-zinc-500 shrink-0">
+              <X className="h-3.5 w-3.5" />
+            </button>
           </motion.div>
         )}
       </AnimatePresence>

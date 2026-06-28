@@ -365,12 +365,12 @@ export default function ProductsPage() {
             className="w-full h-11 rounded-2xl bg-white border border-zinc-200 pl-11 pr-5 text-sm font-medium outline-none focus:border-black transition-colors"
           />
         </div>
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide py-1 -my-1 max-w-full">
           {["All", ...Array.from(new Set(mainProducts.map(p => p.category))).sort()].map(cat => (
             <button
               key={cat}
               onClick={() => setFilterCategory(cat)}
-              className={`h-11 px-4 rounded-2xl text-sm font-bold transition-all ${filterCategory === cat ? "bg-black text-white" : "bg-white border border-zinc-200 hover:border-zinc-400"}`}
+              className={`h-11 px-4 rounded-2xl text-sm font-bold transition-all shrink-0 ${filterCategory === cat ? "bg-black text-white" : "bg-white border border-zinc-200 hover:border-zinc-400"}`}
             >
               {cat} ({countFor(cat)})
             </button>

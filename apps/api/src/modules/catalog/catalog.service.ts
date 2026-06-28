@@ -224,8 +224,10 @@ export class CatalogService {
     }
 
     async createBrandCategory(dto: CreateBrandCategoryDto) {
-        return this.prisma.brandCategory.create({
-            data: dto,
+        return this.prisma.brandCategory.upsert({
+            where: { brandId_categoryId: { brandId: dto.brandId, categoryId: dto.categoryId } },
+            create: { ...dto, images: [] },
+            update: { isActive: true },
             include: { brand: true, category: true },
         });
     }

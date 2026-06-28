@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
-  ArrowLeft, ArrowUpRight, Laptop, Smartphone, Tablet, Gamepad2,
-  Headphones, ShieldCheck, Database, Layers, TrendingUp, Clock,
+  ArrowLeft, ArrowUpRight, ShieldCheck, Database, Layers, TrendingUp, Clock,
   RefreshCw, AlertCircle, RefreshCcw, PoundSterling, Check, X as XIcon,
 } from "lucide-react";
 import {
@@ -12,13 +11,6 @@ import {
   type DeviceCatalogItem, type Product, type ScrapedPriceRow,
 } from "../../../lib/api";
 
-const CATEGORY_META: Record<string, { label: string; icon: React.ElementType; color: string }> = {
-  phones:      { label: "Phones",      icon: Smartphone, color: "bg-blue-500/10 text-blue-400" },
-  tablets:     { label: "Tablets",     icon: Tablet,     color: "bg-rose-500/10 text-rose-400" },
-  consoles:    { label: "Consoles",    icon: Gamepad2,   color: "bg-violet-500/10 text-violet-400" },
-  laptops:     { label: "Laptops",     icon: Laptop,     color: "bg-amber-500/10 text-amber-400" },
-  accessories: { label: "Accessories", icon: Headphones, color: "bg-emerald-500/10 text-emerald-400" },
-};
 
 const SCRAPER_ENABLED = process.env.NEXT_PUBLIC_SCRAPER_ENABLED === "true";
 
@@ -168,8 +160,7 @@ export default function CatalogDetailPage() {
     );
   }
 
-  const meta       = CATEGORY_META[device.brandCategory.category.slug] ?? CATEGORY_META.phones;
-  const Icon       = meta.icon;
+  const categoryLabel = device.brandCategory.category.name;
   const totalStock = products.reduce((acc, p) => acc + p.stock, 0);
   const scrapeIsError = scrapeMsg.toLowerCase().includes("fail") || scrapeMsg.toLowerCase().includes("error");
 
@@ -191,8 +182,8 @@ export default function CatalogDetailPage() {
         <div className="md:col-span-2 bg-white rounded-3xl p-6 border border-zinc-150 shadow-sm flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-4">
-              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold ${meta.color}`}>
-                <Icon className="h-3.5 w-3.5" />{meta.label}
+              <span className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-bold bg-zinc-100 text-zinc-600">
+                {categoryLabel}
               </span>
               <div className="flex items-center gap-2">
                 <span className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${device.isActive ? "bg-emerald-100 text-emerald-800" : "bg-zinc-100 text-zinc-500"}`}>

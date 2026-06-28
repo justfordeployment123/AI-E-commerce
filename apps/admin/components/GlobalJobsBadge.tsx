@@ -67,10 +67,6 @@ export default function GlobalJobsBadge() {
           title="Show active jobs"
         >
           <Activity className="h-5 w-5 text-emerald-400 animate-pulse shrink-0" />
-          <span className="absolute -top-1 -right-1 flex h-3 w-3">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500" />
-          </span>
         </button>
       </div>
     );

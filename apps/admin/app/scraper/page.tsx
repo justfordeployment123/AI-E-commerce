@@ -335,6 +335,25 @@ export default function ScraperPage() {
     setCatalogPage(1);
   }
 
+  const activeRun   = runs.find(r => r.status === "RUNNING") ?? null;
+  const isRunActive = !!activeRun;
+  const lastRun     = runs.find(r => r.status !== "RUNNING") ?? null;
+
+  const runProgress = activeRun?.totalCatalog != null && activeRun?.totalOthers != null
+    ? {
+        done:  (activeRun.catalogProgress ?? 0) + (activeRun.othersProgress ?? 0),
+        total: activeRun.totalCatalog + activeRun.totalOthers,
+        catDone:  activeRun.catalogProgress ?? 0,
+        catTotal: activeRun.totalCatalog,
+        othDone:  activeRun.othersProgress ?? 0,
+        othTotal: activeRun.totalOthers,
+        pct: Math.round(
+          ((activeRun.catalogProgress ?? 0) + (activeRun.othersProgress ?? 0))
+          / Math.max(1, activeRun.totalCatalog + activeRun.totalOthers) * 100
+        ),
+      }
+    : null;
+
   const coverage = stats && stats.total > 0
     ? Math.round((stats.withMarketPrice / stats.total) * 100)
     : 0;
@@ -411,40 +430,101 @@ export default function ScraperPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Competitor Prices</h1>
-          <div className="flex items-center gap-3 mt-1">
+          <div className="flex items-center gap-3 mt-1 flex-wrap">
             <p className="text-sm text-zinc-500">
               Scraped from CeX &amp; Envirofone.{scheduleHours ? ` Auto-runs every ${humanizeHours(scheduleHours)}.` : ""}
             </p>
-            <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg border shrink-0 ${
-              serviceOnline === true
-                ? "text-emerald-700 bg-emerald-50 border-emerald-200"
-                : serviceOnline === false
-                  ? "text-red-700 bg-red-50 border-red-200"
-                  : "text-zinc-500 bg-zinc-50 border-zinc-200"
-            }`}>
-              <span className={`h-1.5 w-1.5 rounded-full ${
-                serviceOnline === true ? "bg-emerald-500"
-                : serviceOnline === false ? "bg-red-500 animate-pulse"
-                : "bg-zinc-400"
-              }`} />
-              {serviceOnline === true ? "Scraper online"
-                : serviceOnline === false ? "Scraper offline"
-                : "Checking…"}
-            </span>
+
+            {/* ── Scraper status badge — all states ── */}
+            {serviceOnline === null ? (
+              /* 1. Initial poll — still checking */
+              <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg border text-zinc-500 bg-zinc-50 border-zinc-200 shrink-0">
+                <Loader2 className="h-3 w-3 animate-spin" /> Checking…
+              </span>
+            ) : serviceOnline === false ? (
+              /* 2. Scraper service unreachable */
+              <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg border text-red-700 bg-red-50 border-red-200 shrink-0">
+                <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" /> Scraper offline
+              </span>
+            ) : isRunActive ? (
+              /* 3. Run in progress — show live progress */
+              <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg border text-blue-700 bg-blue-50 border-blue-200 shrink-0">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Running
+                {runProgress ? (
+                  <span className="text-blue-500 font-normal">
+                    • {runProgress.done}/{runProgress.total} ({runProgress.pct}%)
+                  </span>
+                ) : (
+                  <span className="text-blue-400 font-normal">• starting…</span>
+                )}
+              </span>
+            ) : !lastRun ? (
+              /* 4. Service online, no runs ever */
+              <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg border text-zinc-600 bg-zinc-50 border-zinc-200 shrink-0">
+                <span className="h-1.5 w-1.5 rounded-full bg-zinc-400" /> Online · no runs yet
+              </span>
+            ) : lastRun.status === "COMPLETED" ? (
+              /* 5. Online, last run succeeded */
+              <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg border text-emerald-700 bg-emerald-50 border-emerald-200 shrink-0">
+                <CheckCircle2 className="h-3 w-3" />
+                Scraper online
+                {lastRun.finishedAt && (
+                  <span className="text-emerald-600 font-normal">
+                    · last run {fmtTime(lastRun.finishedAt)}
+                    {lastRun.totalScraped != null && ` · ${lastRun.totalScraped} scraped`}
+                  </span>
+                )}
+              </span>
+            ) : (
+              /* 6. Online, last run failed */
+              <span
+                className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg border text-amber-700 bg-amber-50 border-amber-200 shrink-0 cursor-help"
+                title={lastRun.errorMessage ?? "Last run failed"}
+              >
+                <AlertCircle className="h-3 w-3" />
+                Last run failed
+                {lastRun.finishedAt && (
+                  <span className="text-amber-600 font-normal">· {fmtTime(lastRun.finishedAt)}</span>
+                )}
+              </span>
+            )}
           </div>
         </div>
-        <button
-          onClick={handleRunScraper}
-          disabled={running}
-          className="flex items-center gap-2 h-11 px-6 rounded-2xl bg-black text-white text-sm font-bold hover:bg-zinc-800 transition-colors disabled:opacity-60"
-        >
-          {running
-            ? <><RefreshCw className="h-4 w-4 animate-spin" /> Running…</>
-            : <><Play className="h-4 w-4" /> Run Now</>}
-        </button>
+
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Stop button — only while a run is active */}
+          {isRunActive && (
+            <button
+              onClick={handleStop}
+              disabled={stopping}
+              className="flex items-center gap-2 h-11 px-4 rounded-2xl border-2 border-red-200 text-red-700 text-sm font-bold hover:bg-red-50 transition-colors disabled:opacity-60"
+            >
+              {stopping
+                ? <><Loader2 className="h-4 w-4 animate-spin" /> Stopping…</>
+                : <><XCircle className="h-4 w-4" /> Stop</>}
+            </button>
+          )}
+
+          {/* Run Now / disabled-while-running */}
+          <button
+            onClick={handleRunScraper}
+            disabled={running || isRunActive || serviceOnline === false}
+            title={serviceOnline === false ? "Scraper service is offline" : isRunActive ? "A run is already in progress" : undefined}
+            className="flex items-center gap-2 h-11 px-6 rounded-2xl bg-black text-white text-sm font-bold hover:bg-zinc-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {running ? (
+              <><RefreshCw className="h-4 w-4 animate-spin" /> Starting…</>
+            ) : isRunActive ? (
+              <><Loader2 className="h-4 w-4 animate-spin" /> Running…</>
+            ) : (
+              <><Play className="h-4 w-4" /> Run Now</>
+            )}
+          </button>
+        </div>
       </div>
 
-      {/* Run message */}
+      {/* Run message toast */}
       {runMsg && (
         <div className={`flex items-center gap-3 rounded-2xl px-5 py-3 text-sm font-bold ${
           runMsg.toLowerCase().includes("fail") || runMsg.toLowerCase().includes("error")

@@ -2894,7 +2894,7 @@ function DiscoverMore() {
               ))}
             </div>
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-3 flex justify-end">
-              <ScrollButtons scrollRef={{ current: rowScrollRefs.current[i] } as React.RefObject<HTMLElement | null>} />
+              <ScrollButtons scrollRef={{ get current() { return rowScrollRefs.current[i]; } } as React.RefObject<HTMLElement | null>} />
             </div>
           </div>
         );

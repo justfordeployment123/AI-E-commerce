@@ -239,10 +239,10 @@ export default function OtherProductsPage() {
             onChange={e => setSearch(e.target.value)}
             className="w-full h-11 rounded-2xl bg-white border border-zinc-200 pl-11 pr-5 text-sm font-medium outline-none focus:border-black transition-colors" />
         </div>
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide py-1 -my-1 max-w-full">
           {tabs.map(cat => (
             <button key={cat} onClick={() => setFilterCat(cat)}
-              className={`h-11 px-4 rounded-2xl text-sm font-bold transition-all capitalize ${
+              className={`h-11 px-4 rounded-2xl text-sm font-bold transition-all capitalize shrink-0 ${
                 filterCat === cat ? "bg-black text-white" : "bg-white border border-zinc-200 hover:border-zinc-400"
               }`}>
               {cat} ({countFor(cat)})
