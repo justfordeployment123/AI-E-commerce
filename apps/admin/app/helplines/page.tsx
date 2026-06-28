@@ -90,9 +90,9 @@ export default function HelplinesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-8">
+    <div className="min-h-screen bg-background p-4 sm:p-6 md:p-8">
       {/* Header */}
-      <div className="flex items-start justify-between mb-10">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Helpline Numbers</h1>
           <p className="text-sm text-zinc-500 mt-1">
@@ -170,8 +170,10 @@ export default function HelplinesPage() {
         </div>
       ) : (
         <div className="bg-white rounded-3xl border border-zinc-200 shadow-sm overflow-hidden">
-          {/* Table header */}
-          <div className="grid grid-cols-[auto_1fr_1fr_auto_auto_auto] items-center gap-4 px-6 py-3 border-b border-zinc-100 bg-zinc-50">
+          <div className="overflow-x-auto">
+            <div className="min-w-[600px]">
+              {/* Table header */}
+              <div className="grid grid-cols-[auto_1fr_1fr_auto_auto_auto] items-center gap-4 px-6 py-3 border-b border-zinc-100 bg-zinc-50">
             <div className="w-5" />
             <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Label</p>
             <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Number</p>
@@ -248,6 +250,8 @@ export default function HelplinesPage() {
               {editId === h.id && <div className="w-8" />}
             </div>
           ))}
+            </div>
+          </div>
         </div>
       )}
 

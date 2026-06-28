@@ -277,7 +277,7 @@ export default function BrandCategoryLinksPage() {
                       key={bc.id}
                       className="bg-white border border-zinc-100 rounded-3xl p-6 shadow-sm"
                     >
-                      <div className="flex items-center justify-between border-b border-zinc-100 pb-4 mb-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-zinc-100 pb-4 mb-4 gap-4">
                         <div className="flex items-center gap-3">
                           {logoUrl ? (
                             <img
@@ -299,7 +299,7 @@ export default function BrandCategoryLinksPage() {
                         </div>
 
                         {/* Right side warnings & remove link */}
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
                           {hasZeroImages && (
                             <span className="flex items-center gap-1 text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-100 animate-pulse">
                               <AlertTriangle className="h-3 w-3" /> Minimum 1 image required

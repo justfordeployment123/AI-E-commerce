@@ -119,8 +119,8 @@ export default function OtherProductsLinksPage() {
                     </button>
 
                     {expandedBrandId === brand.id && (
-                      <div className="border-t border-zinc-100">
-                        <table className="w-full text-sm">
+                      <div className="border-t border-zinc-100 overflow-x-auto">
+                        <table className="w-full text-sm min-w-[500px]">
                           <thead>
                             <tr className="border-b border-zinc-50 bg-zinc-50/50">
                               <th className="text-left px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-zinc-400">Product</th>

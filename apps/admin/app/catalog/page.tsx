@@ -182,12 +182,12 @@ export default function CatalogPage() {
     <div className="p-6 md:p-8 max-w-6xl mx-auto">
 
       {/* Header */}
-      <div className="flex items-start justify-between mb-6 gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
         <div>
           <h1 className="text-2xl font-bold text-zinc-900">Device Catalog</h1>
           <p className="text-sm text-zinc-400 font-medium mt-1">Manage which device models appear in the trade-in wizard.</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           {SCRAPER_ENABLED && (
             <button onClick={handleScrape} disabled={scraping}
               className="flex items-center gap-2 h-10 px-4 rounded-xl border-2 border-zinc-200 text-xs font-bold text-zinc-600 hover:border-zinc-400 hover:text-black transition-colors disabled:opacity-50">
@@ -250,7 +250,9 @@ export default function CatalogPage() {
 
       {/* Table */}
       <div className="bg-white rounded-2xl border border-zinc-100 overflow-hidden">
-        <div className={`grid ${SCRAPER_ENABLED ? "grid-cols-[2fr_3fr_1.5fr_2fr_1.5fr_auto_auto]" : "grid-cols-[2fr_3fr_1.5fr_2fr_auto_auto]"} text-[10px] font-bold uppercase tracking-widest text-zinc-400 px-6 py-3 border-b border-zinc-100 bg-zinc-50`}>
+        <div className="overflow-x-auto">
+          <div className="min-w-[850px]">
+            <div className={`grid ${SCRAPER_ENABLED ? "grid-cols-[2fr_3fr_1.5fr_2fr_1.5fr_auto_auto]" : "grid-cols-[2fr_3fr_1.5fr_2fr_auto_auto]"} text-[10px] font-bold uppercase tracking-widest text-zinc-400 px-6 py-3 border-b border-zinc-100 bg-zinc-50`}>
           <span>Brand</span><span>Model</span><span>Category</span><span>Storage Options</span>
           {SCRAPER_ENABLED && <span>CeX Price</span>}
           <span>Status</span><span>Actions</span>
@@ -318,6 +320,8 @@ export default function CatalogPage() {
             </AnimatePresence>
           </div>
         )}
+          </div>
+        </div>
       </div>
 
       {/* Add / Edit Modal */}

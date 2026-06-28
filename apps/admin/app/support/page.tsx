@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { io, Socket } from "socket.io-client";
-import { X, MessageCircle, Send, Circle, User, Package, ExternalLink } from "lucide-react";
+import { X, MessageCircle, Send, Circle, User, Package, ExternalLink, ArrowLeft } from "lucide-react";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002";
 const WS  = API.replace(/^http/, "ws");
@@ -126,7 +126,7 @@ export default function SupportPage() {
   const closedChats = uniqueChats.filter(c => c.status === "closed");
 
   return (
-    <div className="min-h-screen bg-background p-8">
+    <div className="min-h-screen bg-background p-4 sm:p-6 md:p-8">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight">Support & Chat</h1>
@@ -134,9 +134,9 @@ export default function SupportPage() {
       </div>
 
       {/* Chat panel — full width */}
-      <div className="bg-white rounded-3xl border border-zinc-200 shadow-sm overflow-hidden flex h-150">
+      <div className="bg-white rounded-3xl border border-zinc-200 shadow-sm overflow-hidden flex h-[calc(100vh-220px)] md:h-[600px]">
         {/* Sidebar — chat list */}
-        <div className="w-72 border-r border-zinc-200 flex flex-col shrink-0">
+        <div className={`w-full md:w-72 border-r border-zinc-200 flex flex-col shrink-0 ${activeChat ? "hidden md:flex" : "flex"}`}>
           <div className="px-4 py-4 border-b border-zinc-100 flex items-center justify-between">
             <div>
               <h2 className="text-sm font-bold text-zinc-900">Conversations</h2>
@@ -179,10 +179,17 @@ export default function SupportPage() {
 
         {/* Main chat area */}
         {activeChat ? (
-          <div className="flex-1 flex flex-col min-w-0">
+          <div className={`flex-1 flex flex-col min-w-0 ${activeChat ? "flex" : "hidden md:flex"}`}>
             {/* Chat header */}
             <div className="px-5 py-3.5 border-b border-zinc-100 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
+                <button
+                  onClick={() => setActiveChat(null)}
+                  className="p-1 rounded-lg hover:bg-zinc-100 text-zinc-500 md:hidden shrink-0"
+                  aria-label="Back to chat list"
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                </button>
                 <div className="h-9 w-9 rounded-full bg-zinc-100 flex items-center justify-center shrink-0">
                   <User className="h-4 w-4 text-zinc-500" />
                 </div>

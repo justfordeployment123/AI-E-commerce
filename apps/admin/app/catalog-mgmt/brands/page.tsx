@@ -78,7 +78,7 @@ export default function BrandsPage() {
 
   return (
     <div className="p-6 md:p-8 max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <Link href="/catalog-mgmt" className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 mb-1">
             <ArrowLeft className="h-3 w-3" /> Catalog Management
@@ -134,7 +134,8 @@ export default function BrandsPage() {
 
         const renderTable = (rows: CatalogBrandItem[]) => (
           <div className="bg-white border border-zinc-100 rounded-2xl overflow-hidden">
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm min-w-[600px]">
               <thead className="border-b border-zinc-100 bg-zinc-50">
                 <tr className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
                   <th className="text-left px-5 py-3">Brand</th>
@@ -176,6 +177,7 @@ export default function BrandsPage() {
                 )}
               </tbody>
             </table>
+            </div>
           </div>
         );
 

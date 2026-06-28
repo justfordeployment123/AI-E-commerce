@@ -363,7 +363,8 @@ export default function CatalogDetailPage() {
             <p className="text-xs text-zinc-400">Click "Re-scrape" to fetch CeX market prices for all storage variants of this device.</p>
           </div>
         ) : (
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[750px]">
             <thead>
               <tr className="border-b border-zinc-100 bg-zinc-50/50">
                 {["Storage", "CeX Sell", "CeX Cash", "CeX Exchange", "Est. Trade-in Offer", "Scraped"].map(h => (
@@ -406,6 +407,7 @@ export default function CatalogDetailPage() {
               })}
             </tbody>
           </table>
+          </div>
         )}
       </div>}
 
@@ -422,7 +424,8 @@ export default function CatalogDetailPage() {
             <p className="text-xs text-zinc-300">New product listings with this exact brand and model will automatically link here.</p>
           </div>
         ) : (
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[700px]">
             <thead>
               <tr className="border-b border-zinc-100 bg-zinc-50/50">
                 <th className="text-left px-6 py-3 text-xs font-bold uppercase tracking-widest text-zinc-400">Product Name</th>
@@ -472,6 +475,7 @@ export default function CatalogDetailPage() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>

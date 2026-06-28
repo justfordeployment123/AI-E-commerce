@@ -154,8 +154,8 @@ export default function OrdersPage() {
   const fmtDate = (s: string) => new Date(s).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 
   return (
-    <div className="min-h-screen bg-background p-8">
-      <div className="flex items-center justify-between mb-8">
+    <div className="min-h-screen bg-background p-4 sm:p-6 md:p-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Orders</h1>
           <p className="text-sm text-zinc-500 mt-1">
@@ -223,7 +223,8 @@ export default function OrdersPage() {
               <div className="h-8 w-8 border-4 border-zinc-200 border-t-black rounded-full animate-spin" />
             </div>
           ) : (
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm min-w-[700px]">
               <thead>
                 <tr className="border-b border-zinc-100">
                   <th className="text-left px-6 py-4 text-xs font-bold uppercase tracking-widest text-zinc-400">Order</th>
@@ -260,6 +261,7 @@ export default function OrdersPage() {
                 })}
               </tbody>
             </table>
+          </div>
           )}
           {!loading && filtered.length === 0 && (
             <div className="text-center py-20 text-zinc-400">
@@ -269,11 +271,21 @@ export default function OrdersPage() {
           )}
         </div>
 
+        {/* Backdrop for detail drawer */}
+        {selected && (
+          <div
+            className="fixed inset-0 bg-black/40 z-30 xl:hidden"
+            onClick={() => setSelected(null)}
+          />
+        )}
+
         <AnimatePresence>
           {selected && (
             <motion.div
-              initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}
-              className="bg-white rounded-3xl border border-zinc-100 shadow-sm p-6 self-start sticky top-8 max-h-[calc(100vh-4rem)] overflow-y-auto scrollbar-hide"
+              initial={{ opacity: 0, x: 100 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 100 }}
+              className="bg-white rounded-3xl border border-zinc-100 shadow-sm p-6 overflow-y-auto scrollbar-hide fixed inset-y-0 right-0 z-40 w-full sm:w-[400px] h-full max-h-full xl:static xl:self-start xl:sticky xl:top-8 xl:w-auto xl:h-auto xl:max-h-[calc(100vh-4rem)]"
             >
               <div className="flex items-start justify-between mb-5">
                 <div>

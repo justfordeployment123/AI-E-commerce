@@ -46,8 +46,8 @@ export default function AdminDashboard() {
   const stats = data?.stats;
 
   return (
-    <div className="min-h-screen bg-background p-8">
-      <div className="mb-10 flex items-start justify-between gap-4">
+    <div className="min-h-screen bg-background p-4 sm:p-6 md:p-8">
+      <div className="mb-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-sm text-zinc-500 mt-1">
@@ -70,7 +70,7 @@ export default function AdminDashboard() {
       ) : (
         <>
           {/* Stats */}
-          <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
             {[
               {
                 label: "Revenue (MTD)",

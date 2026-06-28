@@ -111,13 +111,13 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 p-6 lg:p-8">
-      <div className="flex items-start justify-between mb-8">
+    <div className="min-h-screen bg-zinc-50 p-4 sm:p-6 lg:p-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Payment Settings</h1>
           <p className="text-sm text-zinc-500 mt-1">Manage Stripe API keys and payment mode.</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={handleTest}
             disabled={testing}

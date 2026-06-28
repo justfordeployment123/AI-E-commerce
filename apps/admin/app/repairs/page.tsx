@@ -113,10 +113,10 @@ export default function RepairsPage() {
   const cfg = (status: string) => STATUS_CFG[status] ?? STATUS_CFG.SUBMITTED;
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-background p-6">
+    <div className="min-h-screen xl:h-screen flex flex-col xl:overflow-hidden bg-background p-4 sm:p-6 md:p-8">
 
       {/* Header */}
-      <div className="flex items-center justify-between gap-4 mb-4 shrink-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 shrink-0">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Repairs</h1>
           <p className="text-xs text-zinc-500 mt-0.5">
@@ -185,8 +185,8 @@ export default function RepairsPage() {
               <p className="font-bold text-sm">No repairs found</p>
             </div>
           ) : (
-            <div className="flex-1 overflow-y-auto">
-              <table className="w-full text-sm">
+            <div className="flex-1 overflow-auto">
+              <table className="w-full text-sm min-w-[750px]">
                 <thead className="sticky top-0 bg-white z-10">
                   <tr className="border-b border-zinc-100">
                     <th className="text-left px-6 py-4 text-xs font-bold uppercase tracking-widest text-zinc-400">Device</th>
@@ -241,11 +241,21 @@ export default function RepairsPage() {
           )}
         </div>
 
+        {/* Backdrop for detail drawer */}
+        {selected && (
+          <div
+            className="fixed inset-0 bg-black/40 z-30 xl:hidden"
+            onClick={() => setSelected(null)}
+          />
+        )}
+
         <AnimatePresence>
           {selected && (
             <motion.div
-              initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}
-              className="bg-white rounded-3xl border border-zinc-100 shadow-sm p-6"
+              initial={{ opacity: 0, x: 100 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 100 }}
+              className="bg-white rounded-3xl border border-zinc-100 shadow-sm p-6 overflow-y-auto scrollbar-hide fixed inset-y-0 right-0 z-40 w-full sm:w-[400px] h-full max-h-full xl:static xl:h-auto xl:w-auto xl:max-h-none"
             >
               {/* Header */}
               <div className="flex items-start justify-between mb-4">

@@ -93,9 +93,9 @@ export default function ReviewsPage() {
     : filter === "pending" ? reviews.length : 0;
 
   return (
-    <div className="min-h-screen bg-background p-8">
+    <div className="min-h-screen bg-background p-4 sm:p-6 md:p-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Customer Reviews</h1>
           <p className="text-sm text-zinc-500 mt-1">

@@ -148,14 +148,14 @@ export default function PricingPage() {
   );
 
   return (
-    <div className="min-h-screen bg-zinc-50 p-6 lg:p-8">
+    <div className="min-h-screen bg-zinc-50 p-4 sm:p-6 lg:p-8">
       {/* Header */}
-      <div className="flex items-start justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Pricing Rules</h1>
           <p className="text-sm text-zinc-500 mt-1">Configure sell prices and trade-in offers. Save then rerun pricing to apply.</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           <button onClick={handleReset} className="flex items-center gap-2 h-10 px-4 rounded-xl border border-zinc-200 bg-white text-sm font-semibold hover:border-zinc-400 transition-colors">
             <RotateCcw className="h-3.5 w-3.5" /> Reset
           </button>

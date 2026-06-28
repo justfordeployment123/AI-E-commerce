@@ -23,7 +23,7 @@ export default function AnalyticsPage() {
   const maxUnits = Math.max(...(data?.topProducts.map(p => p.units) ?? [1]));
 
   return (
-    <div className="min-h-screen bg-background p-8">
+    <div className="min-h-screen bg-background p-4 sm:p-6 md:p-8">
       <div className="mb-10">
         <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
         <p className="text-sm text-zinc-500 mt-1">Last 6 months</p>
@@ -36,7 +36,7 @@ export default function AnalyticsPage() {
       ) : (
         <>
           {/* Summary stats */}
-          <div className="grid grid-cols-2 xl:grid-cols-4 gap-5 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 mb-8">
             {[
               { label: "Total revenue",       value: fmtCurrency(data?.summary.totalRevenue ?? 0),  icon: DollarSign,   color: "bg-violet-50 text-violet-600" },
               { label: "Orders placed",        value: String(data?.summary.totalOrders ?? 0),        icon: ShoppingBag,  color: "bg-blue-50 text-blue-600" },

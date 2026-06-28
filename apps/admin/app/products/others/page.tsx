@@ -202,9 +202,9 @@ export default function OtherProductsPage() {
     : !!formData.otherBrandId && !!formData.otherSubcategoryId && !!formData.name && (formData.price ?? 0) > 0;
 
   return (
-    <div className="min-h-screen bg-background p-8">
+    <div className="min-h-screen bg-background p-4 sm:p-6 md:p-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <Link href="/products" className="text-xs text-zinc-400 hover:text-black flex items-center gap-1 font-bold">
@@ -258,7 +258,8 @@ export default function OtherProductsPage() {
             <div className="h-8 w-8 border-4 border-zinc-200 border-t-black rounded-full animate-spin" />
           </div>
         ) : (
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[700px]">
             <thead>
               <tr className="border-b border-zinc-100">
                 <th className="text-left px-6 py-4 text-xs font-bold uppercase tracking-widest text-zinc-400">Product</th>
@@ -315,6 +316,7 @@ export default function OtherProductsPage() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
         {!loading && filtered.length === 0 && (
           <div className="text-center py-20 text-zinc-400">

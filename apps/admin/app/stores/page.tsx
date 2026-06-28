@@ -84,9 +84,9 @@ export default function StoresPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-8">
+    <div className="min-h-screen bg-background p-4 sm:p-6 md:p-8">
       {/* Header */}
-      <div className="flex items-start justify-between mb-10">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Store Locations</h1>
           <p className="text-sm text-zinc-500 mt-1">Manage the drop-off locations shown to customers during trade-in.</p>

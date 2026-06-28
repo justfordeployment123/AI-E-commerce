@@ -406,9 +406,9 @@ export default function ScraperPage() {
   );
 
   return (
-    <div className="min-h-screen bg-background p-8 space-y-8">
+    <div className="min-h-screen bg-background p-4 sm:p-6 md:p-8 space-y-8">
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Competitor Prices</h1>
           <div className="flex items-center gap-3 mt-1">
@@ -596,7 +596,7 @@ export default function ScraperPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm min-w-[700px]">
               <thead>
                 <tr className="border-b border-zinc-100">
                   {["Status", "Started", "Finished", "Duration", "Devices scraped", "Error"].map(h => (
@@ -708,7 +708,7 @@ export default function ScraperPage() {
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full text-sm min-w-[900px]">
                 {priceTableHead}
                 <tbody className="divide-y divide-zinc-50">
                   {pagedCatalog.map(renderPriceRow)}
@@ -761,7 +761,7 @@ export default function ScraperPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full text-sm min-w-[900px]">
                 {priceTableHead}
                 <tbody className="divide-y divide-zinc-50">
                   {otherRows.map(renderPriceRow)}

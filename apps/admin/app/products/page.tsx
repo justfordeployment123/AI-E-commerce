@@ -308,15 +308,15 @@ export default function ProductsPage() {
   ).length;
 
   return (
-    <div className="min-h-screen bg-background p-8">
-      <div className="flex items-center justify-between mb-8">
+    <div className="min-h-screen bg-background p-4 sm:p-6 md:p-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Products</h1>
           <p className="text-sm text-zinc-500 mt-1">
             {products.length} total · {products.filter(p => p.isActive).length} active · {products.filter(p => p.stock === 0).length} out of stock
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={toggleShowUnpriced}
             disabled={savingUnpriced}
@@ -421,7 +421,8 @@ export default function ProductsPage() {
             <div className="h-8 w-8 border-4 border-zinc-200 border-t-black rounded-full animate-spin" />
           </div>
         ) : (
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[800px]">
             <thead>
               <tr className="border-b border-zinc-100">
                 <th className="text-left px-6 py-4 text-xs font-bold uppercase tracking-widest text-zinc-400">Product</th>
@@ -521,6 +522,7 @@ export default function ProductsPage() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
         {!loading && filtered.length === 0 && (
           <div className="text-center py-20 text-zinc-400">

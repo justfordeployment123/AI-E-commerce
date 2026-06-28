@@ -1,10 +1,11 @@
 "use client";
 
+import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   LayoutDashboard, Package, RefreshCw, Wrench, ShoppingBag,
-  SlidersHorizontal, BarChart3, LogOut, ChevronRight, ListPlus, MapPin, TrendingUp, HeadphonesIcon, Star, Phone, DatabaseZap, Layers, Image, Boxes, Settings
+  SlidersHorizontal, BarChart3, LogOut, ChevronRight, ListPlus, MapPin, TrendingUp, HeadphonesIcon, Star, Phone, DatabaseZap, Layers, Image, Boxes, Settings, X
 } from "lucide-react";
 import { useAdminAuth } from "../context/auth-context";
 
@@ -30,11 +31,15 @@ const NAV = [
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAdminAuth();
   let lastSection = "";
+
+  useEffect(() => {
+    if (onClose) onClose();
+  }, [pathname]);
 
   function handleLogout() {
     logout();
@@ -42,13 +47,22 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="w-60 shrink-0 bg-sidebar text-sidebar-fg flex flex-col h-screen sticky top-0 overflow-y-auto scrollbar-hide">
+    <aside className={`fixed inset-y-0 left-0 z-50 w-60 bg-sidebar text-sidebar-fg flex flex-col h-screen overflow-y-auto scrollbar-hide transition-transform duration-300 ease-in-out md:translate-x-0 md:sticky md:top-0 md:flex md:shrink-0 ${
+      isOpen ? "translate-x-0" : "-translate-x-full"
+    }`}>
       {/* Logo */}
-      <div className="px-5 py-5 border-b border-white/10">
+      <div className="px-5 py-5 border-b border-white/10 flex items-center justify-between">
         <div className="flex flex-col gap-1.5">
           <img src="/logo_white.png" alt="TechStop" className="h-7 w-auto object-contain object-left" />
           <p className="text-[9px] text-white/30 font-bold uppercase tracking-[0.2em] pl-0.5">Admin Panel</p>
         </div>
+        <button
+          onClick={onClose}
+          className="p-1 rounded-lg hover:bg-white/10 text-white/50 hover:text-white md:hidden"
+          aria-label="Close sidebar"
+        >
+          <X className="h-5 w-5" />
+        </button>
       </div>
 
       {/* Nav */}

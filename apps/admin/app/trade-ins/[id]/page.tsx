@@ -88,7 +88,7 @@ export default function TradeInDetailPage() {
         </div>
       )}
 
-      <div className="min-h-screen bg-background p-6 lg:p-8">
+      <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <button
@@ -146,7 +146,7 @@ export default function TradeInDetailPage() {
             {/* Device details */}
             <div className="bg-white rounded-3xl border border-zinc-100 shadow-sm p-6">
               <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-400 mb-4">Device Details</h2>
-              <div className="grid grid-cols-2 gap-x-8 gap-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">
                 {[
                   ["Category", item.category],
                   ["Brand", item.brand],

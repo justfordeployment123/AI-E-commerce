@@ -3,6 +3,7 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
+  color-scheme: light;
   --background: #ffffff;
   --foreground: #0f172a;
   --page-bg: #f8fafc;
@@ -46,6 +47,7 @@
 
 
 :root[data-theme="dark"] {
+  color-scheme: dark;
   --background: #11131c; /* Deep obsidian card background */
   --foreground: #f8fafc;
   --page-bg: #07080c;    /* Deep space black page background */
