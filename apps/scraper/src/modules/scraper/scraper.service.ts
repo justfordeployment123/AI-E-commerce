@@ -43,42 +43,56 @@ export class ScraperService implements OnApplicationBootstrap {
         // Wait for DB connection to fully stabilise
         await this.delay(3000);
 
-        const stuckRun = await this.prisma.scraperRun.findFirst({
-            where: { status: 'RUNNING' },
-            orderBy: { startedAt: 'desc' },
-        });
+        let stuckRun: { id: string; startedAt: Date } | null;
+        try {
+            stuckRun = await this.prisma.scraperRun.findFirst({
+                where: { status: 'RUNNING' },
+                orderBy: { startedAt: 'desc' },
+            });
+        } catch (error) {
+            this.logger.warn(
+                `Database unavailable at startup — skipping interrupted run check. ${error instanceof Error ? error.message : ''}`,
+            );
+            return;
+        }
 
         if (!stuckRun) {
             this.logger.log('Startup check: no interrupted runs found.');
             return;
         }
 
-        // Which devices were already written to the DB in this run?
-        const alreadyDone = await this.prisma.scrapedPrice.findMany({
-            where: { scrapedAt: { gte: stuckRun.startedAt } },
-            select: { deviceKey: true },
-        });
-        const doneKeys = new Set(alreadyDone.map(r => r.deviceKey));
+        try {
+            // Which devices were already written to the DB in this run?
+            const alreadyDone = await this.prisma.scrapedPrice.findMany({
+                where: { scrapedAt: { gte: stuckRun.startedAt } },
+                select: { deviceKey: true },
+            });
+            const doneKeys = new Set(alreadyDone.map(r => r.deviceKey));
 
-        this.logger.warn(
-            `Startup: found interrupted run ${stuckRun.id} from ${stuckRun.startedAt.toISOString()}. ` +
-            `${doneKeys.size} devices already done — resuming the rest.`,
-        );
+            this.logger.warn(
+                `Startup: found interrupted run ${stuckRun.id} from ${stuckRun.startedAt.toISOString()}. ` +
+                `${doneKeys.size} devices already done — resuming the rest.`,
+            );
 
-        // Mark the old run as failed with an explanatory message
-        await this.prisma.scraperRun.update({
-            where: { id: stuckRun.id },
-            data: {
-                status: 'FAILED',
-                finishedAt: new Date(),
-                errorMessage: `Service restarted mid-run — ${doneKeys.size} devices were already scraped and will be skipped in the resumed run.`,
-            },
-        });
+            // Mark the old run as failed with an explanatory message
+            await this.prisma.scraperRun.update({
+                where: { id: stuckRun.id },
+                data: {
+                    status: 'FAILED',
+                    finishedAt: new Date(),
+                    errorMessage: `Service restarted mid-run — ${doneKeys.size} devices were already scraped and will be skipped in the resumed run.`,
+                },
+            });
 
-        // Fire the resume in the background (non-blocking)
-        this.runScraper(undefined, doneKeys).catch(err => {
-            this.logger.error(`Auto-resume after crash failed: ${err?.message}`);
-        });
+            // Fire the resume in the background (non-blocking)
+            this.runScraper(undefined, doneKeys).catch(err => {
+                this.logger.error(`Auto-resume after crash failed: ${err?.message}`);
+            });
+        } catch (error) {
+            this.logger.warn(
+                `Failed to resume interrupted run — ${error instanceof Error ? error.message : error}`,
+            );
+        }
     }
 
     async runScraper(limit?: number, skipKeys?: Set<string>): Promise<Record<string, DevicePrices>> {

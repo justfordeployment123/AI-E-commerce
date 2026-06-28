@@ -54,4 +54,4 @@ USER scraper
 
 EXPOSE 3003
 
-CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy && node dist/main"]
+CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy || echo 'Warning: prisma migrate deploy failed, starting anyway' && node dist/main"]

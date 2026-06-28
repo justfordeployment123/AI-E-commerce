@@ -1,16 +1,12 @@
 import { Controller, Get } from '@nestjs/common';
-import * as os from 'os';
+import { HealthService } from './health.service';
 
 @Controller()
 export class HealthController {
+    constructor(private readonly healthService: HealthService) {}
+
     @Get('health')
     check() {
-        return {
-            status: 'ok',
-            service: 'scraper',
-            uptime: process.uptime(),
-            hostname: os.hostname(),
-            timestamp: new Date().toISOString(),
-        };
+        return this.healthService.getStatus();
     }
 }
