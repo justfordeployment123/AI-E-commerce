@@ -1382,13 +1382,13 @@ function AppPreview() {
                     {/* Product list */}
                     <div className="flex-1 px-4 space-y-2 overflow-hidden">
                       {[
-                        { name: "MacBook Air M2", price: "£849", grade: "A", seed: "mbp2" },
-                        { name: "AirPods Pro 2",  price: "£149", grade: "C",     seed: "app2" },
-                        { name: "iPad Air 5",     price: "£399", grade: "B", seed: "iap5" },
+                        { name: "MacBook Air M2", price: "£849", grade: "A", img: "/products/macbook-air-m2.png" },
+                        { name: "AirPods Pro 2",  price: "£149", grade: "C", img: "/products/airpods-pro-2.png" },
+                        { name: "iPad Air 5",     price: "£399", grade: "B", img: "/products/ipad-air-5.png" },
                       ].map((p, j) => (
                         <div key={j} className="flex items-center gap-3 bg-zinc-50 rounded-xl p-2">
                           <img
-                            src={`https://picsum.photos/seed/${p.seed}/48/48`}
+                            src={p.img}
                             alt={p.name}
                             className="h-9 w-9 rounded-lg object-cover bg-zinc-200 flex-shrink-0"
                           />
@@ -2272,57 +2272,6 @@ function GradeGuide() {
   );
 }
 
-// ─── Live Activity Feed ───────────────────────────────────────────────────────
-function LiveFeed() {
-  const [idx, setIdx] = useState(0);
-  const [mounted, setMounted] = useState(false);
-
-  const activity = [
-    { name: "James K.",  city: "Leicester",   device: "iPhone 14 Pro",       price: "£679", seed: "lf1" },
-    { name: "Aisha M.",  city: "London",      device: "MacBook Air M2",      price: "£849", seed: "lf2" },
-    { name: "Ben P.",    city: "Manchester",  device: "Samsung S23 Ultra",   price: "£599", seed: "lf3" },
-    { name: "Sofia R.",  city: "Birmingham",  device: "iPad Pro M2",         price: "£699", seed: "lf4" },
-    { name: "Tom C.",    city: "Bristol",     device: "AirPods Pro 2",       price: "£149", seed: "lf5" },
-    { name: "Priya D.",  city: "Edinburgh",   device: "PS5 Digital Edition", price: "£299", seed: "lf6" },
-  ];
-
-  useEffect(() => {
-    setMounted(true);
-    const t = setInterval(() => setIdx(i => (i + 1) % activity.length), 3500);
-    return () => clearInterval(t);
-  }, []);
-
-  if (!mounted) return null;
-  const a = activity[idx];
-
-  return (
-    <div className="border-b border-zinc-100 bg-zinc-50/80 py-3 overflow-hidden">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={idx}
-            initial={{ opacity: 0, y: 5 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -5 }}
-            transition={{ duration: 0.28 }}
-            className="flex items-center gap-3"
-          >
-            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" />
-            <img src={`https://picsum.photos/seed/${a.seed}/28/28`} alt="" className="h-7 w-7 rounded-full object-cover flex-shrink-0" />
-            <p className="text-xs font-medium text-zinc-600 truncate">
-              <span className="font-bold text-zinc-950">{a.name} from {a.city}</span>
-              {" just purchased a "}
-              <span className="font-bold text-zinc-950">{a.device}</span>
-              {" for "}
-              <span className="font-bold text-zinc-950 bg-accent/30 px-1.5 py-0.5 rounded">{a.price}</span>
-            </p>
-            <span className="ml-auto text-[10px] font-bold text-zinc-400 flex-shrink-0 hidden sm:block">Live</span>
-          </motion.div>
-        </AnimatePresence>
-      </div>
-    </div>
-  );
-}
 
 // ─── Savings Comparison ───────────────────────────────────────────────────────
 function SavingsComparison() {
@@ -3131,7 +3080,7 @@ export default function HomePage() {
       <MarqueeStrip />
       {/* <Hero /> */}
       <BrandsBar />
-      <LiveFeed />
+
       <CategoryBento />
       <FeaturedShop />
       <TopBrandsSplit />
