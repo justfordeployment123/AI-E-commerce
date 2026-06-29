@@ -232,7 +232,7 @@ function PromoCarouselBanner() {
                   </Link>
                   
                   <Link
-                    href="/how-it-works"
+                    href="/trade-in"
                     className="inline-flex h-12 px-5 items-center justify-center rounded-2xl border border-zinc-200/80 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/50 dark:hover:bg-zinc-900/50 transition-colors font-bold text-xs"
                   >
                     How it Works
@@ -954,7 +954,7 @@ function Hero() {
                 Shop all devices <ArrowRight className="h-4 w-4" />
               </a>
               <a
-                href="/how-it-works"
+                href="/trade-in"
                 className="h-14 px-8 border border-zinc-200 text-zinc-950 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-zinc-50 transition-colors"
               >
                 <Play className="h-4 w-4" /> How it works
@@ -1743,7 +1743,7 @@ function AppPreview() {
               <a href="/shop/phones" className="h-12 px-7 bg-zinc-950 text-white rounded-2xl font-bold text-sm flex items-center gap-2 hover:bg-zinc-800 transition-colors">
                 Start shopping <ArrowRight className="h-4 w-4" />
               </a>
-              <a href="/how-it-works" className="text-sm font-bold text-zinc-500 hover:text-zinc-950 transition-colors flex items-center gap-1.5">
+              <a href="/trade-in" className="text-sm font-bold text-zinc-500 hover:text-zinc-950 transition-colors flex items-center gap-1.5">
                 How it works <ArrowRight className="h-3.5 w-3.5" />
               </a>
             </div>
@@ -3266,8 +3266,8 @@ function SellCTA() {
             <a href="/trade-in" className="h-14 px-8 bg-accent text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-accent-dark transition-colors">
               Get instant quote <ArrowRight className="h-4 w-4" />
             </a>
-            <a href="/how-it-works" className="h-14 px-8 border border-zinc-700 text-white rounded-2xl font-bold text-sm flex items-center justify-center hover:border-zinc-400 transition-colors">
-              How selling works
+            <a href="/trade-in" className="h-14 px-8 border border-zinc-700 text-white rounded-2xl font-bold text-sm flex items-center justify-center hover:border-zinc-400 transition-colors">
+              How it works
             </a>
           </div>
         </div>

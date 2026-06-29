@@ -149,7 +149,11 @@
       "PowerShell(ls \"D:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\api\\\\node_modules\\\\.prisma\\\\client\\\\\" 2>&1)",
       "PowerShell(ls \"D:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\node_modules\\\\.prisma\\\\client\\\\\")",
       "Bash(grep -v \"//\\\\|picsum\\\\|pravatar\\\\|unsplash\\\\|motion\\\\.img\\\\|blob:\")",
-      "Bash(xargs grep -l \"Live\\\\b\")"
+      "Bash(xargs grep -l \"Live\\\\b\")",
+      "Bash(grep -rn \"from \\\\\"\\\\.\\\\.\\\\/\\\\.\\\\.\\\\/\" \"apps/web/app/\\(auth\\)\" \"apps/web/app/\\(info\\)\" \"apps/web/app/\\(services\\)\")",
+      "Bash(grep -rn \"from \\\\\"\\\\.\\\\.\\\\/\\\\.\\\\.\\\\/\" \"apps/web/app/\\(shop\\)\" \"apps/web/app/\\(account\\)\")",
+      "Bash(git rm *)",
+      "Bash(rmdir \"apps/web/app/\\(services\\)/sell\" \"apps/web/app/\\(info\\)/how-it-works\" \"apps/web/app/\\(info\\)/sustainability\")"
     ],
     "additionalDirectories": [
       "d:\\CODE\\Projects\\Markhor Systems Projects\\Ai-Ecommerce\\apps\\web\\app\\account\\repairs",

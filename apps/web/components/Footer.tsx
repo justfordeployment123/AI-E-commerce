@@ -1,12 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  Star,
-  Globe,
-  Mail,
-  MessageCircle
-} from "lucide-react";
+import { Star } from "lucide-react";
 
 export default function Footer() {
   const [theme, setTheme] = useState<string | null>(null);
@@ -39,13 +34,6 @@ export default function Footer() {
               We're on a mission to make world-class technology accessible and sustainable. 
               Join the circular tech revolution.
             </p>
-            <div className="mt-8 flex gap-4">
-               {[Globe, Mail, MessageCircle].map((Icon, i) => (
-                 <a key={i} href="#" className="h-10 w-10 rounded-xl bg-muted flex items-center justify-center text-zinc-400 hover:bg-accent hover:text-white transition-all border border-border/40">
-                    <Icon className="h-5 w-5" />
-                 </a>
-               ))}
-            </div>
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-2 gap-8 lg:col-span-2 lg:ml-auto">
@@ -63,8 +51,7 @@ export default function Footer() {
               <ul className="space-y-4 text-sm font-bold uppercase tracking-widest text-[10px]">
                 <li><a href="/trade-in" className="hover:text-accent transition-colors">Sell Your Tech</a></li>
                 <li><a href="/help" className="hover:text-accent transition-colors">Help Center</a></li>
-                <li><a href="/how-it-works" className="hover:text-accent transition-colors">Our Process</a></li>
-                <li><a href="/sustainability" className="hover:text-accent transition-colors">Environment</a></li>
+                <li><a href="/repair" className="hover:text-accent transition-colors">Repair</a></li>
               </ul>
             </div>
           </div>
@@ -90,9 +77,6 @@ export default function Footer() {
           
           <div className="flex flex-wrap justify-center gap-8 text-[10px] font-bold uppercase tracking-widest text-zinc-400">
             <span className="text-foreground">© 2024 TechStop Leicester</span>
-            <a href="/privacy" className="hover:text-foreground transition-colors">Privacy</a>
-            <a href="/terms" className="hover:text-foreground transition-colors">Terms</a>
-            <a href="/cookies" className="hover:text-foreground transition-colors">Cookies</a>
           </div>
         </div>
       </div>
