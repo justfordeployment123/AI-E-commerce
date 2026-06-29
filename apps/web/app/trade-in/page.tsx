@@ -477,6 +477,11 @@ export default function TradeInPage() {
         setIsWizardActive(true);
       } catch {}
     }
+
+    // Fetch stores on mount to show real info in the dropoff card
+    storesApi.list()
+      .then(setStores)
+      .catch(() => {});
   }, []);
 
   // Auto-save wizard state to sessionStorage whenever anything changes
@@ -690,6 +695,19 @@ export default function TradeInPage() {
 
 
 
+  const [selectedStoreId, setSelectedStoreId] = useState<string>("");
+  useEffect(() => {
+    if (stores.length > 0 && !selectedStoreId) {
+      setSelectedStoreId(stores[0].id);
+    }
+  }, [stores, selectedStoreId]);
+
+  const activeStore = stores.find(s => s.id === selectedStoreId) || stores[0];
+  const storeName = activeStore?.name || "TechStop Leicester";
+  const storeAddress = activeStore ? `${activeStore.address}, ${activeStore.city} ${activeStore.postcode}` : "104 High St, Leicester LE1 5YP";
+  const storeHours = activeStore?.openingHours || "Mon–Sat, 9:00 AM – 6:00 PM";
+  const mapsLink = activeStore ? `https://maps.google.com/?q=${encodeURIComponent(`${activeStore.name}, ${activeStore.address}, ${activeStore.city} ${activeStore.postcode}`)}` : "https://maps.google.com/?q=104+High+St,+Leicester+LE1+5YP";
+
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground font-sans relative overflow-x-hidden selection:bg-accent selection:text-white">
 
@@ -727,361 +745,293 @@ export default function TradeInPage() {
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[600px] h-[350px] bg-sky-500/10 blur-[130px] rounded-full pointer-events-none -z-10" />
 
           {/* Hero Section */}
-          <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-24 pb-16 text-center">
+          <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-12 lg:pt-16 pb-12">
+            
+            <div className="grid lg:grid-cols-12 gap-12 lg:gap-16 items-start text-left mb-12">
+              
+              {/* Left Column: Headline and Search */}
+              <div className="lg:col-span-5 flex flex-col items-start text-left">
+                {/* Trustpilot-style Rating Badge */}
+                <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100/50 dark:border-emerald-900/30 px-3.5 py-1.5 text-xs font-bold text-emerald-800 dark:text-emerald-400 mb-6 shadow-sm">
+                  <span className="flex items-center gap-0.5 text-emerald-600">
+                    <Star className="h-3 w-3 fill-emerald-500 text-emerald-500" />
+                    <Star className="h-3 w-3 fill-emerald-500 text-emerald-500" />
+                    <Star className="h-3 w-3 fill-emerald-500 text-emerald-500" />
+                    <Star className="h-3 w-3 fill-emerald-500 text-emerald-500" />
+                    <Star className="h-3 w-3 fill-emerald-500 text-emerald-500" />
+                  </span>
+                  <span>4.8/5 on Trustpilot</span>
+                </div>
 
-            {/* Trustpilot-style Rating Badge */}
-            <div className="inline-flex flex-wrap items-center justify-center gap-2 rounded-full bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100/50 dark:border-emerald-900/30 px-4 py-2 text-xs font-bold text-emerald-800 dark:text-emerald-400 mb-8 shadow-sm">
-              <span className="flex items-center gap-0.5 text-emerald-600">
-                <Star className="h-3.5 w-3.5 fill-emerald-500 text-emerald-500" />
-                <Star className="h-3.5 w-3.5 fill-emerald-500 text-emerald-500" />
-                <Star className="h-3.5 w-3.5 fill-emerald-500 text-emerald-500" />
-                <Star className="h-3.5 w-3.5 fill-emerald-500 text-emerald-500" />
-                <Star className="h-3.5 w-3.5 fill-emerald-500 text-emerald-500" />
-              </span>
-              <span>4.8/5 on Trustpilot</span>
-              <span className="text-emerald-300">|</span>
-              <span className="text-emerald-600 font-medium">Over 25,000+ happy sellers</span>
-            </div>
+                <h1 className="font-sans text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-zinc-950 dark:text-white mb-4 leading-none">
+                  Sell your tech <br className="hidden sm:inline" />
+                  for cash. <br />
+                  <span className="text-transparent bg-clip-text bg-linear-to-r from-zinc-500 via-zinc-800 to-zinc-950 dark:from-zinc-300 dark:via-zinc-100 dark:to-white">Fast. Fair. Easy.</span>
+                </h1>
+                
+                <p className="text-zinc-500 dark:text-zinc-400 font-semibold text-sm md:text-base mb-8 leading-relaxed">
+                  Get an instant online offer on your phone, tablet, laptop, or gaming console. Free fully-insured Royal Mail shipping is included with every trade.
+                </p>
 
-            <h1 className="font-sans text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tight text-zinc-950 dark:text-white mb-8 max-w-4xl mx-auto leading-none">
-              Sell your tech for cash. <br />
-              <span className="text-transparent bg-clip-text bg-linear-to-r from-zinc-500 via-zinc-800 to-zinc-950 dark:from-zinc-300 dark:via-zinc-100 dark:to-white">Fast. Fair. Easy.</span>
-            </h1>
-            <p className="max-w-2xl mx-auto text-zinc-500 font-semibold text-base md:text-lg mb-10 leading-relaxed">
-              Get an instant online offer on your phone, tablet, laptop, or gaming console. Free fully-insured Royal Mail shipping is included with every trade.
-            </p>
+                {/* Premium Search Autocomplete Bar */}
+                <div className="relative w-full max-w-xl mb-4 z-20">
+                  <div className="relative group">
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onFocus={() => setIsSearchFocused(true)}
+                      onBlur={() => setTimeout(() => setIsSearchFocused(false), 220)}
+                      placeholder="Search your device (e.g. iPhone 15 Pro...)"
+                      className="h-14 w-full rounded-2xl bg-zinc-100 dark:bg-zinc-900 border-2 border-transparent focus:border-accent focus:bg-white focus:dark:bg-zinc-900 pl-12 pr-6 text-sm font-semibold outline-none text-foreground transition-all shadow-sm"
+                    />
+                    <Search className="absolute left-4.5 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400 group-focus-within:text-accent transition-colors" />
+                  </div>
 
-            {/* Premium Search Autocomplete Bar */}
-            <div className="relative w-full max-w-xl mx-auto mb-6 z-20">
-              <div className="relative group">
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onFocus={() => setIsSearchFocused(true)}
-                  onBlur={() => setTimeout(() => setIsSearchFocused(false), 220)}
-                  placeholder="Search your device (e.g. iPhone 15 Pro, Watch Ultra, PS5...)"
-                  className="h-16 w-full rounded-2xl bg-zinc-100 dark:bg-zinc-900 border-2 border-transparent focus:border-accent focus:bg-white focus:dark:bg-zinc-900 pl-14 pr-6 text-sm font-semibold outline-none text-foreground transition-all shadow-lg hover:bg-zinc-200/50 dark:hover:bg-zinc-800 placeholder:text-zinc-400"
-                />
-                <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400 group-focus-within:text-accent transition-colors" />
+                  <AnimatePresence>
+                    {isSearchFocused && suggestions.length > 0 && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 12 }}
+                        className="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden text-left z-30 p-2"
+                      >
+                        {suggestions.map((sug, i) => (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => handleSelectSuggestion(sug)}
+                            className="w-full flex items-center justify-between p-3.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 rounded-xl transition-colors text-left"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="h-8 w-8 bg-zinc-100 dark:bg-zinc-800 rounded-lg flex items-center justify-center text-zinc-500">
+                                <Smartphone className="h-4.5 w-4.5" />
+                              </div>
+                              <div>
+                                <p className="text-xs font-extrabold text-zinc-950 dark:text-white">{sug.name}</p>
+                                <p className="text-[9px] text-zinc-400 font-bold uppercase tracking-wider mt-0.5">{sug.brand} · {sug.category}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1.5 text-[10px] font-bold text-zinc-400 hover:text-black dark:hover:text-white">
+                              Get Cash <ChevronRight className="h-3.5 w-3.5" />
+                            </div>
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Popular quick links */}
+                <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-semibold text-zinc-500 mb-8">
+                  <span className="text-zinc-500 font-extrabold">Popular:</span>
+                  {[
+                    { name: "iPhone 15 Pro Max", category: "Phone", brand: "Apple" },
+                    { name: "PS5 Disc Edition", category: "Console", brand: "Sony PlayStation" },
+                    { name: "MacBook Air 13\" M2", category: "Laptop", brand: "Apple" },
+                  ].map((item, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => handleSelectSuggestion({ name: item.name, category: item.category, brand: item.brand })}
+                      className="px-2.5 py-1 bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-800 dark:text-zinc-200 rounded-lg transition-colors font-bold shadow-sm"
+                    >
+                      {item.name}
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              <AnimatePresence>
-                {isSearchFocused && suggestions.length > 0 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 12 }}
-                    className="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden text-left z-30 p-2"
-                  >
-                    {suggestions.map((sug, i) => (
-                      <button
-                        key={i}
-                        onClick={() => handleSelectSuggestion(sug)}
-                        className="w-full flex items-center justify-between p-3.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 rounded-xl transition-colors text-left"
+              {/* Right Column: Category Cards Grid */}
+              <div className="lg:col-span-7 w-full">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="font-sans text-xl md:text-2xl font-extrabold tracking-tight text-zinc-950 dark:text-white leading-none">
+                    Select category to get started
+                  </h2>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-4 text-left">
+                  {catalogCats.map((cat) => {
+                    const meta = CAT_METADATA[cat.slug];
+                    const mood = meta?.mood ?? "bg-zinc-500/10 border-zinc-500/20";
+                    const moodIcon = meta?.moodIcon ?? "text-zinc-500";
+                    const img = cat.image ?? catFallbackImages[cat.slug] ?? "";
+                    const isProductFallback = !cat.image && !!catFallbackImages[cat.slug];
+                    const sub = cat.description ?? meta?.sub ?? "";
+                    const catId = meta?.oldId ?? cat.slug;
+                    const modelCount = cat.modelCount > 0 ? `${cat.modelCount}+ models` : null;
+                    return (
+                      <motion.button
+                        key={cat.id}
+                        whileHover={{ y: -4, scale: 1.01 }}
+                        whileTap={{ scale: 0.99 }}
+                        onClick={() => startWizard(catId)}
+                        className="flex flex-col rounded-2xl border border-zinc-200/60 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm hover:shadow-xl hover:border-zinc-300 dark:hover:border-zinc-650 transition-all duration-300 group overflow-hidden w-full text-left"
                       >
-                        <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 bg-zinc-100 dark:bg-zinc-800 rounded-lg flex items-center justify-center text-zinc-500">
-                            <Smartphone className="h-4.5 w-4.5" />
+                        <div className={`w-full aspect-[4/3] ${mood} relative overflow-hidden flex items-center justify-center`}>
+                          {img && (
+                            <img
+                              src={img}
+                              alt={cat.name}
+                              className={`transition-transform duration-500 group-hover:scale-[1.03] ${
+                                isProductFallback
+                                  ? "h-[70%] w-[70%] object-contain drop-shadow-lg"
+                                  : "h-full w-full object-cover group-hover:scale-[1.05]"
+                              }`}
+                            />
+                          )}
+                          <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-white/60 to-transparent dark:from-zinc-900/60 pointer-events-none" />
+                          {modelCount && (
+                            <div className="absolute top-2.5 right-2.5 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm rounded-full px-2 py-0.5 text-[8px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-300 border border-zinc-200/60 dark:border-zinc-700/60">
+                              {modelCount}
+                            </div>
+                          )}
+                        </div>
+                        <div className="px-3.5 py-3 flex items-center justify-between">
+                          <div className="min-w-0">
+                            <h3 className="font-extrabold text-xs sm:text-sm text-zinc-950 dark:text-white leading-tight truncate">{cat.name}</h3>
+                            {sub && <p className="text-[9px] text-zinc-400 mt-0.5 truncate">{sub}</p>}
                           </div>
-                          <div>
-                            <p className="text-xs font-extrabold text-zinc-950 dark:text-white">{sug.name}</p>
-                            <p className="text-[9px] text-zinc-400 font-bold uppercase tracking-wider mt-0.5">{sug.brand} · {sug.category}</p>
+                          <div className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${mood} group-hover:scale-105 transition-transform duration-200`}>
+                            <ChevronRight className={`h-3 w-3 ${moodIcon} group-hover:translate-x-0.5 transition-transform`} />
                           </div>
                         </div>
-                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-zinc-400 hover:text-black dark:hover:text-white">
-                          Get Cash <ChevronRight className="h-3.5 w-3.5" />
-                        </div>
-                      </button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                      </motion.button>
+                    );
+                  })}
+                </div>
+              </div>
+
             </div>
 
-            {/* Popular quick links */}
-            <div className="flex flex-wrap items-center justify-center gap-2 mb-28 text-xs font-semibold text-zinc-500">
-              <span className="text-zinc-500 font-extrabold">Popular:</span>
-              {[
-                { name: "iPhone 15 Pro Max", category: "Phone", brand: "Apple" },
-                { name: "PS5 Disc Edition", category: "Console", brand: "Sony PlayStation" },
-                { name: "MacBook Air 13\" M2", category: "Laptop", brand: "Apple" },
-                { name: "Apple Watch Ultra 2", category: "Smartwatch", brand: "Apple" },
-                { name: "AirPods Pro 2", category: "Audio", brand: "Apple" }
-              ].map((item, i) => (
-                <button
-                  key={i}
-                  onClick={() => handleSelectSuggestion({ name: item.name, category: item.category, brand: item.brand })}
-                  className="px-3.5 py-1.5 bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-800 dark:text-zinc-200 rounded-full transition-colors font-bold shadow-sm"
-                >
-                  {item.name}
-                </button>
-              ))}
-            </div>
-
-            {/* Value Proposition Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-5xl mx-auto border-t border-b border-zinc-200 dark:border-zinc-800 py-10 mb-28">
+            {/* Value Proposition Grid below the fold */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-7xl mx-auto border-t border-zinc-200 dark:border-zinc-800 pt-10 mb-28 text-left">
               {[
                 { Icon: Shield, title: "Highest Value Guaranteed", desc: "Always-updated market rates" },
                 { Icon: Zap, title: "Paid Within 48 Hours", desc: "Straight bank transfer deposit" },
                 { Icon: Truck, title: "Free & Insured Postage", desc: "Insured Royal Mail shipping label" },
                 { Icon: Clock, title: "14-Day Offer Lock-in", desc: "Protection against price drop" },
               ].map((item, idx) => (
-                <div key={idx} className="flex flex-col items-center text-center">
-                  <div className="h-12 w-12 bg-zinc-50 dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 flex items-center justify-center mb-3">
-                    <item.Icon className="h-5.5 w-5.5 text-zinc-700 dark:text-zinc-300" strokeWidth={1.8} />
+                <div key={idx} className="flex gap-3 items-start">
+                  <div className="h-10 w-10 bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 flex items-center justify-center shrink-0">
+                    <item.Icon className="h-5 w-5 text-zinc-700 dark:text-zinc-300" strokeWidth={1.8} />
                   </div>
-                  <h4 className="text-xs font-black uppercase tracking-wider text-zinc-900 dark:text-zinc-200 leading-tight mb-1">{item.title}</h4>
-                  <p className="text-[10px] text-zinc-400 font-semibold">{item.desc}</p>
+                  <div>
+                    <h4 className="text-xs font-black uppercase tracking-wider text-zinc-900 dark:text-zinc-200 leading-tight mb-1">{item.title}</h4>
+                    <p className="text-[9px] text-zinc-400 font-semibold">{item.desc}</p>
+                  </div>
                 </div>
               ))}
             </div>
 
-            {/* Category Cards Section with Real Beautiful Product Images */}
-            <h2 className="font-sans text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-zinc-950 dark:text-white mb-12 text-center">
-              Select category to get started
-            </h2>
-
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto mb-32 text-left">
-              {catalogCats.map((cat) => {
-                const meta = CAT_METADATA[cat.slug];
-                const mood = meta?.mood ?? "bg-zinc-500/10 border-zinc-500/20";
-                const moodIcon = meta?.moodIcon ?? "text-zinc-500";
-                const img = cat.image ?? catFallbackImages[cat.slug] ?? "";
-                const isProductFallback = !cat.image && !!catFallbackImages[cat.slug];
-                const sub = cat.description ?? meta?.sub ?? "";
-                const catId = meta?.oldId ?? cat.slug;
-                const modelCount = cat.modelCount > 0 ? `${cat.modelCount}+ models` : null;
-                return (
-                  <motion.button
-                    key={cat.id}
-                    whileHover={{ y: -6, scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => startWizard(catId)}
-                    className="flex flex-col rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm hover:shadow-2xl hover:border-zinc-300 dark:hover:border-zinc-600 transition-all duration-300 group overflow-hidden w-full text-left"
-                  >
-                    <div className={`w-full aspect-[4/3] ${mood} relative overflow-hidden flex items-center justify-center`}>
-                      {img && (
-                        <img
-                          src={img}
-                          alt={cat.name}
-                          className={`transition-transform duration-500 group-hover:scale-[1.04] ${
-                            isProductFallback
-                              ? "h-[75%] w-[75%] object-contain drop-shadow-xl"
-                              : "h-full w-full object-cover group-hover:scale-[1.06]"
-                          }`}
-                        />
-                      )}
-                      <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-white/60 to-transparent dark:from-zinc-900/60 pointer-events-none" />
-                      {modelCount && (
-                        <div className="absolute top-3 right-3 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-300 border border-zinc-200/60 dark:border-zinc-700/60">
-                          {modelCount}
-                        </div>
-                      )}
-                    </div>
-                    <div className="px-3 py-3 sm:px-5 sm:py-4 flex items-center justify-between">
-                      <div>
-                        <h3 className="font-extrabold text-sm sm:text-base text-zinc-950 dark:text-white leading-tight">{cat.name}</h3>
-                        {sub && <p className="text-[10px] sm:text-xs text-zinc-400 mt-0.5">{sub}</p>}
-                      </div>
-                      <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${mood} group-hover:scale-110 transition-transform duration-200 hidden sm:flex`}>
-                        <ChevronRight className={`h-4 w-4 ${moodIcon} group-hover:translate-x-0.5 transition-transform`} />
-                      </div>
-                    </div>
-                  </motion.button>
-                );
-              })}
-            </div>
-
-            {/* Popular Direct Valuations */}
-            <div className="max-w-5xl mx-auto mb-32 text-left">
-              <div className="flex flex-col md:flex-row md:items-end justify-between mb-12">
-                <div>
-                  <div className="inline-flex items-center gap-1.5 rounded-full bg-sky-500/10 text-sky-600 border border-sky-500/20 px-3 py-1 text-[10px] font-black uppercase tracking-widest mb-3">
-                    <Sparkles className="h-3.5 w-3.5 fill-sky-600 text-sky-600" />
-                    High Demand Valuations
-                  </div>
-                  <h2 className="font-sans text-4xl md:text-5xl font-extrabold tracking-tight text-zinc-950 dark:text-white leading-none">
-                    Hot trade-in prices
-                  </h2>
-                </div>
-                <p className="text-zinc-500 dark:text-zinc-400 font-semibold text-sm max-w-sm mt-4 md:mt-0 leading-relaxed">
-                  Ready to upgrade? We are currently paying premium rates for these popular devices:
+            {/* Choose How to Trade In */}
+            <div className="max-w-5xl mx-auto mb-20 text-left font-sans">
+              <div className="text-center mb-12">
+                <h3 className="font-sans text-3xl md:text-4xl font-extrabold tracking-tight text-zinc-950 dark:text-white leading-none mb-3">
+                  Two Convenient Ways to Get Paid
+                </h3>
+                <p className="text-zinc-500 dark:text-zinc-400 font-semibold text-sm max-w-xl mx-auto leading-relaxed">
+                  Whether you prefer the ease of shipping from home or the speed of in-person trade, we've got you covered.
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {hotItems.map((p) => {
-                  const tradeInVal = p.comparePrice ?? Math.round((p.price ?? 0) * 1.35);
-                  const mood = CAT_NAME_MOOD[p.category] ?? "bg-zinc-500/10";
-                  const wizardId = CAT_NAME_TO_WIZARD_ID[p.category] ?? p.category;
-                  // Device categories have lifestyle photos → cover; accessories/others have product shots → contain
-                  const isDeviceCat = ["Phones","Tablets","Consoles","Laptops","Audio"].includes(p.category);
-                  return (
-                    <motion.div
-                      key={p.id}
-                      whileHover={{ y: -6 }}
-                      className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl flex flex-col overflow-hidden hover:shadow-xl hover:border-zinc-300 dark:hover:border-zinc-600 transition-all duration-300 group shadow-sm"
-                    >
-                      <div className={`w-full aspect-[4/3] ${mood} relative overflow-hidden ${isDeviceCat ? "" : "p-6"}`}>
-                        {p.images?.[0] && (
-                          <img
-                            src={p.images[0]}
-                            alt={p.name}
-                            className={`h-full w-full transition-transform duration-500 group-hover:scale-105 ${
-                              isDeviceCat ? "object-cover" : "object-contain drop-shadow-xl"
-                            }`}
-                          />
-                        )}
-                        {isDeviceCat && <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-white/50 to-transparent dark:from-zinc-900/50 pointer-events-none" />}
-                      </div>
-                      <div className="p-5">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">{p.brand}</span>
-                        <h4 className="font-extrabold text-base text-zinc-900 dark:text-white leading-tight mt-0.5 truncate">{p.name}</h4>
-                        <div className="flex items-center justify-between mt-4">
-                          <div>
-                            <p className="text-[9px] font-black uppercase tracking-widest text-zinc-400 leading-none">Up to</p>
-                            <p className="text-2xl font-black text-zinc-950 dark:text-white mt-0.5">£{tradeInVal}</p>
-                          </div>
-                          <button
-                            onClick={() => handleSelectSuggestion({ name: p.name, category: wizardId, brand: p.brand })}
-                            className="px-4 py-2.5 bg-zinc-950 dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-100 text-white dark:text-zinc-950 rounded-xl text-xs font-black transition-colors"
-                          >
-                            Sell Now
-                          </button>
-                        </div>
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </div>
-            </div>
-
-
-
-            {/* "3 Easy Steps" component */}
-            <div className="max-w-5xl mx-auto mb-32">
-              <h2 className="font-sans text-4xl md:text-5xl font-extrabold tracking-tight text-zinc-950 dark:text-white mb-14 text-center">
-                Just 3 easy steps
-              </h2>
-              <div className="grid md:grid-cols-3 gap-8 text-left">
-                {[
-                  { step: "1", title: "Instant Offer Valuation", desc: "Select your hardware models and complete our 2-minute diagnostic questionnaire to lock in a cash offer." },
-                  { step: "2", title: "Free Postage Label", desc: "Pack your device securely and dispatch it using our prepaid, fully-insured Royal Mail parcel shipping labels." },
-                  { step: "3", title: "Direct Bank Transfer", desc: "Our technicians inspect the hardware. Upon verification, funds are released directly to your account within 48 hours." },
-                ].map((item) => (
-                  <div key={item.step} className="flex flex-col items-start p-8 rounded-[2rem] bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 relative hover:shadow-md transition-all">
-                    <div className="h-10 w-10 rounded-xl bg-black dark:bg-zinc-800 text-white font-black text-sm flex items-center justify-center mb-6">
-                      {item.step}
+              <div className="grid md:grid-cols-2 gap-8">
+                {/* Method 1: Postal */}
+                <div className="flex flex-col justify-between p-8 rounded-[2.5rem] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm hover:shadow-xl transition-all group">
+                  <div>
+                    <div className="h-12 w-12 bg-sky-500/10 dark:bg-sky-500/20 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-105 transition-transform">
+                      <Truck className="h-6 w-6 text-sky-500" />
                     </div>
-                    <h4 className="font-extrabold text-lg text-zinc-950 dark:text-white mb-2">{item.title}</h4>
-                    <p className="text-zinc-500 dark:text-zinc-400 text-xs font-semibold leading-relaxed">{item.desc}</p>
+                    <h4 className="font-black text-xl text-zinc-950 dark:text-white mb-2">Post it Free &amp; Insured</h4>
+                    <p className="text-zinc-500 dark:text-zinc-400 text-xs font-semibold leading-relaxed mb-6">
+                      Accept your instant valuation online and we'll generate a prepaid, fully-insured Royal Mail postage label. Wrap your device, drop it off at any Post Office counter, and get paid directly to your bank account within 48 hours of inspection.
+                    </p>
+                    <ul className="space-y-2.5 mb-8">
+                      {[
+                        "Free insured Royal Mail trackable shipping",
+                        "Paid directly via Faster Payments bank transfer",
+                        "Data wipe certificate emailed to you",
+                      ].map((item, i) => (
+                        <li key={i} className="flex items-center gap-2.5 text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                          <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                ))}
-              </div>
-            </div>
-
-
-
-            {/* Impact section */}
-            <div className="max-w-5xl mx-auto mb-32 text-left">
-              <div className="bg-zinc-950 text-white rounded-[3rem] p-10 md:p-16 grid md:grid-cols-3 gap-12 relative overflow-hidden shadow-2xl border border-zinc-900">
-                <div className="absolute bottom-0 right-0 w-96 h-96 bg-sky-500/5 blur-[100px] rounded-full pointer-events-none" />
-                
-                {/* Stat 1: UK Idle Phones */}
-                <div className="space-y-3 relative">
-                  <p className="font-sans text-5xl md:text-6xl font-extrabold text-sky-400 tracking-tighter leading-none">
-                    <AnimatedNumber
-                      value={stats.ukIdlePhones}
-                      format={(val) => Math.round(val) + "M"}
-                      suffix="+"
-                      startOffset={10}
-                      duration={1800}
-                    />
-                  </p>
-                  <h4 className="font-extrabold text-sm text-white">UK Idle Phones</h4>
-                  <p className="text-zinc-400 text-xs font-semibold leading-relaxed">
-                    Ofcom research shows <span className="text-white font-bold">55 million</span> phones are sitting unused in UK homes. Trade yours in and put cash in your pocket.
-                  </p>
+                  <button
+                    type="button"
+                    onClick={() => startWizard("Phone")}
+                    className="w-full py-3.5 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-750 text-zinc-900 dark:text-zinc-100 rounded-xl text-xs font-black transition-colors flex items-center justify-center gap-1.5"
+                  >
+                    Start Postal Quote <ChevronRight className="h-4 w-4" />
+                  </button>
                 </div>
 
-                {/* Stat 2: Lifespan Extension */}
-                <div className="space-y-3 relative">
-                  <p className="font-sans text-5xl md:text-6xl font-extrabold text-sky-400 tracking-tighter leading-none">
-                    <AnimatedNumber
-                      value={stats.lifespanExtension}
-                      format={(val) => val.toFixed(1).replace(/\.0$/, "")}
-                      suffix="x"
-                      startOffset={1}
-                      duration={1200}
-                    />
-                  </p>
-                  <h4 className="font-extrabold text-sm text-white">Lifespan Extension</h4>
-                  <p className="text-zinc-400 text-xs font-semibold leading-relaxed">
-                    Every smartphone or laptop refurbished doubles its operational lifetime, conserving precious raw minerals.
-                  </p>
-                </div>
-
-                {/* Stat 3: Idle Electronics */}
-                <div className="space-y-3 relative">
-                  <p className="font-sans text-5xl md:text-6xl font-extrabold text-sky-400 tracking-tighter leading-none">
-                    <AnimatedNumber
-                      value={stats.idleElectronics / 1000000000}
-                      format={(val) => String(val)}
-                      suffix=" Billion"
-                      startOffset={4}
-                      duration={1500}
-                    />
-                  </p>
-                  <h4 className="font-extrabold text-sm text-white">Idle Electronics</h4>
-                  <p className="text-zinc-400 text-xs font-semibold leading-relaxed">
-                    GSMA data shows <span className="text-white font-bold">5 billion</span> mobile devices are sitting unused globally. Yours could be someone else's next phone.
-                  </p>
-                </div>
-
-              </div>
-            </div>
-
-            {/* FAQs Accordion */}
-            <div className="max-w-3xl mx-auto mb-20 text-left">
-              <h2 className="font-sans text-4xl md:text-5xl font-extrabold tracking-tight text-center text-zinc-950 dark:text-white mb-14">
-                Frequently asked questions
-              </h2>
-              <div className="space-y-4">
-                {[
-                  { q: "How is my trade-in valuation calculated?", a: "Valuations are calculated in real time using automated depreciation rates. We grade overall condition (Mint, Good, Used, Damaged) and modify the base product value using specific inputs from hardware tests (e.g. screen wear, battery capacity index, bios checks, and loose connectivity ports)." },
-                  { q: "How do I ship my device to TechStop Leicester?", a: "After accepting your offer, you'll receive a printable, prepaid shipping voucher via email. Pack the hardware inside a standard bubble mailer envelope or corrugated cardboard box, tape the label on top, and scan it free of charge at any post office counter." },
-                  { q: "How and when do I get paid?", a: "Payments are triggered instantly upon physical verification of the hardware model and diagnostic matching. Sums are disbursed via Faster Payments direct bank deposit or PayPal transfer. Leicester store credit is also available with a 10% bonus." },
-                  { q: "What happens to the data on my device?", a: "We run hardware through an enterprise-grade sanitization wipe that permanently destroys all files and accounts. For safety, we recommend clearing personal iCloud, Google accounts, and factory resetting before dispatch." },
-                  { q: "What if the device condition is different than described?", a: "If our in-store inspection reveals errors in grading (e.g., cracked back glass, dead pixels), we issue an adjusted quote. If you choose to decline, we mail the device back to you for free with return tracking provided." }
-                ].map((faq, idx) => (
-                  <div key={idx} className="border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden bg-white dark:bg-zinc-900 shadow-sm hover:shadow-md transition-shadow">
-                    <button
-                      onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
-                      className="w-full flex items-center justify-between p-6 text-left font-bold text-sm text-zinc-950 dark:text-white hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
-                    >
-                      <span className="flex items-center gap-3">
-                        <HelpCircle className="h-4.5 w-4.5 text-zinc-400 shrink-0" />
-                        {faq.q}
-                      </span>
-                      <ChevronDown className={`h-4.5 w-4.5 text-zinc-400 transition-transform duration-300 shrink-0 ${openFaq === idx ? "rotate-180" : ""}`} />
-                    </button>
-                    <AnimatePresence initial={false}>
-                      {openFaq === idx && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: "auto", opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.25, ease: "easeInOut" }}
+                {/* Method 2: In-Store */}
+                <div className="flex flex-col justify-between p-8 rounded-[2.5rem] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm hover:shadow-xl transition-all group relative">
+                  <div className="absolute top-6 right-6 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-3 py-1 text-[9px] font-black uppercase tracking-widest">
+                    <span className="relative flex h-1.5 w-1.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                    </span>
+                    Open Now
+                  </div>
+                  <div>
+                    <div className="h-12 w-12 bg-emerald-500/10 dark:bg-emerald-500/20 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-105 transition-transform">
+                      <MapPin className="h-6 w-6 text-emerald-500" />
+                    </div>
+                    <h4 className="font-black text-xl text-zinc-950 dark:text-white mb-2">Leicester Store Drop-Off</h4>
+                    <p className="text-zinc-500 dark:text-zinc-400 text-xs font-semibold leading-relaxed mb-6">
+                      Prefer instant hand-to-hand transactions? Bring your device directly to our retail store. Our on-site diagnostics team will inspect your hardware on the spot and hand you cash or apply a 10% bonus store credit index in under 15 minutes.
+                    </p>
+                    {stores.length > 1 && (
+                      <div className="mb-4">
+                        <label className="text-[10px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500 block mb-1.5">Select Store Location</label>
+                        <select
+                          value={selectedStoreId}
+                          onChange={(e) => setSelectedStoreId(e.target.value)}
+                          className="h-10 w-full rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/60 dark:border-zinc-800/80 px-3 text-xs font-bold text-zinc-800 dark:text-zinc-200 outline-none focus:border-accent"
                         >
-                          <div className="px-6 pb-6 text-xs text-zinc-500 dark:text-zinc-400 font-semibold leading-relaxed border-t border-zinc-100 dark:border-zinc-800 pt-4 bg-zinc-50/50 dark:bg-zinc-950/20">
-                            {faq.a}
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+                          {stores.map(s => (
+                            <option key={s.id} value={s.id}>{s.name} ({s.city})</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                    <div className="bg-zinc-50 dark:bg-zinc-950/40 rounded-2xl p-4 border border-zinc-200/60 dark:border-zinc-800/80 space-y-2 mb-6">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-zinc-400 font-bold">Address</span>
+                        <span className="text-zinc-900 dark:text-zinc-200 font-black">{storeAddress}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-zinc-400 font-bold">Opening Hours</span>
+                        <span className="text-zinc-900 dark:text-zinc-200 font-black">{storeHours}</span>
+                      </div>
+                    </div>
+                    {/* Interactive Store Location Map */}
+                    <div className="w-full h-40 rounded-2xl overflow-hidden border border-zinc-200/80 dark:border-zinc-850 mb-6 shadow-inner relative group bg-zinc-100 dark:bg-zinc-950">
+                      <iframe
+                        title="Store Location Map"
+                        width="100%"
+                        height="100%"
+                        frameBorder="0"
+                        style={{ border: 0 }}
+                        src={`https://maps.google.com/maps?q=${encodeURIComponent(storeAddress)}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
+                        allowFullScreen
+                        className="grayscale opacity-90 dark:opacity-85 contrast-[0.95] group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500"
+                      />
+                    </div>
                   </div>
-                ))}
+                  <a
+                    href={mapsLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-3.5 bg-zinc-950 dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-100 text-white dark:text-zinc-950 rounded-xl text-xs font-black transition-colors flex items-center justify-center gap-1.5 text-center"
+                  >
+                    Get Directions <MapPin className="h-4 w-4" />
+                  </a>
+                </div>
               </div>
             </div>
           </section>

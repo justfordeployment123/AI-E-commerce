@@ -512,6 +512,52 @@ async function seedOtherProducts() {
     console.log(`✓ Other products: ${created} created, ${skipped} already existed`);
 }
 
+async function seedStores() {
+    await prisma.store.upsert({
+        where: { id: 'leicester-central' },
+        update: {
+            name: 'TechStop Leicester',
+            address: '104 High St',
+            city: 'Leicester',
+            postcode: 'LE1 5YP',
+            phone: '07343055398',
+            openingHours: 'Mon–Sat, 9:00 AM – 6:00 PM',
+            isActive: true,
+        },
+        create: {
+            id: 'leicester-central',
+            name: 'TechStop Leicester',
+            address: '104 High St',
+            city: 'Leicester',
+            postcode: 'LE1 5YP',
+            phone: '07343055398',
+            openingHours: 'Mon–Sat, 9:00 AM – 6:00 PM',
+            isActive: true,
+        }
+    });
+    console.log('✓ Stores done');
+}
+
+async function seedHelplines() {
+    await prisma.helplineNumber.upsert({
+        where: { id: 'helpline-store' },
+        update: {
+            label: 'Leicester Store Helpline',
+            number: '07343055398',
+            isActive: true,
+            order: 0,
+        },
+        create: {
+            id: 'helpline-store',
+            label: 'Leicester Store Helpline',
+            number: '07343055398',
+            isActive: true,
+            order: 0,
+        }
+    });
+    console.log('✓ Helplines done');
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -530,6 +576,8 @@ async function main() {
     await seedBrands();        // brand logos + brand images
     await seedBanners();       // background banners
     await seedPromoSlides();   // promo carousel from slides.json
+    await seedStores();        // TechStop retail stores
+    await seedHelplines();     // Store Helpline numbers
 
     const catalogIdMap = await seedDeviceCatalog(productsData);
     await seedProducts(productsData, catalogIdMap);
@@ -541,3 +589,4 @@ async function main() {
 main()
     .catch(e => { console.error('Seed failed:', e); process.exit(1); })
     .finally(async () => { await prisma.$disconnect(); await pool.end(); });
+

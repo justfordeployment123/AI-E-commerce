@@ -13,10 +13,24 @@ import {
   CheckCircle2,
   Leaf
 } from "lucide-react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import Footer from "../../components/Footer";
 
 export default function SellPage() {
+  const [searchVal, setSearchVal] = useState("");
+  const router = useRouter();
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchVal.trim()) {
+      router.push(`/trade-in?search=${encodeURIComponent(searchVal)}`);
+    } else {
+      router.push(`/trade-in`);
+    }
+  };
+
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground font-sans selection:bg-accent selection:text-white">
 
@@ -60,17 +74,19 @@ export default function SellPage() {
                   transition={{ delay: 0.3 }}
                   className="relative max-w-xl mx-auto lg:mx-0"
                 >
-                  <div className="relative group">
+                  <form onSubmit={handleSearchSubmit} className="relative group">
                     <input 
                       type="text" 
+                      value={searchVal}
+                      onChange={(e) => setSearchVal(e.target.value)}
                       placeholder="Search your device..."
-                      className="w-full h-20 rounded-[1.5rem] bg-white border-2 border-transparent focus:border-accent px-8 text-lg outline-none transition-all shadow-xl"
+                      className="w-full h-20 rounded-[1.5rem] bg-white border-2 border-transparent focus:border-accent px-8 text-lg outline-none transition-all shadow-xl text-zinc-900"
                     />
-                    <button className="absolute right-3 top-3 bottom-3 bg-accent text-white rounded-[1.25rem] px-4 sm:px-8 font-bold flex items-center gap-2 transition-all hover:scale-[1.02] hover:bg-accent-dark active:scale-[0.98]">
+                    <button type="submit" className="absolute right-3 top-3 bottom-3 bg-accent text-white rounded-[1.25rem] px-4 sm:px-8 font-bold flex items-center gap-2 transition-all hover:scale-[1.02] hover:bg-accent-dark active:scale-[0.98] cursor-pointer">
                       <span className="hidden sm:inline">Search</span>
                       <ArrowRight className="h-5 w-5 text-white" />
                     </button>
-                  </div>
+                  </form>
                 </motion.div>
               </div>
 

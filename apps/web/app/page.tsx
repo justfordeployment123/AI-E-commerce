@@ -72,15 +72,16 @@ function ScrollButtons({ scrollRef }: { scrollRef: React.RefObject<HTMLElement |
 
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ShoppingCart, ShieldCheck, RefreshCw, Leaf, ArrowRight,
   Star, Search, Play, Recycle, TrendingUp, Package, BadgeCheck,
   Zap, Check, Smartphone, Laptop, Headphones, Gamepad2, Tablet,
-  ChevronLeft, ChevronRight
+  ChevronLeft, ChevronRight, MapPin, Clock, Phone
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import NextImage from "next/image";
-import { productsApi, reviewsApi, bannersApi, catalogApi } from "../lib/api";
+import { productsApi, reviewsApi, bannersApi, catalogApi, storesApi, type Store } from "../lib/api";
 import type { CatalogBrand } from "../lib/api";
 import { getGradeConfig } from "../lib/grades";
 import { GradeBadge } from "../components/GradeBadge";
@@ -221,21 +222,21 @@ function PromoCarouselBanner() {
                 </h1>
 
                 <div className="flex flex-wrap items-center gap-4 mt-2">
-                  <a
-                    href={slide.btnLink}
+                  <Link
+                    href={slide.btnLink === "/sell" ? "/trade-in" : slide.btnLink}
                     className="group relative inline-flex h-12 pl-6 pr-10 items-center justify-center bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 rounded-2xl font-bold text-xs overflow-hidden transition-all hover:bg-zinc-900 dark:hover:bg-zinc-50 shadow-md hover:shadow-lg active:scale-97 cursor-pointer"
                   >
                     <span className="relative z-10">{slide.btnText}</span>
                     <ArrowRight className="absolute right-4.5 h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
                     <div className="absolute inset-0 bg-white/10 dark:bg-black/5 translate-y-full group-hover:translate-y-0 transition-transform" />
-                  </a>
+                  </Link>
                   
-                  <a
+                  <Link
                     href="/how-it-works"
                     className="inline-flex h-12 px-5 items-center justify-center rounded-2xl border border-zinc-200/80 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/50 dark:hover:bg-zinc-900/50 transition-colors font-bold text-xs"
                   >
                     How it Works
-                  </a>
+                  </Link>
                 </div>
               </motion.div>
             </AnimatePresence>
@@ -483,6 +484,264 @@ function BrandsBar() {
               );
             })}
           </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+const HOME_TRADE_IN_MODELS = [
+  // Phones
+  { name: "iPhone 15 Pro Max", category: "Phone", brand: "Apple" },
+  { name: "iPhone 15 Pro", category: "Phone", brand: "Apple" },
+  { name: "iPhone 15 Plus", category: "Phone", brand: "Apple" },
+  { name: "iPhone 15", category: "Phone", brand: "Apple" },
+  { name: "iPhone 14 Pro Max", category: "Phone", brand: "Apple" },
+  { name: "iPhone 14 Pro", category: "Phone", brand: "Apple" },
+  { name: "iPhone 13 Pro Max", category: "Phone", brand: "Apple" },
+  { name: "iPhone 13 Pro", category: "Phone", brand: "Apple" },
+  { name: "iPhone 13", category: "Phone", brand: "Apple" },
+  { name: "Galaxy S24 Ultra", category: "Phone", brand: "Samsung" },
+  { name: "Galaxy S24+", category: "Phone", brand: "Samsung" },
+  { name: "Galaxy S24", category: "Phone", brand: "Samsung" },
+  { name: "Galaxy S23 Ultra", category: "Phone", brand: "Samsung" },
+  { name: "Galaxy S23+", category: "Phone", brand: "Samsung" },
+  { name: "Galaxy S23", category: "Phone", brand: "Samsung" },
+  { name: "Pixel 8 Pro", category: "Phone", brand: "Google" },
+  { name: "Pixel 8", category: "Phone", brand: "Google" },
+  { name: "Pixel 7 Pro", category: "Phone", brand: "Google" },
+  { name: "Pixel 7", category: "Phone", brand: "Google" },
+  // Laptops
+  { name: "MacBook Pro 16\" M3 Max", category: "Laptop", brand: "Apple" },
+  { name: "MacBook Pro 16\" M3 Pro", category: "Laptop", brand: "Apple" },
+  { name: "MacBook Pro 14\" M3 Pro", category: "Laptop", brand: "Apple" },
+  { name: "MacBook Air 15\" M3", category: "Laptop", brand: "Apple" },
+  { name: "MacBook Air 13\" M3", category: "Laptop", brand: "Apple" },
+  { name: "MacBook Air 15\" M2", category: "Laptop", brand: "Apple" },
+  { name: "MacBook Air 13\" M2", category: "Laptop", brand: "Apple" },
+  { name: "MacBook Air 13\" M1", category: "Laptop", brand: "Apple" },
+  { name: "XPS 15 (2024)", category: "Laptop", brand: "Dell" },
+  { name: "XPS 13 (2024)", category: "Laptop", brand: "Dell" },
+  // Consoles
+  { name: "PS5 Disc Edition", category: "Console", brand: "Sony PlayStation" },
+  { name: "PS5 Digital Edition", category: "Console", brand: "Sony PlayStation" },
+  { name: "Xbox Series X", category: "Console", brand: "Microsoft Xbox" },
+  { name: "Xbox Series S", category: "Console", brand: "Microsoft Xbox" },
+  { name: "Nintendo Switch OLED", category: "Console", brand: "Nintendo" },
+  { name: "Nintendo Switch Lite", category: "Console", brand: "Nintendo" },
+  // Tablets
+  { name: "iPad Pro 13\" M4", category: "Tablet", brand: "Apple" },
+  { name: "iPad Pro 11\" M4", category: "Tablet", brand: "Apple" },
+  { name: "iPad Air 13\" M2", category: "Tablet", brand: "Apple" },
+  { name: "iPad Air 11\" M2", category: "Tablet", brand: "Apple" },
+  { name: "iPad Pro 13\" M2", category: "Tablet", brand: "Apple" },
+  { name: "iPad Pro 11\" M2", category: "Tablet", brand: "Apple" },
+  { name: "iPad Air 5th Gen", category: "Tablet", brand: "Apple" },
+  { name: "iPad 10th Gen", category: "Tablet", brand: "Apple" },
+];
+
+// ─── Trade-In CTA Section ──────────────────────────────────────────────────
+const getGlowClass = (slug: string) => {
+  switch (slug) {
+    case "phones":   return "hover:shadow-sky-500/10 hover:border-sky-500/35 dark:hover:shadow-sky-500/5";
+    case "laptops":  return "hover:shadow-amber-500/10 hover:border-amber-500/35 dark:hover:shadow-amber-500/5";
+    case "consoles": return "hover:shadow-violet-500/10 hover:border-violet-500/35 dark:hover:shadow-violet-500/5";
+    case "tablets":  return "hover:shadow-rose-500/10 hover:border-rose-500/35 dark:hover:shadow-rose-500/5";
+    default:         return "hover:shadow-zinc-500/10 hover:border-zinc-500/35";
+  }
+};
+
+function TradeInCTASection() {
+  const [searchVal, setSearchVal] = useState("");
+  const [isFocused, setIsFocused] = useState(false);
+  const router = useRouter();
+  const [categories, setCategories] = useState<import('../lib/api').CatalogCategory[]>([]);
+  const [fallbacks, setFallbacks] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    catalogApi.listCategories()
+      .then(cats => {
+        const mainSlugs = ["phones", "laptops", "consoles", "tablets"];
+        const filtered = cats.filter(c => mainSlugs.includes(c.slug));
+        filtered.sort((a, b) => mainSlugs.indexOf(a.slug) - mainSlugs.indexOf(b.slug));
+        setCategories(filtered);
+
+        filtered.forEach(c => {
+          if (!c.image) {
+            productsApi.list({ category: c.name, limit: 1 })
+              .then(r => {
+                const img = r.items[0]?.images?.[0];
+                if (img) setFallbacks(prev => ({ ...prev, [c.slug]: img }));
+              })
+              .catch(() => {});
+          }
+        });
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchVal.trim()) {
+      router.push(`/trade-in?search=${encodeURIComponent(searchVal)}`);
+    } else {
+      router.push(`/trade-in`);
+    }
+  };
+
+  const getCatBg = (slug: string) => {
+    switch (slug) {
+      case "phones":   return "bg-sky-50 dark:bg-sky-950/20 text-sky-900 dark:text-sky-400";
+      case "laptops":  return "bg-amber-50 dark:bg-amber-950/20 text-amber-900 dark:text-amber-400";
+      case "consoles": return "bg-violet-50 dark:bg-violet-950/20 text-violet-900 dark:text-violet-400";
+      case "tablets":  return "bg-rose-50 dark:bg-rose-950/20 text-rose-900 dark:text-rose-400";
+      default:         return "bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-400";
+    }
+  };
+
+  const getDisplayLabel = (slug: string) => {
+    switch (slug) {
+      case "phones":   return "Smartphones";
+      case "laptops":  return "Laptops & MacBooks";
+      case "consoles": return "Consoles";
+      case "tablets":  return "Tablets & iPads";
+      default:         return "";
+    }
+  };
+
+  const suggestions = searchVal.trim() === ""
+    ? []
+    : HOME_TRADE_IN_MODELS.filter(m => m.name.toLowerCase().includes(searchVal.toLowerCase())).slice(0, 5);
+
+  return (
+    <section className="bg-white dark:bg-zinc-950 py-20 border-b border-zinc-100 dark:border-zinc-900 relative overflow-hidden font-sans">
+      {/* Ambient decorative orbs */}
+      <div className="absolute top-1/2 left-0 -translate-y-1/2 w-[500px] h-[500px] bg-zinc-150/40 dark:bg-zinc-900/30 rounded-full blur-[120px] pointer-events-none -z-10" />
+      <div className="absolute top-0 right-[-10%] w-[450px] h-[450px] bg-sky-500/5 dark:bg-sky-500/10 blur-[130px] rounded-full pointer-events-none -z-10" />
+
+      {/* Grid Pattern Overlay */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808006_1px,transparent_1px),linear-gradient(to_bottom,#80808006_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
+      
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="grid lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+          
+          {/* Left Column: Headline and Search */}
+          <div className="lg:col-span-5 flex flex-col items-start text-left">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800 text-[10px] font-black uppercase tracking-widest mb-6">
+              <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+              TechStop Trade-In
+            </span>
+            
+            <h2 className="text-4xl md:text-5xl font-black tracking-tight text-zinc-950 dark:text-white leading-tight mb-4">
+              Sell your old tech. <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent via-accent to-zinc-950 dark:to-white">Get cash in 48 hours.</span>
+            </h2>
+            
+            <p className="text-zinc-500 dark:text-zinc-400 text-sm md:text-base font-semibold leading-relaxed mb-8">
+              We pay premium market rates for used smartphones, laptops, tablets, and gaming consoles. Trade in online with free insured Royal Mail shipping or drop off in-store.
+            </p>
+            
+            {/* Functional search bar */}
+            <form onSubmit={handleSearchSubmit} className="w-full max-w-md mb-8 relative">
+              <div className="relative group">
+                <input
+                  type="text"
+                  value={searchVal}
+                  onChange={(e) => setSearchVal(e.target.value)}
+                  onFocus={() => setIsFocused(true)}
+                  onBlur={() => setTimeout(() => setIsFocused(false), 200)}
+                  placeholder="Search your device (e.g. iPhone 15, PS5...)"
+                  className="w-full h-14 rounded-2xl bg-zinc-50 dark:bg-zinc-900/40 border-2 border-zinc-200 dark:border-zinc-800/85 focus:border-red-500 focus:bg-white dark:focus:bg-zinc-900 pl-12 pr-4 text-sm font-semibold outline-none text-zinc-900 dark:text-white transition-all shadow-sm"
+                />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400 group-focus-within:text-accent transition-colors" />
+                <button type="submit" className="absolute right-2 top-2 bottom-2 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 rounded-xl px-4 font-bold text-xs hover:bg-zinc-850 dark:hover:bg-zinc-50 transition-colors cursor-pointer">
+                  Search
+                </button>
+              </div>
+
+              {/* Suggestions dropdown */}
+              <AnimatePresence>
+                {isFocused && searchVal.trim() !== "" && suggestions.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    className="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden z-30 p-2 text-left"
+                  >
+                    {suggestions.map((sug, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => {
+                          router.push(`/trade-in?search=${encodeURIComponent(sug.name)}`);
+                        }}
+                        className="w-full flex items-center justify-between p-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 rounded-xl transition-colors text-left cursor-pointer text-foreground"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="h-8 w-8 bg-zinc-100 dark:bg-zinc-800 rounded-lg flex items-center justify-center text-zinc-500">
+                            <Smartphone className="h-4.5 w-4.5" />
+                          </div>
+                          <div>
+                            <p className="text-xs font-extrabold text-zinc-950 dark:text-white">{sug.name}</p>
+                            <p className="text-[9px] text-zinc-400 font-bold uppercase tracking-wider mt-0.5">{sug.brand} · {sug.category}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-zinc-400">
+                          Get Cash <ChevronRight className="h-3.5 w-3.5" />
+                        </div>
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </form>
+            
+          </div>
+          
+          {/* Right Column: Visual peeking category cards */}
+          <div className="lg:col-span-7 grid sm:grid-cols-2 gap-6 w-full">
+            {categories.map((c) => {
+              const img = c.image ?? fallbacks[c.slug] ?? "";
+              const label = getDisplayLabel(c.slug) || c.name;
+              return (
+                <Link
+                  key={c.slug}
+                  href={`/trade-in`}
+                  className={`relative group rounded-[2.2rem] border border-zinc-200/80 dark:border-zinc-800/80 bg-zinc-950 overflow-hidden h-44 flex flex-col justify-between p-6 text-left hover:-translate-y-1.5 transition-all duration-300 ${getGlowClass(c.slug)}`}
+                >
+                  {/* Full Card Background Image */}
+                  {img && (
+                    <>
+                      <img
+                        src={img}
+                        alt={label}
+                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 brightness-[1.08] contrast-[1.03] group-hover:brightness-[1.12] transition-all duration-700"
+                      />
+                      {/* Smooth modern gradient overlay for readability and contrast */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-zinc-950/85 via-zinc-950/20 to-transparent z-10" />
+                    </>
+                  )}
+                  
+                  <div className="relative z-20 flex flex-col h-full justify-between text-white w-full">
+                    <span className="inline-flex items-center justify-center px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-wider bg-white/10 dark:bg-black/25 backdrop-blur-md border border-white/10 w-max text-white shadow-sm">
+                      {label}
+                    </span>
+                    
+                    <div className="flex items-center justify-between w-full mt-2">
+                      <div>
+                        <p className="text-[9px] font-black text-zinc-300 uppercase tracking-widest leading-none">Trade-In</p>
+                        <p className="text-sm font-extrabold text-white mt-1 group-hover:text-red-500 dark:group-hover:text-red-400 transition-colors">Start Quote</p>
+                      </div>
+                      <div className="h-8 w-8 rounded-full bg-white/10 group-hover:bg-white dark:group-hover:bg-white text-white group-hover:text-black flex items-center justify-center transition-all duration-300 shrink-0">
+                        <ArrowRight className="h-4.5 w-4.5 transition-transform duration-300 group-hover:translate-x-0.5" />
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+
         </div>
       </div>
     </section>
@@ -1327,8 +1586,8 @@ function AppPreview() {
   const features = [
     { Icon: ShieldCheck, title: "Grade-verified listings",  desc: "Every listing shows battery health, cosmetic grade, and a full inspection certificate." },
     { Icon: RefreshCw,   title: "One-tap returns",          desc: "Initiate a return in seconds from your order page — no calls, no forms, no friction." },
-    { Icon: Leaf,        title: "Your CO₂ dashboard",       desc: "Track exactly how much carbon and waste you've avoided with every purchase." },
     { Icon: BadgeCheck,  title: "Instant price alerts",     desc: "Set a target price on any device and get notified the moment it drops." },
+    { Icon: Leaf,        title: "Eco-conscious shopping",   desc: "Every refurbished device means one less device in a landfill — better for the planet." },
   ];
 
   return (
@@ -1433,19 +1692,6 @@ function AppPreview() {
                   <div className="h-full w-3/4 rounded-full bg-emerald-500" />
                 </div>
                 <p className="text-[9px] text-zinc-400 mt-1.5 font-medium">Est. delivery: Tomorrow</p>
-              </motion.div>
-
-              {/* Floating: CO₂ saved */}
-              <motion.div
-                animate={{ y: [0, 9, 0] }}
-                transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}
-                className="absolute hidden sm:block -left-8 bottom-28 bg-zinc-950 rounded-2xl px-4 py-3 shadow-2xl z-20"
-              >
-                <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest mb-1">You saved</p>
-                <div className="flex items-center gap-2">
-                  <Leaf className="h-4 w-4 text-emerald-400" />
-                  <p className="text-sm font-bold text-white">3.2 kg CO₂</p>
-                </div>
               </motion.div>
 
               {/* Floating: rating */}
@@ -3033,27 +3279,108 @@ function SellCTA() {
 // ─── Newsletter ───────────────────────────────────────────────────────────────
 function Newsletter() {
   const [mounted, setMounted] = useState(false);
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [errorMsg, setErrorMsg] = useState("");
+
   useEffect(() => setMounted(true), []);
 
+  const handleSubscribe = (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg("");
+
+    if (!email.trim()) {
+      setStatus("error");
+      setErrorMsg("Please enter your email address.");
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setStatus("error");
+      setErrorMsg("Please enter a valid email address.");
+      return;
+    }
+
+    setStatus("loading");
+    
+    // Simulate API call
+    setTimeout(() => {
+      setStatus("success");
+      setEmail("");
+      if (typeof window !== "undefined") {
+        localStorage.setItem("ts_newsletter_subscribed", "true");
+      }
+    }, 1000);
+  };
+
   return (
-    <section className="border-t border-zinc-100 bg-zinc-50 py-20">
+    <section className="border-t border-zinc-100 dark:border-zinc-900 bg-zinc-50 dark:bg-zinc-950/20 py-20 font-sans">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-2.5">Stay in the loop</p>
-          <h2 className="font-sans text-3xl md:text-4xl lg:text-5xl font-extrabold text-zinc-950 leading-tight tracking-tight mb-4">
+          <h2 className="font-sans text-3xl md:text-4xl lg:text-5xl font-extrabold text-zinc-950 dark:text-white leading-tight tracking-tight mb-4">
             Deals before they sell out
           </h2>
-          <p className="text-zinc-500 mb-10">Weekly drops, exclusive discounts, and e-waste reports. No spam.</p>
+          <p className="text-zinc-500 dark:text-zinc-400 mb-10">Weekly drops, exclusive discounts, and e-waste reports. No spam.</p>
+          
           {mounted ? (
-            <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-              <input
-                type="email"
-                placeholder="you@example.com"
-                className="h-14 flex-1 px-6 rounded-2xl bg-white border border-zinc-200 text-sm font-medium outline-none focus:ring-2 focus:ring-accent transition-shadow"
-              />
-              <button className="h-14 px-7 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 rounded-2xl font-bold text-sm hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors flex-shrink-0">
-                Subscribe
-              </button>
+            <div className="max-w-md mx-auto">
+              <AnimatePresence mode="wait">
+                {status === "success" ? (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="p-6 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 rounded-3xl text-left flex items-start gap-4"
+                  >
+                    <div className="h-10 w-10 bg-emerald-500/10 dark:bg-emerald-500/25 rounded-full flex items-center justify-center shrink-0 text-emerald-600 dark:text-emerald-400">
+                      <Check className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-extrabold text-zinc-900 dark:text-zinc-100">Successfully Subscribed!</h4>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 font-semibold">Thank you! We've sent a welcome code with 10% discount to your email.</p>
+                    </div>
+                  </motion.div>
+                ) : (
+                  <form onSubmit={handleSubscribe} className="space-y-2">
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <input
+                        type="text"
+                        value={email}
+                        onChange={(e) => {
+                          setEmail(e.target.value);
+                          if (status === "error") setStatus("idle");
+                        }}
+                        disabled={status === "loading"}
+                        placeholder="you@example.com"
+                        className={`h-14 flex-1 px-6 rounded-2xl bg-white dark:bg-zinc-900 border ${
+                          status === "error" 
+                            ? "border-red-500 focus:ring-red-500" 
+                            : "border-zinc-200 dark:border-zinc-800 focus:ring-accent"
+                        } text-sm font-medium outline-none focus:ring-2 transition-all text-foreground` }
+                      />
+                      <button
+                        type="submit"
+                        disabled={status === "loading"}
+                        className="h-14 px-7 bg-zinc-950 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-zinc-950 rounded-2xl font-bold text-sm transition-colors flex-shrink-0 flex items-center justify-center min-w-[120px]"
+                      >
+                        {status === "loading" ? (
+                          <svg className="animate-spin h-5 w-5 text-current" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                        ) : (
+                          "Subscribe"
+                        )}
+                      </button>
+                    </div>
+                    {status === "error" && (
+                      <p className="text-left text-xs font-bold text-red-500 px-2 mt-1">{errorMsg}</p>
+                    )}
+                  </form>
+                )}
+              </AnimatePresence>
             </div>
           ) : (
             <div className="h-14 max-w-md mx-auto rounded-2xl bg-zinc-200/60 animate-pulse" />
@@ -3065,6 +3392,151 @@ function Newsletter() {
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
+
+// ─── Store Location Section ──────────────────────────────────────────────────
+function StoreLocationSection() {
+  const [stores, setStores] = useState<Store[]>([]);
+  const [selectedStoreId, setSelectedStoreId] = useState<string>("");
+
+  useEffect(() => {
+    storesApi.list()
+      .then(data => {
+        setStores(data);
+        if (data.length > 0) {
+          setSelectedStoreId(data[0].id);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const activeStore = stores.find(s => s.id === selectedStoreId) || stores[0];
+  const storeName = activeStore?.name || "TechStop Leicester";
+  const storeAddress = activeStore ? `${activeStore.address}, ${activeStore.city} ${activeStore.postcode}` : "104 High St, Leicester LE1 5YP";
+  const storeHours = activeStore?.openingHours || "Mon–Sat, 9:00 AM – 6:00 PM";
+  const storePhone = activeStore?.phone || "07343055398";
+  const mapsLink = activeStore ? `https://maps.google.com/?q=${encodeURIComponent(`${activeStore.name}, ${activeStore.address}, ${activeStore.city} ${activeStore.postcode}`)}` : "https://maps.google.com/?q=104+High+St,+Leicester+LE1+5YP";
+
+  return (
+    <section className="relative py-24 bg-zinc-50 dark:bg-zinc-950 overflow-hidden font-sans border-t border-b border-zinc-200/60 dark:border-zinc-900/80">
+      
+      {/* Premium Background Decor */}
+      <div className="absolute inset-0 pointer-events-none opacity-[0.03] dark:opacity-[0.05]" style={{ backgroundImage: 'linear-gradient(to right, #888 1px, transparent 1px), linear-gradient(to bottom, #888 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+      <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-red-500/10 dark:bg-red-500/5 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-0 left-1/4 w-[400px] h-[400px] bg-zinc-400/10 dark:bg-white/5 rounded-full blur-[100px] pointer-events-none" />
+
+      <div className="relative mx-auto w-full max-w-[1500px] px-4 sm:px-6 lg:px-12">
+        <div className="grid lg:grid-cols-12 gap-16 items-center">
+          
+          {/* Left info column */}
+          <div className="lg:col-span-5 flex flex-col items-start text-left relative z-10">
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/20 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest mb-6 shadow-sm shadow-red-500/5">
+              <MapPin className="h-3.5 w-3.5" />
+              Our Retail Outlets
+            </div>
+            
+            <h2 className="text-4xl md:text-5xl lg:text-[3.5rem] font-extrabold tracking-tight text-zinc-950 dark:text-white leading-[1.05] mb-6">
+              Visit us in store.<br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 via-red-500 to-zinc-900 dark:from-red-500 dark:via-red-400 dark:to-white">Express trade-in &amp; repairs.</span>
+            </h2>
+            
+            <p className="text-zinc-600 dark:text-zinc-400 font-semibold text-base md:text-lg mb-8 leading-relaxed max-w-lg">
+              Drop by our retail outlet for instant diagnostics, same-day screen/battery repairs in under 45 minutes, or get cash on the spot for your old hardware. No appointment necessary.
+            </p>
+
+            {stores.length > 1 && (
+              <div className="w-full mb-8 relative z-20">
+                <label className="text-[10px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500 block mb-2">Select Store Location</label>
+                <div className="relative">
+                  <select
+                    value={selectedStoreId}
+                    onChange={(e) => setSelectedStoreId(e.target.value)}
+                    className="appearance-none h-14 w-full max-w-md rounded-xl bg-white/70 dark:bg-zinc-900/70 backdrop-blur-md border border-zinc-200 dark:border-zinc-800 px-5 pr-10 text-sm font-bold text-zinc-900 dark:text-zinc-100 outline-none focus:border-red-500 dark:focus:border-red-500 focus:ring-4 focus:ring-red-500/10 transition-all shadow-sm"
+                  >
+                    {stores.map(s => (
+                      <option key={s.id} value={s.id} className="text-zinc-900 dark:text-zinc-900">{s.name} ({s.city})</option>
+                    ))}
+                  </select>
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="relative w-full max-w-md bg-white/60 dark:bg-zinc-900/50 backdrop-blur-xl rounded-[2rem] border border-white/50 dark:border-zinc-800/80 p-6 sm:p-8 space-y-6 mb-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-red-500/50 to-transparent" />
+              
+              <div className="flex gap-4 items-start group">
+                <div className="h-11 w-11 bg-red-50 dark:bg-red-500/10 rounded-2xl border border-red-100 dark:border-red-500/20 flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:bg-red-500 group-hover:text-white transition-all duration-300 text-red-600 dark:text-red-400">
+                  <MapPin className="h-5 w-5" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500 block leading-none mb-1.5">Store Address</span>
+                  <span className="text-sm font-extrabold text-zinc-900 dark:text-zinc-100">{storeAddress}</span>
+                </div>
+              </div>
+
+              <div className="flex gap-4 items-start group">
+                <div className="h-11 w-11 bg-red-50 dark:bg-red-500/10 rounded-2xl border border-red-100 dark:border-red-500/20 flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:bg-red-500 group-hover:text-white transition-all duration-300 text-red-600 dark:text-red-400">
+                  <Clock className="h-5 w-5" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500 block leading-none mb-1.5">Opening Hours</span>
+                  <span className="text-sm font-extrabold text-zinc-900 dark:text-zinc-100">{storeHours}</span>
+                </div>
+              </div>
+
+              <div className="flex gap-4 items-start group">
+                <div className="h-11 w-11 bg-red-50 dark:bg-red-500/10 rounded-2xl border border-red-100 dark:border-red-500/20 flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:bg-red-500 group-hover:text-white transition-all duration-300 text-red-600 dark:text-red-400">
+                  <Phone className="h-5 w-5" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500 block leading-none mb-1.5">Store Contact</span>
+                  <a href={`tel:${storePhone}`} className="text-sm font-extrabold text-zinc-900 dark:text-zinc-100 hover:text-red-500 dark:hover:text-red-400 transition-colors">{storePhone}</a>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+              <a
+                href={mapsLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group relative px-8 py-4.5 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 rounded-xl text-sm font-black transition-all flex items-center justify-center gap-2 text-center overflow-hidden hover:scale-105 active:scale-95 shadow-[0_10px_20px_rgba(0,0,0,0.1)] dark:shadow-[0_10px_20px_rgba(255,255,255,0.1)]"
+              >
+                <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-red-600 to-red-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <span className="relative flex items-center gap-2 group-hover:text-white">Get Directions <MapPin className="h-4 w-4" /></span>
+              </a>
+              <Link
+                href="/repair"
+                className="px-8 py-4.5 bg-white/50 hover:bg-white dark:bg-zinc-900/50 dark:hover:bg-zinc-800 text-zinc-900 dark:text-white backdrop-blur-md rounded-xl text-sm font-black transition-all flex items-center justify-center gap-2 text-center border border-zinc-200/80 dark:border-zinc-800/80 shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-95"
+              >
+                Book a Repair
+              </Link>
+            </div>
+          </div>
+
+          {/* Right map column */}
+          <div className="lg:col-span-7 w-full h-[450px] lg:h-[600px] rounded-[2.5rem] overflow-hidden border-[6px] border-white/50 dark:border-zinc-800/30 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] dark:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] relative group bg-zinc-100 dark:bg-zinc-950 backdrop-blur-sm z-10">
+            <div className="absolute inset-0 bg-red-500/5 pointer-events-none z-10 mix-blend-overlay"></div>
+            <iframe
+              title="TechStop Store Locations Map"
+              width="100%"
+              height="100%"
+              frameBorder="0"
+              style={{ border: 0 }}
+              src={`https://maps.google.com/maps?q=${encodeURIComponent(storeAddress)}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
+              allowFullScreen
+              className="w-full h-full transition-all duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)]"
+            />
+          </div>
+
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function HomePage() {
   useEffect(() => {
     const handlePageShow = (e: PageTransitionEvent) => {
@@ -3080,8 +3552,9 @@ export default function HomePage() {
       <MarqueeStrip />
       {/* <Hero /> */}
       <BrandsBar />
+      <TradeInCTASection />
 
-      <CategoryBento />
+      {/* <CategoryBento /> */}
       <FeaturedShop />
       <TopBrandsSplit />
       <NewArrivals />
@@ -3096,7 +3569,7 @@ export default function HomePage() {
       <Reviews />
 
       <SellCTA />
-      <Newsletter />
+      <StoreLocationSection />
       <Footer />
     </main>
   );

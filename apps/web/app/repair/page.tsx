@@ -3,12 +3,13 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { repairsApi, uploadsApi, catalogApi, productsApi, type CatalogCategory } from "../../lib/api";
+import { repairsApi, storesApi, uploadsApi, catalogApi, productsApi, type Store, type CatalogCategory } from "../../lib/api";
 import {
   Smartphone, Tablet, Gamepad2, Laptop, Package, ArrowLeft, ArrowRight,
   Check, MapPin, Truck, Wrench, Clock, Shield, X,
   Monitor, Zap, Battery, Wifi, HardDrive, CircleAlert,
-  Star, HelpCircle, ChevronDown, Sparkles, ChevronRight, Upload, Plus
+  Star, HelpCircle, ChevronDown, Sparkles, ChevronRight, Upload, Plus,
+  CheckCircle2
 } from "lucide-react";
 import Footer from "../../components/Footer";
 import { useAuth } from "../../context/auth-context";
@@ -110,6 +111,7 @@ export default function RepairPage() {
 
   const [catalogCats, setCatalogCats] = useState<CatalogCategory[]>([]);
   const [catFallbackImages, setCatFallbackImages] = useState<Record<string, string>>({});
+  const [stores, setStores] = useState<Store[]>([]);
   useEffect(() => {
     catalogApi.listCategories()
       .then(cats => {
@@ -158,6 +160,11 @@ export default function RepairPage() {
         setIsWizardActive(true);
       } catch {}
     }
+
+    // Fetch stores on mount to show real info in the dropoff card
+    storesApi.list()
+      .then(setStores)
+      .catch(() => {});
   }, []);
 
   // Auto-save wizard state to sessionStorage whenever anything changes
@@ -275,6 +282,19 @@ export default function RepairPage() {
 
 
 
+  const [selectedStoreId, setSelectedStoreId] = useState<string>("");
+  useEffect(() => {
+    if (stores.length > 0 && !selectedStoreId) {
+      setSelectedStoreId(stores[0].id);
+    }
+  }, [stores, selectedStoreId]);
+
+  const activeStore = stores.find(s => s.id === selectedStoreId) || stores[0];
+  const storeName = activeStore?.name || "TechStop Leicester";
+  const storeAddress = activeStore ? `${activeStore.address}, ${activeStore.city} ${activeStore.postcode}` : "104 High St, Leicester LE1 5YP";
+  const storeHours = activeStore?.openingHours || "Mon–Sat, 9:00 AM – 6:00 PM";
+  const mapsLink = activeStore ? `https://maps.google.com/?q=${encodeURIComponent(`${activeStore.name}, ${activeStore.address}, ${activeStore.city} ${activeStore.postcode}`)}` : "https://maps.google.com/?q=104+High+St,+Leicester+LE1+5YP";
+
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground font-sans relative overflow-x-hidden selection:bg-accent selection:text-white">
 
@@ -286,188 +306,262 @@ export default function RepairPage() {
       ` }} />
 
       {/* ─── LANDING PAGE ────────────────────────────────────────────────────── */}
-      <main className="flex-1">
-        <div className="bg-white relative">
+      <main className="flex-1 bg-background text-foreground relative">
+        {/* Ambient Glow Orbs */}
+        <div className="absolute top-[-100px] right-[10%] w-[350px] h-[350px] bg-violet-500/10 blur-[130px] rounded-full pointer-events-none -z-10" />
+        <div className="absolute top-[100px] left-[5%] w-[400px] h-[400px] bg-sky-500/8 blur-[130px] rounded-full pointer-events-none -z-10" />
+        
+        {/* Background Grid Pattern */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
+
+        <div className="bg-background relative text-foreground">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[350px] bg-mood-violet blur-[130px] rounded-full pointer-events-none -z-10" />
 
-          <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-24 pb-16 text-center">
+          <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-12 lg:pt-16 pb-12">
+            
+            <div className="grid lg:grid-cols-12 gap-12 lg:gap-16 items-start text-left mb-12">
+              
+              {/* Left Column: Headline and Info */}
+              <div className="lg:col-span-5 flex flex-col items-start text-left font-sans">
+                {/* Trustpilot-style Rating Badge */}
+                <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100/50 dark:border-emerald-900/30 px-3.5 py-1.5 text-xs font-bold text-emerald-800 dark:text-emerald-400 mb-6 shadow-sm">
+                  <span className="flex items-center gap-0.5 text-emerald-600">
+                    <Star className="h-3 w-3 fill-emerald-500 text-emerald-500" />
+                    <Star className="h-3 w-3 fill-emerald-500 text-emerald-500" />
+                    <Star className="h-3 w-3 fill-emerald-500 text-emerald-500" />
+                    <Star className="h-3 w-3 fill-emerald-500 text-emerald-500" />
+                    <Star className="h-3 w-3 fill-emerald-500 text-emerald-500" />
+                  </span>
+                  <span>4.9/5 on Trustpilot</span>
+                </div>
 
-            <div className="inline-flex flex-wrap items-center justify-center gap-2 rounded-full bg-emerald-50 border border-emerald-100/50 px-4 py-2 text-xs font-bold text-emerald-800 mb-8 shadow-sm">
-              <span className="flex items-center gap-0.5 text-emerald-600">
-                {[...Array(5)].map((_, i) => <Star key={i} className="h-3.5 w-3.5 fill-emerald-500 text-emerald-500" />)}
-              </span>
-              <span>4.9/5 stars on Trustpilot</span>
-              <span className="text-emerald-300">|</span>
-              <span className="text-emerald-600 font-medium">Over 10,000+ repairs completed</span>
-            </div>
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-zinc-950 dark:text-white mb-4 leading-none font-sans">
+                  Professional <br />
+                  device repairs. <br />
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 via-zinc-800 to-zinc-950 dark:from-red-500 dark:via-zinc-300 dark:to-white">Done fast &amp; right.</span>
+                </h1>
+                
+                <p className="text-zinc-500 dark:text-zinc-400 font-semibold text-sm md:text-base mb-8 leading-relaxed">
+                  Certified technicians. Premium OEM-grade parts. 1-year warranty on all repairs. Same-day service in Leicester, or free mail-in postage UK-wide.
+                </p>
 
-            <h1 className="font-sans text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tight text-zinc-950 mb-8 max-w-4xl mx-auto leading-none">
-              Professional device repairs. <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-zinc-500 via-zinc-800 to-zinc-950 dark:from-zinc-400 dark:via-zinc-200 dark:to-white">Done fast &amp; right.</span>
-            </h1>
-            <p className="max-w-2xl mx-auto text-zinc-500 font-semibold text-base md:text-lg mb-12 leading-relaxed">
-              Certified technicians. Premium OEM-grade parts. 1-year warranty on all repairs. Same-day service in Leicester, or free mail-in postage UK-wide.
-            </p>
-
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
-              <button
-                onClick={() => document.getElementById("device-types")?.scrollIntoView({ behavior: "smooth", block: "center" })}
-                className="px-8 py-5 bg-black hover:bg-zinc-800 text-white font-bold text-base rounded-2xl shadow-xl transition-all flex items-center gap-2 group"
-              >
-                Book a Repair Now <ArrowRight className="h-5 w-5 group-hover:translate-x-0.5 transition-transform" />
-              </button>
-            </div>
-
-            <div className="flex flex-wrap items-center justify-center gap-2 mb-16 text-xs font-semibold text-zinc-500">
-              <span className="font-bold text-zinc-400">Popular:</span>
-              {[
-                { name: "iPhone Screen Repair", category: "Phone", brand: "Apple", issue: "screen" },
-                { name: "MacBook Battery Replacement", category: "Laptop", brand: "Apple", issue: "battery" },
-                { name: "Nintendo Switch Drift Fix", category: "Console", brand: "Nintendo", issue: "controller" },
-                { name: "PS5 Overheating Cleaning", category: "Console", brand: "Sony PlayStation", issue: "overheating" }
-              ].map((item, i) => (
-                <button
-                  key={i}
-                  onClick={() => guardedOpen(() => {
-                    setState({
-                      deviceType: item.category, brand: item.brand,
-                      model: `${item.brand} ${item.category} (Est. Repair)`,
-                      issue: [item.issue], issueNotes: `Shortcut select: ${item.name}`,
-                      fulfillment: "", contact: { name: "", email: "", phone: "", address: "", postcode: "" }
-                    });
-                    setStep(3);
-                    setIsWizardActive(true);
-                  })}
-                  className="px-3.5 py-1.5 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 rounded-full transition-colors font-bold shadow-sm"
-                >
-                  {item.name}
-                </button>
-              ))}
-            </div>
-
-            {/* Device Type Cards — outside modal, on landing page */}
-            <div id="device-types" className="max-w-5xl mx-auto mb-28 text-left">
-              <h2 className="font-sans text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight text-zinc-950 mb-12 text-center">
-                Select your device type
-              </h2>
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-                {catalogCats.map((cat) => {
-                  const meta = DEVICE_TYPE_META[cat.slug] ?? {
-                    oldId: cat.slug,
-                    Icon: Package,
-                    img: "",
-                    mood: "bg-zinc-500/10 border-zinc-500/20",
-                    glow: "hover:shadow-zinc-500/10",
-                  };
-                  const img = cat.image ?? catFallbackImages[cat.slug] ?? meta.img;
-                  const isProductFallback = !cat.image && !!catFallbackImages[cat.slug];
-                  const modelCount = cat.modelCount > 0 ? `${cat.modelCount}+ models` : null;
-                  return (
-                    <motion.button
-                      key={cat.id}
-                      whileHover={{ y: -6, scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => guardedOpen(() => openWizardWithDevice(meta.oldId))}
-                      className={`flex flex-col rounded-3xl border border-zinc-200 bg-white shadow-sm hover:shadow-xl hover:border-zinc-950 dark:hover:border-white transition-all group overflow-hidden w-full ${meta.glow}`}
+                <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-semibold text-zinc-500 mb-8">
+                  <span className="text-zinc-500 font-extrabold">Popular:</span>
+                  {[
+                    { name: "iPhone Screen", category: "Phone", brand: "Apple", issue: "screen" },
+                    { name: "MacBook Battery", category: "Laptop", brand: "Apple", issue: "battery" },
+                    { name: "Switch Drift Fix", category: "Console", brand: "Nintendo", issue: "controller" },
+                  ].map((item, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => guardedOpen(() => {
+                        setState({
+                          deviceType: item.category, brand: item.brand,
+                          model: `${item.brand} ${item.category} (Est. Repair)`,
+                          issue: [item.issue], issueNotes: `Shortcut select: ${item.name}`,
+                          fulfillment: "", contact: { name: "", email: "", phone: "", address: "", postcode: "" }
+                        });
+                        setStep(3);
+                        setIsWizardActive(true);
+                      })}
+                      className="px-2.5 py-1 bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-800 dark:text-zinc-200 rounded-lg transition-colors font-bold shadow-sm"
                     >
-                      <div className="w-full aspect-[4/3] bg-gradient-to-b from-zinc-50 to-white border-b border-zinc-100 flex items-center justify-center p-4 relative overflow-hidden">
-                        {img && (
-                          <img
-                            src={img}
-                            alt={cat.name}
-                            className={`object-contain drop-shadow-md transition-transform duration-500 group-hover:scale-105 ${
-                              isProductFallback ? "h-[70%] w-[70%]" : "h-full w-full"
-                            }`}
-                          />
-                        )}
-                      </div>
-                      <div className="p-5 flex-1 flex flex-col justify-between text-left">
-                        <div>
-                          <h3 className="font-extrabold text-lg text-zinc-950 mb-1 leading-tight">{cat.name}</h3>
-                          {modelCount && <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">{modelCount}</p>}
-                        </div>
-                        <div className="mt-4 flex items-center gap-1.5 text-xs font-bold text-zinc-500 group-hover:text-black transition-colors">
-                          Start Repair <ChevronRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
-                        </div>
-                      </div>
-                    </motion.button>
-                  );
-                })}
+                      {item.name}
+                    </button>
+                  ))}
+                </div>
               </div>
+
+              {/* Right Column: Device Types Grid */}
+              <div className="lg:col-span-7 w-full font-sans">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl md:text-2xl font-extrabold tracking-tight text-zinc-950 dark:text-white leading-none">
+                    Select your device type to start
+                  </h2>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 text-left">
+                  {catalogCats.map((cat) => {
+                    const meta = DEVICE_TYPE_META[cat.slug] ?? {
+                      oldId: cat.slug,
+                      Icon: Package,
+                      img: "",
+                      mood: "bg-zinc-500/10 border-zinc-500/20",
+                      glow: "hover:shadow-zinc-500/10",
+                    };
+                    const img = cat.image ?? catFallbackImages[cat.slug] ?? meta.img;
+                    const isProductFallback = !cat.image && !!catFallbackImages[cat.slug];
+                    const modelCount = cat.modelCount > 0 ? `${cat.modelCount}+ models` : null;
+                    return (
+                      <motion.button
+                        key={cat.id}
+                        whileHover={{ y: -6, scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => guardedOpen(() => openWizardWithDevice(meta.oldId))}
+                        className={`flex flex-col rounded-[2.5rem] border border-zinc-250 dark:border-zinc-800 bg-white dark:bg-zinc-900/40 backdrop-blur-md shadow-sm hover:shadow-xl hover:border-zinc-400 dark:hover:border-zinc-700 transition-all duration-300 group overflow-hidden w-full text-left ${meta.glow}`}
+                      >
+                        <div className="w-full aspect-[4/3] bg-gradient-to-b from-zinc-50 to-white border-b border-zinc-100 dark:from-zinc-950/20 dark:border-zinc-850 flex items-center justify-center relative overflow-hidden">
+                          {img && (
+                            <img
+                              src={img}
+                              alt={cat.name}
+                              className={`transition-transform duration-500 group-hover:scale-105 ${
+                                isProductFallback 
+                                  ? "h-[70%] w-[70%] object-contain drop-shadow-md p-3" 
+                                  : "h-full w-full object-cover"
+                              }`}
+                            />
+                          )}
+                          {!isProductFallback && (
+                            <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-white/60 to-transparent dark:from-zinc-900/60 pointer-events-none" />
+                          )}
+                        </div>
+                        <div className="px-3.5 py-3 flex items-center justify-between">
+                          <div className="min-w-0">
+                            <h3 className="font-extrabold text-xs sm:text-sm text-zinc-950 dark:text-white leading-tight truncate">{cat.name}</h3>
+                            {modelCount && <p className="text-[9px] text-zinc-400 mt-0.5 truncate">{modelCount}</p>}
+                          </div>
+                          <div className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 group-hover:scale-105 transition-transform duration-200">
+                            <ChevronRight className="h-3 w-3 text-zinc-400 group-hover:translate-x-0.5 transition-transform" />
+                          </div>
+                        </div>
+                      </motion.button>
+                    );
+                  })}
+                </div>
+              </div>
+
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-5xl mx-auto border-t border-b border-zinc-150 py-10 mb-28">
+            {/* Value Proposition Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-7xl mx-auto border-t border-zinc-200 dark:border-zinc-800 pt-10 mb-28 text-left font-sans">
               {[
                 { Icon: Shield, title: "1-Year Warranty", desc: "All repair work covered" },
                 { Icon: Wrench, title: "Certified Technicians", desc: "Qualified in-house engineers" },
                 { Icon: Clock, title: "Same-Day Turnaround", desc: "Completed in under 45 mins" },
                 { Icon: Zap, title: "OEM-Grade Parts", desc: "Premium quality guaranteed" },
               ].map((item, idx) => (
-                <div key={idx} className="flex flex-col items-center text-center">
-                  <div className="h-12 w-12 bg-zinc-50 rounded-2xl border border-zinc-150/40 flex items-center justify-center mb-3">
-                    <item.Icon className="h-5 w-5 text-zinc-700" strokeWidth={1.8} />
+                <div key={idx} className="flex gap-3 items-start">
+                  <div className="h-10 w-10 bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 flex items-center justify-center shrink-0">
+                    <item.Icon className="h-5 w-5 text-zinc-700 dark:text-zinc-300" strokeWidth={1.8} />
                   </div>
-                  <h4 className="text-xs font-black uppercase tracking-wider text-zinc-900 leading-tight mb-1">{item.title}</h4>
-                  <p className="text-[10px] text-zinc-400 font-semibold">{item.desc}</p>
+                  <div>
+                    <h4 className="text-xs font-black uppercase tracking-wider text-zinc-900 dark:text-zinc-200 leading-tight mb-1">{item.title}</h4>
+                    <p className="text-[9px] text-zinc-400 font-semibold">{item.desc}</p>
+                  </div>
                 </div>
               ))}
             </div>
 
-
-
-            {/* How it works */}
-            <div className="max-w-5xl mx-auto mb-32">
-              <h2 className="font-sans text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight text-zinc-950 mb-14 text-center">
-                How our repair service works
-              </h2>
-              <div className="grid md:grid-cols-4 gap-8 text-left">
-                {[
-                  { step: "1", title: "Book Online / Drop In", desc: "Select your device specifics and request a repair code or visit our Leicester store." },
-                  { step: "2", title: "Diagnostic Checks", desc: "Our technicians run comprehensive hardware and port sanity diagnostics." },
-                  { step: "3", title: "Approve Quote", desc: "We contact you with a fixed cost proposal. Rejection returns your device free." },
-                  { step: "4", title: "Express Assembly", desc: "Repair is completed, tested thoroughly, and returned with a full 1-year warranty." },
-                ].map((item) => (
-                  <div key={item.step} className="flex flex-col items-start p-6 rounded-[2rem] bg-zinc-50 border border-zinc-150/40 relative hover:shadow-md transition-all">
-                    <div className="h-10 w-10 rounded-xl bg-black text-white font-black text-sm flex items-center justify-center mb-6">{item.step}</div>
-                    <h4 className="font-extrabold text-lg text-zinc-950 mb-2">{item.title}</h4>
-                    <p className="text-zinc-500 text-xs font-semibold leading-relaxed">{item.desc}</p>
-                  </div>
-                ))}
+            {/* Choose How to Trade In */}
+            <div className="max-w-5xl mx-auto mb-20 text-left font-sans">
+              <div className="text-center mb-12">
+                <h3 className="font-sans text-3xl md:text-4xl font-extrabold tracking-tight text-zinc-950 dark:text-white leading-none mb-3">
+                  Two Convenient Ways to Get Serviced
+                </h3>
+                <p className="text-zinc-500 dark:text-zinc-400 font-semibold text-sm max-w-xl mx-auto leading-relaxed">
+                  Whether you prefer mailing your device from home or dropping in for an on-the-spot repair, we've got you covered.
+                </p>
               </div>
-            </div>
 
-
-
-            {/* FAQs */}
-            <div className="max-w-3xl mx-auto mb-20 text-left">
-              <h2 className="font-sans text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight text-center text-zinc-950 mb-14">
-                Repair Frequently Asked Questions
-              </h2>
-              <div className="space-y-4">
-                {[
-                  { q: "Do I pay anything upfront?", a: "No, booking is completely free. We do not charge anything until the device has been received, inspected, and you have formally approved the final quote." },
-                  { q: "What parts do you use for repairs?", a: "We use premium OEM-grade parts that match the exact technical specifications of the original screen, battery, and hardware. All parts carry our 1-year guarantee." },
-                  { q: "How long does a standard repair take?", a: "In-store drop-offs for screens and batteries are completed within 45-60 minutes. Postal repairs take 3-5 working days including Royal Mail shipping time." },
-                  { q: "Is my personal data safe?", a: "Absolutely. We do not access user files during hardware repair. However, we recommend backing up your data to iCloud or Google Drive before sending devices for service." },
-                  { q: "What happens if a device cannot be repaired?", a: "If our diagnostic checks reveal a device is unfixable, we do not charge a penny for the attempt. We will package and return your device to you completely free of charge." }
-                ].map((faq, idx) => (
-                  <div key={idx} className="border border-zinc-200/80 rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow">
-                    <button onClick={() => setOpenFaq(openFaq === idx ? null : idx)} className="w-full flex items-center justify-between p-6 text-left font-bold text-sm text-zinc-950 hover:bg-zinc-50 transition-colors">
-                      <span className="flex items-center gap-3">
-                        <HelpCircle className="h-4 w-4 text-zinc-400 shrink-0" />
-                        {faq.q}
-                      </span>
-                      <ChevronDown className={`h-4 w-4 text-zinc-400 transition-transform duration-300 shrink-0 ${openFaq === idx ? "rotate-180" : ""}`} />
-                    </button>
-                    <AnimatePresence initial={false}>
-                      {openFaq === idx && (
-                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.25, ease: "easeInOut" }}>
-                          <div className="px-6 pb-6 text-xs text-zinc-500 font-semibold leading-relaxed border-t border-zinc-100 pt-4 bg-zinc-50/50">{faq.a}</div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+              <div className="grid md:grid-cols-2 gap-8">
+                {/* Method 1: Postal */}
+                <div className="flex flex-col justify-between p-8 rounded-[2.5rem] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm hover:shadow-xl transition-all group">
+                  <div>
+                    <div className="h-12 w-12 bg-sky-500/10 dark:bg-sky-500/20 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-105 transition-transform">
+                      <Truck className="h-6 w-6 text-sky-500" />
+                    </div>
+                    <h4 className="font-black text-xl text-zinc-950 dark:text-white mb-2">Mail it to Us (Free &amp; Insured)</h4>
+                    <p className="text-zinc-500 dark:text-zinc-400 text-xs font-semibold leading-relaxed mb-6">
+                      Book online, and we'll instantly generate a prepaid, fully-insured Royal Mail shipping label. Print it out, wrap your device securely, and hand it to any Post Office counter. Our Leicester lab will fix, test, and ship it back completely free of charge.
+                    </p>
+                    <ul className="space-y-2.5 mb-8">
+                      {[
+                        "Free insured Royal Mail postage label included",
+                        "Repaired & shipped back within 3-5 working days",
+                        "1-Year warranty on all parts and labor",
+                      ].map((item, i) => (
+                        <li key={i} className="flex items-center gap-2.5 text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                          <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                ))}
+                  <button
+                    type="button"
+                    onClick={() => guardedOpen(() => openWizardWithDevice("Phone"))}
+                    className="w-full py-3.5 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-750 text-zinc-900 dark:text-zinc-100 rounded-xl text-xs font-black transition-colors flex items-center justify-center gap-1.5"
+                  >
+                    Start Postal Repair <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+
+                {/* Method 2: In-Store */}
+                <div className="flex flex-col justify-between p-8 rounded-[2.5rem] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm hover:shadow-xl transition-all group relative">
+                  <div className="absolute top-6 right-6 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-3 py-1 text-[9px] font-black uppercase tracking-widest">
+                    <span className="relative flex h-1.5 w-1.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                    </span>
+                    Open Now
+                  </div>
+                  <div>
+                    <div className="h-12 w-12 bg-emerald-500/10 dark:bg-emerald-500/20 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-105 transition-transform">
+                      <MapPin className="h-6 w-6 text-emerald-500" />
+                    </div>
+                    <h4 className="font-black text-xl text-zinc-950 dark:text-white mb-2">Leicester Store Drop-Off</h4>
+                    <p className="text-zinc-500 dark:text-zinc-400 text-xs font-semibold leading-relaxed mb-6">
+                      Bring your device directly to our high-street retail store for an express evaluation and repair. Most screen and battery replacements are completed by our certified technicians in under 45 minutes while you wait.
+                    </p>
+                    {stores.length > 1 && (
+                      <div className="mb-4">
+                        <label className="text-[10px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500 block mb-1.5">Select Store Location</label>
+                        <select
+                          value={selectedStoreId}
+                          onChange={(e) => setSelectedStoreId(e.target.value)}
+                          className="h-10 w-full rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/60 dark:border-zinc-800/80 px-3 text-xs font-bold text-zinc-800 dark:text-zinc-200 outline-none focus:border-accent"
+                        >
+                          {stores.map(s => (
+                            <option key={s.id} value={s.id}>{s.name} ({s.city})</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                    <div className="bg-zinc-50 dark:bg-zinc-950/40 rounded-2xl p-4 border border-zinc-200/60 dark:border-zinc-800/80 space-y-2 mb-6">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-zinc-400 font-bold">Address</span>
+                        <span className="text-zinc-900 dark:text-zinc-200 font-black">{storeAddress}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-zinc-400 font-bold">Opening Hours</span>
+                        <span className="text-zinc-900 dark:text-zinc-200 font-black">{storeHours}</span>
+                      </div>
+                    </div>
+                    {/* Interactive Store Location Map */}
+                    <div className="w-full h-40 rounded-2xl overflow-hidden border border-zinc-200/80 dark:border-zinc-850 mb-6 shadow-inner relative group bg-zinc-100 dark:bg-zinc-950">
+                      <iframe
+                        title="Store Location Map"
+                        width="100%"
+                        height="100%"
+                        frameBorder="0"
+                        style={{ border: 0 }}
+                        src={`https://maps.google.com/maps?q=${encodeURIComponent(storeAddress)}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
+                        allowFullScreen
+                        className="grayscale opacity-90 dark:opacity-85 contrast-[0.95] group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500"
+                      />
+                    </div>
+                  </div>
+                  <a
+                    href={mapsLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-3.5 bg-zinc-950 dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-100 text-white dark:text-zinc-950 rounded-xl text-xs font-black transition-colors flex items-center justify-center gap-1.5 text-center"
+                  >
+                    Get Directions <MapPin className="h-4 w-4" />
+                  </a>
+                </div>
               </div>
             </div>
           </section>
