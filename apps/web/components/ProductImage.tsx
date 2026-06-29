@@ -10,6 +10,8 @@ interface ProductImageProps {
   hover?: boolean;
   mode?: "product" | "cover";
   sizes?: string;
+  /** Set on the first few above-the-fold images so they load immediately, not lazily */
+  priority?: boolean;
   className?: string;
 }
 
@@ -19,6 +21,7 @@ export default function ProductImage({
   hover = true,
   mode = "product",
   sizes = "(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 30vw",
+  priority = false,
   className = "",
 }: ProductImageProps) {
   const [loaded, setLoaded] = useState(false);
@@ -48,6 +51,7 @@ export default function ProductImage({
           alt={alt}
           fill
           sizes={sizes}
+          priority={priority}
           className={imgClass}
           onLoad={() => setLoaded(true)}
           onError={() => setFailed(true)}

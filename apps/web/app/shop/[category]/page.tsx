@@ -793,7 +793,7 @@ export default function CategoryPage() {
                             </span>
                           )}
 
-                          <ProductImage src={product.image} alt={product.title} hover={product.stock > 0} />
+                          <ProductImage src={product.image} alt={product.title} hover={product.stock > 0} priority={index < 4} />
 
                           {product.stock > 0 && product.price > 0 && (
                             <button
