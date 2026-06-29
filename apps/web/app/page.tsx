@@ -134,7 +134,7 @@ function PromoCarouselBanner() {
     return () => clearInterval(timer);
   }, [slides.length]);
 
-  // Auto-scroll active tab into view on mobile/horizontal scroll without vertical page scrolling
+  // Auto-scroll active tab into view
   useEffect(() => {
     if (!tabContainerRef.current) return;
     const container = tabContainerRef.current;
@@ -178,14 +178,13 @@ function PromoCarouselBanner() {
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
-      {/* Background Ambient Radial Glow */}
+      {/* Premium Red-Black Background Glow Overrides DB values */}
       <div 
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full blur-[180px] pointer-events-none transition-all duration-1000 ease-in-out opacity-25"
-        style={{ backgroundColor: slide.bgGlow }}
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full blur-[180px] pointer-events-none transition-all duration-1000 ease-in-out opacity-15 dark:opacity-20 bg-red-500"
       />
       
       {/* Background Grid Pattern */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
+      <div className="absolute inset-0 pointer-events-none opacity-[0.04] dark:opacity-[0.06]" style={{ backgroundImage: 'linear-gradient(to right, #888 1px, transparent 1px), linear-gradient(to bottom, #888 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
 
       {/* Main Showcase Stage */}
       <div className="mx-auto w-full max-w-[1500px] px-4 sm:px-6 lg:px-12 flex-1 flex items-center relative z-10">
@@ -208,32 +207,34 @@ function PromoCarouselBanner() {
                 transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
                 className="flex flex-col gap-4 items-start relative z-10"
               >
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 shadow-sm text-[9px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-400">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-500/10 dark:bg-red-500/20 border border-red-500/20 shadow-sm text-[9px] font-black uppercase tracking-widest text-red-600 dark:text-red-400">
+                  <span className="h-1.5 w-1.5 rounded-full bg-red-600 dark:bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)]" />
                   {slide.tag}
                 </span>
 
-                <h1 className="font-sans text-[clamp(1.75rem,5vw,3.8rem)] font-black leading-[0.9] tracking-tighter text-zinc-950 dark:text-white uppercase">
+                <h1 className="font-sans text-[clamp(1.75rem,5vw,3.8rem)] font-black leading-[0.9] tracking-tighter text-zinc-950 dark:text-white uppercase mt-2">
                   {slide.titleLine1} <br />
                   {slide.titleLine2}{" "}
-                  <span className={`font-serif italic font-light lowercase tracking-normal bg-clip-text text-transparent bg-gradient-to-r ${slide.themeColor}`}>
+                  <span className="font-serif italic font-light lowercase tracking-normal bg-clip-text text-transparent bg-gradient-to-r from-red-600 via-zinc-800 to-zinc-950 dark:from-red-500 dark:via-zinc-300 dark:to-white">
                     {slide.titleItalic}
                   </span>
                 </h1>
 
-                <div className="flex flex-wrap items-center gap-4 mt-2">
+                <div className="flex flex-wrap items-center gap-4 mt-4">
                   <Link
                     href={slide.btnLink === "/sell" ? "/trade-in" : slide.btnLink}
-                    className="group relative inline-flex h-12 pl-6 pr-10 items-center justify-center bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 rounded-2xl font-bold text-xs overflow-hidden transition-all hover:bg-zinc-900 dark:hover:bg-zinc-50 shadow-md hover:shadow-lg active:scale-97 cursor-pointer"
+                    className="group relative inline-flex h-12 px-8 items-center justify-center bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 rounded-2xl font-bold text-xs overflow-hidden transition-all hover:scale-105 active:scale-95 shadow-[0_10px_20px_rgba(0,0,0,0.1)] cursor-pointer"
                   >
-                    <span className="relative z-10">{slide.btnText}</span>
-                    <ArrowRight className="absolute right-4.5 h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
-                    <div className="absolute inset-0 bg-white/10 dark:bg-black/5 translate-y-full group-hover:translate-y-0 transition-transform" />
+                    <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-red-600 to-red-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <span className="relative z-10 flex items-center gap-2 group-hover:text-white transition-colors duration-300">
+                      {slide.btnText}
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </span>
                   </Link>
                   
                   <Link
                     href="/trade-in"
-                    className="inline-flex h-12 px-5 items-center justify-center rounded-2xl border border-zinc-200/80 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/50 dark:hover:bg-zinc-900/50 transition-colors font-bold text-xs"
+                    className="inline-flex h-12 px-6 items-center justify-center rounded-2xl bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md border border-zinc-200/80 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-white dark:hover:bg-zinc-800 transition-all font-bold text-xs shadow-sm hover:shadow-md active:scale-95"
                   >
                     How it Works
                   </Link>
@@ -246,30 +247,30 @@ function PromoCarouselBanner() {
           {/* Right Column: 3D Curved Showcase Card */}
           <div className="lg:col-span-6 flex justify-center items-center relative min-h-[300px] lg:min-h-[400px]">
             
-            {/* Dynamic Card Glow mesh behind Card */}
+            {/* Dynamic Card Glow mesh behind Card overrides DB values to match premium theme */}
             {slides.map((s, i) => {
               const isActive = safeIdx === i;
               return (
                 <div
                   key={`glow-${s.id}`}
-                  className={`absolute w-72 h-72 rounded-full blur-[80px] bg-gradient-to-tr ${s.themeColor} transition-opacity duration-500`}
-                  style={{ opacity: isActive ? 0.2 : 0 }}
+                  className="absolute w-72 h-72 rounded-full blur-[80px] bg-gradient-to-tr from-red-500/40 to-zinc-500/40 transition-opacity duration-500"
+                  style={{ opacity: isActive ? 0.3 : 0 }}
                 />
               );
             })}
 
             <div
-              className="relative w-[260px] h-[260px] sm:w-[340px] sm:h-[340px] lg:w-[380px] lg:h-[380px] rounded-[2.5rem] bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border border-white/85 dark:border-zinc-800/85 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.08)] dark:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.3)] flex items-center justify-center p-6 group duration-200 ease-out cursor-grab active:cursor-grabbing"
+              className="relative w-[260px] h-[260px] sm:w-[340px] sm:h-[340px] lg:w-[380px] lg:h-[380px] rounded-[2.5rem] bg-white/60 dark:bg-zinc-900/40 backdrop-blur-2xl border border-white dark:border-zinc-800/80 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] dark:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.4)] flex items-center justify-center p-6 group duration-200 ease-out cursor-grab active:cursor-grabbing"
               style={{
                 transformStyle: "preserve-3d",
                 transform: `perspective(1000px) rotateY(${tilt.x}deg) rotateX(${tilt.y}deg)`
               }}
             >
               {/* Surface Reflection layer */}
-              <div className="absolute inset-0 rounded-[2.5rem] bg-gradient-to-tr from-white/0 via-white/5 to-white/10 dark:from-white/0 dark:via-white/2 dark:to-white/5 pointer-events-none" />
+              <div className="absolute inset-0 rounded-[2.5rem] bg-gradient-to-tr from-white/0 via-white/5 to-white/20 dark:from-white/0 dark:via-white/5 dark:to-white/10 pointer-events-none" />
 
               {/* Floating Shadow Under Image */}
-              <div className="absolute bottom-6 w-[80%] h-4 bg-black/5 dark:bg-black/20 blur-lg rounded-full scale-y-20 transition-transform duration-700 group-hover:scale-95 [transform:translateZ(10px)]" />
+              <div className="absolute bottom-6 w-[80%] h-4 bg-black/5 dark:bg-black/30 blur-lg rounded-full scale-y-20 transition-transform duration-700 group-hover:scale-95 [transform:translateZ(10px)]" />
 
               {/* Service images with floating frame */}
               {slides.map((s, i) => {
@@ -301,7 +302,7 @@ function PromoCarouselBanner() {
                       scale: { duration: 0.3 },
                       rotateY: { duration: 0.3 }
                     }}
-                    className="absolute max-h-[85%] max-w-[85%] object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.1)] mix-blend-multiply dark:mix-blend-normal transition-transform duration-700 group-hover:scale-103 [transform:translateZ(40px)] pointer-events-none select-none"
+                    className="absolute max-h-[85%] max-w-[85%] object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.1)] dark:drop-shadow-[0_20px_40px_rgba(0,0,0,0.4)] transition-transform duration-700 group-hover:scale-105 [transform:translateZ(40px)] pointer-events-none select-none"
                     style={{
                       display: isActive ? "block" : "none"
                     }}
@@ -319,7 +320,7 @@ function PromoCarouselBanner() {
                     initial={false}
                     animate={isActive ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
                     transition={{ duration: 0.3 }}
-                    className="absolute -top-2.5 -right-2.5 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 rounded-xl px-3 py-1.5 text-[9px] font-black shadow-md [transform:translateZ(60px)] select-none pointer-events-none border border-zinc-900 dark:border-zinc-100"
+                    className="absolute -top-3 -right-3 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 rounded-xl px-4 py-2 text-[10px] font-black shadow-xl [transform:translateZ(60px)] select-none pointer-events-none border border-zinc-800 dark:border-white ring-1 ring-white/10 dark:ring-black/5"
                     style={{
                       display: isActive ? "block" : "none"
                     }}
@@ -329,7 +330,7 @@ function PromoCarouselBanner() {
                 );
               })}
 
-              {/* Floating Badge B */}
+              {/* Floating Badge B - Updated to Red Accent */}
               {slides.map((s, i) => {
                 const isActive = safeIdx === i;
                 return (
@@ -339,7 +340,7 @@ function PromoCarouselBanner() {
                     initial={false}
                     animate={isActive ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
                     transition={{ duration: 0.3 }}
-                    className="absolute -bottom-2.5 -left-2.5 bg-emerald-500 text-white rounded-xl px-3 py-1.5 text-[9px] font-black shadow-md [transform:translateZ(60px)] select-none pointer-events-none"
+                    className="absolute -bottom-3 -left-3 bg-red-600 dark:bg-red-500 text-white rounded-xl px-4 py-2 text-[10px] font-black shadow-xl shadow-red-500/20 [transform:translateZ(60px)] select-none pointer-events-none ring-1 ring-red-400/50"
                     style={{
                       display: isActive ? "block" : "none"
                     }}
@@ -355,9 +356,9 @@ function PromoCarouselBanner() {
       </div>
 
       {/* Bottom Floating Navigation Dock */}
-      <div className="mx-auto w-full max-w-[1500px] px-4 sm:px-6 lg:px-12 mt-6 relative z-20">
+      <div className="mx-auto w-full max-w-[1500px] px-4 sm:px-6 lg:px-12 mt-8 relative z-20">
         <div className="flex justify-center">
-          <div ref={tabContainerRef} className="flex items-center gap-1 p-1.5 rounded-3xl bg-white/70 dark:bg-zinc-900/70 backdrop-blur-md border border-zinc-200/50 dark:border-zinc-800/50 shadow-lg overflow-x-auto scrollbar-hide max-w-full">
+          <div ref={tabContainerRef} className="flex items-center gap-2 p-2 rounded-[2rem] bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-white dark:border-zinc-800 shadow-xl overflow-x-auto scrollbar-hide max-w-full relative">
             {slides.map((s, i) => {
               const isActive = safeIdx === i;
               return (
@@ -365,13 +366,13 @@ function PromoCarouselBanner() {
                   key={s.id}
                   onClick={() => setIdx(i)}
                   data-active={isActive}
-                  className={`relative flex items-center gap-2 px-3.5 h-10 rounded-2xl transition-all duration-350 cursor-pointer whitespace-nowrap ${
+                  className={`relative flex items-center gap-2 px-4 h-11 rounded-2xl transition-all duration-500 cursor-pointer whitespace-nowrap ${
                     isActive
-                      ? "bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 shadow-md font-bold"
-                      : "text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-zinc-100/50 dark:hover:bg-zinc-800/50 font-semibold"
+                      ? "bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 shadow-lg font-black"
+                      : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 font-bold"
                   }`}
                 >
-                  <span className={`text-[9px] font-black tracking-wider ${isActive ? "opacity-60" : "text-zinc-400"}`}>
+                  <span className={`text-[10px] tracking-widest ${isActive ? "opacity-60" : "text-zinc-400 dark:text-zinc-500"}`}>
                     {String(s.order + 1).padStart(2, "0")}
                   </span>
 
@@ -380,13 +381,13 @@ function PromoCarouselBanner() {
                   </span>
 
                   {isActive && (
-                    <div className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full overflow-hidden bg-white/20 dark:bg-black/10">
+                    <div className="absolute bottom-1 left-3 right-3 h-0.5 rounded-full overflow-hidden bg-white/20 dark:bg-black/10">
                       <motion.div
                         key={safeIdx}
                         initial={{ width: "0%" }}
                         animate={{ width: "100%" }}
                         transition={{ duration: 5, ease: "linear" }}
-                        className="h-full bg-white dark:bg-zinc-950"
+                        className="h-full bg-red-500"
                       />
                     </div>
                   )}
@@ -957,7 +958,7 @@ function Hero() {
                 href="/trade-in"
                 className="h-14 px-8 border border-zinc-200 text-zinc-950 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-zinc-50 transition-colors"
               >
-                <Play className="h-4 w-4" /> How it works
+                Sell your device
               </a>
             </motion.div>
 
@@ -1743,8 +1744,8 @@ function AppPreview() {
               <a href="/shop/phones" className="h-12 px-7 bg-zinc-950 text-white rounded-2xl font-bold text-sm flex items-center gap-2 hover:bg-zinc-800 transition-colors">
                 Start shopping <ArrowRight className="h-4 w-4" />
               </a>
-              <a href="/trade-in" className="text-sm font-bold text-zinc-500 hover:text-zinc-950 transition-colors flex items-center gap-1.5">
-                How it works <ArrowRight className="h-3.5 w-3.5" />
+              <a href="/help" className="text-sm font-bold text-zinc-500 hover:text-zinc-950 transition-colors flex items-center gap-1.5">
+                Help center <ArrowRight className="h-3.5 w-3.5" />
               </a>
             </div>
           </div>
@@ -2119,193 +2120,59 @@ function NewArrivals() {
 }
 
 // ─── Grade Guide ──────────────────────────────────────────────────────────────
-function ConditionMeter({ level, barClass }: { level: 0 | 1 | 2 | 3 | 4; barClass: string }) {
-  const bars = 5;
-  const filled = [5, 5, 4, 3, 1][level];
-  return (
-    <div className="flex gap-1.5 items-end h-6">
-      {[...Array(bars)].map((_, k) => (
-        <div
-          key={k}
-          className={`w-2 rounded-full transition-all ${k < filled ? barClass : "bg-white/10"}`}
-          style={{ height: `${40 + k * 12}%` }}
-        />
-      ))}
-    </div>
-  );
-}
-
-function PhoneSketch({ level }: { level: 0 | 1 | 2 | 3 }) {
-  return (
-    <svg viewBox="0 0 110 190" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-44 w-auto drop-shadow-2xl">
-      {/* Phone body */}
-      <rect x="8" y="4" width="94" height="182" rx="20" fill="white" fillOpacity="0.13" stroke="white" strokeOpacity="0.45" strokeWidth="2.5"/>
-      {/* Dynamic island */}
-      <rect x="36" y="12" width="38" height="10" rx="5" fill="white" fillOpacity="0.35"/>
-      {/* Screen */}
-      <rect x="14" y="28" width="82" height="142" rx="10" fill="white" fillOpacity="0.07" stroke="white" strokeOpacity="0.2" strokeWidth="1"/>
-      {/* Home bar */}
-      <rect x="38" y="178" width="34" height="5" rx="2.5" fill="white" fillOpacity="0.4"/>
-      {/* Side buttons */}
-      <rect x="5" y="56" width="3" height="24" rx="1.5" fill="white" fillOpacity="0.3"/>
-      <rect x="102" y="50" width="3" height="16" rx="1.5" fill="white" fillOpacity="0.3"/>
-      <rect x="102" y="72" width="3" height="16" rx="1.5" fill="white" fillOpacity="0.3"/>
-
-      {/* App icons 3×4 grid */}
-      {[0,1,2].map(col => [0,1,2,3].map(row => (
-        <rect key={`${col}-${row}`} x={20 + col * 28} y={42 + row * 28} width="18" height="18" rx="5" fill="white" fillOpacity="0.1"/>
-      )))}
-
-      {/* Dock bar */}
-      <rect x="18" y="158" width="74" height="20" rx="10" fill="white" fillOpacity="0.08" stroke="white" strokeOpacity="0.12" strokeWidth="1"/>
-      {[0,1,2,3].map(k => <rect key={k} x={26 + k * 18} y={163} width="12" height="12" rx="3" fill="white" fillOpacity="0.12"/>)}
-
-      {/* ── NEW / A Grade: verified badge ── */}
-      {level === 0 && (
-        <g>
-          <circle cx="88" cy="44" r="14" fill="#10b981" fillOpacity="0.9"/>
-          <path d="M81 44 L86 49 L96 38" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-        </g>
-      )}
-
-      {/* ── B Grade: one faint scratch + magnifier callout ── */}
-      {level === 1 && (
-        <>
-          <line x1="30" y1="52" x2="72" y2="94" stroke="white" strokeOpacity="0.4" strokeWidth="1.5" strokeLinecap="round"/>
-          {/* Magnifier circle */}
-          <circle cx="94" cy="56" r="13" fill="white" fillOpacity="0.15" stroke="white" strokeOpacity="0.5" strokeWidth="1.5"/>
-          <line x1="82" y1="66" x2="75" y2="74" stroke="white" strokeOpacity="0.5" strokeWidth="1.5" strokeLinecap="round"/>
-          <line x1="48" y1="70" x2="82" y2="58" stroke="white" strokeOpacity="0.2" strokeWidth="1" strokeDasharray="3 2"/>
-          <circle cx="94" cy="56" r="3" fill="white" fillOpacity="0.5"/>
-        </>
-      )}
-
-      {/* ── C Grade: multiple prominent scratches + warning badge ── */}
-      {level === 2 && (
-        <>
-          <line x1="24" y1="60" x2="68" y2="96"  stroke="white" strokeOpacity="0.55" strokeWidth="2.5" strokeLinecap="round"/>
-          <line x1="40" y1="100" x2="84" y2="130" stroke="white" strokeOpacity="0.4"  strokeWidth="2"   strokeLinecap="round"/>
-          <line x1="20" y1="110" x2="50" y2="92"  stroke="white" strokeOpacity="0.3"  strokeWidth="1.5" strokeLinecap="round"/>
-          <line x1="60" y1="50" x2="86" y2="76"   stroke="white" strokeOpacity="0.25" strokeWidth="1"   strokeLinecap="round"/>
-          {/* Warning triangle */}
-          <path d="M88 34 L100 54 L76 54 Z" fill="#f59e0b" fillOpacity="0.85"/>
-          <text x="88" y="50" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold">!</text>
-        </>
-      )}
-
-      {/* ── F Grade: large X + red broken circle ── */}
-      {level === 3 && (
-        <>
-          <line x1="22" y1="52" x2="88" y2="138" stroke="white" strokeOpacity="0.6" strokeWidth="3.5" strokeLinecap="round"/>
-          <line x1="88" y1="52" x2="22" y2="138" stroke="white" strokeOpacity="0.6" strokeWidth="3.5" strokeLinecap="round"/>
-          <line x1="30" y1="40" x2="52" y2="66"  stroke="white" strokeOpacity="0.2" strokeWidth="1.5" strokeLinecap="round"/>
-          <line x1="60" y1="118" x2="82" y2="148" stroke="white" strokeOpacity="0.2" strokeWidth="1.5" strokeLinecap="round"/>
-          {/* Red X badge */}
-          <circle cx="88" cy="44" r="14" fill="#b91c1c" fillOpacity="0.9"/>
-          <line x1="82" y1="38" x2="94" y2="50" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-          <line x1="94" y1="38" x2="82" y2="50" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-        </>
-      )}
-    </svg>
-  );
-}
-
 function GradeGuide() {
   const [gradeImgs, setGradeImgs] = useState<(string | null)[]>([null, null, null, null, null]);
-  const [gradeProducts, setGradeProducts] = useState<Record<string, { name: string; price: string; link: string }[]>>({});
   const [sectionRef, trigger] = useLazyFetchTrigger();
 
   useEffect(() => {
     if (trigger === 0) return;
-    bannersApi.random(5).then(b => setGradeImgs(b.map(x => x.url ?? null))).catch(() => {});
-    for (const condition of ["NEW", "A", "B", "C", "F"]) {
-      productsApi.list({ condition, limit: 3 })
-        .then(res => {
-          if (res.items.length === 0) return;
-          setGradeProducts(prev => ({
-            ...prev,
-            [condition]: res.items.map(p => ({
-              name: p.name,
-              price: p.price != null ? `£${p.price}` : "POA",
-              link: `/shop/${p.category.toLowerCase()}/${p.slug}`,
-            })),
-          }));
-        })
-        .catch(() => {});
-    }
+    bannersApi.random(100).then(b => {
+      const shuffled = [...b].sort(() => Math.random() - 0.5);
+      setGradeImgs(shuffled.slice(0, 5).map(x => x.url ?? null));
+    }).catch(() => {});
   }, [trigger]);
 
   const grades: {
     condition: string;
-    num: string; name: string; tagline: string;
-    battery: number; saving: number; fromPrice: string;
-    rating: number; reviewCount: string;
-    conditionLabel: string; sketchLevel: 0 | 1 | 2 | 3; conditionLevel: 0 | 1 | 2 | 3 | 4;
-    featured: boolean; partsOnly: boolean;
-    img: string | null; features: string[];
-    products: { name: string; price: string; link: string }[];
-    barClass: string; textClass: string;
-    chipBg: string; featuredRing: string;
+    num: string;
+    name: string;
+    tagline: string;
+    fromPrice: string;
+    featured: boolean;
+    img: string | null;
+    textClass: string;
+    featuredRing: string;
   }[] = [
     {
       condition: "NEW",
       num: "01", name: "New", tagline: "Brand new, sealed or equivalent.",
-      battery: 100, saving: 10, fromPrice: "From £329",
-      rating: 5.0, reviewCount: "1,200", conditionLabel: "Sealed box",
-      sketchLevel: 0, conditionLevel: 0, featured: false, partsOnly: false,
-      img: gradeImgs[0],
-      features: ["Brand new in original sealed packaging", "Full manufacturer warranty included", "All original accessories in box", "25/25 inspection points passed"],
-      products: [{ name: "iPhone 15", price: "£729", link: "/shop/phones" }, { name: "MacBook Air M3", price: "£1,099", link: "/shop/laptops" }, { name: "Galaxy S24", price: "£799", link: "/shop/phones" }],
-      barClass: "bg-zinc-400", textClass: "text-zinc-300",
-      chipBg: "bg-white/10", featuredRing: "",
+      fromPrice: "From £329", featured: false, img: gradeImgs[0],
+      textClass: "text-zinc-300", featuredRing: "",
     },
     {
       condition: "A",
       num: "02", name: "A Grade", tagline: "Used but like new — zero visible marks.",
-      battery: 95, saving: 20, fromPrice: "From £249",
-      rating: 4.9, reviewCount: "4,200", conditionLabel: "Zero marks",
-      sketchLevel: 0, conditionLevel: 1, featured: true, partsOnly: false,
-      img: gradeImgs[1],
-      features: ["No visible marks — like new appearance", "Battery 95%+ certified by engineers", "All ports, cameras & buttons tested", "25/25 inspection points passed"],
-      products: [{ name: "iPhone 15 Pro", price: "£739", link: "/shop/phones" }, { name: "MacBook Pro M3", price: "£1,699", link: "/shop/laptops" }, { name: "Galaxy S24 Ultra", price: "£899", link: "/shop/phones" }],
-      barClass: "bg-emerald-500", textClass: "text-emerald-400",
-      chipBg: "bg-emerald-500/20", featuredRing: "border-emerald-500/60 shadow-[0_0_30px_rgba(16,185,129,0.15)] ring-1 ring-emerald-500/20",
+      fromPrice: "From £249", featured: true, img: gradeImgs[1],
+      textClass: "text-emerald-400",
+      featuredRing: "border-emerald-500/60 shadow-[0_0_30px_rgba(16,185,129,0.15)] ring-1 ring-emerald-500/20",
     },
     {
       condition: "B",
       num: "03", name: "B Grade", tagline: "Minor signs of usage, small scratches.",
-      battery: 85, saving: 35, fromPrice: "From £149",
-      rating: 4.7, reviewCount: "12,400", conditionLabel: "Minor scratches",
-      sketchLevel: 1, conditionLevel: 2, featured: false, partsOnly: false,
-      img: gradeImgs[2],
-      features: ["Minor scratches not visible in normal use", "Battery 85%+ certified by engineers", "All ports, cameras & buttons tested", "Thoroughly cleaned and sanitised"],
-      products: [{ name: "iPhone 14 Pro", price: "£549", link: "/shop/phones" }, { name: "MacBook Air M2", price: "£849", link: "/shop/laptops" }, { name: "Samsung S23", price: "£429", link: "/shop/phones" }],
-      barClass: "bg-blue-500", textClass: "text-blue-400",
-      chipBg: "bg-blue-500/20", featuredRing: "",
+      fromPrice: "From £149", featured: false, img: gradeImgs[2],
+      textClass: "text-blue-400", featuredRing: "",
     },
     {
       condition: "C",
       num: "04", name: "C Grade", tagline: "Heavy scratches or marks, fully working.",
-      battery: 75, saving: 50, fromPrice: "From £99",
-      rating: 4.5, reviewCount: "8,900", conditionLabel: "Visible marks",
-      sketchLevel: 2, conditionLevel: 3, featured: false, partsOnly: false,
-      img: gradeImgs[3],
-      features: ["Visible scratches or scuffs on body", "Battery 75%+ certified by engineers", "All features 100% working", "Best price-to-performance ratio"],
-      products: [{ name: "iPhone 13", price: "£299", link: "/shop/phones" }, { name: "MacBook Air M1", price: "£649", link: "/shop/laptops" }, { name: "Pixel 7 Pro", price: "£349", link: "/shop/phones" }],
-      barClass: "bg-amber-500", textClass: "text-amber-400",
-      chipBg: "bg-amber-500/20", featuredRing: "",
+      fromPrice: "From £99", featured: false, img: gradeImgs[3],
+      textClass: "text-amber-400", featuredRing: "",
     },
     {
       condition: "F",
       num: "05", name: "F Grade", tagline: "Non-working — for parts or repair only.",
-      battery: 0, saving: 70, fromPrice: "From £29",
-      rating: 4.3, reviewCount: "2,100", conditionLabel: "For Parts",
-      sketchLevel: 3, conditionLevel: 4, featured: false, partsOnly: true,
-      img: gradeImgs[4],
-      features: ["Non-functional — sold as-is, no warranty", "Ideal for spares, repairs & DIY", "Heavily discounted for quick resale", "Full description of known faults listed"],
-      products: [{ name: "iPhone 12 (Parts)", price: "£59", link: "/shop/phones" }, { name: "Samsung S21 (Parts)", price: "£49", link: "/shop/phones" }, { name: "Pixel 6 (Parts)", price: "£39", link: "/shop/phones" }],
-      barClass: "bg-red-700", textClass: "text-red-400",
-      chipBg: "bg-red-700/20", featuredRing: "",
+      fromPrice: "From £29", featured: false, img: gradeImgs[4],
+      textClass: "text-red-400", featuredRing: "",
     },
   ];
 
@@ -2313,7 +2180,6 @@ function GradeGuide() {
     <section ref={sectionRef} className="py-24 bg-zinc-950 overflow-hidden">
       <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
 
-        {/* Section header */}
         <div className="mb-16 flex flex-col lg:flex-row lg:items-end justify-between gap-6">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-2.5">How grading works</p>
@@ -2334,23 +2200,12 @@ function GradeGuide() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.12 }}
-              className={`relative rounded-[2rem] overflow-hidden flex flex-col group hover:-translate-y-1.5 transition-all duration-300 border bg-zinc-950/40 backdrop-blur-sm ${
-                g.featured
-                  ? g.featuredRing
-                  : g.condition === "NEW"
-                  ? "border-zinc-800/80 hover:border-zinc-600/80"
-                  : g.condition === "B"
-                  ? "border-zinc-800/80 hover:border-blue-500/50"
-                  : g.condition === "C"
-                  ? "border-zinc-800/80 hover:border-amber-500/50"
-                  : g.condition === "F"
-                  ? "border-zinc-800/80 hover:border-rose-500/50"
-                  : "border-zinc-800/80 hover:border-zinc-700/80"
+              className={`relative rounded-[2rem] overflow-hidden flex flex-col group hover:-translate-y-1.5 transition-all duration-300 border bg-zinc-950/40 ${
+                g.featured ? g.featuredRing : "border-zinc-800/80 hover:border-zinc-700/80"
               }`}
             >
-              {/* ── Photo panel ── */}
-              <div className="relative h-[380px] overflow-hidden flex-shrink-0">
-                {/* Product photo */}
+              {/* Photo */}
+              <div className="relative h-[340px] overflow-hidden flex-shrink-0">
                 {g.img && (
                   <NextImage
                     fill
@@ -2360,154 +2215,34 @@ function GradeGuide() {
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 20vw"
                   />
                 )}
-                {/* Dark gradient from top + bottom */}
-                <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/70 via-transparent to-zinc-950/95" />
+                <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/40 via-transparent to-zinc-950" />
 
-                {/* Watermark number */}
-                <div className="absolute -bottom-6 -right-4 text-[160px] font-black leading-none select-none pointer-events-none text-white/[0.04]">
-                  {g.num}
-                </div>
-
-                {/* Most Popular badge */}
                 {g.featured && (
                   <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-accent text-white text-[9px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-full whitespace-nowrap shadow-lg">
                     Most Popular
                   </div>
                 )}
 
-                {/* Top-left: number + rating */}
-                <div className="absolute top-4 left-5 flex flex-col gap-1.5">
-                  <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">{g.num}</span>
-                  <div className="flex items-center gap-1">
-                    {[...Array(5)].map((_, k) => <Star key={k} className="h-3 w-3 fill-amber-400 text-amber-400" />)}
-                    <span className="text-[10px] font-bold text-white/70 ml-1">{g.rating} · {g.reviewCount}</span>
-                  </div>
-                </div>
+                <span className="absolute top-4 left-5 text-[10px] font-bold text-white/30 uppercase tracking-widest">{g.num}</span>
 
-                {/* Top-right: savings pill */}
-                <div className="absolute top-4 right-5 flex flex-col items-center justify-center h-14 w-14 rounded-full bg-zinc-950/60 border border-white/10 backdrop-blur-md">
-                  <span className={`text-sm font-bold leading-none ${g.textClass}`}>-{g.saving}%</span>
-                  <span className="text-[8px] text-white/40 uppercase tracking-wide mt-0.5">save</span>
-                </div>
-
-                {/* Floating glassmorphism chips (left side) */}
-                <div className="absolute left-5 top-1/2 -translate-y-1/2 flex flex-col gap-2">
-                  {!g.partsOnly && (
-                    <div className={`${g.chipBg} backdrop-blur-md border border-white/10 rounded-xl px-3 py-2`}>
-                      <p className="text-[8px] text-white/50 font-bold uppercase tracking-widest mb-0.5">Battery</p>
-                      <p className={`text-sm font-bold ${g.textClass}`}>{g.battery}%+</p>
-                    </div>
-                  )}
-                  <div className={`${g.partsOnly ? g.chipBg : 'bg-white/10'} backdrop-blur-md border border-white/10 rounded-xl px-3 py-2`}>
-                    <p className="text-[8px] text-white/50 font-bold uppercase tracking-widest mb-0.5">Condition</p>
-                    <p className={`text-sm font-bold ${g.partsOnly ? g.textClass : 'text-white'}`}>{g.conditionLabel}</p>
+                {/* Grade + name + price */}
+                <div className="absolute bottom-0 left-0 right-0 p-5">
+                  <div className="mb-2">
+                    <GradeBadge condition={g.condition} />
                   </div>
-                </div>
-
-                {/* Phone sketch — centred */}
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="opacity-90 group-hover:opacity-100 transition-opacity mt-6 block">
-                    <PhoneSketch level={g.sketchLevel} />
-                  </div>
-                </div>
-
-                {/* Bottom: grade name + price */}
-                <div className="absolute bottom-0 left-0 right-0 p-6">
-                  <div className="flex items-end justify-between">
-                    <div>
-                      <div className="mb-2.5">
-                        <GradeBadge condition={g.condition} />
-                      </div>
-                      <p className="font-sans text-3xl font-extrabold text-white leading-none tracking-tight">{g.name}</p>
-                      <p className="text-white/50 text-xs font-medium mt-1.5">{g.tagline}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className={`text-xl font-bold ${g.textClass}`}>{g.fromPrice}</p>
-                      <p className="text-[10px] text-white/40 font-medium mt-0.5 uppercase tracking-widest">certified</p>
-                    </div>
-                  </div>
+                  <p className="font-sans text-2xl font-extrabold text-white leading-none tracking-tight">{g.name}</p>
+                  <p className="text-white/50 text-xs font-medium mt-1">{g.tagline}</p>
+                  <p className={`text-base font-bold mt-2 ${g.textClass}`}>{g.fromPrice}</p>
                 </div>
               </div>
 
-              {/* ── Dark body panel ── */}
-              <div className="bg-zinc-900/60 flex-1 p-6 flex flex-col gap-4 border-t border-zinc-800/60 rounded-b-[2rem]">
-
-                {/* Condition meter */}
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-500 mb-2">Condition score</p>
-                    <ConditionMeter level={g.conditionLevel} barClass={g.barClass} />
-                  </div>
-                  <div className="text-right">
-                    <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-500 mb-1">Inspection</p>
-                    <div className="flex items-center gap-1.5 justify-end">
-                      <div className="h-5 w-5 rounded-md bg-zinc-800 flex items-center justify-center">
-                        <Check className="h-3 w-3 text-accent" />
-                      </div>
-                      <span className="text-xs font-bold text-white">25 / 25</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Battery segments */}
-                {g.partsOnly ? (
-                  <div className="flex items-center gap-2 py-1">
-                    <div className={`h-2 w-2 rounded-full flex-shrink-0 ${g.barClass}`} />
-                    <p className={`text-[10px] font-black uppercase tracking-widest ${g.textClass}`}>Non-working — parts &amp; repair only</p>
-                  </div>
-                ) : (
-                  <div>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-500">Battery health</p>
-                      <p className={`text-xs font-bold ${g.textClass}`}>{g.battery}%+</p>
-                    </div>
-                    <div className="flex gap-1">
-                      {[...Array(10)].map((_, k) => (
-                        <motion.div
-                          key={k}
-                          initial={{ scaleY: 0 }}
-                          whileInView={{ scaleY: 1 }}
-                          viewport={{ once: true }}
-                          transition={{ delay: i * 0.1 + k * 0.04 + 0.3 }}
-                          className={`h-2.5 flex-1 rounded-sm origin-bottom ${k < Math.round(g.battery / 10) ? g.barClass : "bg-zinc-800"}`}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Popular devices */}
-                <div>
-                  <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-500 mb-2">Popular in {g.name}</p>
-                  <div className="flex flex-col gap-1.5">
-                    {(gradeProducts[g.condition] ?? g.products).map((p, j) => (
-                      <Link key={j} href={p.link} className="flex items-center justify-between bg-zinc-800/60 rounded-xl px-3 py-2 hover:bg-zinc-700/60 transition-colors cursor-pointer">
-                        <div className="flex items-center gap-2">
-                          <div className={`h-1.5 w-1.5 rounded-full ${g.barClass}`} />
-                          <span className="text-xs font-medium text-zinc-300 truncate max-w-[120px]">{p.name}</span>
-                        </div>
-                        <span className={`text-xs font-bold ${g.textClass} flex-shrink-0 ml-2`}>{p.price}</span>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Feature list */}
-                <ul className="space-y-2 pt-1 border-t border-zinc-800">
-                  {g.features.map((feat, j) => (
-                    <li key={j} className="flex items-start gap-2.5 pt-1">
-                      <Check className={`h-3.5 w-3.5 mt-0.5 flex-shrink-0 ${g.textClass}`} />
-                      <span className="text-xs text-zinc-400 leading-snug">{feat}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                {/* CTA */}
+              {/* CTA */}
+              <div className="p-4 border-t border-zinc-800/60">
                 <a
                   href="/shop/phones"
-                  className={`mt-auto flex items-center justify-center gap-2 h-11 rounded-2xl bg-zinc-800 hover:bg-accent text-zinc-300 hover:text-white font-bold text-sm transition-all duration-200`}
+                  className="flex items-center justify-center gap-2 h-10 rounded-2xl bg-zinc-800 hover:bg-accent text-zinc-300 hover:text-white font-bold text-sm transition-all duration-200"
                 >
-                  Shop {g.name} <ArrowRight className="h-4 w-4" />
+                  Browse devices <ArrowRight className="h-4 w-4" />
                 </a>
               </div>
             </motion.div>
@@ -3266,9 +3001,6 @@ function SellCTA() {
             <a href="/trade-in" className="h-14 px-8 bg-accent text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-accent-dark transition-colors">
               Get instant quote <ArrowRight className="h-4 w-4" />
             </a>
-            <a href="/trade-in" className="h-14 px-8 border border-zinc-700 text-white rounded-2xl font-bold text-sm flex items-center justify-center hover:border-zinc-400 transition-colors">
-              How it works
-            </a>
           </div>
         </div>
       </motion.div>
@@ -3512,6 +3244,12 @@ function StoreLocationSection() {
                 className="px-8 py-4.5 bg-white/50 hover:bg-white dark:bg-zinc-900/50 dark:hover:bg-zinc-800 text-zinc-900 dark:text-white backdrop-blur-md rounded-xl text-sm font-black transition-all flex items-center justify-center gap-2 text-center border border-zinc-200/80 dark:border-zinc-800/80 shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-95"
               >
                 Book a Repair
+              </Link>
+              <Link
+                href="/trade-in"
+                className="px-8 py-4.5 bg-white/50 hover:bg-white dark:bg-zinc-900/50 dark:hover:bg-zinc-800 text-zinc-900 dark:text-white backdrop-blur-md rounded-xl text-sm font-black transition-all flex items-center justify-center gap-2 text-center border border-zinc-200/80 dark:border-zinc-800/80 shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-95"
+              >
+                Trade In
               </Link>
             </div>
           </div>

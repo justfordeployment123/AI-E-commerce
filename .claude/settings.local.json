@@ -153,7 +153,8 @@
       "Bash(grep -rn \"from \\\\\"\\\\.\\\\.\\\\/\\\\.\\\\.\\\\/\" \"apps/web/app/\\(auth\\)\" \"apps/web/app/\\(info\\)\" \"apps/web/app/\\(services\\)\")",
       "Bash(grep -rn \"from \\\\\"\\\\.\\\\.\\\\/\\\\.\\\\.\\\\/\" \"apps/web/app/\\(shop\\)\" \"apps/web/app/\\(account\\)\")",
       "Bash(git rm *)",
-      "Bash(rmdir \"apps/web/app/\\(services\\)/sell\" \"apps/web/app/\\(info\\)/how-it-works\" \"apps/web/app/\\(info\\)/sustainability\")"
+      "Bash(rmdir \"apps/web/app/\\(services\\)/sell\" \"apps/web/app/\\(info\\)/how-it-works\" \"apps/web/app/\\(info\\)/sustainability\")",
+      "Bash(grep -v \"^.*//\\\\|slide\\\\.btnLink\\\\|p\\\\.link\\\\|link\\\\b.*=\\\\|category\\\\|slug\\\\|brand\\\\|account\\\\|login\\\\|repair\\\\|trade\")"
     ],
     "additionalDirectories": [
       "d:\\CODE\\Projects\\Markhor Systems Projects\\Ai-Ecommerce\\apps\\web\\app\\account\\repairs",
