@@ -43,11 +43,11 @@ export class BannersService {
     }
 
     async uploadBanner(file: any, label?: string) {
-        const { filePath, presignedUrl } = await this.storage.uploadFile(file, 'banners');
+        const { filePath, url } = await this.storage.uploadFile(file, 'banners');
         const banner = await this.prisma.banner.create({
             data: { key: filePath, label: label ?? null, isActive: true, order: 0 },
         });
-        return { ...banner, url: presignedUrl };
+        return { ...banner, url };
     }
 
     async presignBanner(filename: string, contentType: string) {

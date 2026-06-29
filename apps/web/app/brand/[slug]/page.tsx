@@ -7,6 +7,8 @@ import { catalogApi, CatalogBrand, CatalogBrandCategory } from "../../../lib/api
 import Footer from "../../../components/Footer";
 import { ArrowRight, ShoppingCart, Star } from "lucide-react";
 import { useCart } from "../../../context/cart-context";
+import NextImage from "next/image";
+import ProductImage from "../../../components/ProductImage";
 
 type BrandWithCategories = CatalogBrand & {
   brandCategories: (CatalogBrandCategory & {
@@ -84,13 +86,21 @@ export default function BrandPage() {
       {/* ── Hero ──────────────────────────────────────────────────────────────── */}
       <section className="relative bg-zinc-950 text-white overflow-hidden">
         <div className="absolute inset-0 opacity-20">
-          {heroImage && <img src={heroImage} alt="" className="w-full h-full object-cover" />}
+          {heroImage && (
+            <NextImage
+              fill
+              src={heroImage}
+              alt=""
+              className="object-cover"
+              sizes="100vw"
+            />
+          )}
         </div>
         <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-20 flex flex-col md:flex-row items-center gap-10">
           <div className="flex-1">
             {data.logo && (
               <div className="inline-flex bg-white rounded-2xl p-3 mb-6">
-                <img src={data.logo} alt={data.name} className="h-12 w-auto object-contain" />
+                <NextImage src={data.logo} alt={data.name} width={96} height={48} className="object-contain" />
               </div>
             )}
             <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">
@@ -109,8 +119,14 @@ export default function BrandPage() {
             </div>
           </div>
           {heroImage && (
-            <div className="w-64 h-64 rounded-3xl overflow-hidden shrink-0 bg-white/5">
-              <img src={heroImage} alt={data.name} className="w-full h-full object-cover" />
+            <div className="relative w-64 h-64 rounded-3xl overflow-hidden shrink-0 bg-white/5">
+              <NextImage
+                fill
+                src={heroImage}
+                alt={data.name}
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, 33vw"
+              />
             </div>
           )}
         </div>
@@ -152,11 +168,13 @@ export default function BrandPage() {
                 {/* Left: brand-category images (random pick shown as featured) */}
                 {(bc.images as string[]).length > 0 && (
                   <div className="hidden lg:block w-52 shrink-0">
-                    <div className="aspect-[3/4] rounded-[24px] overflow-hidden bg-zinc-100">
-                      <img
+                    <div className="relative aspect-[3/4] rounded-[24px] overflow-hidden bg-zinc-100">
+                      <NextImage
+                        fill
                         src={pickRandom(bc.images as string[])}
                         alt={`${data.name} ${bc.category.name}`}
-                        className="w-full h-full object-cover"
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw, 33vw"
                       />
                     </div>
                   </div>
@@ -172,21 +190,15 @@ export default function BrandPage() {
                         className="w-[220px] shrink-0 group block"
                       >
                         <div className="bg-white rounded-[24px] p-3 border border-zinc-200 hover:border-black hover:shadow-lg transition-all h-full flex flex-col">
-                          <div className="relative aspect-square rounded-[18px] bg-[#f5f5f7] mb-3 overflow-hidden flex items-center justify-center p-4">
-                            <span className="absolute top-3 left-3 text-[10px] font-bold px-2 py-0.5 rounded-full bg-white border border-zinc-200 uppercase tracking-wider">
+                          <div className="relative aspect-square rounded-[18px] bg-[#f5f5f7] mb-3 overflow-hidden">
+                            <span className="absolute top-3 left-3 z-20 text-[10px] font-bold px-2 py-0.5 rounded-full bg-white border border-zinc-200 uppercase tracking-wider">
                               {product.condition}
                             </span>
-                            {product.images[0] && (
-                              <img
-                                src={product.images[0]}
-                                alt={product.name}
-                                className="max-h-full max-w-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform"
-                              />
-                            )}
+                            <ProductImage src={product.images[0]} alt={product.name} />
                             {product.stock > 0 && (
                               <button
                                 onClick={e => { e.preventDefault(); handleAdd(product); }}
-                                className="absolute bottom-3 right-3 h-9 w-9 rounded-full bg-white flex items-center justify-center shadow translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all"
+                                className="absolute bottom-3 right-3 z-20 h-9 w-9 rounded-full bg-white flex items-center justify-center shadow translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all"
                               >
                                 <ShoppingCart className="h-4 w-4" />
                               </button>

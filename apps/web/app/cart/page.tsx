@@ -17,6 +17,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Footer from "../../components/Footer";
 import { useCart } from "../../context/cart-context";
 import RequireAuth from "../../components/RequireAuth";
+import ProductImage from "../../components/ProductImage";
 
 function CartPageContent() {
   const { items, count, subtotal, loading, updateItem, removeItem } = useCart();
@@ -88,16 +89,8 @@ function CartPageContent() {
                   >
                     <div className="flex flex-col sm:flex-row gap-6 sm:gap-8">
                       {/* Image */}
-                      <div className="relative aspect-square w-full sm:w-40 shrink-0 overflow-hidden rounded-[24px] bg-[#f5f5f7] p-4 flex items-center justify-center">
-                        {item.image ? (
-                          <img
-                            src={item.image}
-                            alt={item.name}
-                            className="h-full w-full object-contain mix-blend-multiply"
-                          />
-                        ) : (
-                          <ShoppingCart className="h-12 w-12 text-zinc-300" />
-                        )}
+                      <div className="relative aspect-square w-full sm:w-40 shrink-0 overflow-hidden rounded-[24px] bg-[#f5f5f7]">
+                        <ProductImage src={item.image} alt={item.name} hover={false} />
                       </div>
 
                       {/* Details */}

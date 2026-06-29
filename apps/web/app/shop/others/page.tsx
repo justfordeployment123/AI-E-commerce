@@ -8,6 +8,7 @@ import Footer from "../../../components/Footer";
 import { productsApi } from "../../../lib/api";
 import { GradeBadge } from "../../../components/GradeBadge";
 import { useCart } from "../../../context/cart-context";
+import ProductImage from "../../../components/ProductImage";
 
 
 interface Product {
@@ -168,17 +169,9 @@ function ProductGridCard({ p, i, handleAddToCart, addedIds }: { p: Product; i: n
       className="group bg-white rounded-3xl border border-zinc-100 hover:border-zinc-300 hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col w-[210px] md:w-[230px] flex-shrink-0"
     >
       <Link href={`/shop/${p.category.toLowerCase()}/${p.slug}`} className="block">
-        <div className="aspect-square bg-image-light flex items-center justify-center p-4 relative overflow-hidden">
-          {p.images?.[0] ? (
-            <img
-              src={p.images[0]}
-              alt={p.name}
-              className="h-full w-full object-contain group-hover:scale-105 transition-transform duration-500 mix-blend-multiply"
-            />
-          ) : (
-            <Package className="h-10 w-10 text-zinc-200" />
-          )}
-          <GradeBadge condition={p.condition ?? ''} className="absolute top-2 left-2" />
+        <div className="aspect-square bg-image-light relative overflow-hidden">
+          <ProductImage src={p.images?.[0]} alt={p.name} />
+          <GradeBadge condition={p.condition ?? ''} className="absolute top-2 left-2 z-20" />
           {saving > 0 && (
             <span className="absolute top-2 right-2 bg-accent text-white text-[9px] font-black px-2 py-0.5 rounded-full">
               -{saving}%

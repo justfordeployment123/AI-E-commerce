@@ -147,7 +147,8 @@
       "PowerShell(ls \"D:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\api\\\\src\\\\modules\\\\database\\\\\")",
       "PowerShell(ls \"D:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\node_modules\\\\@prisma\\\\client\\\\\")",
       "PowerShell(ls \"D:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\api\\\\node_modules\\\\.prisma\\\\client\\\\\" 2>&1)",
-      "PowerShell(ls \"D:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\node_modules\\\\.prisma\\\\client\\\\\")"
+      "PowerShell(ls \"D:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\node_modules\\\\.prisma\\\\client\\\\\")",
+      "Bash(grep -v \"//\\\\|picsum\\\\|pravatar\\\\|unsplash\\\\|motion\\\\.img\\\\|blob:\")"
     ],
     "additionalDirectories": [
       "d:\\CODE\\Projects\\Markhor Systems Projects\\Ai-Ecommerce\\apps\\web\\app\\account\\repairs",

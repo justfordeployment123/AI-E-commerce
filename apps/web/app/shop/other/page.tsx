@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import Footer from "../../../components/Footer";
 import productsData from "../../../lib/others-data.json";
+import ProductImage from "../../../components/ProductImage";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -73,20 +74,16 @@ function ProductCard({ product }: { product: OtherProduct }) {
     <div className="shrink-0 w-[200px] sm:w-[220px] group">
       <div className="bg-white rounded-[28px] border border-zinc-200 hover:border-black hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden h-full">
         {/* Image */}
-        <div className="relative aspect-square bg-[#f5f5f7] flex items-center justify-center p-5 overflow-hidden">
+        <div className="relative aspect-square bg-[#f5f5f7] overflow-hidden">
           {pct > 0 && (
-            <span className="absolute top-3 left-3 bg-accent text-white text-[9px] font-bold px-2 py-1 rounded-full z-10 uppercase tracking-wide">
+            <span className="absolute top-3 left-3 bg-accent text-white text-[9px] font-bold px-2 py-1 rounded-full z-20 uppercase tracking-wide">
               -{pct}%
             </span>
           )}
-          <img
-            src={product.image}
-            alt={product.name}
-            className="max-h-full max-w-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-500"
-          />
+          <ProductImage src={product.image} alt={product.name} />
           <button
             onClick={handleAdd}
-            className={`absolute bottom-3 right-3 h-9 w-9 rounded-full flex items-center justify-center shadow transition-all duration-300 text-xs font-bold ${
+            className={`absolute bottom-3 right-3 z-20 h-9 w-9 rounded-full flex items-center justify-center shadow transition-all duration-300 text-xs font-bold ${
               added
                 ? "bg-emerald-500 text-white scale-110"
                 : "bg-white text-black hover:bg-black hover:text-white translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100"
@@ -276,12 +273,8 @@ export default function OtherPage() {
                   {products.map(p => (
                     <div key={p.id} className="group">
                       <div className="bg-white rounded-[20px] border border-zinc-200 hover:border-black hover:shadow-lg transition-all duration-300 flex flex-col overflow-hidden">
-                        <div className="aspect-[3/4] bg-[#f5f5f7] relative overflow-hidden flex items-center justify-center p-3">
-                          <img
-                            src={p.image}
-                            alt={p.name}
-                            className="max-h-full max-w-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-500"
-                          />
+                        <div className="aspect-[3/4] bg-[#f5f5f7] relative overflow-hidden">
+                          <ProductImage src={p.image} alt={p.name} />
                         </div>
                         <div className="p-3">
                           <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-0.5">{p.brand}</p>

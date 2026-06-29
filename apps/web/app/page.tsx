@@ -79,11 +79,13 @@ import {
   ChevronLeft, ChevronRight
 } from "lucide-react";
 import dynamic from "next/dynamic";
+import NextImage from "next/image";
 import { productsApi, reviewsApi, bannersApi, catalogApi } from "../lib/api";
 import type { CatalogBrand } from "../lib/api";
 import { getGradeConfig } from "../lib/grades";
 import { GradeBadge } from "../components/GradeBadge";
 import { useCart } from "../context/cart-context";
+import ProductImage from "../components/ProductImage";
 const Footer = dynamic(() => import("../components/Footer"));
 
 const isOtherProduct = (category?: string, imgUrl?: string) => {
@@ -641,8 +643,8 @@ function Hero() {
                               href={`/shop/${item.category.toLowerCase()}/${item.slug}`}
                               className="flex items-center gap-4 p-2 rounded-xl hover:bg-zinc-50 transition-colors group"
                             >
-                              <div className="h-10 w-10 bg-zinc-100 rounded-lg p-1.5 flex items-center justify-center shrink-0">
-                                <img src={item.images?.[0] || undefined} alt={item.name} className="h-full w-full object-contain mix-blend-multiply" />
+                              <div className="relative h-10 w-10 bg-zinc-100 rounded-lg overflow-hidden shrink-0">
+                                <ProductImage src={item.images?.[0]} alt={item.name} hover={false} sizes="40px" />
                               </div>
                               <div className="min-w-0 flex-1">
                                 <p className="text-xs font-bold text-zinc-950 group-hover:text-black">{item.name}</p>
@@ -740,11 +742,12 @@ function Hero() {
                   <Link href={`/shop/${p.category.toLowerCase()}/${p.slug}`} className="block">
                     <div className="bg-white rounded-[2.5rem] p-6 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.08)] mb-4 ring-1 ring-zinc-100 group cursor-pointer hover:shadow-[0_48px_80px_-16px_rgba(0,0,0,0.12)] transition-all duration-500">
                       <div className="flex items-center gap-6">
-                        <div className={`h-32 w-32 rounded-3xl overflow-hidden bg-image-light flex-shrink-0 flex items-center justify-center ${isOtherProduct(p.category, p.images?.[0]) ? 'p-3' : ''}`}>
-                          <img
+                        <div className="relative h-32 w-32 rounded-3xl overflow-hidden bg-image-light flex-shrink-0">
+                          <ProductImage
                             src={p.images?.[0]}
                             alt={p.name}
-                            className={`h-full w-full ${isOtherProduct(p.category, p.images?.[0]) ? 'object-contain mix-blend-multiply' : 'object-cover'} group-hover:scale-110 transition-transform duration-700`}
+                            mode={isOtherProduct(p.category, p.images?.[0]) ? "product" : "cover"}
+                            sizes="128px"
                           />
                         </div>
                         <div className="flex-1 min-w-0">
@@ -780,11 +783,12 @@ function Hero() {
                   return (
                     <Link key={i} href={`/shop/${p.category.toLowerCase()}/${p.slug}`} className="block">
                       <div className="bg-white rounded-[2rem] p-5 shadow-[0_20px_40px_-12px_rgba(0,0,0,0.06)] ring-1 ring-zinc-100 group cursor-pointer hover:shadow-[0_32px_50px_-12px_rgba(0,0,0,0.1)] transition-all duration-500">
-                        <div className={`h-28 w-full rounded-2xl overflow-hidden bg-image-light mb-4 flex items-center justify-center ${isOtherProduct(p.category, p.images?.[0]) ? 'p-3.5' : ''}`}>
-                          <img
+                        <div className="relative h-28 w-full rounded-2xl overflow-hidden bg-image-light mb-4">
+                          <ProductImage
                             src={p.images?.[0]}
                             alt={p.name}
-                            className={`h-full w-full ${isOtherProduct(p.category, p.images?.[0]) ? 'object-contain mix-blend-multiply' : 'object-cover'} group-hover:scale-110 transition-transform duration-700`}
+                            mode={isOtherProduct(p.category, p.images?.[0]) ? "product" : "cover"}
+                            sizes="(max-width: 1024px) 50vw, 25vw"
                           />
                         </div>
                         <p className="font-bold text-sm text-zinc-950 truncate mb-1.5">{p.name}</p>
@@ -929,10 +933,12 @@ function CategoryBento() {
                 className={`group relative overflow-hidden rounded-[2rem] bg-zinc-100 cursor-pointer border border-zinc-200/50 hover:border-zinc-300 hover:shadow-2xl transition-all duration-500 ${i === 0 ? "col-span-2 lg:col-span-2 lg:row-span-2 h-[260px] sm:h-[320px] lg:h-auto" : "h-[180px] sm:h-[220px] lg:h-auto"}`}
               >
                 {cat.image && (
-                  <img
+                  <NextImage
+                    fill
                     src={cat.image}
                     alt={cat.name}
-                    className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-1000 ease-out"
+                    className="object-cover group-hover:scale-105 transition-transform duration-1000 ease-out"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   />
                 )}
                 {/* Double-sided gradient mask for readability */}
@@ -1052,7 +1058,13 @@ function TrendingDeals() {
               className="group relative overflow-hidden rounded-[2.5rem] bg-zinc-100 cursor-pointer block lg:h-full"
             >
               <div className="aspect-[4/3] lg:aspect-auto lg:h-full w-full relative">
-                <img src={featured.images?.[0] || undefined} alt={featured.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                <NextImage
+                  fill
+                  src={featured.images?.[0] || "https://picsum.photos/seed/featured/800/600"}
+                  alt={featured.name}
+                  className="object-cover group-hover:scale-105 transition-transform duration-700"
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                />
                 <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/80 via-zinc-950/20 to-transparent" />
 
                 {/* Grade badge */}
@@ -1106,17 +1118,18 @@ function TrendingDeals() {
                   transition={{ delay: i * 0.07, type: "spring", stiffness: 240, damping: 24 }}
                   className="group cursor-pointer block"
                 >
-                  <div className={`relative aspect-square overflow-hidden rounded-3xl bg-zinc-100 mb-3 flex items-center justify-center ${isOtherProduct(deal.category, deal.images?.[0]) ? 'p-4' : ''}`}>
-                    <img
-                      src={deal.images?.[0] || undefined}
+                  <div className="relative aspect-square overflow-hidden rounded-3xl bg-zinc-100 mb-3">
+                    <ProductImage
+                      src={deal.images?.[0]}
                       alt={deal.name}
-                      className={`h-full w-full ${isOtherProduct(deal.category, deal.images?.[0]) ? 'object-contain mix-blend-multiply' : 'object-cover'} group-hover:scale-105 transition-transform duration-700`}
+                      mode={isOtherProduct(deal.category, deal.images?.[0]) ? "product" : "cover"}
+                      sizes="(max-width: 640px) 45vw, (max-width: 1024px) 25vw, 20vw"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="absolute inset-0 z-20 bg-gradient-to-t from-zinc-950/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     {(() => {
                       const grade = getGradeConfig(deal.condition ?? '');
                       return (
-                        <div className="absolute top-2 left-2 sm:top-3 sm:left-3 flex items-center gap-1 px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-white/90 backdrop-blur-sm text-[8px] sm:text-[9px] font-bold uppercase tracking-widest shadow-sm">
+                        <div className="absolute top-2 left-2 sm:top-3 sm:left-3 z-20 flex items-center gap-1 px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-white/90 backdrop-blur-sm text-[8px] sm:text-[9px] font-bold uppercase tracking-widest shadow-sm">
                           <span className={`h-1 sm:h-1.5 w-1 sm:w-1.5 rounded-full ${grade.dotClass}`} />
                           {grade.label}
                           {grade.forParts && <span className="text-[10px] font-normal opacity-80">· For Parts</span>}
@@ -1124,11 +1137,11 @@ function TrendingDeals() {
                       );
                     })()}
                     {deal.comparePrice && (
-                      <span className="absolute top-2 right-2 sm:top-3 sm:right-3 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full bg-accent text-[8px] sm:text-[9px] font-bold shadow-sm">
+                      <span className="absolute top-2 right-2 sm:top-3 sm:right-3 z-20 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full bg-accent text-[8px] sm:text-[9px] font-bold shadow-sm">
                         -{Math.round((1 - deal.price / deal.comparePrice) * 100)}%
                       </span>
                     )}
-                    <div className="absolute bottom-3 right-3 h-10 w-10 rounded-full bg-zinc-950 text-white flex items-center justify-center opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 shadow-lg">
+                    <div className="absolute bottom-3 right-3 z-20 h-10 w-10 rounded-full bg-zinc-950 text-white flex items-center justify-center opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 shadow-lg">
                       <ShoppingCart className="h-4 w-4" />
                     </div>
                   </div>
@@ -1280,8 +1293,8 @@ function Reviews() {
                   </div>
                   <p className="text-zinc-700 leading-relaxed text-[15px] flex-1">"{r.body}"</p>
                   {r.images?.length > 0 && (
-                    <div className="w-full h-44 rounded-2xl overflow-hidden">
-                      <img src={r.images[0]} alt="" className="w-full h-full object-cover" />
+                    <div className="relative w-full h-44 rounded-2xl overflow-hidden">
+                      <NextImage src={r.images[0]} alt="" fill className="object-cover" sizes="(max-width: 768px) 90vw, 400px" />
                     </div>
                   )}
                   <div className="pt-4 border-t border-zinc-100 flex items-center gap-3">
@@ -1682,11 +1695,13 @@ function BestDealsSplit() {
           {/* Left Image — static banner for All, product image for categories */}
           <div className={`w-full lg:w-[340px] xl:w-[380px] flex-shrink-0 relative rounded-2xl overflow-hidden aspect-[4/3] lg:aspect-auto lg:h-[390px] ${isAllSelected ? "bg-zinc-900" : "bg-[#f5f5f7]"}`}>
             {leftImage && (
-              <img
+              <NextImage
+                fill
                 src={leftImage}
                 alt="Featured product"
                 suppressHydrationWarning
-                className={`absolute inset-0 w-full h-full ${isAllSelected ? "object-cover" : "object-contain p-6"}`}
+                className={isAllSelected ? "object-cover" : "object-contain p-6"}
+                sizes="(max-width: 1024px) 100vw, 380px"
               />
             )}
           </div>
@@ -1722,7 +1737,7 @@ function BestDealsSplit() {
                       : "bg-image-light border-transparent hover:border-zinc-200 dark:hover:border-zinc-700"
                   }`}>
                     {pill.img
-                      ? <img src={pill.img} alt={pill.name} className="h-9 w-9 object-contain mix-blend-multiply" />
+                      ? <NextImage src={pill.img} alt={pill.name} width={36} height={36} className="object-contain mix-blend-multiply" />
                       : <span className="text-[9px] font-bold text-zinc-500 uppercase">{pill.name.slice(0, 3)}</span>
                     }
                   </div>
@@ -1741,12 +1756,12 @@ function BestDealsSplit() {
                 return (
                   <div key={p.id} className="w-[240px] flex-shrink-0 bg-white rounded-xl p-3.5 border border-zinc-200/60 shadow-sm hover:shadow-md transition-shadow flex flex-col relative group">
                     <Link href={`/shop/${p.category.toLowerCase()}/${p.slug}`} className="block">
-                      <div className="h-32 w-full rounded-xl mb-2 overflow-hidden flex items-center justify-center bg-[#f5f5f7] relative p-2">
+                      <div className="relative h-32 w-full rounded-xl mb-2 overflow-hidden bg-[#f5f5f7]">
                         {/* Flash Deal Overlay Badge */}
-                        <div className="absolute top-2 left-2 z-10 flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-500 text-white text-[8px] font-bold uppercase tracking-wider shadow-sm">
+                        <div className="absolute top-2 left-2 z-20 flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-500 text-white text-[8px] font-bold uppercase tracking-wider shadow-sm">
                           <Zap className="h-2 w-2 fill-white" /> Flash
                         </div>
-                        {p.images?.[0] && <img src={p.images[0]} alt={p.name} className="max-h-full max-w-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-500" />}
+                        <ProductImage src={p.images?.[0]} alt={p.name} />
                       </div>
                       <p className="font-semibold text-zinc-950 text-[12.5px] leading-snug mb-1 line-clamp-2 hover:underline min-h-[36px]">{p.name}</p>
                     </Link>
@@ -1824,17 +1839,18 @@ function NewArrivals() {
         <div className="w-4 sm:w-6 lg:w-8 flex-shrink-0" />
         {items.map((item, i) => (
           <Link href={`/shop/${item.category.toLowerCase()}/${item.slug}`} key={i} className="block group flex-shrink-0 w-[220px] md:w-[240px] cursor-pointer">
-            <div className={`relative aspect-square rounded-3xl bg-image-light overflow-hidden mb-4 flex items-center justify-center ${isOtherProduct(item.category, item.images?.[0]) ? 'p-4' : ''}`}>
-              <img
-                src={item.images?.[0] || undefined}
+            <div className="relative aspect-square rounded-3xl bg-image-light overflow-hidden mb-4">
+              <ProductImage
+                src={item.images?.[0]}
                 alt={item.name}
-                className={`h-full w-full ${isOtherProduct(item.category, item.images?.[0]) ? 'object-contain mix-blend-multiply' : 'object-cover'} group-hover:scale-105 transition-transform duration-500`}
+                mode={isOtherProduct(item.category, item.images?.[0]) ? "product" : "cover"}
+                sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 240px"
               />
-              <GradeBadge condition={item.condition ?? ''} className="absolute top-3 left-3" />
-              <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-zinc-950 text-white text-[9px] font-bold uppercase tracking-widest">
+              <GradeBadge condition={item.condition ?? ''} className="absolute top-3 left-3 z-20" />
+              <div className="absolute top-3 right-3 z-20 px-2.5 py-1 rounded-full bg-zinc-950 text-white text-[9px] font-bold uppercase tracking-widest">
                 New
               </div>
-              <button className="absolute bottom-3 right-3 h-10 w-10 rounded-full bg-zinc-950 text-white flex items-center justify-center opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 shadow-lg">
+              <button className="absolute bottom-3 right-3 z-20 h-10 w-10 rounded-full bg-zinc-950 text-white flex items-center justify-center opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 shadow-lg">
                 <ShoppingCart className="h-4 w-4" />
               </button>
             </div>
@@ -2089,7 +2105,15 @@ function GradeGuide() {
               {/* ── Photo panel ── */}
               <div className="relative h-[380px] overflow-hidden flex-shrink-0">
                 {/* Product photo */}
-                {g.img && <img src={g.img} alt={g.name} className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-700" />}
+                {g.img && (
+                  <NextImage
+                    fill
+                    src={g.img}
+                    alt={g.name}
+                    className="object-cover group-hover:scale-105 transition-transform duration-700"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 20vw"
+                  />
+                )}
                 {/* Dark gradient from top + bottom */}
                 <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/70 via-transparent to-zinc-950/95" />
 
@@ -2368,8 +2392,8 @@ function SavingsComparison() {
                       href={`/shop/${item.category?.toLowerCase() ?? "phones"}/${item.slug}`}
                       className="group flex items-center gap-3 md:gap-6 p-3 md:p-5 rounded-2xl border border-zinc-100 hover:shadow-md hover:border-zinc-200 transition-all cursor-pointer"
                     >
-                      <div className="h-12 w-12 md:h-16 md:w-16 rounded-2xl bg-image-light flex-shrink-0 overflow-hidden">
-                        {item.img && <img src={item.img} alt={item.device} className="h-full w-full object-contain mix-blend-multiply" />}
+                      <div className="relative h-12 w-12 md:h-16 md:w-16 rounded-2xl bg-image-light flex-shrink-0 overflow-hidden">
+                        <ProductImage src={item.img} alt={item.device} hover={false} sizes="64px" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-bold text-zinc-950 text-xs sm:text-sm truncate">{item.device}</p>
@@ -2423,10 +2447,10 @@ function ProductCard({ name, type, spec, price, was, grade, img, index = 0, link
         className="cursor-pointer"
       >
         <div className="relative aspect-square rounded-2xl bg-image-light overflow-hidden mb-3 ring-1 ring-zinc-200/10 group-hover:ring-transparent group-hover:shadow-xl transition-all duration-300">
-          {img && <img src={img} alt={name} className="h-full w-full object-contain p-4 mix-blend-multiply group-hover:scale-105 transition-transform duration-500" />}
-          <GradeBadge condition={grade ?? ''} className="absolute top-3 left-3" />
-          {!isUnpriced && pct > 0 && <div className="absolute top-3 right-3 px-2 py-1 rounded-full bg-accent text-white text-[9px] font-bold">-{pct}%</div>}
-          <button className="absolute bottom-3 right-3 h-10 w-10 rounded-full bg-zinc-950 text-white flex items-center justify-center opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 shadow-lg">
+          <ProductImage src={img} alt={name} />
+          <GradeBadge condition={grade ?? ''} className="absolute top-3 left-3 z-20" />
+          {!isUnpriced && pct > 0 && <div className="absolute top-3 right-3 z-20 px-2 py-1 rounded-full bg-accent text-white text-[9px] font-bold">-{pct}%</div>}
+          <button className="absolute bottom-3 right-3 z-20 h-10 w-10 rounded-full bg-zinc-950 text-white flex items-center justify-center opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 shadow-lg">
             <ShoppingCart className="h-4 w-4" />
           </button>
         </div>
@@ -2688,7 +2712,15 @@ function TopBrandsSplit() {
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 lg:items-start">
           {/* Left Image */}
           <div className="w-full lg:w-[320px] xl:w-[360px] flex-shrink-0 relative rounded-2xl overflow-hidden aspect-[4/3] lg:aspect-auto lg:h-[420px]">
-            {deskImg && <img src={deskImg} alt="Desk with tech" className="absolute inset-0 w-full h-full object-cover" />}
+            {deskImg && (
+              <NextImage
+                fill
+                src={deskImg}
+                alt="Desk with tech"
+                className="object-cover"
+                sizes="(max-width: 1024px) 100vw, 360px"
+              />
+            )}
           </div>
 
           {/* Right Content */}
@@ -2719,10 +2751,12 @@ function TopBrandsSplit() {
                   }`}
                 >
                   {brand.logo && (
-                    <img
+                    <NextImage
                       src={brand.logo}
                       alt={brand.name}
-                      className={`h-5 w-5 object-contain flex-shrink-0 ${
+                      width={20}
+                      height={20}
+                      className={`object-contain flex-shrink-0 ${
                         activeBrand === brand.name
                           ? "brightness-0 invert dark:brightness-100 dark:invert-0"
                           : "dark:brightness-0 dark:invert"
@@ -2763,9 +2797,9 @@ function TopBrandsSplit() {
                       href={`/shop/${CAT_SLUG[p.category] ?? p.category.toLowerCase()}/${p.slug}`}
                       className="w-[220px] flex-shrink-0 bg-white rounded-xl p-4 border border-zinc-200/60 shadow-sm hover:shadow-md transition-shadow flex flex-col group cursor-pointer"
                     >
-                      <div className="relative h-40 w-full rounded-xl mb-3 overflow-hidden flex items-center justify-center bg-image-light p-2">
-                        {p.images?.[0] && <img src={p.images[0]} alt={p.name} className="h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-500" />}
-                        <GradeBadge condition={p.condition ?? ''} className="absolute top-2 left-2" />
+                      <div className="relative h-40 w-full rounded-xl mb-3 overflow-hidden bg-image-light">
+                        <ProductImage src={p.images?.[0]} alt={p.name} />
+                        <GradeBadge condition={p.condition ?? ''} className="absolute top-2 left-2 z-20" />
                       </div>
                       <p className="font-semibold text-zinc-950 text-[13px] leading-snug mb-2 line-clamp-2">{p.name}</p>
                       <div className="flex items-center gap-1 mb-auto">
@@ -2869,15 +2903,14 @@ function DiscoverMore() {
                     transition={{ delay: j * 0.05 }}
                     className="w-full"
                   >
-                    <div className={`relative aspect-square rounded-2xl bg-zinc-100 overflow-hidden mb-3 group-hover:shadow-lg transition-shadow duration-300 flex items-center justify-center ${isOtherProduct(p.type, p.img) ? 'p-4' : ''}`}>
-                      {p.img && (
-                        <img
-                          src={p.img}
-                          alt={p.name}
-                          className={`h-full w-full ${isOtherProduct(p.type, p.img) ? 'object-contain mix-blend-multiply' : 'object-cover'} group-hover:scale-105 transition-transform duration-500`}
-                        />
-                      )}
-                      <GradeBadge condition={p.grade ?? ''} className="absolute top-2.5 left-2.5" />
+                    <div className="relative aspect-square rounded-2xl bg-zinc-100 overflow-hidden mb-3 group-hover:shadow-lg transition-shadow duration-300">
+                      <ProductImage
+                        src={p.img}
+                        alt={p.name}
+                        mode={isOtherProduct(p.type, p.img) ? "product" : "cover"}
+                        sizes="(max-width: 640px) 50vw, 210px"
+                      />
+                      <GradeBadge condition={p.grade ?? ''} className="absolute top-2.5 left-2.5 z-20" />
                     </div>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-0.5">{p.type}</p>
                     <p className="font-bold text-zinc-950 text-xs leading-tight truncate mb-1.5">{p.name}</p>
@@ -2962,16 +2995,15 @@ function BudgetPicks() {
                 transition={{ delay: i * 0.06 }}
                 className="w-full"
               >
-                <div className={`relative aspect-square rounded-2xl bg-zinc-100 overflow-hidden mb-3 group-hover:shadow-lg transition-shadow duration-300 flex items-center justify-center ${isOtherProduct(p.type, p.img) ? 'p-4' : ''}`}>
-                  {p.img && (
-                    <img
-                      src={p.img}
-                      alt={p.name}
-                      className={`h-full w-full ${isOtherProduct(p.type, p.img) ? 'object-contain mix-blend-multiply' : 'object-cover'} group-hover:scale-105 transition-transform duration-500`}
-                    />
-                  )}
-                  <GradeBadge condition={p.grade ?? ''} className="absolute top-2.5 left-2.5" />
-                  <button className="absolute bottom-2.5 right-2.5 h-9 w-9 rounded-full bg-zinc-950 text-white flex items-center justify-center opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+                <div className="relative aspect-square rounded-2xl bg-zinc-100 overflow-hidden mb-3 group-hover:shadow-lg transition-shadow duration-300">
+                  <ProductImage
+                    src={p.img}
+                    alt={p.name}
+                    mode={isOtherProduct(p.type, p.img) ? "product" : "cover"}
+                    sizes="(max-width: 640px) 50vw, 210px"
+                  />
+                  <GradeBadge condition={p.grade ?? ''} className="absolute top-2.5 left-2.5 z-20" />
+                  <button className="absolute bottom-2.5 right-2.5 z-20 h-9 w-9 rounded-full bg-zinc-950 text-white flex items-center justify-center opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
                     <ShoppingCart className="h-3.5 w-3.5" />
                   </button>
                 </div>

@@ -16,6 +16,7 @@ import Footer from "../../../components/Footer";
 import { catalogApi } from "../../../lib/api";
 import { GradeKey, GRADE_CONFIG, getGradeConfig } from "../../../lib/grades";
 import { GradeBadge } from "../../../components/GradeBadge";
+import ProductImage from "../../../components/ProductImage";
 
 // ─── Scroll Buttons ───────────────────────────────────────────────────────────
 function ScrollButtons({ scrollRef }: { scrollRef: React.RefObject<HTMLElement | null> }) {
@@ -389,12 +390,8 @@ export default function CategoryPage() {
                     }}
                     className="flex flex-col gap-2.5 group text-left"
                   >
-                    <div className="w-full aspect-[3/4] rounded-[24px] overflow-hidden bg-zinc-100">
-                      <img
-                        src={item.image ?? ""}
-                        alt={item.brand}
-                        className="w-full h-full object-cover group-hover:scale-[1.06] transition-transform duration-500"
-                      />
+                    <div className="relative w-full aspect-[3/4] rounded-[24px] overflow-hidden bg-zinc-100">
+                      <ProductImage src={item.image} alt={item.brand} mode="cover" sizes="(max-width: 640px) 45vw, 25vw" />
                     </div>
                     <span className="font-extrabold text-sm text-zinc-900 group-hover:text-black pl-1">
                       {item.brand}
@@ -454,11 +451,11 @@ export default function CategoryPage() {
               {allProducts.slice(0, 8).map(product => (
                 <Link href={`/shop/${categorySlug}/${product.id}`} key={`top-${product.id}`} className="shrink-0 w-[240px] md:w-[280px] group block">
                   <div className="bg-white rounded-[32px] p-3 border border-zinc-200 hover:border-black hover:shadow-xl transition-all duration-300 h-full flex flex-col">
-                    <div className="relative aspect-square rounded-[24px] bg-image-light mb-5 overflow-hidden flex items-center justify-center p-5">
-                      <span className="absolute top-4 left-4 inline-flex px-2.5 py-1 rounded-full bg-accent text-[10px] font-bold text-white border border-accent shadow-sm uppercase tracking-wider z-10">
+                    <div className="relative aspect-square rounded-[24px] bg-image-light mb-5 overflow-hidden">
+                      <span className="absolute top-4 left-4 inline-flex px-2.5 py-1 rounded-full bg-accent text-[10px] font-bold text-white border border-accent shadow-sm uppercase tracking-wider z-20">
                         Best Seller
                       </span>
-                      {product.image && <img src={product.image} alt={product.title} className="max-h-full max-w-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform" />}
+                      <ProductImage src={product.image} alt={product.title} />
                     </div>
                     <div className="px-2 flex flex-col flex-1 pb-2">
                       <h3 className="font-bold text-lg leading-tight mb-1">{product.title}</h3>
@@ -487,11 +484,7 @@ export default function CategoryPage() {
               {/* Left Column: Lifestyle Flatlay Banner */}
               <div className="w-full lg:w-[260px] h-[340px] md:h-[400px] rounded-[24px] overflow-hidden shrink-0 relative shadow-sm bg-[#f5f5f7]">
                 {bannerImage && (
-                  <img
-                    src={bannerImage}
-                    alt="Tech Stop lifestyle flatlay"
-                    className="w-full h-full object-contain p-6"
-                  />
+                  <ProductImage src={bannerImage} alt="Tech Stop lifestyle flatlay" mode="product" hover={false} sizes="(max-width: 1024px) 100vw, 260px" />
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent flex flex-col justify-end p-5">
                   <span className="text-[10px] font-bold text-accent uppercase tracking-widest mb-1">TechStop Certified</span>
@@ -549,9 +542,9 @@ export default function CategoryPage() {
                           <div className="bg-white rounded-[24px] p-3 border border-zinc-200 hover:border-black hover:shadow-lg transition-all duration-300 h-full flex flex-col justify-between">
                             
                             {/* Centered Image */}
-                            <div className="relative aspect-square rounded-[18px] bg-[#f5f5f7] mb-3 overflow-hidden flex items-center justify-center p-4">
-                              {product.image && <img src={product.image} alt={product.title} className="max-h-full max-w-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform" />}
-                              <GradeBadge condition={product.grade ?? ''} className="absolute top-2 left-2" />
+                            <div className="relative aspect-square rounded-[18px] bg-[#f5f5f7] mb-3 overflow-hidden">
+                              <ProductImage src={product.image} alt={product.title} />
+                              <GradeBadge condition={product.grade ?? ''} className="absolute top-2 left-2 z-20" />
                             </div>
 
                             {/* Product Info */}
@@ -784,8 +777,8 @@ export default function CategoryPage() {
                       <Link href={`/shop/${categorySlug}/${product.id}`} className="group block">
                       <div className={`bg-white rounded-[32px] p-3 border transition-all duration-300 h-full flex flex-col ${product.stock === 0 ? "border-zinc-200 hover:border-zinc-300" : "border-zinc-200 hover:border-black hover:shadow-xl"}`}>
 
-                        <div className="relative aspect-square rounded-[24px] bg-[#f5f5f7] mb-5 overflow-hidden flex items-center justify-center p-5">
-                          <div className="absolute top-4 left-4 z-10 flex flex-col gap-1.5">
+                        <div className="relative aspect-square rounded-[24px] bg-[#f5f5f7] mb-5 overflow-hidden">
+                          <div className="absolute top-4 left-4 z-20 flex flex-col gap-1.5">
                             <GradeBadge condition={product.grade} />
                             {product.stock > 0 && product.stock <= 2 && (
                               <span className="inline-flex px-2.5 py-1 rounded-full bg-amber-500 text-[10px] font-bold text-white uppercase tracking-wider">
@@ -795,23 +788,17 @@ export default function CategoryPage() {
                           </div>
 
                           {product.stock === 0 && (
-                            <span className="absolute top-2 left-2 z-10 text-[10px] font-bold bg-orange-100 text-orange-700 px-2 py-0.5 rounded-lg border border-orange-200">
+                            <span className="absolute top-2 left-2 z-20 text-[10px] font-bold bg-orange-100 text-orange-700 px-2 py-0.5 rounded-lg border border-orange-200">
                               Out of Stock
                             </span>
                           )}
 
-                          {product.image && (
-                            <img
-                              src={product.image}
-                              alt={product.title}
-                              className={`max-h-full max-w-full object-contain mix-blend-multiply transition-transform duration-500 ${product.stock > 0 ? "group-hover:scale-105" : ""}`}
-                            />
-                          )}
+                          <ProductImage src={product.image} alt={product.title} hover={product.stock > 0} />
 
                           {product.stock > 0 && product.price > 0 && (
                             <button
                               onClick={e => { e.preventDefault(); handleAdd(product.id); }}
-                              className={`absolute bottom-4 right-4 h-11 w-11 rounded-full flex items-center justify-center shadow-md transition-all duration-300 ${
+                              className={`absolute bottom-4 right-4 z-20 h-11 w-11 rounded-full flex items-center justify-center shadow-md transition-all duration-300 ${
                                 added ? "bg-emerald-500 text-white scale-110" : "bg-white text-black hover:bg-black hover:text-white translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100"
                               }`}
                             >

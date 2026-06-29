@@ -8,11 +8,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Star, ShoppingCart, Heart, Shield, RefreshCw, Truck,
   Check, ChevronDown, ChevronUp, ArrowLeft,
-  Award, Info, Camera, X, Send, Loader2, MessageSquare
+  Award, Info, Camera, X, Send, Loader2, MessageSquare, Package
 } from "lucide-react";
 import Footer from "../../../../components/Footer";
 import { getGradeConfig } from "../../../../lib/grades";
 import { GradeBadge } from "../../../../components/GradeBadge";
+import ProductImage from "../../../../components/ProductImage";
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -198,6 +199,7 @@ export default function ProductDetailPage() {
                 <Heart className={`h-5 w-5 transition-colors ${wishlisted ? "fill-red-500 text-red-500" : "text-black"}`} />
               </button>
               <div className="w-full max-w-[400px] aspect-square relative flex items-center justify-center bg-image-light rounded-[24px] p-6">
+                <Package className="absolute h-16 w-16 text-zinc-200" strokeWidth={1.5} />
                 <AnimatePresence mode="wait">
                   <motion.img
                     key={activeImage}
@@ -219,11 +221,11 @@ export default function ProductDetailPage() {
                   <button
                     key={i}
                     onClick={() => setActiveImage(i)}
-                    className={`relative shrink-0 snap-center h-24 w-24 rounded-[20px] overflow-hidden bg-image-light border-2 flex items-center justify-center p-2 transition-all ${
+                    className={`relative shrink-0 snap-center h-24 w-24 rounded-[20px] overflow-hidden bg-image-light border-2 transition-all ${
                       activeImage === i ? "border-black dark:border-white shadow-md" : "border-zinc-200 dark:border-zinc-800 opacity-60 hover:opacity-100 hover:border-zinc-400"
                     }`}
                   >
-                    <img src={img} alt="" className="h-full w-full object-contain mix-blend-multiply" />
+                    <ProductImage src={img} alt="" hover={false} />
                   </button>
                 ))}
               </div>

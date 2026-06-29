@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import ProductImage from "../../components/ProductImage";
 import {
   Shield, Lock, ChevronRight, Check, CreditCard, Truck,
   Tag, ArrowLeft, Zap, ShoppingCart, ArrowRight, AlertCircle,
@@ -562,11 +563,8 @@ function CheckoutInner() {
                 <div className="space-y-4 mb-6">
                   {items.map(item => (
                     <div key={item.productId} className="flex gap-4">
-                      <div className="h-16 w-16 rounded-[1rem] bg-white border border-zinc-100 overflow-hidden flex-shrink-0 flex items-center justify-center">
-                        {item.image
-                          ? <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
-                          : <ShoppingCart className="h-6 w-6 text-zinc-300" />
-                        }
+                      <div className="relative h-16 w-16 rounded-[1rem] bg-white border border-zinc-100 overflow-hidden flex-shrink-0">
+                        <ProductImage src={item.image} alt={item.name} hover={false} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-bold text-sm truncate">{item.name}</p>
