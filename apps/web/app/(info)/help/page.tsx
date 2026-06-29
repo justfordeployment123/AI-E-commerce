@@ -1,17 +1,21 @@
-﻿"use client";
+"use client";
 
 import {
   Search, Package, RefreshCw, ShieldCheck, Truck,
   Smartphone, ChevronRight, MessageCircle, ArrowRight,
   X, Send, HelpCircle, User,
-  ChevronDown, Phone, Circle, CreditCard
+  ChevronDown, Phone, Circle, CreditCard,
+  ThumbsUp, ThumbsDown, Zap, RotateCcw, BadgeCheck,
+  LogIn, CheckCircle2, Mail
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { io, Socket } from "socket.io-client";
 import Footer from "@/components/Footer";
-import { authApi, ordersApi, type Order } from "@/lib/api";
+import { ordersApi, type Order } from "@/lib/api";
 import { useAuth } from "@/context/auth-context";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002";
@@ -116,28 +120,66 @@ const STATUS_LABELS: Record<string, string> = {
   CANCELLED: "Cancelled",
 };
 
+const STATUS_COLORS: Record<string, string> = {
+  PENDING:   "bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-900/50",
+  CONFIRMED: "bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-900/50",
+  SHIPPED:   "bg-purple-50 dark:bg-purple-950/30 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-900/50",
+  DELIVERED: "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/50",
+  CANCELLED: "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700",
+};
+
+const FAQS = [
+  {
+    q: "How does the standard 12-month hardware warranty work?",
+    a: "All TechStop purchases come with a 12-month hardware warranty. This covers display failures, motherboard issues, battery degradation under 80%, and port connection drops. Physical cracks or liquid immersion are excluded. To file a claim, go to Warranty & Repairs in your account.",
+    articleId: "warranty-coverage"
+  },
+  {
+    q: "What is your return process and timeline?",
+    a: "You can return any unit for a 100% refund within 30 days of receiving your package. We provide a prepaid postage label. Simply pack the item securely, print and attach the label, and drop it off at any Post Office. Refunds are processed within 24 hours of us receiving the return.",
+    articleId: "return-policy"
+  },
+  {
+    q: "When and how do I receive trade-in payments?",
+    a: "After you ship your device and our technicians check it (within 24 hours of receipt), we release your funds immediately. Bank transfers typically clear in your account within 2 hours via Faster Payments.",
+    articleId: "trade-in-payment"
+  },
+  {
+    q: "Can I modify or cancel my order after placing it?",
+    a: "Orders can be cancelled within 15 minutes directly from your Account page. After that window, contact our live support immediately — if the parcel hasn't left our warehouse, we can still intercept it. Once dispatched, you can return it free of charge within 30 days.",
+    articleId: "change-order"
+  },
+  {
+    q: "What payment methods and financing options are available?",
+    a: "We accept all major credit/debit cards (Visa, Mastercard, Amex), Apple Pay, Google Pay, and PayPal. Klarna and Clearpay are available at checkout for interest-free instalments or pay-later in 30 days.",
+    articleId: "payment-methods"
+  },
+  {
+    q: "My order is delayed — what should I do?",
+    a: "Check the tracking page first for courier delay notifications. If your order is more than 48 hours overdue with no tracking update, start a chat or call us and we'll open an investigation with the carrier. If the parcel is confirmed lost, we'll reship or refund same-day.",
+    articleId: "order-delayed"
+  },
+];
+
 export default function HelpPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
   const [drawerType, setDrawerType] = useState<"article" | "chat" | null>(null);
 
-  // Modals / Dropdown States
   const [isOrdersModalOpen, setIsOrdersModalOpen] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const [missingDetailsOpen, setMissingDetailsOpen] = useState(false);
-  const [missingFields, setMissingFields] = useState<string[]>([]);
 
-  // Real orders
   const [userOrders, setUserOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
+  const [recentOrder, setRecentOrder] = useState<Order | null>(null);
 
-  // Helplines
   const [helplines, setHelplines] = useState<Helpline[]>([]);
+  const [articleFeedback, setArticleFeedback] = useState<Record<string, "up" | "down">>({});
+  const [isMounted, setIsMounted] = useState(false);
 
-  // Real chat state
+
+  // Chat state
   const [chatStep, setChatStep] = useState<"form" | "chat">("form");
   const [chatName, setChatName] = useState("");
   const [chatEmail, setChatEmail] = useState("");
@@ -149,49 +191,38 @@ export default function HelpPage() {
   const [chatStarting, setChatStarting] = useState(false);
   const socketRef = useRef<Socket | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
-
   const categoriesRef = useRef<HTMLDivElement>(null);
 
-  const guardedOpen = (action: () => void) => {
-    if (authLoading) return;
-    if (!user) {
-      sessionStorage.setItem("ts_login_redirect", "/help");
-      router.push("/login?redirect=%2Fhelp");
-      return;
-    }
-    const missing: string[] = [];
-    if (!user.phone)    missing.push("Phone number");
-    if (!user.address)  missing.push("Street address");
-    if (!user.city)     missing.push("City");
-    if (!user.postcode) missing.push("Postcode");
-    if (missing.length > 0) {
-      setMissingFields(missing);
-      setMissingDetailsOpen(true);
-      return;
-    }
-    action();
-  };
+  useEffect(() => { setIsMounted(true); }, []);
 
-  // Load helplines on mount
+
+
   useEffect(() => {
     fetch(`${API_URL}/support/helplines`)
       .then(r => r.json()).then(setHelplines).catch(() => {});
   }, []);
 
-  // Sync user profile name/email when user is loaded
   useEffect(() => {
     if (user) {
       setChatName(user.name ?? "");
       setChatEmail(user.email ?? "");
+      ordersApi.myOrders()
+        .then(orders => {
+          if (orders.length > 0) {
+            const sorted = [...orders].sort((a, b) =>
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            );
+            setRecentOrder(sorted[0]);
+          }
+        })
+        .catch(() => {});
     }
   }, [user]);
 
-  // Auto-scroll chat
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages]);
 
-  // Cleanup socket on unmount
   useEffect(() => () => { socketRef.current?.disconnect(); }, []);
 
   const connectSocket = useCallback((id: string) => {
@@ -242,14 +273,6 @@ export default function HelpPage() {
     setChatInput("");
   }
 
-  // Search matches
-  const matchedArticles = searchQuery.trim() 
-    ? ARTICLES.filter(art => 
-        art.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        art.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        art.category.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : [];
 
   function openOrdersModal() {
     setIsOrdersModalOpen(true);
@@ -265,101 +288,104 @@ export default function HelpPage() {
   const handleOpenArticle = (article: Article) => {
     setSelectedArticle(article);
     setDrawerType("article");
-    setIsSearchFocused(false);
   };
 
   const handleOpenChat = () => {
-    guardedOpen(() => {
-      setChatMessages([]);
-      setChatId(null);
-      setChatOrderRef(undefined);
-      socketRef.current?.disconnect();
-      if (chatName.trim()) {
-        setChatStep("chat");
-        setDrawerType("chat");
-        startChatSession(chatName, chatEmail, undefined);
-      } else {
-        setChatStep("form");
-        setDrawerType("chat");
-      }
-    });
+    if (authLoading) return;
+    if (!user) {
+      sessionStorage.setItem("ts_login_redirect", "/help");
+      router.push("/login?redirect=%2Fhelp");
+      return;
+    }
+    setChatMessages([]);
+    setChatId(null);
+    setChatOrderRef(undefined);
+    socketRef.current?.disconnect();
+    if (chatName.trim()) {
+      setChatStep("chat");
+      setDrawerType("chat");
+      startChatSession(chatName, chatEmail, undefined);
+    } else {
+      setChatStep("form");
+      setDrawerType("chat");
+    }
   };
 
-  // Trigger Chat with prefilled Order ID context
   const handleSelectOrderForHelp = (order: Order) => {
-    guardedOpen(() => {
-      const ref = `#${order.id.slice(0, 8).toUpperCase()}`;
-      setIsOrdersModalOpen(false);
-      setChatMessages([]);
-      setChatId(null);
-      setChatOrderRef(ref);
-      socketRef.current?.disconnect();
-      if (chatName.trim()) {
-        setChatStep("chat");
-        setDrawerType("chat");
-        startChatSession(chatName, chatEmail, ref);
-      } else {
-        setChatStep("form");
-        setDrawerType("chat");
-      }
-    });
+    const ref = `#${order.id.slice(0, 8).toUpperCase()}`;
+    setIsOrdersModalOpen(false);
+    setChatMessages([]);
+    setChatId(null);
+    setChatOrderRef(ref);
+    socketRef.current?.disconnect();
+    if (chatName.trim()) {
+      setChatStep("chat");
+      setDrawerType("chat");
+      startChatSession(chatName, chatEmail, ref);
+    } else {
+      setChatStep("form");
+      setDrawerType("chat");
+    }
   };
 
   const scrollToCategories = () => {
     categoriesRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  const getRelatedArticles = (article: Article): Article[] =>
+    ARTICLES.filter(a => a.id !== article.id && a.category === article.category).slice(0, 3);
+
   const categories = [
-    { 
-      title: "Orders & Shipping", 
-      icon: Truck, 
-      desc: "Track delivery, edit address, check delays.", 
+    {
+      title: "Orders & Shipping",
+      icon: Truck,
+      desc: "Track delivery, edit address, check delays.",
       links: [
         { label: "Track my active shipment", articleId: "track-order" },
         { label: "Modify or cancel an order", articleId: "change-order" },
         { label: "What to do if order is delayed", articleId: "order-delayed" }
       ]
     },
-    { 
-      title: "Returns & Refunds", 
-      icon: RefreshCw, 
-      desc: "Free 30-day return policy and label generation.", 
+    {
+      title: "Returns & Refunds",
+      icon: RefreshCw,
+      desc: "Free 30-day return policy and label generation.",
       links: [
         { label: "Our 30-day return policy", articleId: "return-policy" },
         { label: "Generate prepaid return label", articleId: "return-label" }
       ]
     },
-    { 
-      title: "Payments & Invoices", 
-      icon: CreditCard, 
-      desc: "Klarna, payment methods, VAT invoices.", 
+    {
+      title: "Payments & Invoices",
+      icon: CreditCard,
+      desc: "Klarna, payment methods, VAT invoices.",
       links: [
         { label: "Supported payment methods", articleId: "payment-methods" },
         { label: "How to download VAT invoice", articleId: "invoice" }
       ]
     },
-    { 
-      title: "Trade-In & Selling", 
-      icon: Smartphone, 
-      desc: "Get valuations, package safely, and get paid.", 
+    {
+      title: "Trade-In & Selling",
+      icon: Smartphone,
+      desc: "Get valuations, package safely, and get paid.",
       links: [
         { label: "How and when do I get paid?", articleId: "trade-in-payment" },
         { label: "Package trade-in device safely", articleId: "shipping-trade-in" }
       ]
     },
-    { 
-      title: "Warranty & Coverage", 
-      icon: ShieldCheck, 
-      desc: "12-month hardware guarantee claims.", 
+    {
+      title: "Warranty & Coverage",
+      icon: ShieldCheck,
+      desc: "12-month hardware guarantee claims.",
       links: [
         { label: "What does our warranty cover?", articleId: "warranty-coverage" },
         { label: "File a warranty repair claim", articleId: "claim-warranty" }
       ]
     },
-    { 
-      title: "Account & Privacy", 
-      icon: Package, 
-      desc: "Reset passwords, credentials, profile removal.", 
+    {
+      title: "Account & Privacy",
+      icon: Package,
+      desc: "Reset passwords, credentials, profile removal.",
       links: [
         { label: "Reset my password", articleId: "reset-password" },
         { label: "Delete account & data", articleId: "delete-account" }
@@ -367,126 +393,167 @@ export default function HelpPage() {
     },
   ];
 
+  const quickActions = [
+    { label: "Track Order", icon: Truck, action: openOrdersModal },
+    { label: "Start a Return", icon: RotateCcw, action: () => handleOpenArticle(ARTICLES.find(a => a.id === "return-label")!) },
+    { label: "Warranty Claim", icon: BadgeCheck, action: () => handleOpenArticle(ARTICLES.find(a => a.id === "claim-warranty")!) },
+    { label: "Trade-In Quote", icon: Zap, action: () => router.push("/trade-in") },
+  ];
+
   return (
-    <div className="flex min-h-screen flex-col bg-background text-foreground font-sans selection:bg-accent selection:text-white">
+    <div className="flex min-h-screen flex-col bg-zinc-50 dark:bg-zinc-950 text-foreground font-sans selection:bg-red-500/30 selection:text-red-900 dark:selection:text-red-100 overflow-x-hidden">
 
-      <main className="flex-1">
-        
-        {/* Back Market Clean Search Hero Section */}
-        <section className="bg-zinc-50 dark:bg-zinc-950/50 py-20 border-b border-zinc-200/80 dark:border-zinc-800/80">
-          <div className="mx-auto max-w-4xl px-4 text-center">
-            
-            <h1 className="font-sans text-4xl md:text-5xl font-extrabold tracking-tight text-zinc-900 dark:text-white mb-6">
-              How can we help?
-            </h1>
-            
-            {/* Search Box */}
-            <div className="relative max-w-2xl mx-auto shadow-sm z-30">
-              <div className="relative group">
-                <input 
-                  type="text" 
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onFocus={() => setIsSearchFocused(true)}
-                  placeholder="Search our help center articles..."
-                  className="w-full h-16 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 focus:border-accent dark:focus:border-accent px-14 text-sm md:text-base font-bold text-zinc-900 dark:text-white outline-none transition-all"
-                />
-                <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400 group-focus-within:text-accent transition-colors" />
-                
-                {searchQuery.trim() && (
-                  <button 
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-5 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center justify-center text-zinc-400"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
+      <main className="flex-1 relative pb-20">
 
-              {/* Suggestions dropdown */}
-              <AnimatePresence>
-                {isSearchFocused && searchQuery.trim() && (
-                  <>
-                    <div 
-                      className="fixed inset-0 z-30 bg-transparent" 
-                      onClick={() => setIsSearchFocused(false)} 
-                    />
-                    <motion.div
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 8 }}
-                      className="absolute left-0 right-0 mt-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-xl p-3 text-left z-45 max-h-[300px] overflow-y-auto"
-                    >
-                      <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2 px-3">
-                        Matched Articles ({matchedArticles.length})
-                      </p>
-                      {matchedArticles.length > 0 ? (
-                        <div className="space-y-1">
-                          {matchedArticles.map((art) => (
-                            <button
-                              key={art.id}
-                              onClick={() => handleOpenArticle(art)}
-                              className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors text-left"
-                            >
-                              <div>
-                                <p className="font-extrabold text-sm text-zinc-950 dark:text-white">{art.title}</p>
-                                <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider mt-0.5">{art.category}</p>
-                              </div>
-                              <ChevronRight className="h-4 w-4 text-zinc-400" />
-                            </button>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="p-6 text-center text-zinc-500 font-medium text-xs">
-                          No matches found. Try searching "warranty" or "order".
-                        </div>
-                      )}
-                    </motion.div>
-                  </>
-                )}
-              </AnimatePresence>
+        {/* Hero */}
+        <section className="relative pt-32 pb-16 border-b border-zinc-200/50 dark:border-zinc-800/50 bg-zinc-950 dark:bg-black">
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            <div className="absolute w-[800px] h-[800px] top-[-20%] right-[-10%] bg-red-600/30 blur-[150px] rounded-full" />
+            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 mix-blend-overlay" />
+          </div>
+
+          <div className="relative z-10 mx-auto max-w-5xl px-4 text-center flex flex-col items-center">
+
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 mb-6">
+              <Circle className="h-2 w-2 fill-emerald-400 text-emerald-400" />
+              <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-widest">Live support · within 24 hours</span>
             </div>
+
+            <h1 className="font-sans text-[clamp(2.5rem,6vw,4rem)] font-black tracking-tighter text-white mb-6 drop-shadow-sm uppercase">
+              How can we <span className="font-serif italic font-light lowercase text-red-500 tracking-normal">help?</span>
+            </h1>
+
+            <div className="flex flex-wrap items-center justify-center gap-4 mb-8 w-full max-w-2xl">
+              <button
+                onClick={handleOpenChat}
+                className="group relative h-16 flex-1 min-w-[250px] bg-white text-zinc-950 hover:bg-zinc-100 font-black rounded-2xl flex items-center justify-center gap-3 transition-all text-sm uppercase tracking-widest shadow-[0_20px_40px_rgba(255,255,255,0.1)] hover:shadow-[0_20px_40px_rgba(255,255,255,0.2)] hover:scale-105 active:scale-95 overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-red-600 to-red-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <MessageCircle className="h-5 w-5 relative z-10 group-hover:text-white transition-colors duration-300" />
+                <span className="relative z-10 group-hover:text-white transition-colors duration-300">Start Live Chat</span>
+              </button>
+
+              {helplines.map((hl) => (
+                <a
+                  key={hl.id}
+                  href={`tel:${hl.number.replace(/\s/g, "")}`}
+                  className="group h-16 flex-1 min-w-[250px] flex items-center justify-center gap-3 rounded-2xl border border-white/20 bg-white/10 backdrop-blur-md hover:bg-white/20 hover:border-white/40 transition-all shadow-xl"
+                >
+                  <Phone className="h-5 w-5 text-white" />
+                  <div className="text-left">
+                    {helplines.length > 1 && (
+                      <p className="text-[10px] text-white/60 font-bold uppercase tracking-widest leading-none mb-0.5">{hl.label}</p>
+                    )}
+                    <span className="font-bold text-sm text-white uppercase tracking-widest">Call {hl.number}</span>
+                  </div>
+                </a>
+              ))}
+            </div>
+
 
           </div>
         </section>
 
-        {/* Back Market Split Action Section (Help with order vs other) */}
-        <section className="max-w-4xl mx-auto px-4 -mt-6 relative z-20">
-          <div className="grid md:grid-cols-2 gap-6">
-            
-            {/* Card A: Order Specific Support */}
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2rem] p-8 shadow-sm flex flex-col justify-between items-start text-left">
-              <div>
-                <div className="h-10 w-10 bg-zinc-100 dark:bg-zinc-800 rounded-xl flex items-center justify-center text-zinc-900 dark:text-white mb-4">
-                  <Package className="h-5 w-5" />
+        {/* Quick Actions */}
+        <section className="max-w-4xl mx-auto px-4 pt-12 relative z-20">
+          <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 dark:text-zinc-400 text-center mb-6 drop-shadow-sm">Quick Actions</p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {quickActions.map(({ label, icon: Icon, action }) => (
+              <button
+                key={label}
+                onClick={action}
+                className="group relative flex flex-col items-center gap-3 p-6 rounded-[2rem] bg-white/5 dark:bg-zinc-900/40 backdrop-blur-xl border border-zinc-200/50 dark:border-zinc-800/50 hover:border-red-500/50 dark:hover:border-red-500/50 transition-all duration-300 hover:shadow-[0_0_30px_rgba(239,68,68,0.1)] overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                <div className="relative z-10 h-12 w-12 rounded-2xl bg-white dark:bg-zinc-800 flex items-center justify-center text-zinc-600 dark:text-zinc-400 shadow-md group-hover:scale-110 group-hover:bg-red-50 group-hover:text-red-600 dark:group-hover:bg-red-950/40 dark:group-hover:text-red-400 transition-all duration-300">
+                  <Icon className="h-5 w-5" strokeWidth={2} />
                 </div>
-                <h3 className="text-xl font-bold text-zinc-950 dark:text-white mb-2">I need help with an order</h3>
-                <p className="text-zinc-500 dark:text-zinc-400 text-xs font-semibold leading-relaxed mb-6">
-                  Track delivery, request return labels, cancel items, or contact the seller regarding an active purchase.
+                <span className="relative z-10 text-[11px] font-black text-zinc-700 dark:text-zinc-300 group-hover:text-zinc-950 dark:group-hover:text-white transition-colors text-center leading-tight tracking-wide uppercase">{label}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* Recent Order Widget (logged-in users only) */}
+        {user && recentOrder && (
+          <section className="max-w-4xl mx-auto px-4 mt-8 relative z-20">
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="relative bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl border border-zinc-200/80 dark:border-zinc-800/80 rounded-[2rem] p-6 flex flex-col sm:flex-row sm:items-center gap-5 overflow-hidden shadow-lg hover:shadow-xl hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-300 group"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-zinc-50/50 to-transparent dark:from-zinc-800/10 pointer-events-none" />
+              <div className="h-14 w-14 rounded-2xl bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 flex items-center justify-center shrink-0 relative z-10 shadow-lg group-hover:scale-105 transition-transform duration-300">
+                <Package className="h-6 w-6" />
+              </div>
+              <div className="flex-1 min-w-0 relative z-10">
+                <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-1">Your most recent order</p>
+                <p className="text-base font-black text-zinc-950 dark:text-white truncate">
+                  {recentOrder.items[0]?.product.name ?? "Order"}
+                  {recentOrder.items.length > 1 && (
+                    <span className="text-zinc-400 font-semibold"> +{recentOrder.items.length - 1} more</span>
+                  )}
+                </p>
+                <div className="flex flex-wrap items-center gap-3 mt-2">
+                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${STATUS_COLORS[recentOrder.status] ?? STATUS_COLORS.CANCELLED}`}>
+                    <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                    {STATUS_LABELS[recentOrder.status] ?? recentOrder.status}
+                  </span>
+                  <span className="text-[10px] text-zinc-500 dark:text-zinc-400 font-bold tracking-wider uppercase">
+                    #{recentOrder.id.slice(0, 8).toUpperCase()} · {new Date(recentOrder.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => handleSelectOrderForHelp(recentOrder)}
+                className="relative z-10 w-full sm:w-auto h-12 px-6 rounded-xl bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 text-xs font-black uppercase tracking-wider hover:bg-red-600 hover:text-white dark:hover:bg-red-500 dark:hover:text-white transition-colors flex items-center justify-center gap-2"
+              >
+                Get Help <ChevronRight className="h-4 w-4" />
+              </button>
+            </motion.div>
+          </section>
+        )}
+
+        {/* Cards */}
+        <section className="max-w-4xl mx-auto px-4 mt-8 relative z-20">
+          <div className="grid md:grid-cols-2 gap-6 lg:gap-8">
+
+            <div className="group relative bg-white/80 dark:bg-zinc-900/80 backdrop-blur-2xl border border-zinc-200/80 dark:border-zinc-800/80 rounded-[2.5rem] p-8 md:p-10 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] hover:shadow-[0_20px_40px_-15px_rgba(239,68,68,0.1)] hover:border-red-500/30 transition-all duration-500 flex flex-col justify-between items-start text-left overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-zinc-50 to-transparent dark:from-zinc-800/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+              <div className="relative z-10 w-full">
+                <div className="h-14 w-14 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 rounded-2xl flex items-center justify-center mb-6 shadow-xl shadow-zinc-900/10 group-hover:scale-110 transition-transform duration-500">
+                  <Package className="h-6 w-6" />
+                </div>
+                <h3 className="text-2xl font-black text-zinc-950 dark:text-white mb-3">Order Support</h3>
+                <p className="text-zinc-500 dark:text-zinc-400 text-sm font-semibold leading-relaxed mb-8">
+                  Track delivery, request return labels, cancel items, or get help with an active purchase.
                 </p>
               </div>
               <button
                 onClick={openOrdersModal}
-                className="w-full h-14 bg-black dark:bg-accent hover:bg-zinc-800 dark:hover:bg-accent-dark text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2"
+                className="relative z-10 w-full h-14 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 font-bold text-xs uppercase tracking-widest rounded-2xl transition-all shadow-[0_10px_20px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-3 group/btn overflow-hidden"
               >
-                Get help with an order <ArrowRight className="h-4 w-4" />
+                <div className="absolute inset-0 bg-gradient-to-r from-red-600 to-red-500 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300" />
+                <span className="relative z-10 flex items-center gap-2 group-hover/btn:text-white transition-colors duration-300">
+                  Get help with an order <ArrowRight className="h-4 w-4" />
+                </span>
               </button>
             </div>
 
-            {/* Card B: General Support */}
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2rem] p-8 shadow-sm flex flex-col justify-between items-start text-left">
-              <div>
-                <div className="h-10 w-10 bg-zinc-100 dark:bg-zinc-800 rounded-xl flex items-center justify-center text-zinc-900 dark:text-white mb-4">
-                  <HelpCircle className="h-5 w-5" />
+            <div className="group relative bg-white/80 dark:bg-zinc-900/80 backdrop-blur-2xl border border-zinc-200/80 dark:border-zinc-800/80 rounded-[2.5rem] p-8 md:p-10 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] hover:shadow-[0_20px_40px_-15px_rgba(239,68,68,0.1)] hover:border-red-500/30 transition-all duration-500 flex flex-col justify-between items-start text-left overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-red-50/50 to-transparent dark:from-red-900/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+              <div className="relative z-10 w-full">
+                <div className="h-14 w-14 bg-red-100 dark:bg-red-950/30 text-red-600 dark:text-red-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
+                  <HelpCircle className="h-6 w-6" />
                 </div>
-                <h3 className="text-xl font-bold text-zinc-950 dark:text-white mb-2">I need help with something else</h3>
-                <p className="text-zinc-500 dark:text-zinc-400 text-xs font-semibold leading-relaxed mb-6">
-                  Learn about trading in devices, our 12-month hardware warranty, payment financing, and managing your account profile.
+                <h3 className="text-2xl font-black text-zinc-950 dark:text-white mb-3">General Support</h3>
+                <p className="text-zinc-500 dark:text-zinc-400 text-sm font-semibold leading-relaxed mb-8">
+                  Learn about trading in devices, our 12-month hardware warranty, payment financing, and managing your account.
                 </p>
               </div>
-              <button 
+              <button
                 onClick={scrollToCategories}
-                className="w-full h-14 border border-zinc-300 dark:border-zinc-700 hover:border-zinc-950 dark:hover:border-white text-zinc-950 dark:text-white hover:bg-zinc-50 dark:hover:bg-zinc-800 font-bold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center"
+                className="relative z-10 w-full h-14 bg-white/50 dark:bg-zinc-800/50 backdrop-blur-md border border-zinc-200 dark:border-zinc-700 hover:border-red-500 dark:hover:border-red-500 text-zinc-950 dark:text-white hover:bg-white dark:hover:bg-zinc-800 font-bold text-xs uppercase tracking-widest rounded-2xl transition-all flex items-center justify-center shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-[0.98]"
               >
                 Browse FAQ categories
               </button>
@@ -495,40 +562,92 @@ export default function HelpPage() {
           </div>
         </section>
 
-        {/* Minimalist Categories Grid (No Colored Cards) */}
-        <section ref={categoriesRef} className="py-28 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <h2 className="font-sans text-3xl md:text-4xl font-extrabold tracking-tight text-center text-zinc-900 dark:text-white mb-14">
-            Browse all topics
+        {/* FAQ */}
+        <section className="py-24 relative overflow-hidden">
+          <div className="mx-auto max-w-3xl px-4 relative z-10">
+            <h2 className="font-sans text-4xl font-black tracking-tighter text-center text-zinc-950 dark:text-white mb-10 drop-shadow-sm uppercase">
+              Popular <span className="font-serif italic font-light lowercase text-red-500 tracking-normal">questions</span>
+            </h2>
+            <div className="space-y-4">
+              {FAQS.map((faq, idx) => {
+                const isOpen = openFaq === idx;
+                const linkedArticle = ARTICLES.find(a => a.id === faq.articleId);
+                return (
+                  <div key={idx} className={`relative bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border ${isOpen ? "border-red-500/50 dark:border-red-500/50 shadow-xl" : "border-zinc-200/50 dark:border-zinc-800/50 shadow-sm hover:border-zinc-300 dark:hover:border-zinc-700"} rounded-[1.5rem] overflow-hidden transition-all duration-300`}>
+                    <button
+                      onClick={() => setOpenFaq(isOpen ? null : idx)}
+                      className="w-full flex items-center justify-between p-6 text-left group"
+                    >
+                      <span className={`font-bold text-base transition-colors pr-6 ${isOpen ? "text-red-600 dark:text-red-400" : "text-zinc-700 dark:text-zinc-300 group-hover:text-zinc-950 dark:group-hover:text-white"}`}>
+                        {faq.q}
+                      </span>
+                      <div className={`h-8 w-8 rounded-full border flex items-center justify-center shrink-0 transition-all duration-300 ${isOpen ? "border-red-500 bg-red-500 text-white rotate-180 shadow-lg shadow-red-500/30" : "border-zinc-200 dark:border-zinc-700 text-zinc-400 group-hover:border-zinc-400"}`}>
+                        <ChevronDown className="h-4 w-4" />
+                      </div>
+                    </button>
+                    <AnimatePresence initial={false}>
+                      {isOpen && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.3, ease: "easeInOut" }}
+                        >
+                          <div className="px-6 pb-6 text-sm text-zinc-600 dark:text-zinc-400 font-semibold leading-relaxed border-t border-zinc-100 dark:border-zinc-800 pt-5">
+                            <p>{faq.a}</p>
+                            {linkedArticle && (
+                              <button
+                                onClick={() => handleOpenArticle(linkedArticle)}
+                                className="mt-4 inline-flex items-center gap-1.5 text-red-500 font-black text-xs uppercase tracking-widest hover:gap-2.5 transition-all"
+                              >
+                                Read full guide <ChevronRight className="h-3.5 w-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        {/* Categories */}
+        <section ref={categoriesRef} className="pb-24 pt-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10 border-t border-zinc-200/50 dark:border-zinc-800/50">
+          <h2 className="font-sans text-4xl font-black tracking-tighter text-center text-zinc-950 dark:text-white mb-10 drop-shadow-sm uppercase">
+            Browse all <span className="font-serif italic font-light lowercase text-red-500 tracking-normal">topics</span>
           </h2>
-          
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {categories.map((cat, i) => (
-              <motion.div 
+              <motion.div
                 key={cat.title}
-                initial={{ opacity: 0, y: 15 }}
+                initial={{ opacity: 0, y: 10 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.05 }}
-                className="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 rounded-[2rem] p-8 hover:border-zinc-950 dark:hover:border-white transition-all hover:shadow-lg flex flex-col justify-between text-left"
+                transition={{ delay: i * 0.05, type: "spring", stiffness: 100 }}
+                className="group relative bg-white/60 dark:bg-zinc-900/60 backdrop-blur-md border border-zinc-200/80 dark:border-zinc-800 rounded-[1.5rem] p-6 hover:border-red-200 dark:hover:border-red-900/50 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between text-left overflow-hidden"
               >
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-bold text-zinc-950 dark:text-white">{cat.title}</h3>
-                    <cat.icon className="h-5 w-5 text-zinc-400" strokeWidth={1.5} />
+                <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+                <div className="relative z-10">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="h-10 w-10 bg-zinc-100 dark:bg-zinc-800 rounded-xl flex items-center justify-center text-zinc-600 dark:text-zinc-400 group-hover:bg-red-500 group-hover:text-white transition-colors duration-300 shadow-sm">
+                      <cat.icon className="h-5 w-5" strokeWidth={2} />
+                    </div>
+                    <h3 className="text-lg font-black text-zinc-950 dark:text-white tracking-tight">{cat.title}</h3>
                   </div>
-                  <p className="text-zinc-400 dark:text-zinc-400 text-[11px] font-semibold mb-6">{cat.desc}</p>
-                  
-                  <div className="space-y-3.5 border-t border-zinc-100 dark:border-zinc-800 pt-4">
+                  <div className="space-y-3">
                     {cat.links.map((link) => {
                       const linkedArticle = ARTICLES.find(a => a.id === link.articleId);
                       return (
                         <button
                           key={link.label}
                           onClick={() => linkedArticle && handleOpenArticle(linkedArticle)}
-                          className="w-full flex items-center justify-between text-left group/link py-1 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
+                          className="w-full flex items-center justify-between text-left group/link py-1.5 transition-colors border-b border-zinc-100 dark:border-zinc-800/50 last:border-0"
                         >
-                          <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200 group-hover/link:underline">{link.label}</span>
-                          <ChevronRight className="h-3.5 w-3.5 text-zinc-400 group-hover/link:translate-x-0.5 transition-transform" />
+                          <span className="text-sm font-bold text-zinc-600 dark:text-zinc-400 group-hover/link:text-zinc-950 dark:group-hover/link:text-white">{link.label}</span>
+                          <ChevronRight className="h-4 w-4 text-zinc-300 dark:text-zinc-600 group-hover/link:translate-x-1 group-hover/link:text-red-500 transition-all" />
                         </button>
                       );
                     })}
@@ -539,151 +658,102 @@ export default function HelpPage() {
           </div>
         </section>
 
-        {/* Popular Answers Accordion */}
-        <section className="py-28 bg-zinc-50 dark:bg-zinc-950/50 border-y border-zinc-200/80 dark:border-zinc-800/80">
-          <div className="mx-auto max-w-4xl px-4">
-            <h2 className="font-sans text-3xl md:text-4xl font-extrabold tracking-tight mb-12 text-center text-zinc-900 dark:text-white">
-              Popular Questions
+        {/* Premium Support CTA (Contacts) */}
+        <section className="py-24 relative overflow-hidden bg-zinc-950 dark:bg-black rounded-t-[3rem] mt-10">
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            <div className="absolute w-[600px] h-[600px] bottom-[-20%] left-[-10%] bg-red-600/20 blur-[120px] rounded-full" />
+            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 mix-blend-overlay" />
+          </div>
+
+          <div className="mx-auto max-w-4xl px-4 relative z-10 text-center">
+            <h2 className="font-sans text-4xl font-black tracking-tighter text-white mb-4 uppercase">
+              Still need <span className="text-red-500">assistance?</span>
             </h2>
-            <div className="space-y-4">
-              {[
-                {
-                  q: "How does the standard 12-month hardware warranty work?",
-                  a: "All TechStop purchases come with a 12-month hardware warranty. This covers display failures, motherboard issues, battery degradation under 80%, and port connection drops. Physical cracks or liquid immersion are excluded."
-                },
-                {
-                  q: "What is your return process and timeline?",
-                  a: "You can return any unit for a 100% refund within 30 days of receiving your package. We provide a prepaid postage label. Simply pack the item securely, print and attach the label, and drop it off at any Post Office."
-                },
-                {
-                  q: "When and how do I receive trade-in payments?",
-                  a: "After you ship your device and our technicians check it (within 24 hours of receipt), we release your funds immediately. Bank transfers typically clear in your account within 2 hours."
-                }
-              ].map((faq, idx) => (
-                <div key={idx} className="border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden shadow-sm">
-                  <button
-                    onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
-                    className="w-full flex items-center justify-between p-6 text-left font-bold text-sm text-zinc-950 dark:text-white hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
-                  >
-                    <span className="flex items-center gap-3">
-                      <HelpCircle className="h-4.5 w-4.5 text-zinc-400 shrink-0" />
-                      {faq.q}
-                    </span>
-                    <ChevronDown className={`h-4.5 w-4.5 text-zinc-400 transition-transform duration-300 shrink-0 ${openFaq === idx ? "rotate-180" : ""}`} />
-                  </button>
-                  <AnimatePresence initial={false}>
-                    {openFaq === idx && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.2, ease: "easeInOut" }}
-                      >
-                        <div className="px-6 pb-6 text-xs text-zinc-500 dark:text-zinc-400 font-semibold leading-relaxed border-t border-zinc-100 dark:border-zinc-800 pt-4 bg-zinc-50/50 dark:bg-zinc-950/30">
-                          {faq.a}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+            <p className="text-zinc-400 font-semibold mb-12 max-w-xl mx-auto text-sm md:text-base">
+              Our support team is available around the clock to help you with any issues, large or small.
+            </p>
+
+            <div className="grid md:grid-cols-2 gap-4 max-w-3xl mx-auto text-left">
+              <a href="mailto:support@markhor.ai" className="group relative bg-white/5 backdrop-blur-xl border border-white/10 p-6 rounded-[2rem] hover:bg-white/10 hover:border-white/20 transition-all duration-300 flex items-center gap-5">
+                <div className="h-12 w-12 rounded-xl bg-white/10 flex items-center justify-center text-white group-hover:scale-110 group-hover:bg-red-500 transition-all shadow-lg">
+                  <Mail className="h-5 w-5" />
                 </div>
+                <div>
+                  <p className="text-[10px] text-white/50 font-black uppercase tracking-widest mb-1">Email Support</p>
+                  <p className="text-lg font-black text-white">support@markhor.ai</p>
+                </div>
+              </a>
+              {helplines.map((hl) => (
+                <a key={hl.id} href={`tel:${hl.number.replace(/\s/g, "")}`} className="group relative bg-white/5 backdrop-blur-xl border border-white/10 p-6 rounded-[2rem] hover:bg-white/10 hover:border-white/20 transition-all duration-300 flex items-center gap-5">
+                  <div className="h-12 w-12 rounded-xl bg-white/10 flex items-center justify-center text-white group-hover:scale-110 group-hover:bg-red-500 transition-all shadow-lg">
+                    <Phone className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-white/50 font-black uppercase tracking-widest mb-1">{hl.label}</p>
+                    <p className="text-lg font-black text-white">{hl.number}</p>
+                  </div>
+                </a>
               ))}
             </div>
           </div>
         </section>
 
-        {/* Support Call-to-Action Section */}
-        <section className="py-28 bg-background">
-          <div className="mx-auto max-w-4xl px-4 text-center">
-            <h2 className="font-sans text-3xl md:text-4xl font-extrabold tracking-tight text-zinc-950 dark:text-white mb-4">Still need help?</h2>
-            <p className="text-zinc-500 dark:text-zinc-400 text-xs font-semibold leading-relaxed mb-10 max-w-md mx-auto">
-              Reach out to our team in Leicester for fast live help.
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-4 mb-12">
-              <button
-                onClick={handleOpenChat}
-                className="h-16 px-8 bg-black dark:bg-accent hover:bg-zinc-800 dark:hover:bg-accent-dark text-white font-bold rounded-2xl flex items-center gap-3 transition-colors text-xs uppercase tracking-wider shadow-lg shadow-accent/15"
-              >
-                <MessageCircle className="h-4 w-4" />
-                Start a Live Chat
-              </button>
-            </div>
-
-            {/* Helpline Numbers */}
-            {helplines.length > 0 && (
-              <div className="mt-2">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-5">Or call us directly</p>
-                <div className="flex flex-wrap justify-center gap-4">
-                  {helplines.map(h => (
-                    <a
-                      key={h.id}
-                      href={`tel:${h.number.replace(/\s/g, "")}`}
-                      className="flex items-center gap-3 h-14 px-6 rounded-2xl border-2 border-zinc-200 dark:border-zinc-800 hover:border-zinc-950 dark:hover:border-white bg-white dark:bg-zinc-900 transition-all group"
-                    >
-                      <div className="h-8 w-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 flex items-center justify-center group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/35 transition-colors">
-                        <Phone className="h-4 w-4 text-emerald-600 dark:text-emerald-450" />
-                      </div>
-                      <div className="text-left">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">{h.label}</p>
-                        <p className="text-sm font-bold text-zinc-950 dark:text-white font-mono">{h.number}</p>
-                      </div>
-                    </a>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </section>
-
       </main>
 
-      {/* 1. Active Orders Modal (Back Market Style) */}
+      {/* Orders Modal */}
       <AnimatePresence>
         {isOrdersModalOpen && (
           <>
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
-              animate={{ opacity: 0.5 }}
+              animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsOrdersModalOpen(false)}
-              className="fixed inset-0 bg-black z-50 backdrop-blur-sm"
+              className="fixed inset-0 bg-black/60 z-50 backdrop-blur-sm"
             />
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-2rem)] sm:w-full max-w-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2rem] p-8 shadow-2xl z-55 text-left"
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-2rem)] sm:w-full max-w-xl bg-white/90 dark:bg-zinc-900/90 backdrop-blur-3xl border border-white dark:border-zinc-800 rounded-[2.5rem] p-8 shadow-2xl z-55 text-left overflow-hidden"
             >
-              <div className="flex justify-between items-center mb-6">
+              <div className="flex justify-between items-center mb-8">
                 <div>
-                  <h3 className="text-xl font-bold text-zinc-900 dark:text-white">Select an order</h3>
-                  <p className="text-zinc-500 dark:text-zinc-400 text-[11px] font-semibold mt-1">Choose which order you need support with.</p>
+                  <h3 className="text-2xl font-black text-zinc-950 dark:text-white tracking-tight">Select an order</h3>
+                  <p className="text-zinc-500 dark:text-zinc-400 text-xs font-semibold mt-1">Choose which order you need support with.</p>
                 </div>
-                <button 
+                <button
                   onClick={() => setIsOrdersModalOpen(false)}
-                  className="h-8 w-8 rounded-full border border-zinc-200 dark:border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-zinc-950 dark:hover:text-white"
+                  className="h-10 w-10 rounded-full border border-zinc-200 dark:border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-5 w-5" />
                 </button>
               </div>
 
-              <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+              <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
                 {loadingOrders ? (
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     {[1, 2, 3].map(i => (
-                      <div key={i} className="h-20 rounded-2xl bg-zinc-100 dark:bg-zinc-800 animate-pulse" />
+                      <div key={i} className="h-24 rounded-[1.5rem] bg-zinc-100 dark:bg-zinc-800 animate-pulse" />
                     ))}
                   </div>
-                ) : !localStorage.getItem("ts_token") ? (
-                  <div className="py-10 text-center">
-                    <Package className="h-10 w-10 text-zinc-200 dark:text-zinc-700 mx-auto mb-3" />
-                    <p className="font-bold text-sm text-zinc-700 dark:text-zinc-300">Sign in to see your orders</p>
-                    <p className="text-xs text-zinc-400 mt-1">Log in to your account to get order-specific support.</p>
+                ) : !user ? (
+                  <div className="py-12 text-center bg-zinc-50 dark:bg-zinc-950/50 rounded-[2rem] border border-zinc-200/50 dark:border-zinc-800/50">
+                    <Package className="h-12 w-12 text-zinc-300 dark:text-zinc-700 mx-auto mb-4" />
+                    <p className="font-black text-base text-zinc-800 dark:text-zinc-200 mb-1">Sign in to see your orders</p>
+                    <p className="text-sm font-semibold text-zinc-500 mb-6">Log in to get order-specific support.</p>
+                    <Link
+                      href="/login?redirect=%2Fhelp"
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 rounded-xl font-black text-sm uppercase tracking-wider hover:bg-zinc-700 dark:hover:bg-zinc-200 transition-colors"
+                    >
+                      <LogIn className="h-4 w-4" /> Sign In
+                    </Link>
                   </div>
                 ) : userOrders.length === 0 ? (
-                  <div className="py-10 text-center">
-                    <Package className="h-10 w-10 text-zinc-200 dark:text-zinc-700 mx-auto mb-3" />
-                    <p className="font-bold text-sm text-zinc-700 dark:text-zinc-300">No orders found</p>
-                    <p className="text-xs text-zinc-400 mt-1">You haven't placed any orders yet.</p>
+                  <div className="py-12 text-center bg-zinc-50 dark:bg-zinc-950/50 rounded-[2rem] border border-zinc-200/50 dark:border-zinc-800/50">
+                    <Package className="h-12 w-12 text-zinc-300 dark:text-zinc-700 mx-auto mb-4" />
+                    <p className="font-black text-base text-zinc-800 dark:text-zinc-200">No orders found</p>
+                    <p className="text-sm font-semibold text-zinc-500 mt-2">You haven't placed any orders yet.</p>
                   </div>
                 ) : (
                   userOrders.map((order) => {
@@ -694,135 +764,210 @@ export default function HelpPage() {
                     const shortId = `#${order.id.slice(0, 8).toUpperCase()}`;
                     const statusLabel = STATUS_LABELS[order.status] ?? order.status;
                     const purchaseDate = new Date(order.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
-                    const isActive = ["PENDING", "CONFIRMED", "SHIPPED"].includes(order.status);
                     return (
                       <button
                         key={order.id}
                         onClick={() => handleSelectOrderForHelp(order)}
-                        className="w-full flex items-center justify-between p-4 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-950 dark:hover:border-white rounded-2xl transition-all text-left bg-white dark:bg-zinc-900 group"
+                        className="w-full flex items-center justify-between p-5 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-950 dark:hover:border-white rounded-[1.5rem] transition-all duration-300 text-left bg-white dark:bg-zinc-950 group hover:shadow-lg"
                       >
-                        <div className="flex gap-4 items-center min-w-0">
-                          <div className="h-12 w-12 bg-zinc-50 dark:bg-zinc-850 border border-zinc-200 dark:border-zinc-800 rounded-xl flex items-center justify-center text-zinc-900 dark:text-white shrink-0">
-                            <Package className="h-5 w-5 text-zinc-500" />
+                        <div className="flex gap-5 items-center min-w-0">
+                          <div className="h-14 w-14 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                            <Package className="h-6 w-6 text-zinc-400 group-hover:text-zinc-950 dark:group-hover:text-white transition-colors" />
                           </div>
                           <div className="min-w-0">
-                            <p className="text-xs font-black text-zinc-900 dark:text-white truncate">{displayName}</p>
-                            <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider mt-0.5">
+                            <p className="text-sm font-black text-zinc-900 dark:text-white truncate">{displayName}</p>
+                            <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-1">
                               Order {shortId} · {purchaseDate}
                             </p>
-                            <span className={`inline-block mt-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
-                              isActive ? "bg-blue-50 dark:bg-blue-950/20 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/30" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700"
-                            }`}>
+                            <span className={`inline-block mt-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${STATUS_COLORS[order.status] ?? STATUS_COLORS.CANCELLED}`}>
                               {statusLabel}
                             </span>
                           </div>
                         </div>
-                        <ChevronRight className="h-5 w-5 text-zinc-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
+                        <ChevronRight className="h-6 w-6 text-zinc-300 dark:text-zinc-700 group-hover:translate-x-1 group-hover:text-zinc-950 dark:group-hover:text-white transition-all shrink-0" />
                       </button>
                     );
                   })
                 )}
-              </div>
-
-              <div className="mt-6 border-t border-zinc-100 dark:border-zinc-800 pt-5 text-center">
-                <p className="text-[10px] font-semibold text-zinc-400">
-                  Don't see your order here? Make sure you are logged into the correct account.
-                </p>
               </div>
             </motion.div>
           </>
         )}
       </AnimatePresence>
 
-      {/* 2. Slide-Out Support Drawer Panel */}
+      {/* Slide-Out Drawer */}
       <AnimatePresence>
         {drawerType && (
           <>
-            {/* Backdrop filter overlay */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
-              animate={{ opacity: 0.5 }}
+              animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setDrawerType(null)}
-              className="fixed inset-0 bg-black z-50 backdrop-blur-sm"
+              className="fixed inset-0 bg-black/60 z-50 backdrop-blur-sm"
             />
-
-            {/* Sidebar drawer container */}
             <motion.div
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 220 }}
-              className="fixed right-0 top-0 bottom-0 w-full max-w-lg bg-white dark:bg-zinc-900 shadow-2xl z-55 flex flex-col border-l border-zinc-200 dark:border-zinc-800"
+              transition={{ type: "spring", damping: 30, stiffness: 200 }}
+              className="fixed right-0 top-0 bottom-0 w-full max-w-lg bg-white/95 dark:bg-zinc-950/95 backdrop-blur-3xl shadow-[-20px_0_40px_rgba(0,0,0,0.1)] z-55 flex flex-col border-l border-white/20 dark:border-zinc-800/50"
             >
-              {/* Drawer Header */}
-              <div className="p-6 border-b border-zinc-150 dark:border-zinc-800 flex items-center justify-between bg-zinc-50 dark:bg-zinc-950/50">
-                <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 bg-black dark:bg-accent text-white rounded-xl flex items-center justify-center">
-                    {drawerType === "article" && <HelpCircle className="h-4.5 w-4.5 text-white" />}
-                    {drawerType === "chat" && <MessageCircle className="h-4.5 w-4.5 text-white" />}
+              <div className="p-6 border-b border-zinc-200/50 dark:border-zinc-800/50 flex items-center justify-between bg-zinc-50/50 dark:bg-zinc-900/30">
+                <div className="flex items-center gap-4">
+                  <div className="h-12 w-12 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 rounded-[1.25rem] flex items-center justify-center shadow-lg shadow-zinc-900/10">
+                    {drawerType === "article" && <HelpCircle className="h-6 w-6" />}
+                    {drawerType === "chat" && <MessageCircle className="h-6 w-6" />}
                   </div>
                   <div className="text-left">
-                    <h3 className="font-extrabold text-sm text-zinc-900 dark:text-white leading-tight">
+                    <h3 className="font-black text-lg text-zinc-950 dark:text-white tracking-tight">
                       {drawerType === "article" && "Help Guide"}
                       {drawerType === "chat" && "Support Chat"}
                     </h3>
-                    <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider mt-0.5">
+                    <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-0.5">
                       {drawerType === "article" && selectedArticle?.category}
-                      {drawerType === "chat" && "Live Support"}
+                      {drawerType === "chat" && "Live Support Team"}
                     </p>
                   </div>
                 </div>
-                <button 
+                <button
                   onClick={() => setDrawerType(null)}
-                  className="h-8 w-8 rounded-full border border-zinc-200 dark:border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-black dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all"
+                  className="h-10 w-10 rounded-full border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-zinc-400 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-5 w-5" />
                 </button>
               </div>
 
-              {/* Drawer Content */}
-              <div className="flex-1 overflow-y-auto p-6 text-left">
-                
-                {/* 1. Article View */}
+              <div className="flex-1 overflow-y-auto p-8 text-left">
+
+                {/* Article View */}
                 {drawerType === "article" && selectedArticle && (
-                  <div className="prose prose-zinc max-w-none">
-                    <h2 className="font-sans text-3xl font-extrabold tracking-tight text-zinc-950 dark:text-white mb-6">
-                      {selectedArticle.title}
-                    </h2>
-                    <div className="text-zinc-650 dark:text-zinc-300 text-xs md:text-sm font-semibold leading-relaxed space-y-4 whitespace-pre-line border-t border-zinc-100 dark:border-zinc-800 pt-6">
-                      {selectedArticle.content.split("\n\n").map((para, i) => {
-                        // Bold tags conversion logic
-                        if (para.includes("**")) {
-                           const parts = para.split("**");
-                           return (
-                             <p key={i}>
-                               {parts.map((p, idx) => idx % 2 === 1 ? <strong key={idx} className="text-zinc-950 dark:text-white font-black">{p}</strong> : p)}
-                             </p>
-                           );
-                        }
-                        return <p key={i}>{para}</p>;
-                      })}
+                  <div>
+                    <div className="prose prose-zinc dark:prose-invert max-w-none">
+                      <h2 className="font-sans text-4xl font-black tracking-tighter text-zinc-950 dark:text-white mb-8 leading-[1.1]">
+                        {selectedArticle.title}
+                      </h2>
+                      <div className="text-zinc-600 dark:text-zinc-400 text-sm md:text-base font-medium leading-relaxed space-y-6">
+                        {selectedArticle.content.split("\n\n").map((para, i) => {
+                          if (para.includes("**")) {
+                            const parts = para.split("**");
+                            return (
+                              <p key={i} className="leading-relaxed">
+                                {parts.map((p, idx) => idx % 2 === 1 ? <strong key={idx} className="text-zinc-950 dark:text-white font-black">{p}</strong> : p)}
+                              </p>
+                            );
+                          }
+                          if (para.startsWith("- ")) {
+                            const lines = para.split("\n");
+                            return (
+                              <ul key={i} className="space-y-3 bg-zinc-50 dark:bg-zinc-900/50 p-6 rounded-[1.5rem] border border-zinc-100 dark:border-zinc-800/80">
+                                {lines.map((line, idx) => {
+                                  const clean = line.replace(/^- /, "");
+                                  if (clean.includes("**")) {
+                                    const parts = clean.split("**");
+                                    return <li key={idx} className="flex gap-3"><span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0 mt-2" /><span>{parts.map((p, pIdx) => pIdx % 2 === 1 ? <strong key={pIdx} className="text-zinc-950 dark:text-white font-black">{p}</strong> : p)}</span></li>;
+                                  }
+                                  return <li key={idx} className="flex gap-3"><span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0 mt-2" />{clean}</li>;
+                                })}
+                              </ul>
+                            );
+                          }
+                          if (/^[0-9]. /.test(para)) {
+                            const lines = para.split("\n");
+                            return (
+                              <ol key={i} className="space-y-4">
+                                {lines.map((line, idx) => {
+                                  const match = line.match(/^([0-9]+)\. (.*)/);
+                                  if (match) {
+                                    const num = match[1];
+                                    const txt = match[2];
+                                    let contentNode = <>{txt}</>;
+                                    if (txt.includes("**")) {
+                                      const parts = txt.split("**");
+                                      contentNode = <>{parts.map((p, pIdx) => pIdx % 2 === 1 ? <strong key={pIdx} className="text-zinc-950 dark:text-white font-black">{p}</strong> : p)}</>;
+                                    }
+                                    return (
+                                      <li key={idx} className="flex gap-4 items-start">
+                                        <span className="flex items-center justify-center w-6 h-6 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-950 dark:text-white font-black text-xs shrink-0 mt-0.5">{num}</span>
+                                        <span>{contentNode}</span>
+                                      </li>
+                                    );
+                                  }
+                                  return <li key={idx}>{line}</li>;
+                                })}
+                              </ol>
+                            );
+                          }
+                          return <p key={i} className="leading-relaxed">{para}</p>;
+                        })}
+                      </div>
                     </div>
-                    
-                    <div className="mt-12 p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-150/40 dark:border-zinc-800/40 flex items-center justify-between">
-                      <div>
-                        <p className="font-bold text-xs text-zinc-900 dark:text-white">Was this helpful?</p>
-                        <p className="text-[10px] text-zinc-400 font-medium">94% of users found this helpful</p>
+
+                    {/* Was this helpful? */}
+                    <div className="mt-10 pt-8 border-t border-zinc-100 dark:border-zinc-800">
+                      {articleFeedback[selectedArticle.id] ? (
+                        <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
+                          <CheckCircle2 className="h-4 w-4" />
+                          <span className="text-sm font-bold">Thanks for your feedback!</span>
+                        </div>
+                      ) : (
+                        <div>
+                          <p className="text-xs font-black uppercase tracking-widest text-zinc-400 mb-3">Was this article helpful?</p>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => setArticleFeedback(prev => ({ ...prev, [selectedArticle.id]: "up" }))}
+                              className="flex items-center gap-2 px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 hover:border-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-600 dark:hover:text-emerald-400 text-zinc-500 transition-all text-xs font-bold"
+                            >
+                              <ThumbsUp className="h-3.5 w-3.5" /> Yes, helpful
+                            </button>
+                            <button
+                              onClick={() => setArticleFeedback(prev => ({ ...prev, [selectedArticle.id]: "down" }))}
+                              className="flex items-center gap-2 px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-600 dark:hover:text-red-400 text-zinc-500 transition-all text-xs font-bold"
+                            >
+                              <ThumbsDown className="h-3.5 w-3.5" /> Not really
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Related Articles */}
+                    {getRelatedArticles(selectedArticle).length > 0 && (
+                      <div className="mt-8">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-3">Related articles</p>
+                        <div className="space-y-2">
+                          {getRelatedArticles(selectedArticle).map(rel => (
+                            <button
+                              key={rel.id}
+                              onClick={() => setSelectedArticle(rel)}
+                              className="w-full flex items-center justify-between p-4 rounded-xl bg-zinc-50 dark:bg-zinc-900/60 hover:bg-zinc-100 dark:hover:bg-zinc-800/60 border border-zinc-100 dark:border-zinc-800/80 transition-all group/rel text-left"
+                            >
+                              <span className="text-sm font-bold text-zinc-700 dark:text-zinc-300 group-hover/rel:text-zinc-950 dark:group-hover/rel:text-white">{rel.title}</span>
+                              <ChevronRight className="h-4 w-4 text-zinc-300 dark:text-zinc-600 group-hover/rel:text-red-500 group-hover/rel:translate-x-0.5 transition-all shrink-0" />
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                      <div className="flex gap-2">
-                        <button className="px-4 py-2 border border-zinc-200 dark:border-zinc-700 hover:border-zinc-900 dark:hover:border-white rounded-lg text-xs font-bold transition-all bg-white dark:bg-zinc-800 text-foreground">Yes</button>
-                        <button className="px-4 py-2 border border-zinc-200 dark:border-zinc-700 hover:border-zinc-900 dark:hover:border-white rounded-lg text-xs font-bold transition-all bg-white dark:bg-zinc-800 text-foreground">No</button>
-                      </div>
+                    )}
+
+                    {/* Still need help? */}
+                    <div className="mt-8 p-5 rounded-2xl bg-zinc-950 dark:bg-zinc-900 border border-zinc-800">
+                      <p className="text-sm font-black text-white mb-1">Still need help?</p>
+                      <p className="text-xs text-zinc-400 font-semibold mb-4">Our support team typically responds within 24 hours.</p>
+                      <button
+                        onClick={() => setDrawerType("chat")}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-white text-zinc-950 rounded-xl text-xs font-black uppercase tracking-wider hover:bg-zinc-200 transition-colors"
+                      >
+                        <MessageCircle className="h-3.5 w-3.5" /> Start Live Chat
+                      </button>
                     </div>
                   </div>
                 )}
 
-                {/* 2. Real Live Chat */}
+                {/* Live Chat */}
                 {drawerType === "chat" && (
                   <div className="flex flex-col h-full">
 
-                    {/* Step 1: Name/Email form */}
                     {chatStep === "form" && (
                       <form onSubmit={handleStartChat} className="space-y-4 max-w-sm mx-auto pt-4">
                         <div className="text-center mb-6">
@@ -830,10 +975,10 @@ export default function HelpPage() {
                             <MessageCircle className="h-6 w-6 text-accent" />
                           </div>
                           <h3 className="font-bold text-zinc-950 dark:text-white text-lg">Start a live chat</h3>
-                          <p className="text-zinc-500 dark:text-zinc-400 text-xs mt-1">Our team typically responds within 3 minutes.</p>
+                          <p className="text-zinc-500 dark:text-zinc-400 text-xs mt-1">Our team typically responds within 24 hours.</p>
                         </div>
                         {chatOrderRef && (
-                          <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-705">
+                          <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700">
                             <Package className="h-4 w-4 text-zinc-500 shrink-0" />
                             <div>
                               <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Order Reference</p>
@@ -871,11 +1016,10 @@ export default function HelpPage() {
                       </form>
                     )}
 
-                    {/* Step 2: Live chat messages */}
                     {chatStep === "chat" && (
                       <>
                         <div className="flex items-center gap-2 mb-4 pb-3 border-b border-zinc-100 dark:border-zinc-800">
-                          <Circle className={`h-2 w-2 ${chatConnected ? "fill-emerald-500 text-emerald-500" : "fill-zinc-300 text-zinc-350"}`} />
+                          <Circle className={`h-2 w-2 ${chatConnected ? "fill-emerald-500 text-emerald-500" : "fill-zinc-300 text-zinc-300"}`} />
                           <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
                             {chatConnected ? "Connected · Agent will respond shortly" : "Connecting…"}
                           </span>
@@ -887,10 +1031,10 @@ export default function HelpPage() {
                             return (
                               <div key={msg.id ?? i} className={`flex ${isCustomer ? "justify-end" : "justify-start"}`}>
                                 <div className={`flex gap-3 max-w-[85%] ${isCustomer ? "flex-row-reverse" : "flex-row"}`}>
-                                  <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 text-xs font-black ${isCustomer ? "bg-zinc-850 dark:bg-zinc-700 text-white" : "bg-accent text-white"}`}>
+                                  <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 text-xs font-black ${isCustomer ? "bg-zinc-800 text-white" : "bg-accent text-white"}`}>
                                     {isCustomer ? <User className="h-4 w-4" /> : "TS"}
                                   </div>
-                                  <div className={`p-4 rounded-2xl text-xs md:text-sm font-semibold leading-relaxed ${isCustomer ? "bg-black dark:bg-zinc-800 text-white rounded-tr-none" : "bg-zinc-100 dark:bg-zinc-950/60 text-zinc-900 dark:text-zinc-150 rounded-tl-none border border-transparent dark:border-zinc-850/50"}`}>
+                                  <div className={`p-4 rounded-2xl text-xs md:text-sm font-semibold leading-relaxed ${isCustomer ? "bg-black dark:bg-zinc-800 text-white rounded-tr-none" : "bg-zinc-100 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 rounded-tl-none border border-zinc-200 dark:border-zinc-800"}`}>
                                     {body}
                                   </div>
                                 </div>
@@ -899,8 +1043,6 @@ export default function HelpPage() {
                           })}
                           <div ref={chatEndRef} />
                         </div>
-
-                        {/* Chat Input */}
                         <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex gap-2">
                           <input
                             type="text"
@@ -908,7 +1050,7 @@ export default function HelpPage() {
                             onChange={e => setChatInput(e.target.value)}
                             onKeyDown={e => e.key === "Enter" && handleSendChat()}
                             placeholder="Type a message…"
-                            className="flex-1 h-12 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-850 px-4 text-xs font-bold text-zinc-800 dark:text-zinc-200 rounded-xl outline-none focus:bg-white focus:dark:bg-zinc-900 focus:border-accent focus:dark:border-accent transition-all"
+                            className="flex-1 h-12 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 px-4 text-xs font-bold text-zinc-800 dark:text-zinc-200 rounded-xl outline-none focus:bg-white focus:dark:bg-zinc-900 focus:border-accent transition-all"
                           />
                           <button
                             onClick={handleSendChat}
@@ -928,41 +1070,6 @@ export default function HelpPage() {
           </>
         )}
       </AnimatePresence>
-      
-      {/* Missing profile details modal */}
-      {missingDetailsOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setMissingDetailsOpen(false)} />
-          <div className="relative bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl p-6 max-w-sm w-full space-y-4 text-left">
-            <div className="flex items-start justify-between">
-              <div>
-                <h3 className="text-base font-black text-zinc-950 dark:text-white">Complete your profile first</h3>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-1">We need a few more details before you can start a chat.</p>
-              </div>
-              <button onClick={() => setMissingDetailsOpen(false)} className="text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors ml-4 mt-0.5">
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <ul className="space-y-2">
-              {missingFields.map(f => (
-                <li key={f} className="flex items-center gap-2 text-sm font-semibold text-zinc-700 dark:text-zinc-300">
-                  <span className="h-1.5 w-1.5 rounded-full bg-red-500 shrink-0" />
-                  {f} is missing
-                </li>
-              ))}
-            </ul>
-            <button
-              onClick={() => {
-                setMissingDetailsOpen(false);
-                router.push("/account/settings");
-              }}
-              className="w-full h-11 bg-black dark:bg-accent text-white rounded-xl text-sm font-black hover:bg-zinc-800 dark:hover:bg-accent-dark transition-colors"
-            >
-              Go to Account Settings →
-            </button>
-          </div>
-        </div>
-      )}
 
       <Footer />
     </div>
