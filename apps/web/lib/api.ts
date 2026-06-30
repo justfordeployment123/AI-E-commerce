@@ -1,3 +1,5 @@
+import { compressImage } from './compressImage';
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3002';
 
 function getToken(): string | null {
@@ -155,7 +157,10 @@ export const uploadsApi = {
   image: (file: File) => presignedUpload('/uploads/presign-image', file),
   tradeInImage: (file: File, groupId: string) => presignedUpload('/uploads/presign-trade-in-image', file, { groupId }),
   repairImage: (file: File, groupId: string) => presignedUpload('/uploads/presign-repair-image', file, { groupId }),
-  reviewImage: (file: File) => presignedUpload('/uploads/presign-review-image', file),
+  reviewImage: async (file: File) => {
+    const compressed = await compressImage(file);
+    return presignedUpload('/uploads/presign-review-image', compressed);
+  },
 };
 
 // ── Reviews ───────────────────────────────────────────────────────────────────

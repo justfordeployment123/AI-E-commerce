@@ -269,6 +269,28 @@ export class StorageService implements OnModuleInit {
     return { filePath: key, url };
   }
 
+  // ─── Download ─────────────────────────────────────────────────────────────────
+
+  /** Accepts either a raw S3 key or a full own-storage URL and returns the key. */
+  extractKey(imageRef: string): string {
+    if (!imageRef.startsWith('http')) return imageRef;
+    const pathname = new URL(imageRef).pathname;
+    return pathname.replace(`/${this.bucketName}/`, '').split('?')[0] ?? imageRef;
+  }
+
+  async getObjectBuffer(key: string): Promise<Buffer> {
+    const response = await this.s3Client.send(
+      new GetObjectCommand({ Bucket: this.bucketName, Key: key }),
+    );
+    const stream = response.Body as NodeJS.ReadableStream;
+    return new Promise<Buffer>((resolve, reject) => {
+      const chunks: Buffer[] = [];
+      stream.on('data', (chunk: Buffer) => chunks.push(chunk));
+      stream.on('end', () => resolve(Buffer.concat(chunks)));
+      stream.on('error', reject);
+    });
+  }
+
   // ─── Deletion ─────────────────────────────────────────────────────────────────
 
   async deleteFiles(keys: string[]): Promise<void> {

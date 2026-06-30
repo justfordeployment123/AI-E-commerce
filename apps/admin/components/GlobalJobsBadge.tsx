@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Activity, Minus } from "lucide-react";
+import { Activity, Minus, Scissors, Tag, Database, DatabaseZap } from "lucide-react";
 import { productPricingApi, scraperApi, type PricingJobStatus, type ScraperRun } from "../lib/api";
+import { useBgRemoval } from "../context/bg-removal-context";
 
 interface JobState {
   pricing: PricingJobStatus | null;
@@ -21,7 +22,7 @@ function PulsingDot() {
 
 function Chevron() {
   return (
-    <svg className="h-3 w-3 text-zinc-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+    <svg className="h-3 w-3 text-zinc-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
     </svg>
   );
@@ -31,6 +32,7 @@ export default function GlobalJobsBadge() {
   const router = useRouter();
   const [state, setState] = useState<JobState>({ pricing: null, scraper: null });
   const [minimized, setMinimized] = useState(false);
+  const { bgState, seeding } = useBgRemoval();
 
   useEffect(() => {
     async function poll() {
@@ -55,9 +57,12 @@ export default function GlobalJobsBadge() {
     return () => clearInterval(id);
   }, []);
 
-  const hasJobs = state.pricing || state.scraper;
+  const hasJobs = state.pricing || state.scraper || bgState || seeding;
   if (!hasJobs) return null;
 
+  const jobCount = [state.pricing, state.scraper, bgState, seeding || null].filter(Boolean).length;
+
+  // Minimized: single icon button
   if (minimized) {
     return (
       <div className="fixed bottom-5 left-5 md:left-63 z-30">
@@ -67,70 +72,120 @@ export default function GlobalJobsBadge() {
           title="Show active jobs"
         >
           <Activity className="h-5 w-5 text-emerald-400 animate-pulse shrink-0" />
+          {jobCount > 1 && (
+            <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-emerald-500 text-[9px] font-black text-white flex items-center justify-center">
+              {jobCount}
+            </span>
+          )}
         </button>
       </div>
     );
   }
 
+  // Expanded: single card with all active jobs listed
   return (
-    <div className="fixed bottom-5 left-5 md:left-63 z-30 flex flex-col gap-1.5">
+    <div className="fixed bottom-5 left-5 md:left-63 z-30 w-64 bg-zinc-900 border border-zinc-700/60 rounded-2xl shadow-2xl overflow-hidden">
 
-      {/* Auto-pricing pill */}
-      {state.pricing && (
-        <button
-          onClick={() => router.push("/products")}
-          className="flex items-center gap-3 bg-zinc-900 hover:bg-zinc-800 active:bg-zinc-700 text-white rounded-2xl px-4 py-2.5 shadow-2xl border border-zinc-700/60 transition-colors min-w-55 text-left relative group/pill"
-        >
-          <PulsingDot />
-          <div className="flex-1 min-w-0 pr-3">
-            <p className="text-xs font-bold leading-tight">Auto-pricing</p>
-            <p className="text-[10px] text-zinc-400 mt-0.5">
-              {state.pricing.total > 0 ? `${state.pricing.done} / ${state.pricing.total} products` : "Starting…"}
-            </p>
-          </div>
-          <Chevron />
-          <span
-            onClick={(e) => { e.stopPropagation(); setMinimized(true); }}
-            className="absolute top-1 right-1 p-0.5 rounded text-zinc-500 hover:text-white hover:bg-white/10 opacity-100 md:opacity-0 md:group-hover/pill:opacity-100 transition-all cursor-pointer"
-            title="Minimize"
-          >
-            <Minus className="h-3 w-3" />
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800">
+        <div className="flex items-center gap-2">
+          <Activity className="h-3.5 w-3.5 text-emerald-400 animate-pulse" />
+          <span className="text-[11px] font-black uppercase tracking-widest text-zinc-300">
+            Active Jobs
           </span>
-        </button>
-      )}
-
-      {/* Scraper pill */}
-      {state.scraper && (
+          <span className="bg-emerald-500/20 text-emerald-400 text-[9px] font-black px-1.5 py-0.5 rounded-full">
+            {jobCount}
+          </span>
+        </div>
         <button
-          onClick={() => router.push("/scraper")}
-          className="flex items-center gap-3 bg-zinc-900 hover:bg-zinc-800 active:bg-zinc-700 text-white rounded-2xl px-4 py-3 shadow-2xl border border-zinc-700/60 transition-colors min-w-55 text-left relative group/pill"
+          onClick={() => setMinimized(true)}
+          className="p-1 rounded-lg text-zinc-500 hover:text-white hover:bg-white/10 transition-all"
+          title="Minimize"
         >
-          <PulsingDot />
-          <div className="flex-1 min-w-0 pr-3">
-            <p className="text-xs font-bold leading-tight mb-2">Scraper</p>
-            <div className="space-y-1">
-              <ScraperStat
-                label="DEVICES"
-                done={state.scraper.catalogProgress}
-                total={state.scraper.totalCatalog}
-              />
-              <ScraperStat
-                label="OTHERS"
-                done={state.scraper.othersProgress}
-                total={state.scraper.totalOthers}
-              />
+          <Minus className="h-3.5 w-3.5" />
+        </button>
+      </div>
+
+      {/* Job rows */}
+      <div className="divide-y divide-zinc-800">
+
+        {/* Auto-pricing */}
+        {state.pricing && (
+          <button
+            onClick={() => router.push("/products")}
+            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-zinc-800 active:bg-zinc-700 transition-colors text-left"
+          >
+            <PulsingDot />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5">
+                <Tag className="h-3 w-3 text-zinc-400 shrink-0" />
+                <p className="text-xs font-bold text-white leading-tight">Auto-pricing</p>
+              </div>
+              <p className="text-[10px] text-zinc-400 mt-0.5">
+                {state.pricing.total > 0 ? `${state.pricing.done} / ${state.pricing.total} products` : "Starting…"}
+              </p>
             </div>
-          </div>
-          <Chevron />
-          <span
-            onClick={(e) => { e.stopPropagation(); setMinimized(true); }}
-            className="absolute top-1 right-1 p-0.5 rounded text-zinc-500 hover:text-white hover:bg-white/10 opacity-100 md:opacity-0 md:group-hover/pill:opacity-100 transition-all cursor-pointer"
-            title="Minimize"
+            <Chevron />
+          </button>
+        )}
+
+        {/* Scraper */}
+        {state.scraper && (
+          <button
+            onClick={() => router.push("/scraper")}
+            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-zinc-800 active:bg-zinc-700 transition-colors text-left"
           >
-            <Minus className="h-3 w-3" />
-          </span>
-        </button>
-      )}
+            <PulsingDot />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5 mb-2">
+                <Database className="h-3 w-3 text-zinc-400 shrink-0" />
+                <p className="text-xs font-bold text-white leading-tight">Scraper</p>
+              </div>
+              <ScraperStat label="DEVICES" done={state.scraper.catalogProgress} total={state.scraper.totalCatalog} />
+              <div className="mt-1">
+                <ScraperStat label="OTHERS" done={state.scraper.othersProgress} total={state.scraper.totalOthers} />
+              </div>
+            </div>
+            <Chevron />
+          </button>
+        )}
+
+        {/* Seeding */}
+        {seeding && (
+          <button
+            onClick={() => router.push("/seed")}
+            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-zinc-800 active:bg-zinc-700 transition-colors text-left"
+          >
+            <PulsingDot />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5">
+                <DatabaseZap className="h-3 w-3 text-zinc-400 shrink-0" />
+                <p className="text-xs font-bold text-white leading-tight">Database Seed</p>
+              </div>
+              <p className="text-[10px] text-zinc-400 mt-0.5">This may take 1–3 minutes…</p>
+            </div>
+            <Chevron />
+          </button>
+        )}
+
+        {/* Background removal */}
+        {bgState && (
+          <button
+            onClick={() => router.push(bgState.redirectUrl)}
+            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-zinc-800 active:bg-zinc-700 transition-colors text-left"
+          >
+            <PulsingDot />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5">
+                <Scissors className="h-3 w-3 text-zinc-400 shrink-0" />
+                <p className="text-xs font-bold text-white leading-tight">Removing Background</p>
+              </div>
+              <p className="text-[10px] text-zinc-400 mt-0.5 truncate">{bgState.label}</p>
+            </div>
+            <Chevron />
+          </button>
+        )}
+      </div>
     </div>
   );
 }

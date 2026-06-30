@@ -4,9 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft, Check, X, Trash2, Upload, Image as ImageIcon,
-  Package, Tag, Layers, ToggleLeft, ToggleRight, ExternalLink
+  Package, Tag, Layers, ToggleLeft, ToggleRight, ExternalLink,
+  Scissors, Loader2, Sparkles,
 } from "lucide-react";
 import { productsApi, ordersApi, catalogCategoriesApi, type Product } from "../../../lib/api";
+import { removeBackground } from "../../../lib/removeBackground";
+import { useBgRemoval } from "../../../context/bg-removal-context";
 
 const CONDITIONS = [
   { value: 'NEW', label: 'New' },
@@ -51,7 +54,9 @@ export default function ProductDetailPage() {
   const [success, setSuccess] = useState("");
   const [lightbox, setLightbox] = useState<string | null>(null);
   const [uploadingImg, setUploadingImg] = useState(false);
+  const [removingBgIndex, setRemovingBgIndex] = useState<number | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const { startBgRemoval, stopBgRemoval } = useBgRemoval();
 
   const [buyers, setBuyers] = useState<{
     orderId: string;
@@ -171,6 +176,27 @@ export default function ProductDetailPage() {
     }
   }
 
+  async function handleRemoveBg(index: number) {
+    const rawKey = rawImagePaths[index];
+    if (!rawKey || !product) return;
+    setRemovingBgIndex(index);
+    startBgRemoval(product.name, `/products/${product.id}`);
+    try {
+      const file = await removeBackground(rawKey, rawKey.split("/").pop() ?? "product.jpg");
+      const { filePath } = await productsApi.uploadImage(file);
+      const newRawPaths = rawImagePaths.map((p, i) => i === index ? filePath : p);
+      await productsApi.update(product.id, { images: newRawPaths });
+      const refreshed = await productsApi.getById(product.id);
+      setProduct(refreshed);
+      setRawImagePaths(refreshed.rawImages ?? []);
+    } catch (e: unknown) {
+      setError((e instanceof Error ? e.message : null) ?? "Background removal failed. Please try again.");
+    } finally {
+      setRemovingBgIndex(null);
+      stopBgRemoval();
+    }
+  }
+
   async function removeImage(idx: number) {
     if (!product) return;
     const newRawPaths = rawImagePaths.filter((_, i) => i !== idx);
@@ -279,6 +305,16 @@ export default function ProductDetailPage() {
                         onClick={() => setLightbox(url)}
                       />
                       <button
+                        onClick={() => handleRemoveBg(i)}
+                        disabled={removingBgIndex !== null}
+                        className="absolute top-2 left-2 h-7 px-2 rounded-lg bg-zinc-900/80 backdrop-blur-sm text-white text-[10px] font-bold flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-40"
+                      >
+                        {removingBgIndex === i
+                          ? <><Loader2 className="h-3 w-3 animate-spin" /> Processing...</>
+                          : <><Scissors className="h-3 w-3" /> Remove BG</>
+                        }
+                      </button>
+                      <button
                         onClick={() => removeImage(i)}
                         className="absolute top-2 right-2 h-7 w-7 rounded-lg bg-red-600 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-700"
                       >
@@ -302,6 +338,10 @@ export default function ProductDetailPage() {
                 </button>
               )}
               <p className="text-[10px] text-zinc-400 font-medium mt-3">First image is shown as the main product photo. Click any image to enlarge.</p>
+              <p className="text-[10px] text-zinc-400 font-medium flex items-center gap-1.5 mt-1">
+                <Sparkles className="h-3 w-3 shrink-0" />
+                Hover an image and click <strong>Remove BG</strong> to create a cleaner look for customers
+              </p>
             </div>
 
             {/* Details form */}

@@ -154,7 +154,10 @@
       "Bash(grep -rn \"from \\\\\"\\\\.\\\\.\\\\/\\\\.\\\\.\\\\/\" \"apps/web/app/\\(shop\\)\" \"apps/web/app/\\(account\\)\")",
       "Bash(git rm *)",
       "Bash(rmdir \"apps/web/app/\\(services\\)/sell\" \"apps/web/app/\\(info\\)/how-it-works\" \"apps/web/app/\\(info\\)/sustainability\")",
-      "Bash(grep -v \"^.*//\\\\|slide\\\\.btnLink\\\\|p\\\\.link\\\\|link\\\\b.*=\\\\|category\\\\|slug\\\\|brand\\\\|account\\\\|login\\\\|repair\\\\|trade\")"
+      "Bash(grep -v \"^.*//\\\\|slide\\\\.btnLink\\\\|p\\\\.link\\\\|link\\\\b.*=\\\\|category\\\\|slug\\\\|brand\\\\|account\\\\|login\\\\|repair\\\\|trade\")",
+      "PowerShell(Remove-Item -Recurse -Force \"d:\\\\CODE\\\\Projects\\\\Markhor System\\\\AI-E-commerce\\\\apps\\\\admin\\\\app\\\\api\\\\remove-background\" -Confirm:$false)",
+      "PowerShell(node -e \"const {removeBackground} = require\\('d:/CODE/Projects/Markhor System/AI-E-commerce/node_modules/@imgly/background-removal-node/dist/index.cjs'\\); console.log\\('loaded ok', typeof removeBackground\\)\" 2>&1)",
+      "PowerShell(node -e \"const path = require\\('path'\\); const d = path.dirname\\(require.resolve\\('@imgly/background-removal-node', {paths: ['d:/CODE/Projects/Markhor System/AI-E-commerce/apps/api']}\\)\\); console.log\\(d\\); console.log\\('resources.json exists:', require\\('fs'\\).existsSync\\(path.join\\(d, 'resources.json'\\)\\)\\)\")"
     ],
     "additionalDirectories": [
       "d:\\CODE\\Projects\\Markhor Systems Projects\\Ai-Ecommerce\\apps\\web\\app\\account\\repairs",

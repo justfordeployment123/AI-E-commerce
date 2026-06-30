@@ -436,18 +436,9 @@ export default function ScraperPage() {
             </p>
 
             {/* ── Scraper status badge — all states ── */}
-            {serviceOnline === null ? (
-              /* 1. Initial poll — still checking */
-              <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg border text-zinc-500 bg-zinc-50 border-zinc-200 shrink-0">
-                <Loader2 className="h-3 w-3 animate-spin" /> Checking…
-              </span>
-            ) : serviceOnline === false ? (
-              /* 2. Scraper service unreachable */
-              <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg border text-red-700 bg-red-50 border-red-200 shrink-0">
-                <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" /> Scraper offline
-              </span>
-            ) : isRunActive ? (
-              /* 3. Run in progress — show live progress */
+            {isRunActive ? (
+              /* 1. Active run — always show Running regardless of health check result.
+                 The scraper service is too busy to answer health pings mid-run. */
               <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg border text-blue-700 bg-blue-50 border-blue-200 shrink-0">
                 <Loader2 className="h-3 w-3 animate-spin" />
                 Running
@@ -458,6 +449,16 @@ export default function ScraperPage() {
                 ) : (
                   <span className="text-blue-400 font-normal">• starting…</span>
                 )}
+              </span>
+            ) : serviceOnline === null ? (
+              /* 2. Initial load — health check not yet run */
+              <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg border text-zinc-500 bg-zinc-50 border-zinc-200 shrink-0">
+                <Loader2 className="h-3 w-3 animate-spin" /> Checking…
+              </span>
+            ) : serviceOnline === false ? (
+              /* 3. Health check failed and no active run */
+              <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg border text-red-700 bg-red-50 border-red-200 shrink-0">
+                <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" /> Scraper offline
               </span>
             ) : !lastRun ? (
               /* 4. Service online, no runs ever */

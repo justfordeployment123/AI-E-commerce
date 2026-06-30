@@ -1,3 +1,5 @@
+import { compressImage } from './compressImage';
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3002';
 
 export function getToken(): string | null {
@@ -13,6 +15,7 @@ export async function presignedUpload(
   file: File,
   extraQuery: Record<string, string> = {},
 ): Promise<{ filePath: string; presignedUrl: string }> {
+  file = await compressImage(file);
   const q = new URLSearchParams({
     filename: file.name,
     contentType: file.type || 'application/octet-stream',

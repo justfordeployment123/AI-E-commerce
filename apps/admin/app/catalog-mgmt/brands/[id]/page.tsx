@@ -23,7 +23,11 @@ import {
   ToggleLeft,
   ToggleRight,
   ShoppingBag,
+  Scissors,
+  Loader2,
 } from "lucide-react";
+import { removeBackground } from "../../../../lib/removeBackground";
+import { useBgRemoval } from "../../../../context/bg-removal-context";
 
 const MAX_IMAGES = 10;
 const MAIN_CATEGORIES_SLUGS = new Set(["phones", "tablets", "consoles", "laptops", "audio"]);
@@ -48,6 +52,9 @@ export default function BrandDetailPage() {
   const [assignCatId, setAssignCatId] = useState("");
   const [assigning, setAssigning] = useState(false);
   const [uploadingBcId, setUploadingBcId] = useState<string | null>(null);
+  const [removingBgLogo, setRemovingBgLogo] = useState(false);
+  const [removingBgImageUrl, setRemovingBgImageUrl] = useState<string | null>(null);
+  const { startBgRemoval, stopBgRemoval } = useBgRemoval();
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -139,12 +146,25 @@ export default function BrandDetailPage() {
               className="relative group aspect-square rounded-2xl overflow-hidden bg-zinc-50 border border-zinc-100"
             >
               <img src={img} alt="" className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+              <button
+                onClick={() => handleRemoveCategoryImageBg(bc.id, img)}
+                disabled={removingBgImageUrl !== null}
+                className="absolute top-1.5 left-1.5 h-6 px-1.5 rounded-lg bg-zinc-900/80 text-white text-[9px] font-bold flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-40"
+                title="Remove background"
+              >
+                {removingBgImageUrl === img
+                  ? <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                  : <Scissors className="h-2.5 w-2.5" />
+                }
+              </button>
               <button
                 onClick={() => handleDeleteImage(bc.id, img)}
-                className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                disabled={removingBgImageUrl !== null}
+                className="absolute top-1.5 right-1.5 h-6 w-6 rounded-lg bg-red-600/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-40"
                 title="Delete image"
               >
-                <X className="h-4 w-4 text-white" />
+                <X className="h-3 w-3 text-white" />
               </button>
             </div>
           ))}
@@ -171,6 +191,42 @@ export default function BrandDetailPage() {
       </div>
     );
   };
+
+  // Remove background from brand logo
+  async function handleRemoveLogoBg() {
+    if (!brand?.logo) return;
+    setRemovingBgLogo(true);
+    startBgRemoval(`${brand.name} logo`, `/catalog-mgmt/brands/${id}`);
+    setError("");
+    try {
+      const file = await removeBackground(brand.logo, "logo.png");
+      await catalogBrandsApi.uploadLogo(id, file);
+      await load();
+    } catch (e: unknown) {
+      setError((e instanceof Error ? e.message : null) ?? "Logo background removal failed. Please try again.");
+    } finally {
+      setRemovingBgLogo(false);
+      stopBgRemoval();
+    }
+  }
+
+  // Remove background from a brand-category presentation image
+  async function handleRemoveCategoryImageBg(bcId: string, imgUrl: string) {
+    setRemovingBgImageUrl(imgUrl);
+    startBgRemoval(`${brand?.name ?? "Brand"} image`, `/catalog-mgmt/brands/${id}`);
+    setError("");
+    try {
+      const file = await removeBackground(imgUrl, imgUrl.split("/").pop() ?? "image.jpg");
+      await catalogBrandCategoryApi.uploadImage(bcId, file);
+      await catalogBrandCategoryApi.deleteImage(bcId, imgUrl);
+      await load();
+    } catch (e: unknown) {
+      setError((e instanceof Error ? e.message : null) ?? "Background removal failed. Please try again.");
+    } finally {
+      setRemovingBgImageUrl(null);
+      stopBgRemoval();
+    }
+  }
 
   // Save Brand info
   async function handleSaveBrandInfo() {
@@ -366,6 +422,18 @@ export default function BrandDetailPage() {
             >
               <Upload className="h-3 w-3" /> Upload Logo
             </button>
+            {brand.logo && (
+              <button
+                onClick={handleRemoveLogoBg}
+                disabled={removingBgLogo || uploadingLogo}
+                className="flex items-center gap-1.5 h-8 px-3 rounded-lg border border-zinc-200 hover:border-zinc-400 bg-white text-[11px] font-bold transition-colors disabled:opacity-60"
+              >
+                {removingBgLogo
+                  ? <><Loader2 className="h-3 w-3 animate-spin" /> Processing...</>
+                  : <><Scissors className="h-3 w-3" /> Remove BG</>
+                }
+              </button>
+            )}
           </div>
 
           {/* Form details */}

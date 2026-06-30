@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { DatabaseZap, CheckCircle, AlertCircle, Loader2, TriangleAlert, Trash2 } from "lucide-react";
+import { useBgRemoval } from "../../context/bg-removal-context";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002";
 
@@ -60,6 +61,7 @@ interface PurgeResult {
 }
 
 export default function SeedPage() {
+  const { startSeeding, stopSeeding } = useBgRemoval();
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<SeedResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -76,6 +78,7 @@ export default function SeedPage() {
     setLoading(true);
     setError(null);
     setResult(null);
+    startSeeding();
     try {
       const res = await apiFetch<SeedResult>("/admin/seed/run", { method: "POST" });
       setResult(res);
@@ -83,6 +86,7 @@ export default function SeedPage() {
       setError(e.message);
     } finally {
       setLoading(false);
+      stopSeeding();
     }
   }
 

@@ -1,9 +1,17 @@
-import { BadRequestException, Controller, Get, Post, Query, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, InternalServerErrorException, Post, Query, StreamableFile, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { StorageService } from '../../common/services/storage.service';
+import path from 'path';
+
+// Resolve the dist/ directory of the package wherever npm hoisted it.
+// The default publicPath the library uses is relative to process.cwd(), which
+// points at apps/api — wrong when the package is hoisted to the monorepo root.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const _bgDistDir = path.dirname(require.resolve('@imgly/background-removal-node'));
+const _bgPublicPath = `file://${_bgDistDir.replace(/\\/g, '/')}/`;
 
 @Controller('uploads')
 export class UploadsController {
@@ -99,5 +107,25 @@ export class UploadsController {
     async uploadReviewImage(@UploadedFile() file: any) {
         if (!file) throw new BadRequestException('No file provided');
         return this.storage.uploadFile(file, 'review-images');
+    }
+
+    @Post('remove-background')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('ADMIN')
+    async removeBackground(@Body('imageRef') imageRef: string): Promise<StreamableFile> {
+        if (!imageRef) throw new BadRequestException('imageRef is required');
+        try {
+            const key = this.storage.extractKey(imageRef);
+            const imageBuffer = await this.storage.getObjectBuffer(key);
+            const imageBlob = new Blob([imageBuffer], { type: 'application/octet-stream' });
+            const { removeBackground } = await import('@imgly/background-removal-node');
+            const blob = await removeBackground(imageBlob, { publicPath: _bgPublicPath });
+            const outBuffer = Buffer.from(await blob.arrayBuffer());
+            return new StreamableFile(outBuffer, { type: 'image/png', disposition: 'inline' });
+        } catch (err) {
+            const msg = err instanceof Error ? err.message : 'Background removal failed';
+            console.error('[remove-background]', err);
+            throw new InternalServerErrorException(msg);
+        }
     }
 }
