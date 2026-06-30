@@ -42,13 +42,15 @@ export class ScraperDataService {
         return { total, withMarketPrice, withCex, withBM, withMM, withEnvirofone: withEF, lastScrapedAt: latest?.scrapedAt ?? null };
     }
 
-    async cleanupStuckRuns(): Promise<{ cleaned: number }> {
-        const twoHoursAgo = new Date(Date.now() - 1 * 60 * 60 * 1000);
+    async cleanupStuckRuns(force = false): Promise<{ cleaned: number }> {
+        const where = force
+            ? { status: 'RUNNING' as const }
+            : { status: 'RUNNING' as const, startedAt: { lt: new Date(Date.now() - 60 * 60 * 1000) } };
         const result = await this.prisma.scraperRun.updateMany({
-            where: { status: 'RUNNING', startedAt: { lt: twoHoursAgo } },
-            data:  { status: 'FAILED', finishedAt: new Date(), errorMessage: 'Marked failed manually via admin cleanup' },
+            where,
+            data: { status: 'FAILED', finishedAt: new Date(), errorMessage: force ? 'Scraper service offline — run marked failed automatically' : 'Marked failed manually via admin cleanup' },
         });
-        this.logger.log(`Cleaned up ${result.count} stuck run(s).`);
+        this.logger.log(`Cleaned up ${result.count} stuck run(s) (force=${force}).`);
         return { cleaned: result.count };
     }
 
@@ -114,14 +116,19 @@ export class ScraperDataService {
                 signal: AbortSignal.timeout(5000),
             });
             if (!res.ok) {
+                // Service responded but returned an error — force-clean any stuck runs
+                await this.cleanupStuckRuns(true);
                 return { ok: false, message: `Scraper service returned ${res.status}. Check scraper logs.` };
             }
             return { ok: true, message: 'Scraper started in the background.' };
         } catch (err: any) {
             const isTimeout = err?.name === 'TimeoutError';
+            // Service is offline — force-clean stuck RUNNING records so the UI isn't blocked
+            const { cleaned } = await this.cleanupStuckRuns(true);
+            const clearedNote = cleaned > 0 ? ` ${cleaned} stuck run${cleaned !== 1 ? 's' : ''} cleared.` : '';
             const msg = isTimeout
-                ? 'Scraper service did not respond in time. It may be starting up — try again in a moment.'
-                : 'Scraper service is unreachable. Make sure the scraper container is running.';
+                ? `Scraper service did not respond. It may be starting up — try again in a moment.${clearedNote}`
+                : `Scraper service is offline. Make sure the scraper container is running.${clearedNote}`;
             this.logger.error(`Failed to trigger scraper: ${err?.message}`);
             return { ok: false, message: msg };
         }

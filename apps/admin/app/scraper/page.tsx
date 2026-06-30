@@ -146,11 +146,12 @@ export default function ScraperPage() {
     loadStats();
     loadRuns();
     loadSchedule();
-    // checkServiceHealth is called by the polling interval (every 8/30s).
-    // Calling it immediately on mount pings the scraper service while it may
-    // be mid-run and busy, which can cause the Docker health check to fail and
-    // trigger a container restart.
   }, [loadStats, loadRuns, loadSchedule, router]);
+
+  // One-shot health check on mount so serviceOnline resolves immediately
+  // rather than waiting up to 15s for the first poll tick.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { if (SCRAPER_ENABLED) checkServiceHealth(); }, []);
 
   useEffect(() => {
     if (!SCRAPER_ENABLED) return;
@@ -172,20 +173,22 @@ export default function ScraperPage() {
     prevRunsRef.current = runs;
   }, [runs, loadPrices]);
 
-  // Auto-poll: 8s while a run is active, 30s when idle.
-  // Health check runs less often (every 3rd tick) to avoid stressing the
-  // scraper service while it is mid-run.
+  // Auto-poll: 8s while a run is active, 15s when idle (fast enough to feel
+  // real-time without hammering the server).
+  // Health check: every tick when idle (safe — scraper isn't busy); every 3rd
+  // tick when running (avoid stressing the service mid-scrape).
   const pollCountRef = useRef(0);
   useEffect(() => {
     if (!SCRAPER_ENABLED) return;
     const isRunning = runs.some(r => r.status === "RUNNING");
+    pollCountRef.current = 0; // reset cadence so health check fires predictably after run state changes
     const tick = () => {
       pollCountRef.current += 1;
       loadStats();
       loadRuns();
-      if (pollCountRef.current % 3 === 0) checkServiceHealth();
+      if (!isRunning || pollCountRef.current % 3 === 0) checkServiceHealth();
     };
-    const id = setInterval(tick, isRunning ? 8_000 : 30_000);
+    const id = setInterval(tick, isRunning ? 8_000 : 15_000);
     return () => clearInterval(id);
   }, [runs, loadStats, loadRuns, checkServiceHealth]);
 
@@ -227,12 +230,12 @@ export default function ScraperPage() {
     }
   }
 
-  async function handleCleanup() {
+  async function handleCleanup(force = false) {
     setCleaning(true);
     setCleanMsg("");
     try {
-      const res = await scraperApi.cleanup();
-      setCleanMsg(`Cleaned ${res.cleaned} stuck run${res.cleaned !== 1 ? "s" : ""}.`);
+      const res = await scraperApi.cleanup(force);
+      setCleanMsg(`Cleared ${res.cleaned} stuck run${res.cleaned !== 1 ? "s" : ""}.`);
       loadRuns();
     } catch (e: any) {
       setCleanMsg(e.message ?? "Cleanup failed");
@@ -338,6 +341,10 @@ export default function ScraperPage() {
   const activeRun   = runs.find(r => r.status === "RUNNING") ?? null;
   const isRunActive = !!activeRun;
   const lastRun     = runs.find(r => r.status !== "RUNNING") ?? null;
+  // Stalled = DB says RUNNING but the scraper service is confirmed offline.
+  // In this state the run will never progress — we allow the user to force-start
+  // which auto-cleans the stuck record and retries connecting to the service.
+  const isStalled   = isRunActive && serviceOnline === false;
 
   const runProgress = activeRun?.totalCatalog != null && activeRun?.totalOthers != null
     ? {
@@ -436,9 +443,14 @@ export default function ScraperPage() {
             </p>
 
             {/* ── Scraper status badge — all states ── */}
-            {isRunActive ? (
-              /* 1. Active run — always show Running regardless of health check result.
-                 The scraper service is too busy to answer health pings mid-run. */
+            {isStalled ? (
+              /* 1a. Stalled — DB says RUNNING but service is confirmed offline */
+              <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg border text-amber-700 bg-amber-50 border-amber-200 shrink-0">
+                <AlertCircle className="h-3 w-3" />
+                Stalled — service offline
+              </span>
+            ) : isRunActive ? (
+              /* 1b. Active run — service is online (or health not yet checked) */
               <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg border text-blue-700 bg-blue-50 border-blue-200 shrink-0">
                 <Loader2 className="h-3 w-3 animate-spin" />
                 Running
@@ -494,8 +506,8 @@ export default function ScraperPage() {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          {/* Stop button — only while a run is active */}
-          {isRunActive && (
+          {/* Stop button — only while genuinely running (not stalled — service is offline) */}
+          {isRunActive && !isStalled && (
             <button
               onClick={handleStop}
               disabled={stopping}
@@ -507,15 +519,22 @@ export default function ScraperPage() {
             </button>
           )}
 
-          {/* Run Now / disabled-while-running */}
+          {/* Run Now — disabled only while genuinely running (not stalled) */}
           <button
             onClick={handleRunScraper}
-            disabled={running || isRunActive || serviceOnline === false}
-            title={serviceOnline === false ? "Scraper service is offline" : isRunActive ? "A run is already in progress" : undefined}
+            disabled={running || (isRunActive && !isStalled)}
+            title={
+              isStalled ? "Service is offline — clicking will clear the stuck run and attempt to reconnect" :
+              isRunActive ? "A run is already in progress" :
+              serviceOnline === false ? "Scraper service is offline" :
+              undefined
+            }
             className="flex items-center gap-2 h-11 px-6 rounded-2xl bg-black text-white text-sm font-bold hover:bg-zinc-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {running ? (
               <><RefreshCw className="h-4 w-4 animate-spin" /> Starting…</>
+            ) : isStalled ? (
+              <><Play className="h-4 w-4" /> Force Start</>
             ) : isRunActive ? (
               <><Loader2 className="h-4 w-4 animate-spin" /> Running…</>
             ) : (
@@ -635,8 +654,8 @@ export default function ScraperPage() {
             <p className="text-xs text-zinc-400 mt-0.5">Last 20 scraper executions</p>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
-            {/* Stop button — only shown while a run is active */}
-            {runs.some(r => r.status === "RUNNING") && (
+            {/* Stop button — only shown while genuinely running (not stalled) */}
+            {isRunActive && !isStalled && (
               <button
                 onClick={handleStop}
                 disabled={stopping}
@@ -652,13 +671,16 @@ export default function ScraperPage() {
               <span className="text-xs font-bold text-zinc-500">{stopMsg}</span>
             )}
             {(() => {
-              const oneHourAgo = Date.now() - 1 * 60 * 60 * 1000;
-              const stuckCount = runs.filter(r => r.status === "RUNNING" && new Date(r.startedAt).getTime() < oneHourAgo).length;
-              return stuckCount > 0 ? (
-                <button onClick={handleCleanup} disabled={cleaning}
+              const oneHourAgo = Date.now() - 60 * 60 * 1000;
+              const oldStuckCount = runs.filter(r => r.status === "RUNNING" && new Date(r.startedAt).getTime() < oneHourAgo).length;
+              // Show immediately if stalled (service offline), otherwise only after 1h
+              const showCleanup = isStalled || oldStuckCount > 0;
+              const isForce = isStalled;
+              return showCleanup ? (
+                <button onClick={() => handleCleanup(isForce)} disabled={cleaning}
                   className="flex items-center gap-1.5 text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-xl hover:bg-amber-100 transition-colors disabled:opacity-50">
                   <AlertCircle className="h-3.5 w-3.5" />
-                  {cleaning ? "Cleaning…" : `${stuckCount} stuck — fix`}
+                  {cleaning ? "Cleaning…" : isStalled ? "Clear stuck run" : `${oldStuckCount} stuck — fix`}
                 </button>
               ) : null;
             })()}

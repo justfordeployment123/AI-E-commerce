@@ -69,20 +69,31 @@ export class ScraperService implements OnApplicationBootstrap {
             });
             const doneKeys = new Set(alreadyDone.map(r => r.deviceKey));
 
-            this.logger.warn(
-                `Startup: found interrupted run ${stuckRun.id} from ${stuckRun.startedAt.toISOString()}. ` +
-                `${doneKeys.size} devices already done — resuming the rest.`,
-            );
-
-            // Mark the old run as failed with an explanatory message
+            // Mark the old run as failed regardless of whether we resume
             await this.prisma.scraperRun.update({
                 where: { id: stuckRun.id },
                 data: {
                     status: 'FAILED',
                     finishedAt: new Date(),
-                    errorMessage: `Service restarted mid-run — ${doneKeys.size} devices were already scraped and will be skipped in the resumed run.`,
+                    errorMessage: doneKeys.size > 0
+                        ? `Service restarted mid-run — ${doneKeys.size} devices were already scraped and will be skipped in the resumed run.`
+                        : `Service restarted before any devices were scraped — not auto-resuming to avoid crash loop. Trigger manually.`,
                 },
             });
+
+            if (doneKeys.size === 0) {
+                // Crashed before doing any work — auto-resuming would just crash again.
+                // Leave it for the admin to trigger manually once the underlying issue is fixed.
+                this.logger.warn(
+                    `Startup: interrupted run ${stuckRun.id} had 0 devices scraped — skipping auto-resume to avoid crash loop.`,
+                );
+                return;
+            }
+
+            this.logger.warn(
+                `Startup: found interrupted run ${stuckRun.id} from ${stuckRun.startedAt.toISOString()}. ` +
+                `${doneKeys.size} devices already done — resuming the rest.`,
+            );
 
             // Fire the resume in the background (non-blocking)
             this.runScraper(undefined, doneKeys).catch(err => {

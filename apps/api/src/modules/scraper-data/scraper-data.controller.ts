@@ -70,8 +70,8 @@ export class ScraperDataController {
 
     @Post('cleanup')
     @HttpCode(HttpStatus.OK)
-    cleanup() {
-        return this.service.cleanupStuckRuns();
+    cleanup(@Query('force') force?: string) {
+        return this.service.cleanupStuckRuns(force === 'true');
     }
 
     @Get('schedule')

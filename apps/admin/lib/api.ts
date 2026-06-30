@@ -330,7 +330,7 @@ export const scraperApi = {
 
   stop: () => apiFetch<{ ok: boolean; message: string }>('/scraper/stop', { method: 'POST' }),
 
-  cleanup: () => apiFetch<{ cleaned: number }>('/scraper/cleanup', { method: 'POST' }),
+  cleanup: (force = false) => apiFetch<{ cleaned: number }>(`/scraper/cleanup${force ? '?force=true' : ''}`, { method: 'POST' }),
 
   getSchedule: () => apiFetch<{ hours: number }>('/scraper/schedule'),
 
