@@ -16,6 +16,9 @@ export class DeviceCatalogService {
         search?: string;
         isActive?: boolean;
         forTradeIn?: boolean;
+        page?: number;
+        limit?: number;
+        paged?: boolean;
     }) {
         const where: Record<string, unknown> = {};
         if (params?.isActive !== undefined) where.isActive = params.isActive;
@@ -27,7 +30,25 @@ export class DeviceCatalogService {
             where.brandCategory = bc;
         }
         if (params?.search) {
-            where.model = { contains: params.search, mode: 'insensitive' };
+            where.OR = [
+                { model: { contains: params.search, mode: 'insensitive' } },
+                { brandCategory: { brand: { name: { contains: params.search, mode: 'insensitive' } } } },
+            ];
+        }
+
+        if (params?.paged) {
+            const page  = params.page  ?? 1;
+            const limit = Math.min(params.limit ?? 50, 200);
+            const skip  = (page - 1) * limit;
+            const [entries, total] = await Promise.all([
+                this.prisma.deviceCatalog.findMany({
+                    where, skip, take: limit,
+                    include: { brandCategory: { include: { brand: true, category: true } } },
+                    orderBy: [{ brandCategory: { brand: { name: 'asc' } } }, { model: 'asc' }],
+                }),
+                this.prisma.deviceCatalog.count({ where }),
+            ]);
+            return { items: entries, total, page, pages: Math.ceil(total / limit) };
         }
 
         const entries = await this.prisma.deviceCatalog.findMany({

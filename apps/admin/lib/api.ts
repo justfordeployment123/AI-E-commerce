@@ -80,6 +80,16 @@ export const deviceCatalogApi = {
     if (params?.search) q.set('search', params.search);
     return apiFetch<DeviceCatalogItem[]>(`/device-catalog?${q}`, { auth: false });
   },
+  listPaged: (params?: { categorySlug?: string; brandSlug?: string; search?: string; page?: number; limit?: number }) => {
+    const q = new URLSearchParams();
+    q.set('paged', 'true');
+    if (params?.categorySlug) q.set('categorySlug', params.categorySlug);
+    if (params?.brandSlug) q.set('brandSlug', params.brandSlug);
+    if (params?.search) q.set('search', params.search);
+    if (params?.page) q.set('page', String(params.page));
+    q.set('limit', String(params?.limit ?? 50));
+    return apiFetch<{ items: DeviceCatalogItem[]; total: number; page: number; pages: number }>(`/device-catalog?${q}`);
+  },
   getById: (id: string) =>
     apiFetch<DeviceCatalogItem>(`/device-catalog/${id}`, { auth: false }),
   create: (data: { brandCategoryId: string; model: string; storageOptions: string[]; isActive?: boolean }) =>
@@ -404,15 +414,30 @@ export const authApi = {
 
 // ── Products ──────────────────────────────────────────────────────────────────
 export const productsApi = {
-  list: (params?: { category?: string; search?: string; page?: number; limit?: number }) => {
+  list: (params?: {
+    category?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+    pricingStatus?: string;
+    excludeOthers?: boolean;
+    onlyOthers?: boolean;
+    includeAll?: boolean;
+  }) => {
     const q = new URLSearchParams();
     if (params?.category) q.set('category', params.category);
     if (params?.search) q.set('search', params.search);
     if (params?.page) q.set('page', String(params.page));
-    q.set('limit', String(params?.limit ?? 200));
-    q.set('includeAll', 'true');
+    q.set('limit', String(params?.limit ?? 50));
+    q.set('includeAll', params?.includeAll === false ? 'false' : 'true');
+    if (params?.pricingStatus) q.set('pricingStatus', params.pricingStatus);
+    if (params?.excludeOthers) q.set('excludeOthers', 'true');
+    if (params?.onlyOthers) q.set('onlyOthers', 'true');
     return apiFetch<{ items: Product[]; total: number; page: number; pages: number }>(`/products?${q}`);
   },
+
+  categories: () => apiFetch<string[]>('/products/categories'),
+  othersCategories: () => apiFetch<string[]>('/products/others-categories'),
 
   getById: (id: string) =>
     apiFetch<Product>(`/products/by-id/${id}`),
@@ -434,13 +459,16 @@ export const productsApi = {
 
 // ── Orders ────────────────────────────────────────────────────────────────────
 export const ordersApi = {
-  list: (params?: { status?: string; page?: number; limit?: number }) => {
+  list: (params?: { status?: string; search?: string; page?: number; limit?: number }) => {
     const q = new URLSearchParams();
     if (params?.status) q.set('status', params.status);
+    if (params?.search) q.set('search', params.search);
     if (params?.page) q.set('page', String(params.page));
-    q.set('limit', String(params?.limit ?? 100));
+    q.set('limit', String(params?.limit ?? 50));
     return apiFetch<{ items: Order[]; total: number; page: number; pages: number }>(`/orders?${q}`);
   },
+
+  getById: (id: string) => apiFetch<Order>(`/orders/${id}`),
 
   ship: (id: string, trackingNumber: string) =>
     apiFetch<Order>(`/orders/${id}/ship`, { method: 'POST', body: JSON.stringify({ trackingNumber }) }),
@@ -484,12 +512,13 @@ export const paymentSettingsApi = {
 
 // ── Trade-ins ─────────────────────────────────────────────────────────────────
 export const tradeInsApi = {
-  list: (params?: { status?: string; page?: number; limit?: number }) => {
+  list: (params?: { status?: string; search?: string; page?: number; limit?: number }) => {
     const q = new URLSearchParams();
     if (params?.status) q.set('status', params.status);
+    if (params?.search) q.set('search', params.search);
     if (params?.page) q.set('page', String(params.page));
-    q.set('limit', String(params?.limit ?? 100));
-    return apiFetch<{ items: TradeIn[]; total: number }>(`/trade-ins?${q}`);
+    q.set('limit', String(params?.limit ?? 50));
+    return apiFetch<{ items: TradeIn[]; total: number; page: number; pages: number }>(`/trade-ins?${q}`);
   },
 
   getById: (id: string) => apiFetch<TradeIn>(`/trade-ins/${id}`),
@@ -512,12 +541,13 @@ export const tradeInsApi = {
 
 // ── Repairs ───────────────────────────────────────────────────────────────────
 export const repairsApi = {
-  list: (params?: { status?: string; page?: number; limit?: number }) => {
+  list: (params?: { status?: string; search?: string; page?: number; limit?: number }) => {
     const q = new URLSearchParams();
     if (params?.status) q.set('status', params.status);
+    if (params?.search) q.set('search', params.search);
     if (params?.page) q.set('page', String(params.page));
-    q.set('limit', String(params?.limit ?? 100));
-    return apiFetch<{ items: Repair[]; total: number }>(`/repairs?${q}`);
+    q.set('limit', String(params?.limit ?? 50));
+    return apiFetch<{ items: Repair[]; total: number; page: number; pages: number }>(`/repairs?${q}`);
   },
 
   getById: (id: string) => apiFetch<Repair>(`/repairs/${id}`),

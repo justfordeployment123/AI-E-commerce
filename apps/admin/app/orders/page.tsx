@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
-import { Search, ShoppingBag, Eye, X, Truck, Check, Clock, MapPin, Package, Mail, Phone, Trash2, CreditCard } from "lucide-react";
+import { Search, ShoppingBag, Eye, X, Truck, Check, Clock, MapPin, Package, Mail, Phone, Trash2, CreditCard, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ordersApi, paymentSettingsApi, type Order } from "../../lib/api";
 
@@ -25,7 +25,12 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState(deepLinkId);
+  const [debouncedSearch, setDebouncedSearch] = useState(deepLinkId);
   const [filterStatus, setFilterStatus] = useState("all");
+  const [total, setTotal] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   const [selected, setSelected] = useState<Order | null>(null);
   const [trackingInput, setTrackingInput] = useState("");
   const [saving, setSaving] = useState(false);
@@ -37,27 +42,49 @@ export default function OrdersPage() {
   const [refundAmount, setRefundAmount] = useState("");
   const [refundError, setRefundError] = useState("");
 
-  async function handlePurgeAll() {
-    setPurging(true);
-    try {
-      await ordersApi.purgeAll();
-      setOrders([]);
-      setSelected(null);
-      setConfirmPurge(false);
-    } catch { /* ignore */ }
-    finally { setPurging(false); }
-  }
+  // Stable refs for observer
+  const hasMoreRef = useRef(false);
+  const loadingMoreRef = useRef(false);
+  const currentPageRef = useRef(1);
+  const debouncedSearchRef = useRef(deepLinkId);
+  const filterStatusRef = useRef("all");
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
-  async function load() {
+  debouncedSearchRef.current = debouncedSearch;
+  filterStatusRef.current = filterStatus;
+
+  // 300ms debounce
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  // Page-1 reset when filters change
+  useEffect(() => {
+    let cancelled = false;
     setLoading(true);
-    try {
-      const res = await ordersApi.list({ limit: 100 });
-      setOrders(res.items);
-    } catch { /* ignore */ }
-    finally { setLoading(false); }
-  }
+    setOrders([]);
+    setCurrentPage(1);
+    currentPageRef.current = 1;
 
-  useEffect(() => { load(); }, []);
+    ordersApi.list({
+      status: filterStatus === "all" ? undefined : filterStatus,
+      search: debouncedSearch || undefined,
+      page: 1,
+      limit: 50,
+    }).then(res => {
+      if (cancelled) return;
+      setOrders(res.items);
+      setTotal(res.total);
+      const more = res.page < res.pages;
+      setHasMore(more);
+      hasMoreRef.current = more;
+    }).catch(() => {}).finally(() => {
+      if (!cancelled) setLoading(false);
+    });
+
+    return () => { cancelled = true; };
+  }, [debouncedSearch, filterStatus]);
 
   // Auto-open the order when arriving from a deep link (?q=DA8DE705)
   useEffect(() => {
@@ -75,13 +102,56 @@ export default function OrdersPage() {
     setRefundError("");
   }, [selected?.id]);
 
-  const filtered = orders.filter(o => {
-    const customerName = o.user?.name ?? o.shippingAddress?.name ?? "";
-    const matchSearch = o.id.toLowerCase().includes(search.toLowerCase()) ||
-      customerName.toLowerCase().includes(search.toLowerCase());
-    const matchStatus = filterStatus === "all" || o.status === filterStatus;
-    return matchSearch && matchStatus;
-  });
+  // Infinite scroll
+  const loadMore = useCallback(async () => {
+    if (loadingMoreRef.current || !hasMoreRef.current) return;
+    loadingMoreRef.current = true;
+    setLoadingMore(true);
+    const nextPage = currentPageRef.current + 1;
+    try {
+      const res = await ordersApi.list({
+        status: filterStatusRef.current === "all" ? undefined : filterStatusRef.current,
+        search: debouncedSearchRef.current || undefined,
+        page: nextPage,
+        limit: 50,
+      });
+      setOrders(prev => [...prev, ...res.items]);
+      currentPageRef.current = nextPage;
+      setCurrentPage(nextPage);
+      const more = res.page < res.pages;
+      hasMoreRef.current = more;
+      setHasMore(more);
+    } catch { }
+    finally {
+      loadingMoreRef.current = false;
+      setLoadingMore(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      entries => { if (entries[0]?.isIntersecting) loadMore(); },
+      { rootMargin: "200px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [loadMore]);
+
+  async function handlePurgeAll() {
+    setPurging(true);
+    try {
+      await ordersApi.purgeAll();
+      setOrders([]);
+      setTotal(0);
+      setHasMore(false);
+      hasMoreRef.current = false;
+      setSelected(null);
+      setConfirmPurge(false);
+    } catch { }
+    finally { setPurging(false); }
+  }
 
   async function handleShip(id: string) {
     if (!trackingInput.trim()) return;
@@ -91,7 +161,7 @@ export default function OrdersPage() {
       setOrders(os => os.map(o => o.id === id ? updated : o));
       setSelected(updated);
       setTrackingInput("");
-    } catch { /* ignore */ }
+    } catch { }
     finally { setSaving(false); }
   }
 
@@ -101,7 +171,7 @@ export default function OrdersPage() {
       const updated = await ordersApi.deliver(id);
       setOrders(os => os.map(o => o.id === id ? updated : o));
       setSelected(updated);
-    } catch { /* ignore */ }
+    } catch { }
     finally { setSaving(false); }
   }
 
@@ -111,7 +181,7 @@ export default function OrdersPage() {
       const updated = await ordersApi.cancel(id);
       setOrders(os => os.map(o => o.id === id ? updated : o));
       setSelected(updated);
-    } catch { /* ignore */ }
+    } catch { }
     finally { setSaving(false); }
   }
 
@@ -130,9 +200,8 @@ export default function OrdersPage() {
     setRefundError("");
     try {
       await paymentSettingsApi.refund(orderId, amount);
-      const res = await ordersApi.list({ limit: 100 });
-      setOrders(res.items);
-      const refreshed = res.items.find(o => o.id === orderId) ?? null;
+      const refreshed = await ordersApi.getById(orderId);
+      setOrders(os => os.map(o => o.id === orderId ? refreshed : o));
       setSelected(refreshed);
       setShowRefundDialog(false);
       setRefundAmount("");
@@ -159,13 +228,13 @@ export default function OrdersPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Orders</h1>
           <p className="text-sm text-zinc-500 mt-1">
-            {orders.length} total · {orders.filter(o => o.status === "PENDING").length} to dispatch
+            {total} total · {orders.filter(o => o.status === "PENDING").length} to dispatch
           </p>
         </div>
         <div className="flex items-center gap-2">
           {confirmPurge ? (
             <>
-              <span className="text-xs text-red-600 font-bold">Delete all {orders.length} orders?</span>
+              <span className="text-xs text-red-600 font-bold">Delete all {total} orders?</span>
               <button
                 onClick={handlePurgeAll}
                 disabled={purging}
@@ -183,7 +252,7 @@ export default function OrdersPage() {
           ) : (
             <button
               onClick={() => setConfirmPurge(true)}
-              disabled={orders.length === 0}
+              disabled={total === 0}
               className="flex items-center gap-2 h-9 px-4 rounded-xl border border-red-200 text-red-600 text-xs font-bold hover:bg-red-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             >
               <Trash2 className="h-3.5 w-3.5" /> Delete All Orders
@@ -235,7 +304,7 @@ export default function OrdersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-50">
-                {filtered.map(o => {
+                {orders.map(o => {
                   const cfg = STATUS_CFG[o.status] ?? STATUS_CFG.PENDING;
                   const StatusIcon = cfg.icon;
                   return (
@@ -261,9 +330,18 @@ export default function OrdersPage() {
                 })}
               </tbody>
             </table>
+            <div ref={sentinelRef} className="h-1" />
+            {loadingMore && (
+              <div className="flex justify-center py-4">
+                <Loader2 className="h-5 w-5 animate-spin text-zinc-300" />
+              </div>
+            )}
+            {!hasMore && orders.length > 0 && (
+              <p className="text-center text-xs text-zinc-300 py-3">All {total} orders loaded</p>
+            )}
           </div>
           )}
-          {!loading && filtered.length === 0 && (
+          {!loading && orders.length === 0 && (
             <div className="text-center py-20 text-zinc-400">
               <ShoppingBag className="h-10 w-10 mx-auto mb-3 opacity-30" />
               <p className="font-bold text-sm">No orders found</p>

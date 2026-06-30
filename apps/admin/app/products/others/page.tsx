@@ -1,17 +1,18 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search, Plus, Edit2, Trash2, X, Check, Package,
-  Image as ImageIcon, ChevronDown, AlertTriangle,
+  Image as ImageIcon, ChevronDown, AlertTriangle, Loader2,
 } from "lucide-react";
 import {
   productsApi, otherBrandsApi, otherSubcategoriesApi,
   type Product, type CreateProductPayload, type OtherBrand, type OtherSubcategory,
 } from "../../../lib/api";
+
 
 const CONDITIONS = [
   { value: 'NEW', label: 'New' },
@@ -39,7 +40,24 @@ export default function OtherProductsPage() {
   const [products, setProducts]   = useState<Product[]>([]);
   const [loading, setLoading]     = useState(true);
   const [search, setSearch]       = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [filterCat, setFilterCat] = useState("All");
+  const [categories, setCategories] = useState<string[]>([]);
+  const [total, setTotal]         = useState(0);
+  const [hasMore, setHasMore]     = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Stable refs for observer
+  const hasMoreRef     = useRef(false);
+  const loadingMoreRef = useRef(false);
+  const currentPageRef = useRef(1);
+  const debouncedSearchRef = useRef("");
+  const filterCatRef   = useRef("All");
+  const sentinelRef    = useRef<HTMLDivElement>(null);
+
+  debouncedSearchRef.current = debouncedSearch;
+  filterCatRef.current = filterCat;
   const [showModal, setShowModal] = useState(false);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [formData, setFormData]   = useState<CreateProductPayload>(EMPTY_FORM);
@@ -73,16 +91,84 @@ export default function OtherProductsPage() {
     return () => document.removeEventListener("mousedown", onOutside);
   }, []);
 
-  async function load() {
-    setLoading(true);
-    try {
-      const res = await productsApi.list({ limit: 500 });
-      setProducts(res.items.filter(p => !!p.otherBrandId));
-    } catch { /* ignore */ }
-    finally { setLoading(false); }
-  }
+  // Load category list once
+  useEffect(() => {
+    productsApi.othersCategories().then(cats => setCategories(cats)).catch(() => {});
+  }, []);
 
-  useEffect(() => { load(); }, []);
+  // 300ms debounce
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  // Page-1 reset on filter change
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setProducts([]);
+    setCurrentPage(1);
+    currentPageRef.current = 1;
+
+    productsApi.list({
+      onlyOthers: true,
+      includeAll: true,
+      search: debouncedSearch || undefined,
+      category: filterCat === "All" ? undefined : filterCat,
+      page: 1,
+      limit: 50,
+    }).then(res => {
+      if (cancelled) return;
+      setProducts(res.items);
+      setTotal(res.total);
+      const more = res.page < res.pages;
+      setHasMore(more);
+      hasMoreRef.current = more;
+    }).catch(() => {}).finally(() => {
+      if (!cancelled) setLoading(false);
+    });
+
+    return () => { cancelled = true; };
+  }, [debouncedSearch, filterCat]);
+
+  // Infinite scroll
+  const loadMore = useCallback(async () => {
+    if (loadingMoreRef.current || !hasMoreRef.current) return;
+    loadingMoreRef.current = true;
+    setLoadingMore(true);
+    const nextPage = currentPageRef.current + 1;
+    try {
+      const res = await productsApi.list({
+        onlyOthers: true,
+        includeAll: true,
+        search: debouncedSearchRef.current || undefined,
+        category: filterCatRef.current === "All" ? undefined : filterCatRef.current,
+        page: nextPage,
+        limit: 50,
+      });
+      setProducts(prev => [...prev, ...res.items]);
+      currentPageRef.current = nextPage;
+      setCurrentPage(nextPage);
+      const more = res.page < res.pages;
+      hasMoreRef.current = more;
+      setHasMore(more);
+    } catch { }
+    finally {
+      loadingMoreRef.current = false;
+      setLoadingMore(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      entries => { if (entries[0]?.isIntersecting) loadMore(); },
+      { rootMargin: "200px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [loadMore]);
 
   async function loadPickerData() {
     const [b, s] = await Promise.all([
@@ -93,15 +179,7 @@ export default function OtherProductsPage() {
     setSubcats(s);
   }
 
-  const tabs = ["All", ...Array.from(new Set(products.map(p => p.category).filter(Boolean))).sort()];
-  const countFor = (cat: string) => products.filter(p => cat === "All" || p.category.toLowerCase() === cat.toLowerCase()).length;
-
-  const filtered = products.filter(p => {
-    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.brand.toLowerCase().includes(search.toLowerCase());
-    const matchCat = filterCat === "All" || p.category.toLowerCase() === filterCat.toLowerCase();
-    return matchSearch && matchCat;
-  });
+  const tabs = ["All", ...categories];
 
   function openAdd() {
     setEditProduct(null);
@@ -177,7 +255,10 @@ export default function OtherProductsPage() {
         setProducts(ps => ps.map(p => p.id === editProduct.id ? updated : p));
       } else {
         const created = await productsApi.create(formData);
-        if (!created.catalogId) setProducts(ps => [created, ...ps]);
+        if (!created.catalogId) {
+          setProducts(ps => [created, ...ps]);
+          setTotal(t => t + 1);
+        }
       }
       setShowModal(false);
     } catch (e) {
@@ -191,6 +272,7 @@ export default function OtherProductsPage() {
     try {
       await productsApi.remove(id);
       setProducts(ps => ps.filter(p => p.id !== id));
+      setTotal(t => Math.max(0, t - 1));
     } catch { /* ignore */ }
     setDeleteId(null);
   }
@@ -216,7 +298,7 @@ export default function OtherProductsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Other Products</h1>
           <p className="text-sm text-zinc-500 mt-1">
             Accessories, games, films, cables &amp; more ·{" "}
-            {products.length} total · {products.filter(p => p.isActive).length} active
+            {total} total · {products.filter(p => p.isActive).length} active
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -245,7 +327,7 @@ export default function OtherProductsPage() {
               className={`h-11 px-4 rounded-2xl text-sm font-bold transition-all capitalize shrink-0 ${
                 filterCat === cat ? "bg-black text-white" : "bg-white border border-zinc-200 hover:border-zinc-400"
               }`}>
-              {cat} ({countFor(cat)})
+              {cat}{filterCat === cat ? ` (${total})` : ""}
             </button>
           ))}
         </div>
@@ -271,7 +353,7 @@ export default function OtherProductsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-50">
-              {filtered.map(p => (
+              {products.map(p => (
                 <tr key={p.id} onClick={() => router.push(`/products/${p.id}`)}
                   className="hover:bg-zinc-50/50 transition-colors group cursor-pointer">
                   <td className="px-6 py-4">
@@ -316,9 +398,18 @@ export default function OtherProductsPage() {
               ))}
             </tbody>
           </table>
+          <div ref={sentinelRef} className="h-1" />
+          {loadingMore && (
+            <div className="flex justify-center py-4">
+              <Loader2 className="h-5 w-5 animate-spin text-zinc-300" />
+            </div>
+          )}
+          {!hasMore && products.length > 0 && (
+            <p className="text-center text-xs text-zinc-300 py-3">All {total} products loaded</p>
+          )}
           </div>
         )}
-        {!loading && filtered.length === 0 && (
+        {!loading && products.length === 0 && (
           <div className="text-center py-20 text-zinc-400">
             <Package className="h-10 w-10 mx-auto mb-3 opacity-30" />
             <p className="font-bold text-sm">No other products yet</p>

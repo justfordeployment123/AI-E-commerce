@@ -133,6 +133,25 @@ export class ProductsService {
         return this.presignAndFlatten(product);
     }
 
+    async getAdminCategories(): Promise<string[]> {
+        const bcs = await this.prisma.brandCategory.findMany({
+            where: { deviceCatalogs: { some: { products: { some: {} } } } },
+            select: { category: { select: { name: true } } },
+            distinct: ['categoryId'],
+            orderBy: { category: { name: 'asc' } },
+        });
+        return bcs.map(bc => bc.category.name);
+    }
+
+    async getOthersCategories(): Promise<string[]> {
+        const subcats = await this.prisma.otherSubcategory.findMany({
+            where: { products: { some: {} } },
+            select: { name: true },
+            orderBy: { name: 'asc' },
+        });
+        return subcats.map(s => s.name);
+    }
+
     async findAll(query: {
         category?: string;
         brand?: string;
@@ -143,8 +162,11 @@ export class ProductsService {
         page?: number;
         limit?: number;
         includeInactive?: boolean;
+        pricingStatus?: string;
+        excludeOthers?: boolean;
+        onlyOthers?: boolean;
     }) {
-        const { category, brand, condition, minPrice, maxPrice, search, page = 1, limit = 20, includeInactive } = query;
+        const { category, brand, condition, minPrice, maxPrice, search, page = 1, limit = 20, includeInactive, pricingStatus, excludeOthers } = query;
         const safeLimit = Math.min(limit, 200);
         const skip = (page - 1) * safeLimit;
 
@@ -199,6 +221,10 @@ export class ProductsService {
                 { otherSubcategory: { name: { contains: search, mode: 'insensitive' } } },
             ];
         }
+
+        if (pricingStatus) where.pricingStatus = pricingStatus;
+        if (excludeOthers) where.otherBrandId = null;
+        if (query.onlyOthers) where.otherBrandId = { not: null };
 
         const [rawItems, total] = await Promise.all([
             this.prisma.product.findMany({ where, skip, take: safeLimit, orderBy: { createdAt: 'desc' }, include: CATALOG_INCLUDE }),

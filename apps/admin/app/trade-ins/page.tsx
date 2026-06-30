@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, X, Check, Minus, RefreshCw, Truck, MapPin, Eye, ExternalLink, Trash2 } from "lucide-react";
+import { Search, X, Check, Minus, RefreshCw, Truck, MapPin, Eye, ExternalLink, Trash2, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { tradeInsApi, type TradeIn } from "../../lib/api";
 
@@ -22,7 +22,12 @@ export default function TradeInsPage() {
   const [items, setItems] = useState<TradeIn[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [total, setTotal] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   const [selected, setSelected] = useState<TradeIn | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -33,37 +38,100 @@ export default function TradeInsPage() {
   const [purging, setPurging] = useState(false);
   const [confirmPurge, setConfirmPurge] = useState(false);
 
+  // Stable refs for observer
+  const hasMoreRef = useRef(false);
+  const loadingMoreRef = useRef(false);
+  const currentPageRef = useRef(1);
+  const debouncedSearchRef = useRef("");
+  const filterStatusRef = useRef("all");
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  debouncedSearchRef.current = debouncedSearch;
+  filterStatusRef.current = filterStatus;
+
+  // 300ms debounce
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  // Page-1 reset when filters change
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setItems([]);
+    setCurrentPage(1);
+    currentPageRef.current = 1;
+
+    tradeInsApi.list({
+      status: filterStatus === "all" ? undefined : filterStatus,
+      search: debouncedSearch || undefined,
+      page: 1,
+      limit: 50,
+    }).then(res => {
+      if (cancelled) return;
+      setItems(res.items);
+      setTotal(res.total);
+      const more = res.page < res.pages;
+      setHasMore(more);
+      hasMoreRef.current = more;
+    }).catch(() => {}).finally(() => {
+      if (!cancelled) setLoading(false);
+    });
+
+    return () => { cancelled = true; };
+  }, [debouncedSearch, filterStatus]);
+
+  // Infinite scroll
+  const loadMore = useCallback(async () => {
+    if (loadingMoreRef.current || !hasMoreRef.current) return;
+    loadingMoreRef.current = true;
+    setLoadingMore(true);
+    const nextPage = currentPageRef.current + 1;
+    try {
+      const res = await tradeInsApi.list({
+        status: filterStatusRef.current === "all" ? undefined : filterStatusRef.current,
+        search: debouncedSearchRef.current || undefined,
+        page: nextPage,
+        limit: 50,
+      });
+      setItems(prev => [...prev, ...res.items]);
+      currentPageRef.current = nextPage;
+      setCurrentPage(nextPage);
+      const more = res.page < res.pages;
+      hasMoreRef.current = more;
+      setHasMore(more);
+    } catch { }
+    finally {
+      loadingMoreRef.current = false;
+      setLoadingMore(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      entries => { if (entries[0]?.isIntersecting) loadMore(); },
+      { rootMargin: "200px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [loadMore]);
+
   async function handlePurgeAll() {
     setPurging(true);
     try {
       await tradeInsApi.purgeAll();
       setItems([]);
+      setTotal(0);
+      setHasMore(false);
+      hasMoreRef.current = false;
       setSelected(null);
       setConfirmPurge(false);
-    } catch { /* ignore */ }
+    } catch { }
     finally { setPurging(false); }
   }
-
-  async function load() {
-    setLoading(true);
-    try {
-      const res = await tradeInsApi.list({ limit: 100 });
-      setItems(res.items);
-    } catch { /* ignore */ }
-    finally { setLoading(false); }
-  }
-
-  useEffect(() => { load(); }, []);
-
-  const filtered = items.filter(t => {
-    const name = t.contact?.name ?? "";
-    const matchSearch =
-      t.model.toLowerCase().includes(search.toLowerCase()) ||
-      t.reference.toLowerCase().includes(search.toLowerCase()) ||
-      name.toLowerCase().includes(search.toLowerCase());
-    const matchStatus = filterStatus === "all" || t.status === filterStatus;
-    return matchSearch && matchStatus;
-  });
 
   async function refreshSelected(id: string) {
     try {
@@ -117,13 +185,13 @@ export default function TradeInsPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Trade-Ins</h1>
           <p className="text-xs text-zinc-500 mt-0.5">
-            {items.length} total — <span className="text-amber-600 font-bold">{pending} pending review</span>
+            {total} total — <span className="text-amber-600 font-bold">{pending} pending review</span>
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {confirmPurge ? (
             <>
-              <span className="text-xs text-red-600 font-bold">Delete all {items.length} trade-ins?</span>
+              <span className="text-xs text-red-600 font-bold">Delete all {total} trade-ins?</span>
               <button onClick={handlePurgeAll} disabled={purging}
                 className="h-9 px-4 rounded-xl bg-red-600 text-white text-xs font-bold hover:bg-red-700 transition-colors disabled:opacity-50">
                 {purging ? "Deleting…" : "Yes, delete all"}
@@ -134,7 +202,7 @@ export default function TradeInsPage() {
               </button>
             </>
           ) : (
-            <button onClick={() => setConfirmPurge(true)} disabled={items.length === 0}
+            <button onClick={() => setConfirmPurge(true)} disabled={total === 0}
               className="flex items-center gap-2 h-9 px-4 rounded-xl border border-red-200 text-red-600 text-xs font-bold hover:bg-red-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
               <Trash2 className="h-3.5 w-3.5" /> Delete All
             </button>
@@ -167,16 +235,16 @@ export default function TradeInsPage() {
         </div>
       </div>
 
-      {/* Content grid — takes all remaining height */}
+      {/* Content grid */}
       <div className={`flex-1 min-h-0 grid gap-6 ${selected ? "xl:grid-cols-[1fr_400px]" : ""}`}>
 
-        {/* Table card — scrollable body, sticky header */}
+        {/* Table card */}
         <div className="bg-white rounded-3xl border border-zinc-100 shadow-sm flex flex-col overflow-hidden">
           {loading ? (
             <div className="flex-1 flex items-center justify-center">
               <div className="h-8 w-8 border-4 border-zinc-200 border-t-black rounded-full animate-spin" />
             </div>
-          ) : filtered.length === 0 ? (
+          ) : items.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center text-zinc-400">
               <RefreshCw className="h-10 w-10 mb-3 opacity-30" />
               <p className="font-bold text-sm">No trade-ins found</p>
@@ -195,7 +263,7 @@ export default function TradeInsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-50">
-                  {filtered.map(t => {
+                  {items.map(t => {
                     const c = cfg(t.status);
                     return (
                       <tr
@@ -243,16 +311,22 @@ export default function TradeInsPage() {
                   })}
                 </tbody>
               </table>
+              <div ref={sentinelRef} className="h-1" />
+              {loadingMore && (
+                <div className="flex justify-center py-4">
+                  <Loader2 className="h-5 w-5 animate-spin text-zinc-300" />
+                </div>
+              )}
+              {!hasMore && items.length > 0 && (
+                <p className="text-center text-xs text-zinc-300 py-3">All {total} trade-ins loaded</p>
+              )}
             </div>
           )}
         </div>
 
-        {/* Backdrop for detail drawer */}
+        {/* Backdrop */}
         {selected && (
-          <div
-            className="fixed inset-0 bg-black/40 z-30 xl:hidden"
-            onClick={() => setSelected(null)}
-          />
+          <div className="fixed inset-0 bg-black/40 z-30 xl:hidden" onClick={() => setSelected(null)} />
         )}
 
         <AnimatePresence>
@@ -360,7 +434,7 @@ export default function TradeInsPage() {
                 </div>
               )}
 
-              {/* Admin notes (read-only display) */}
+              {/* Admin notes */}
               {selected.adminNotes && (
                 <div className="rounded-2xl bg-amber-50 border border-amber-100 px-4 py-3 mb-2">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-amber-600 mb-1">Note to customer</p>
@@ -416,7 +490,6 @@ export default function TradeInsPage() {
                 </div>
               )}
 
-              {/* Full details link */}
               <Link href={`/trade-ins/${selected.id}`}
                 className="flex items-center justify-center gap-2 w-full h-9 rounded-xl border border-zinc-200 hover:border-black hover:bg-black hover:text-white text-xs font-bold transition-all mt-3">
                 <ExternalLink className="h-3.5 w-3.5" /> View full details

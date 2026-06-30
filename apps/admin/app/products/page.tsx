@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Plus, Edit2, Trash2, X, Check, Package, Image as ImageIcon,
   ChevronDown, ExternalLink, AlertTriangle, Zap, ToggleLeft, ToggleRight,
-  RefreshCw } from "lucide-react";
+  RefreshCw, Loader2 } from "lucide-react";
 import { productsApi, deviceCatalogApi, productPricingApi, pricingConfigApi,
   type Product, type CreateProductPayload, type DeviceCatalogItem,
   type PricingRunResult, type PricingJobStatus } from "../../lib/api";
@@ -19,18 +19,13 @@ const CONDITIONS = [
   { value: 'F',   label: 'F Grade' },
 ];
 
-// These categories belong to Other Products page — excluded from main Products
-// Includes both slugs AND display names (p.category returns the name from the API)
-const OTHERS_SLUGS = new Set([
-  // slugs
-  "accessories", "cables", "chargers", "memory", "storage",
-  "mouse", "pen", "graphics", "lens",
-  "smartwatches", "games", "films",
-  "other", "others",
-  // display names (as returned by productsApi)
-  "camera lenses", "graphics cards", "mouse & peripherals", "stylus & pens",
-  "chargers", "cables", "memory", "storage",
-]);
+// Map status tab labels to server-side pricingStatus values
+const STATUS_TO_API: Record<string, string | undefined> = {
+  'All': undefined,
+  'Auto-priced': 'auto_priced',
+  'Flagged': 'flagged',
+  'No Price': 'no_data',
+};
 
 const EMPTY_FORM: CreateProductPayload = {
   catalogId: "", name: "", condition: "A",
@@ -40,10 +35,23 @@ const EMPTY_FORM: CreateProductPayload = {
 
 export default function ProductsPage() {
   const router = useRouter();
+
+  // ── Product list state ────────────────────────────────────────────────────
   const [products, setProducts]     = useState<Product[]>([]);
   const [loading, setLoading]       = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore]       = useState(false);
+  const [total, setTotal]           = useState(0);
+
+  // ── Filters ───────────────────────────────────────────────────────────────
   const [search, setSearch]         = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [filterCategory, setFilterCategory] = useState("All");
+  const [filterStatus, setFilterStatus]     = useState<string>("All");
+  const [categories, setCategories] = useState<string[]>([]);
+
+  // ── Modals / UI state ─────────────────────────────────────────────────────
   const [showModal, setShowModal]   = useState(false);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [formData, setFormData]     = useState<CreateProductPayload>(EMPTY_FORM);
@@ -54,7 +62,6 @@ export default function ProductsPage() {
   const [saving, setSaving]         = useState(false);
   const [error, setError]           = useState("");
 
-  const [filterStatus, setFilterStatus]       = useState<string>("All");
   const [autoPricing, setAutoPricing]         = useState(false);
   const [autoPriceResult, setAutoPriceResult] = useState<PricingRunResult | null>(null);
   const [autoPriceJob, setAutoPriceJob]       = useState<PricingJobStatus | null>(null);
@@ -73,7 +80,92 @@ export default function ProductsPage() {
   const [selectedDevice, setSelectedDevice]   = useState<DeviceCatalogItem | null>(null);
   const [deviceQuery, setDeviceQuery]         = useState("");
   const [pickerOpen, setPickerOpen]           = useState(false);
-  const pickerRef = useRef<HTMLDivElement>(null);
+  const pickerRef  = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  // ── Search debounce (300ms) ───────────────────────────────────────────────
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  // ── Category list (fetched once on mount) ─────────────────────────────────
+  useEffect(() => {
+    productsApi.categories().then(setCategories).catch(() => {});
+  }, []);
+
+  // Increment to force a full reload from page 1 (used by auto-price completion)
+  const [reloadKey, setReloadKey] = useState(0);
+  const triggerReload = useCallback(() => setReloadKey(k => k + 1), []);
+
+  // ── Core load: fires when filters change OR triggerReload() is called ─────
+  useEffect(() => {
+    let cancelled = false;
+    async function loadFirst() {
+      setLoading(true);
+      setProducts([]);
+      setHasMore(false);
+      try {
+        const res = await productsApi.list({
+          page: 1, limit: 50, excludeOthers: true,
+          search: debouncedSearch || undefined,
+          category: filterCategory !== "All" ? filterCategory : undefined,
+          pricingStatus: STATUS_TO_API[filterStatus],
+        });
+        if (!cancelled) {
+          setProducts(res.items);
+          setCurrentPage(1);
+          setHasMore(res.page < res.pages);
+          setTotal(res.total);
+        }
+      } catch { /* ignore */ }
+      finally { if (!cancelled) setLoading(false); }
+    }
+    loadFirst();
+    return () => { cancelled = true; };
+  }, [debouncedSearch, filterCategory, filterStatus, reloadKey]);
+
+  // ── Load-more function (stable ref so the observer never needs reconnecting) ─
+  const loadMore = useCallback(async (page: number) => {
+    setLoadingMore(true);
+    try {
+      const res = await productsApi.list({
+        page, limit: 50, excludeOthers: true,
+        search: debouncedSearch || undefined,
+        category: filterCategory !== "All" ? filterCategory : undefined,
+        pricingStatus: STATUS_TO_API[filterStatus],
+      });
+      setProducts(prev => [...prev, ...res.items]);
+      setCurrentPage(res.page);
+      setHasMore(res.page < res.pages);
+      setTotal(res.total);
+    } catch { /* ignore */ }
+    finally { setLoadingMore(false); }
+  }, [debouncedSearch, filterCategory, filterStatus]);
+
+  const loadMoreRef = useRef(loadMore);
+  loadMoreRef.current = loadMore;
+  const currentPageRef = useRef(currentPage);
+  currentPageRef.current = currentPage;
+  const hasMoreRef = useRef(hasMore);
+  hasMoreRef.current = hasMore;
+  const loadingMoreRef = useRef(loadingMore);
+  loadingMoreRef.current = loadingMore;
+  const loadingRef = useRef(loading);
+  loadingRef.current = loading;
+
+  // ── IntersectionObserver: trigger next page when sentinel is visible ───────
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMoreRef.current && !loadingMoreRef.current && !loadingRef.current) {
+        loadMoreRef.current(currentPageRef.current + 1);
+      }
+    }, { rootMargin: "200px" });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []); // set up once — all current values accessed via refs
 
   // Close picker on outside click
   useEffect(() => {
@@ -84,19 +176,7 @@ export default function ProductsPage() {
     return () => document.removeEventListener("mousedown", onOutside);
   }, []);
 
-  async function load() {
-    setLoading(true);
-    try {
-      const res = await productsApi.list({ limit: 500 });
-      setProducts(res.items.filter(p => !p.otherBrandId));
-    } catch { /* ignore */ }
-    finally { setLoading(false); }
-  }
-
-  const loadProducts = load;
-
   useEffect(() => {
-    load();
     pricingConfigApi.list()
       .then(configs => {
         const c = configs.find(x => x.key === 'show_unpriced_products');
@@ -120,6 +200,8 @@ export default function ProductsPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const loadProducts = triggerReload;
+
   async function toggleShowUnpriced() {
     setSavingUnpriced(true);
     const next = !showUnpriced;
@@ -129,19 +211,6 @@ export default function ProductsPage() {
     } catch { /* ignore */ }
     finally { setSavingUnpriced(false); }
   }
-
-  const filtered = products.filter(p => {
-    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.brand.toLowerCase().includes(search.toLowerCase());
-    const matchCat = filterCategory === "All" ||
-      p.category.toLowerCase() === filterCategory.toLowerCase();
-    const matchStatus = filterStatus === "All"
-      || (filterStatus === "Flagged" && p.pricingStatus === "flagged")
-      || (filterStatus === "No Price" && p.price == null)
-      || (filterStatus === "Auto-priced" && p.pricingStatus === "auto_priced");
-    const isOther = OTHERS_SLUGS.has(p.category?.toLowerCase());
-    return matchSearch && matchCat && matchStatus && !isOther;
-  });
 
   const filteredCatalog = catalogDevices.filter(d => {
     const q = deviceQuery.toLowerCase();
@@ -159,7 +228,7 @@ export default function ProductsPage() {
     setShowModal(true);
     if (catalogDevices.length === 0) {
       deviceCatalogApi.list()
-        .then(items => setCatalogDevices(items.filter(d => !OTHERS_SLUGS.has(d.brandCategory.category.slug.toLowerCase()))))
+        .then(items => setCatalogDevices(items))
         .catch(() => {});
     }
   }
@@ -302,10 +371,6 @@ export default function ProductsPage() {
   }
 
   const storage = (p: Product) => p.storage || "—";
-  const mainProducts = products.filter(p => !OTHERS_SLUGS.has(p.category?.toLowerCase()));
-  const countFor = (cat: string) => mainProducts.filter(p =>
-    cat === "All" ? true : p.category.toLowerCase() === cat.toLowerCase()
-  ).length;
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 md:p-8">
@@ -313,7 +378,7 @@ export default function ProductsPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Products</h1>
           <p className="text-sm text-zinc-500 mt-1">
-            {products.length} total · {products.filter(p => p.isActive).length} active · {products.filter(p => p.stock === 0).length} out of stock
+            {loading ? "Loading…" : `${total} product${total !== 1 ? "s" : ""}${filterCategory !== "All" || filterStatus !== "All" || debouncedSearch ? " matching filters" : " total"}`}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -366,13 +431,13 @@ export default function ProductsPage() {
           />
         </div>
         <div className="flex gap-2 overflow-x-auto scrollbar-hide py-1 -my-1 max-w-full">
-          {["All", ...Array.from(new Set(mainProducts.map(p => p.category))).sort()].map(cat => (
+          {["All", ...categories].map(cat => (
             <button
               key={cat}
               onClick={() => setFilterCategory(cat)}
               className={`h-11 px-4 rounded-2xl text-sm font-bold transition-all shrink-0 ${filterCategory === cat ? "bg-black text-white" : "bg-white border border-zinc-200 hover:border-zinc-400"}`}
             >
-              {cat} ({countFor(cat)})
+              {cat}{filterCategory === cat && total > 0 ? ` (${total})` : ""}
             </button>
           ))}
         </div>
@@ -436,7 +501,7 @@ export default function ProductsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-50">
-              {filtered.map(p => (
+              {products.map(p => (
                 <tr
                   key={p.id}
                   onClick={() => router.push(`/products/${p.id}`)}
@@ -524,11 +589,24 @@ export default function ProductsPage() {
           </table>
           </div>
         )}
-        {!loading && filtered.length === 0 && (
+        {!loading && products.length === 0 && (
           <div className="text-center py-20 text-zinc-400">
             <Package className="h-10 w-10 mx-auto mb-3 opacity-30" />
             <p className="font-bold text-sm">No products found</p>
           </div>
+        )}
+        {/* Infinite scroll sentinel + load-more spinner */}
+        <div ref={sentinelRef} className="h-px" />
+        {loadingMore && (
+          <div className="flex items-center justify-center py-6 gap-2 text-zinc-400 text-sm">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Loading more…
+          </div>
+        )}
+        {!loading && !loadingMore && !hasMore && products.length > 0 && total > 50 && (
+          <p className="text-center text-xs text-zinc-400 py-4">
+            All {total} products loaded
+          </p>
         )}
       </div>
 

@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus, Search, Trash2, Pencil, X, Check, ChevronDown, Image,
-  ToggleLeft, ToggleRight, RefreshCw, TrendingUp, CheckCircle2, AlertCircle, AlertTriangle,
+  ToggleLeft, ToggleRight, RefreshCw, TrendingUp, CheckCircle2, AlertCircle, AlertTriangle, Loader2,
 } from "lucide-react";
 import {
   deviceCatalogApi, catalogBrandCategoryApi, catalogBrandsApi, catalogCategoriesApi, scraperApi,
@@ -36,7 +36,23 @@ export default function CatalogPage() {
   const [brandCategories, setBrandCategories] = useState<BrandCategoryOption[]>([]);
   const [loading, setLoading]     = useState(true);
   const [search, setSearch]       = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [filterCat, setFilterCat] = useState<string>("all");
+  const [total, setTotal]         = useState(0);
+  const [hasMore, setHasMore]     = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Stable refs for observer
+  const hasMoreRef   = useRef(false);
+  const loadingMoreRef = useRef(false);
+  const currentPageRef = useRef(1);
+  const debouncedSearchRef = useRef("");
+  const filterCatRef = useRef("all");
+  const sentinelRef  = useRef<HTMLDivElement>(null);
+
+  debouncedSearchRef.current = debouncedSearch;
+  filterCatRef.current = filterCat;
   const [modalOpen, setModalOpen] = useState(false);
   const [editItem, setEditItem]   = useState<DeviceCatalogItem | null>(null);
   const [deleteId, setDeleteId]   = useState<string | null>(null);
@@ -67,34 +83,89 @@ export default function CatalogPage() {
     } catch { /* non-fatal */ }
   }, []);
 
-  async function load() {
-    setLoading(true);
-    try {
-      const [items, bcs, cats, brands] = await Promise.all([
-        deviceCatalogApi.list(),
-        catalogBrandCategoryApi.list().catch(() => [] as BrandCategoryOption[]),
-        catalogCategoriesApi.list().catch(() => [] as CatalogCategoryItem[]),
-        catalogBrandsApi.list().catch(() => [] as CatalogBrandItem[]),
-      ]);
-      setDevices(items);
+  // Load brand/category/meta once on mount
+  useEffect(() => {
+    Promise.all([
+      catalogBrandCategoryApi.list().catch(() => [] as BrandCategoryOption[]),
+      catalogCategoriesApi.list().catch(() => [] as CatalogCategoryItem[]),
+      catalogBrandsApi.list().catch(() => [] as CatalogBrandItem[]),
+    ]).then(([bcs, cats, brands]) => {
       setBrandCategories(bcs);
       setAllCategories(cats.filter(c => c.isActive));
       setAllBrands(brands.filter(b => b.isActive));
-    } catch { /* ignore */ }
-    finally { setLoading(false); }
-  }
+    });
+    loadPrices();
+  }, [loadPrices]);
 
-  useEffect(() => { load(); loadPrices(); }, [loadPrices]);
+  // 300ms debounce
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
 
-  // All unique category slugs present in loaded devices
-  const presentCategories = [...new Set(devices.map(categorySlug).filter(Boolean))];
+  // Page-1 reset on filter/search change
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setDevices([]);
+    setCurrentPage(1);
+    currentPageRef.current = 1;
 
-  const filtered = devices.filter(d => {
-    const matchesCat = filterCat === "all" || categorySlug(d) === filterCat;
-    const q = search.toLowerCase();
-    const matchesSearch = !q || brandName(d).toLowerCase().includes(q) || d.model.toLowerCase().includes(q);
-    return matchesCat && matchesSearch;
-  });
+    deviceCatalogApi.listPaged({
+      categorySlug: filterCat === "all" ? undefined : filterCat,
+      search: debouncedSearch || undefined,
+      page: 1,
+      limit: 50,
+    }).then(res => {
+      if (cancelled) return;
+      setDevices(res.items);
+      setTotal(res.total);
+      const more = res.page < res.pages;
+      setHasMore(more);
+      hasMoreRef.current = more;
+    }).catch(() => {}).finally(() => {
+      if (!cancelled) setLoading(false);
+    });
+
+    return () => { cancelled = true; };
+  }, [debouncedSearch, filterCat]);
+
+  // Infinite scroll
+  const loadMore = useCallback(async () => {
+    if (loadingMoreRef.current || !hasMoreRef.current) return;
+    loadingMoreRef.current = true;
+    setLoadingMore(true);
+    const nextPage = currentPageRef.current + 1;
+    try {
+      const res = await deviceCatalogApi.listPaged({
+        categorySlug: filterCatRef.current === "all" ? undefined : filterCatRef.current,
+        search: debouncedSearchRef.current || undefined,
+        page: nextPage,
+        limit: 50,
+      });
+      setDevices(prev => [...prev, ...res.items]);
+      currentPageRef.current = nextPage;
+      setCurrentPage(nextPage);
+      const more = res.page < res.pages;
+      hasMoreRef.current = more;
+      setHasMore(more);
+    } catch { }
+    finally {
+      loadingMoreRef.current = false;
+      setLoadingMore(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      entries => { if (entries[0]?.isIntersecting) loadMore(); },
+      { rootMargin: "200px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [loadMore]);
 
   async function handleScrape() {
     setScraping(true); setScrapeMsg("");
@@ -113,7 +184,8 @@ export default function CatalogPage() {
     setDeletingAll(true); setDeleteAllError("");
     try {
       await deviceCatalogApi.removeAll();
-      setDevices([]); setShowDeleteAll(false); setDeleteAllInput("");
+      setDevices([]); setTotal(0); setHasMore(false); hasMoreRef.current = false;
+      setShowDeleteAll(false); setDeleteAllInput("");
     } catch (e: any) {
       setDeleteAllError(e.message || "Delete failed. Please try again.");
     } finally { setDeletingAll(false); }
@@ -249,12 +321,12 @@ export default function CatalogPage() {
         <div className="flex gap-2 overflow-x-auto scrollbar-hide py-1 -my-1 max-w-full">
           <button onClick={() => setFilterCat("all")}
             className={`h-10 px-4 rounded-xl text-xs font-bold transition-colors shrink-0 ${filterCat === "all" ? "bg-zinc-950 text-white" : "bg-white border border-zinc-200 text-zinc-500 hover:border-zinc-400"}`}>
-            All ({devices.length})
+            All{filterCat === "all" ? ` (${total})` : ""}
           </button>
-          {presentCategories.map(cat => (
-            <button key={cat} onClick={() => setFilterCat(cat)}
-              className={`h-10 px-4 rounded-xl text-xs font-bold transition-colors capitalize shrink-0 ${filterCat === cat ? "bg-zinc-950 text-white" : "bg-white border border-zinc-200 text-zinc-500 hover:border-zinc-400"}`}>
-              {cat} ({devices.filter(d => categorySlug(d) === cat).length})
+          {allCategories.map(cat => (
+            <button key={cat.slug} onClick={() => setFilterCat(cat.slug)}
+              className={`h-10 px-4 rounded-xl text-xs font-bold transition-colors capitalize shrink-0 ${filterCat === cat.slug ? "bg-zinc-950 text-white" : "bg-white border border-zinc-200 text-zinc-500 hover:border-zinc-400"}`}>
+              {cat.slug}{filterCat === cat.slug ? ` (${total})` : ""}
             </button>
           ))}
         </div>
@@ -277,11 +349,11 @@ export default function CatalogPage() {
         ) : (
           <div className="divide-y divide-zinc-50">
             <AnimatePresence initial={false}>
-              {filtered.length === 0 ? (
+              {devices.length === 0 ? (
                 <div className="px-6 py-12 text-center text-sm text-zinc-400 font-medium">
-                  {devices.length === 0 ? "No devices yet. Add your first device." : "No devices match your filters."}
+                  {debouncedSearch || filterCat !== "all" ? "No devices match your filters." : "No devices yet. Add your first device."}
                 </div>
-              ) : filtered.map(device => {
+              ) : devices.map(device => {
                 const slug = categorySlug(device);
                 const range = devicePriceRange(device);
                 return (
@@ -324,6 +396,15 @@ export default function CatalogPage() {
                 );
               })}
             </AnimatePresence>
+            <div ref={sentinelRef} className="h-1" />
+            {loadingMore && (
+              <div className="flex justify-center py-4">
+                <Loader2 className="h-5 w-5 animate-spin text-zinc-300" />
+              </div>
+            )}
+            {!hasMore && devices.length > 0 && (
+              <p className="text-center text-xs text-zinc-300 py-3">All {total} devices loaded</p>
+            )}
           </div>
         )}
           </div>

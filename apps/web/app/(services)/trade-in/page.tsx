@@ -416,11 +416,12 @@ export default function TradeInPage() {
       .then(cats => {
         const sellable = cats.filter(c => c.isSellable);
         setCatalogCats(sellable);
-        // For categories with no DB image, fetch a product image as fallback
+        // For categories with no DB image, fetch a random product image as fallback
         sellable.filter(c => !c.image).forEach(c => {
-          productsApi.list({ category: c.name, limit: 1 })
+          productsApi.list({ category: c.name, limit: 12 })
             .then(r => {
-              const img = r.items[0]?.images?.[0];
+              const pool = r.items.flatMap(p => p.images ?? []);
+              const img = pool[Math.floor(Math.random() * pool.length)];
               if (img) setCatFallbackImages(prev => ({ ...prev, [c.slug]: img }));
             })
             .catch(() => {});

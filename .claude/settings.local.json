@@ -160,7 +160,8 @@
       "PowerShell(node -e \"const path = require\\('path'\\); const d = path.dirname\\(require.resolve\\('@imgly/background-removal-node', {paths: ['d:/CODE/Projects/Markhor System/AI-E-commerce/apps/api']}\\)\\); console.log\\(d\\); console.log\\('resources.json exists:', require\\('fs'\\).existsSync\\(path.join\\(d, 'resources.json'\\)\\)\\)\")",
       "Bash(grep -E \"\\\\.\\(md|yml|yaml|json|sql\\)$\")",
       "Bash(xargs wc -l)",
-      "PowerShell(cd \"d:\\\\CODE\\\\Projects\\\\Markhor System\\\\AI-E-commerce\"; npx tsc --project apps/scraper/tsconfig.json --noEmit 2>&1 | Where-Object { $_ -notmatch \"e2e-spec\" -and $_ -notmatch \"test/\" })"
+      "PowerShell(cd \"d:\\\\CODE\\\\Projects\\\\Markhor System\\\\AI-E-commerce\"; npx tsc --project apps/scraper/tsconfig.json --noEmit 2>&1 | Where-Object { $_ -notmatch \"e2e-spec\" -and $_ -notmatch \"test/\" })",
+      "Bash(echo \"EXIT:$?\")"
     ],
     "additionalDirectories": [
       "d:\\CODE\\Projects\\Markhor Systems Projects\\Ai-Ecommerce\\apps\\web\\app\\account\\repairs",

@@ -31,6 +31,9 @@ export class ProductsController {
         @Query('page') page?: string,
         @Query('limit') limit?: string,
         @Query('includeAll') includeAll?: string,
+        @Query('pricingStatus') pricingStatus?: string,
+        @Query('excludeOthers') excludeOthers?: string,
+        @Query('onlyOthers') onlyOthers?: string,
     ) {
         return this.productsService.findAll({
             category,
@@ -42,7 +45,20 @@ export class ProductsController {
             page: page ? Number(page) : undefined,
             limit: limit ? Number(limit) : undefined,
             includeInactive: includeAll === 'true',
+            pricingStatus: pricingStatus || undefined,
+            excludeOthers: excludeOthers === 'true',
+            onlyOthers: onlyOthers === 'true',
         });
+    }
+
+    @Get('categories')
+    getAdminCategories() {
+        return this.productsService.getAdminCategories();
+    }
+
+    @Get('others-categories')
+    getOthersCategories() {
+        return this.productsService.getOthersCategories();
     }
 
     @Get('brands')

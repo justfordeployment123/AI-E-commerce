@@ -63,10 +63,18 @@ export class TradeInsService {
         });
     }
 
-    async findAll(query: { status?: string; page?: number; limit?: number }) {
-        const { status, page = 1, limit = 20 } = query;
+    async findAll(query: { status?: string; search?: string; page?: number; limit?: number }) {
+        const { status, search, page = 1, limit = 20 } = query;
         const skip = (page - 1) * limit;
-        const where = status ? { status: status as never } : {};
+        const where: Record<string, unknown> = {};
+        if (status) where.status = status as never;
+        if (search) {
+            where.OR = [
+                { model:     { contains: search, mode: 'insensitive' } },
+                { reference: { contains: search, mode: 'insensitive' } },
+                { user: { name: { contains: search, mode: 'insensitive' } } },
+            ];
+        }
 
         const [items, total] = await Promise.all([
             this.prisma.tradeIn.findMany({

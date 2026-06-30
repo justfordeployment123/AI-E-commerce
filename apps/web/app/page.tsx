@@ -569,9 +569,10 @@ function TradeInCTASection() {
 
         filtered.forEach(c => {
           if (!c.image) {
-            productsApi.list({ category: c.name, limit: 1 })
+            productsApi.list({ category: c.name, limit: 12 })
               .then(r => {
-                const img = r.items[0]?.images?.[0];
+                const pool = r.items.flatMap(p => p.images ?? []);
+                const img = pool[Math.floor(Math.random() * pool.length)];
                 if (img) setFallbacks(prev => ({ ...prev, [c.slug]: img }));
               })
               .catch(() => {});

@@ -16,6 +16,9 @@ export class DeviceCatalogController {
         @Query('search') search?: string,
         @Query('isActive') isActive?: string,
         @Query('forTradeIn') forTradeIn?: string,
+        @Query('paged') paged?: string,
+        @Query('page') page?: string,
+        @Query('limit') limit?: string,
     ) {
         return this.service.findAll({
             categorySlug,
@@ -23,6 +26,9 @@ export class DeviceCatalogController {
             search,
             isActive: isActive !== undefined ? isActive === 'true' : undefined,
             forTradeIn: forTradeIn === 'true',
+            paged: paged === 'true',
+            page: page ? Number(page) : undefined,
+            limit: limit ? Number(limit) : undefined,
         });
     }
 

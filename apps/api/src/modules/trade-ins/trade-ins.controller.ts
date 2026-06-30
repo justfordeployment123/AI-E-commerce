@@ -81,9 +81,15 @@ export class TradeInsController {
     @Get()
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles('ADMIN')
-    findAll(@Query('status') status?: string, @Query('page') page?: string, @Query('limit') limit?: string) {
+    findAll(
+        @Query('status') status?: string,
+        @Query('search') search?: string,
+        @Query('page') page?: string,
+        @Query('limit') limit?: string,
+    ) {
         return this.tradeInsService.findAll({
             status,
+            search: search || undefined,
             page: page ? Number(page) : undefined,
             limit: limit ? Number(limit) : undefined,
         });
