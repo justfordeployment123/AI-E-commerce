@@ -480,3 +480,17 @@ model AppSetting {
 
   @@map("app_settings")
 }
+
+// Devices shown in the search autocomplete (DeviceSearchBox) — admin-managed
+model TradeInDevice {
+  id        String   @id @default(cuid())
+  name      String   // model name, e.g. "iPhone 15 Pro"
+  brand     String   // brand name, e.g. "Apple"
+  category  String   // wizard category ID: Phone | Tablet | Console | Laptop | Audio | Smartwatch | Other
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([brand, name])
+  @@map("trade_in_devices")
+}

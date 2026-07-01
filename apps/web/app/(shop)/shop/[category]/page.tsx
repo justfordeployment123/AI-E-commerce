@@ -7,7 +7,6 @@ import { productsApi } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import {
-  Smartphone, Laptop, Tablet, Gamepad2, Headphones, Package, Watch,
   ChevronDown, ChevronLeft, ChevronRight, ShoppingCart, Star, Check,
   ArrowLeft, ArrowRight, ShieldCheck, Zap, RefreshCw, Wrench, X, SlidersHorizontal,
   Battery, Camera, Monitor, Wifi, Cpu
@@ -45,99 +44,6 @@ function ScrollButtons({ scrollRef }: { scrollRef: React.RefObject<HTMLElement |
   );
 }
 
-// ─── Category meta ──────────────────────────────────────────────────────────
-
-const CATEGORY_META: Record<string, {
-  label: string;
-  plural: string;
-  icon: React.ElementType;
-  mood: string;
-  description: string;
-  filters: string[];
-  brands: string[];
-}> = {
-  phones: {
-    label: "Phones",
-    plural: "Smartphones",
-    icon: Smartphone,
-    mood: "bg-blue-50 text-blue-900 border-blue-200",
-    description: "Certified refurbished smartphones with 2-year warranty. Every handset is unlocked, tested, and backed by our quality guarantee.",
-    filters: ["Apple", "Samsung", "Google", "OnePlus"],
-    brands: ["Apple", "Samsung", "Google", "OnePlus", "Nothing"],
-  },
-  tablets: {
-    label: "Tablets",
-    plural: "Tablets",
-    icon: Tablet,
-    mood: "bg-rose-50 text-rose-900 border-rose-200",
-    description: "Refurbished iPads, Samsung Galaxy Tabs and Surface devices. Fully tested, screen checked, and sold with a 2-year warranty.",
-    filters: ["Apple", "Samsung", "Microsoft"],
-    brands: ["Apple", "Samsung", "Microsoft"],
-  },
-  consoles: {
-    label: "Consoles",
-    plural: "Gaming Consoles",
-    icon: Gamepad2,
-    mood: "bg-violet-50 text-violet-900 border-violet-200",
-    description: "Certified refurbished PlayStation, Xbox and Nintendo consoles. Disc drives tested, HDMI verified, controllers included.",
-    filters: ["Sony", "Microsoft", "Nintendo"],
-    brands: ["Sony", "Microsoft", "Nintendo"],
-  },
-  laptops: {
-    label: "Laptops",
-    plural: "Laptops & MacBooks",
-    icon: Laptop,
-    mood: "bg-amber-50 text-amber-900 border-amber-200",
-    description: "Refurbished MacBooks, ThinkPads, Dell XPS and more. Every laptop is battery-tested, keyboard-checked, and ships with a warranty.",
-    filters: ["Apple", "Dell", "Lenovo", "HP"],
-    brands: ["Apple", "Dell", "Lenovo", "HP", "ASUS"],
-  },
-  audio: {
-    label: "Audio",
-    plural: "Audio & Headphones",
-    icon: Headphones,
-    mood: "bg-emerald-50 text-emerald-900 border-emerald-200",
-    description: "Genuine refurbished accessories including headphones, chargers, cases and cables. Tested and quality-checked.",
-    filters: ["Sony", "Apple", "Bose"],
-    brands: ["Sony", "Apple", "Bose", "Samsung"],
-  },
-  accessories: {
-    label: "Accessories",
-    plural: "Accessories",
-    icon: Package,
-    mood: "bg-zinc-50 text-zinc-900 border-zinc-200",
-    description: "Chargers, cables, memory, storage, mice, graphics cards and more — quality accessories at great prices.",
-    filters: [],
-    brands: [],
-  },
-  smartwatches: {
-    label: "Smartwatches",
-    plural: "Smartwatches",
-    icon: Watch,
-    mood: "bg-teal-50 text-teal-900 border-teal-200",
-    description: "Certified refurbished smartwatches from Apple, Samsung and more. Battery-tested and quality-graded.",
-    filters: ["Apple", "Samsung"],
-    brands: ["Apple", "Samsung"],
-  },
-  games: {
-    label: "Games",
-    plural: "Video Games",
-    icon: Gamepad2,
-    mood: "bg-indigo-50 text-indigo-900 border-indigo-200",
-    description: "Pre-owned video games at great prices. Fully tested and ready to play.",
-    filters: [],
-    brands: [],
-  },
-  films: {
-    label: "Films",
-    plural: "Films & Blu-rays",
-    icon: Monitor,
-    mood: "bg-sky-50 text-sky-900 border-sky-200",
-    description: "Pre-owned Blu-rays and DVDs at brilliant prices.",
-    filters: [],
-    brands: [],
-  },
-};
 
 
 const GRADES: GradeKey[] = ['NEW', 'A', 'B', 'C', 'F'];
@@ -251,38 +157,31 @@ const SEO_TEXT: Record<string, { title: string; content: string[] }> = {
   }
 };
 
-const DEFAULT_META = {
-  icon: Package,
-  mood: "bg-zinc-50 text-zinc-900 border-zinc-200",
-  filters: [] as string[],
-  brands: [] as string[],
-};
-
 export default function CategoryPage() {
   const params = useParams();
   const categorySlug = (params?.category as string)?.toLowerCase();
-  const staticMeta = CATEGORY_META[categorySlug];
 
-  // For unknown slugs, fetch the category from the API and build a fallback
-  const [dynamicCatName, setDynamicCatName] = useState<string | null>(null);
+  // All category content comes from the API — admin panel is the single source of truth
+  const [dynamicCat, setDynamicCat] = useState<{ name: string; description?: string } | null>(null);
   const [catNotFound, setCatNotFound] = useState(false);
   useEffect(() => {
-    if (staticMeta) return;
     catalogApi.listCategories({ includeInactive: false } as any)
       .then(cats => {
         const found = cats.find(c => c.slug === categorySlug);
-        if (found) setDynamicCatName(found.name);
+        if (found) setDynamicCat({ name: found.name, description: found.description ?? undefined });
         else setCatNotFound(true);
       })
       .catch(() => setCatNotFound(true));
-  }, [categorySlug, staticMeta]);
+  }, [categorySlug]);
 
-  const meta = staticMeta ?? (dynamicCatName ? {
-    ...DEFAULT_META,
-    label: dynamicCatName,
-    plural: dynamicCatName,
-    description: `Browse all ${dynamicCatName} products.`,
-  } : null);
+  // meta is purely derived from the API — no hardcoded content
+  const meta = dynamicCat
+    ? {
+        label: dynamicCat.name,
+        plural: dynamicCat.name,
+        description: dynamicCat.description ?? "",
+      }
+    : null;
 
   const [activeBrands, setActiveBrands] = useState<string[]>([]);
   const [activeGrades, setActiveGrades] = useState<string[]>([]);
@@ -349,7 +248,6 @@ export default function CategoryPage() {
     setList(list.includes(item) ? list.filter(x => x !== item) : [...list, item]);
   }
 
-  const CategoryIcon = meta.icon;
   const allProducts = displayProducts;
   const dynamicBrands = subBrands.map(b => b.brand);
   const bannerImage = activeTabBrand === "all"

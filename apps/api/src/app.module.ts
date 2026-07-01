@@ -22,6 +22,7 @@ import { AdminModule } from './modules/admin/admin.module';
 import { PricingConfigModule } from './modules/pricing-config/pricing-config.module';
 import { DeviceCatalogModule } from './modules/device-catalog/device-catalog.module';
 import { StoresModule } from './modules/stores/stores.module';
+import { TradeInDevicesModule } from './modules/trade-in-devices/trade-in-devices.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { ShippingModule } from './modules/shipping/shipping.module';
@@ -58,6 +59,7 @@ import { SettingsModule } from './modules/settings/settings.module';
     PricingConfigModule,
     DeviceCatalogModule,
     StoresModule,
+    TradeInDevicesModule,
     UploadsModule,
     NotificationsModule,
     ShippingModule,

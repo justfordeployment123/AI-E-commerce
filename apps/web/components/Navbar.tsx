@@ -76,6 +76,7 @@ export default function Navbar() {
   const closeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [shopCategories, setShopCategories] = useState<{ label: string; href: string; slug: string; icon: React.ElementType }[]>([]);
   const [categoryBrands, setCategoryBrands] = useState<Record<string, string[]>>({});
+  const [categoryDescriptions, setCategoryDescriptions] = useState<Record<string, string>>({});
   const [otherSubcats, setOtherSubcats] = useState<{ label: string; slug: string }[]>([]);
 
   function openDropdown(slug: string) {
@@ -117,6 +118,14 @@ export default function Navbar() {
             }));
           mainCats.push({ label: "Others", href: `/shop/others`, slug: "other", icon: MoreHorizontal });
           setShopCategories(mainCats);
+
+          // Store descriptions from DB — admin can update these in the admin panel
+          const descs: Record<string, string> = {};
+          cats.filter(c => !OTHERS_SLUGS.has(c.slug)).forEach(c => {
+            if (c.description) descs[c.slug] = c.description;
+          });
+          setCategoryDescriptions(descs);
+
           cats
             .filter(c => !OTHERS_SLUGS.has(c.slug))
             .forEach(c => {
@@ -504,10 +513,12 @@ export default function Navbar() {
                       <h2 className="text-2xl font-bold tracking-tight text-zinc-950 dark:text-white mb-1.5">
                         {CATEGORY_DROPDOWN_META[hoveredCat].plural}
                       </h2>
-                      {/* Description */}
-                      <p className="text-sm font-medium text-zinc-500 max-w-2xl leading-relaxed">
-                        {CATEGORY_DROPDOWN_META[hoveredCat].description}
-                      </p>
+                      {/* Description — from admin panel (DB), no hardcoded fallback */}
+                      {(categoryDescriptions[hoveredCat] ?? CATEGORY_DROPDOWN_META[hoveredCat]?.description) && (
+                        <p className="text-sm font-medium text-zinc-500 max-w-2xl leading-relaxed">
+                          {categoryDescriptions[hoveredCat] ?? CATEGORY_DROPDOWN_META[hoveredCat]?.description}
+                        </p>
+                      )}
 
                       {/* For "other": show subcategory chips; for main cats: show brand chips */}
                       {hoveredCat === "other" ? (

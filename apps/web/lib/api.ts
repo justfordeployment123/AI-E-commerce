@@ -350,6 +350,10 @@ export const catalogApi = {
 
   deleteBrandCategory: (id: string) =>
     apiFetch<void>(`/catalog/brand-categories/${id}`, { method: 'DELETE', auth: true }),
+
+  // All tradeable models for search — used by DeviceSearchBox (from admin-managed trade_in_devices table)
+  listTradeInModels: () =>
+    apiFetch<{ name: string; brand: string; category: string }[]>('/trade-in-devices'),
 };
 
 // ── Types ─────────────────────────────────────────────────────────────────────

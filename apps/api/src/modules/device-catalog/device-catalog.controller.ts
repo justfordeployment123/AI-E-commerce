@@ -9,6 +9,12 @@ import { UpsertDeviceDto } from './dto/upsert-device.dto';
 export class DeviceCatalogController {
     constructor(private readonly service: DeviceCatalogService) {}
 
+    // Public — flat list of all active tradeable models for client-side fuzzy search
+    @Get('search-models')
+    searchModels() {
+        return this.service.listForSearch();
+    }
+
     @Get()
     findAll(
         @Query('categorySlug') categorySlug?: string,

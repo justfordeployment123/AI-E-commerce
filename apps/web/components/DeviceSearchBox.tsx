@@ -1,9 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, ChevronRight, Plus, Smartphone } from "lucide-react";
-import { TRADE_IN_MODELS_FUSE, type TradeInModel } from "@/lib/trade-in-data";
+import Fuse from "fuse.js";
+import { TRADE_IN_MODELS, type TradeInModel } from "@/lib/trade-in-data";
+import { catalogApi } from "@/lib/api";
+
+// Category name from DB → wizard category ID used by trade-in/repair pages
+const CAT_NAME_TO_ID: Record<string, string> = {
+  Phones: "Phone", Tablets: "Tablet", Consoles: "Console",
+  Laptops: "Laptop", Audio: "Audio", Smartwatches: "Smartwatch",
+  Gaming: "Console",
+};
 
 interface DeviceSearchBoxProps {
   placeholder?: string;
@@ -22,6 +31,19 @@ interface DeviceSearchBoxProps {
   onSubmit?: (query: string) => void;
 }
 
+const FUSE_OPTIONS = {
+  keys: [
+    { name: "name",     weight: 0.7 },
+    { name: "brand",    weight: 0.25 },
+    { name: "category", weight: 0.05 },
+  ],
+  threshold: 0.4,
+  ignoreLocation: true,
+};
+
+// Static fallback Fuse — used instantly while the API call is in flight
+const STATIC_FUSE = new Fuse(TRADE_IN_MODELS, FUSE_OPTIONS);
+
 export default function DeviceSearchBox({
   placeholder = "Search your device (e.g. Samsung Galaxy, iPhone 15 Pro...)",
   className = "",
@@ -34,13 +56,39 @@ export default function DeviceSearchBox({
 }: DeviceSearchBoxProps) {
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
+  // Starts with static fallback; upgraded to live catalog data once the API responds
+  const [fuseInstance, setFuseInstance] = useState<Fuse<TradeInModel>>(STATIC_FUSE);
 
-  const suggestions: TradeInModel[] = query.trim()
-    ? TRADE_IN_MODELS_FUSE.search(query)
-        .map(r => r.item)
-        .filter(m => !filterCategories || filterCategories.includes(m.category))
-        .slice(0, maxSuggestions)
-    : [];
+  useEffect(() => {
+    catalogApi.listTradeInModels()
+      .then(items => {
+        const dbModels: TradeInModel[] = items.map(item => ({
+          name:     item.name,
+          brand:    item.brand,
+          category: item.category, // already stored as wizard category ID (Phone, Tablet, etc.)
+        }));
+
+        // Merge: DB models first, then any static models not already in the DB
+        // This ensures models in the admin catalog take priority, but the static
+        // list (e.g. Nothing Phone, Fairphone) fills gaps until they're added to the catalog
+        const dbKeys = new Set(dbModels.map(m => `${m.brand}:${m.name}`));
+        const staticOnly = TRADE_IN_MODELS.filter(m => !dbKeys.has(`${m.brand}:${m.name}`));
+        const merged = [...dbModels, ...staticOnly];
+
+        setFuseInstance(new Fuse(merged, FUSE_OPTIONS));
+      })
+      .catch(() => {}); // silently keep static fallback on error
+  }, []);
+
+  const suggestions: TradeInModel[] = useMemo(
+    () => query.trim()
+      ? fuseInstance.search(query)
+          .map(r => r.item)
+          .filter(m => !filterCategories || filterCategories.includes(m.category))
+          .slice(0, maxSuggestions)
+      : [],
+    [query, fuseInstance, filterCategories, maxSuggestions],
+  );
 
   const handleSelect = (device: TradeInModel) => {
     setQuery("");
@@ -93,7 +141,6 @@ export default function DeviceSearchBox({
             transition={{ duration: 0.15 }}
             className="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden z-50 p-2 text-left"
           >
-            {/* Matched suggestions */}
             {suggestions.length === 0 ? (
               <p className="text-xs text-zinc-400 font-semibold text-center py-3 px-3">
                 No results for &quot;{query}&quot; — use the option below to start a manual quote.
@@ -124,7 +171,6 @@ export default function DeviceSearchBox({
               ))
             )}
 
-            {/* Always-visible manual entry escape hatch */}
             <div className="border-t border-zinc-100 dark:border-zinc-800 mt-1 pt-1">
               <button
                 type="button"

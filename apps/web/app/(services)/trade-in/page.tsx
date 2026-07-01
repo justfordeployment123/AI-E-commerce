@@ -781,11 +781,12 @@ export default function TradeInPage() {
 
   const handleSelectSuggestion = (suggestion: { name: string; category: string; brand: string }) => {
     guardedOpen(() => {
+      // Open wizard immediately at phase 2 with unpriced as safe default
       setState({
         category: suggestion.category,
         brand: suggestion.brand,
         model: suggestion.name,
-        tradeInMode: "auto",
+        tradeInMode: "unpriced", // safe default — upgraded below if catalog has pricing
         specs: {},
         condition: "",
         answers: {},
@@ -795,6 +796,25 @@ export default function TradeInPage() {
       setPhase(2);
       setIsWizardActive(true);
       scrollToTop();
+
+      // In background: check device catalog for real tradeInMode
+      const catSlugMap: Record<string, string> = {
+        Phone: "phones", Tablet: "tablets", Console: "consoles",
+        Laptop: "laptops", Audio: "audio", Smartwatch: "smartwatches",
+      };
+      const catSlug = catSlugMap[suggestion.category];
+      const brandSlug = suggestion.brand.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+      if (catSlug) {
+        fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002"}/device-catalog?forTradeIn=true&categorySlug=${catSlug}&brandSlug=${brandSlug}`)
+          .then(r => r.json())
+          .then((entries: { model: string; tradeInMode?: string }[]) => {
+            const match = entries.find(e => e.model.toLowerCase() === suggestion.name.toLowerCase());
+            if (match?.tradeInMode && match.tradeInMode !== "unpriced") {
+              setState(s => ({ ...s, tradeInMode: match.tradeInMode as "auto" | "manual_price" | "unpriced" }));
+            }
+          })
+          .catch(() => {}); // stays unpriced on error → manual review
+      }
     });
   };
 
@@ -1779,7 +1799,7 @@ export default function TradeInPage() {
                               </div>
 
                               <div className="max-w-md mx-auto w-full space-y-3">
-                                <span className="text-xs font-black uppercase tracking-widest text-zinc-400 block">Device Photos <span className="text-amber-600 dark:text-amber-400">(Recommended)</span></span>
+                                <span className="text-xs font-black uppercase tracking-widest text-zinc-400 block">Device Photos <span className="text-red-500 dark:text-red-400">(Required · min 1)</span></span>
 
                                 <motion.button
                                   whileHover={{ scale: 1.01 }}
@@ -1896,7 +1916,7 @@ export default function TradeInPage() {
                         {!aiLoading && !aiError && aiPrice === null && (
                           <div className="space-y-6 flex-1 flex flex-col justify-between">
                             <div className="space-y-6">
-                              <StepHeader label="Device Photos (Optional)" sub="Add photos to help our AI give a more accurate valuation — you can skip this step." />
+                              <StepHeader label="Device Photos" sub="Upload at least 1 clear photo of your device — our AI uses these to assess condition and give an accurate valuation." />
 
                               <motion.button
                                 whileHover={{ scale: 1.01 }}
@@ -1914,7 +1934,7 @@ export default function TradeInPage() {
                                 </div>
                                 <div className="text-center">
                                   <p className="text-xs font-black text-zinc-800 dark:text-zinc-200">{imageUploading ? "Uploading…" : "Tap to upload photos"}</p>
-                                  <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-bold mt-1">JPEG or PNG · up to 6 photos · optional</p>
+                                  <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-bold mt-1">JPEG or PNG · 1–6 photos required</p>
                                 </div>
                               </motion.button>
 
@@ -1944,11 +1964,17 @@ export default function TradeInPage() {
                               )}
                             </div>
 
-                            <div className="pt-6 border-t border-zinc-100 dark:border-zinc-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
+                            <div className="pt-6 border-t border-zinc-100 dark:border-zinc-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                              {images.length === 0 && !imageUploading && (
+                                <p className="text-xs text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1.5">
+                                  <span className="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0" />
+                                  At least 1 photo is required to get your offer
+                                </p>
+                              )}
                               <button
                                 onClick={fetchAiPrice}
-                                disabled={imageUploading}
-                                className="w-full sm:w-auto h-12 px-8 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:opacity-50 disabled:pointer-events-none rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 shadow-lg shrink-0"
+                                disabled={imageUploading || images.length === 0}
+                                className="w-full sm:w-auto h-12 px-8 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:opacity-50 disabled:pointer-events-none rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 shadow-lg shrink-0 ml-auto"
                               >
                                 <Sparkles className="h-4 w-4 fill-white dark:fill-zinc-950 shrink-0" />
                                 <span className="whitespace-nowrap">Get My Cash Offer</span>

@@ -809,6 +809,27 @@ export const bannerImagesApi = {
   },
 };
 
+export interface TradeInDeviceItem {
+  id: string;
+  name: string;
+  brand: string;
+  category: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const tradeInDevicesApi = {
+  list: (all = true) =>
+    apiFetch<TradeInDeviceItem[]>(`/trade-in-devices${all ? '?all=true' : ''}`),
+  create: (data: { name: string; brand: string; category: string; isActive?: boolean }) =>
+    apiFetch<TradeInDeviceItem>('/trade-in-devices', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: Partial<{ name: string; brand: string; category: string; isActive: boolean }>) =>
+    apiFetch<TradeInDeviceItem>(`/trade-in-devices/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  remove: (id: string) =>
+    apiFetch<void>(`/trade-in-devices/${id}`, { method: 'DELETE' }),
+};
+
 export const promoSlidesApi = {
   list: () => apiFetch<PromoSlideItem[]>('/banners/promo-slides/all'),
   create: (data: Omit<PromoSlideItem, 'id' | 'imgUrl'> & { imageUrl?: string }) =>

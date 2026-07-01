@@ -428,10 +428,6 @@ function MarqueeStrip() {
 }
 
 // ─── Brands Bar ───────────────────────────────────────────────────────────────
-const MAIN_BRANDS = new Set([
-  "apple", "samsung", "google", "oneplus", "asus", "sony", "microsoft"
-]);
-
 function BrandsBar() {
   const [brands, setBrands] = useState<CatalogBrand[]>([]);
   const [loading, setLoading] = useState(true);
@@ -439,8 +435,8 @@ function BrandsBar() {
   useEffect(() => {
     catalogApi.listBrands()
       .then(res => {
-        const filtered = res.filter(b => MAIN_BRANDS.has(b.slug.toLowerCase()));
-        setBrands(filtered);
+        // Show all active brands that have a logo, sorted by product count desc
+        setBrands(res.filter(b => b.isActive && b.logo).sort((a, b) => (b.productCount ?? 0) - (a.productCount ?? 0)));
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -492,55 +488,7 @@ function BrandsBar() {
   );
 }
 
-const HOME_TRADE_IN_MODELS = [
-  // Phones
-  { name: "iPhone 15 Pro Max", category: "Phone", brand: "Apple" },
-  { name: "iPhone 15 Pro", category: "Phone", brand: "Apple" },
-  { name: "iPhone 15 Plus", category: "Phone", brand: "Apple" },
-  { name: "iPhone 15", category: "Phone", brand: "Apple" },
-  { name: "iPhone 14 Pro Max", category: "Phone", brand: "Apple" },
-  { name: "iPhone 14 Pro", category: "Phone", brand: "Apple" },
-  { name: "iPhone 13 Pro Max", category: "Phone", brand: "Apple" },
-  { name: "iPhone 13 Pro", category: "Phone", brand: "Apple" },
-  { name: "iPhone 13", category: "Phone", brand: "Apple" },
-  { name: "Galaxy S24 Ultra", category: "Phone", brand: "Samsung" },
-  { name: "Galaxy S24+", category: "Phone", brand: "Samsung" },
-  { name: "Galaxy S24", category: "Phone", brand: "Samsung" },
-  { name: "Galaxy S23 Ultra", category: "Phone", brand: "Samsung" },
-  { name: "Galaxy S23+", category: "Phone", brand: "Samsung" },
-  { name: "Galaxy S23", category: "Phone", brand: "Samsung" },
-  { name: "Pixel 8 Pro", category: "Phone", brand: "Google" },
-  { name: "Pixel 8", category: "Phone", brand: "Google" },
-  { name: "Pixel 7 Pro", category: "Phone", brand: "Google" },
-  { name: "Pixel 7", category: "Phone", brand: "Google" },
-  // Laptops
-  { name: "MacBook Pro 16\" M3 Max", category: "Laptop", brand: "Apple" },
-  { name: "MacBook Pro 16\" M3 Pro", category: "Laptop", brand: "Apple" },
-  { name: "MacBook Pro 14\" M3 Pro", category: "Laptop", brand: "Apple" },
-  { name: "MacBook Air 15\" M3", category: "Laptop", brand: "Apple" },
-  { name: "MacBook Air 13\" M3", category: "Laptop", brand: "Apple" },
-  { name: "MacBook Air 15\" M2", category: "Laptop", brand: "Apple" },
-  { name: "MacBook Air 13\" M2", category: "Laptop", brand: "Apple" },
-  { name: "MacBook Air 13\" M1", category: "Laptop", brand: "Apple" },
-  { name: "XPS 15 (2024)", category: "Laptop", brand: "Dell" },
-  { name: "XPS 13 (2024)", category: "Laptop", brand: "Dell" },
-  // Consoles
-  { name: "PS5 Disc Edition", category: "Console", brand: "Sony PlayStation" },
-  { name: "PS5 Digital Edition", category: "Console", brand: "Sony PlayStation" },
-  { name: "Xbox Series X", category: "Console", brand: "Microsoft Xbox" },
-  { name: "Xbox Series S", category: "Console", brand: "Microsoft Xbox" },
-  { name: "Nintendo Switch OLED", category: "Console", brand: "Nintendo" },
-  { name: "Nintendo Switch Lite", category: "Console", brand: "Nintendo" },
-  // Tablets
-  { name: "iPad Pro 13\" M4", category: "Tablet", brand: "Apple" },
-  { name: "iPad Pro 11\" M4", category: "Tablet", brand: "Apple" },
-  { name: "iPad Air 13\" M2", category: "Tablet", brand: "Apple" },
-  { name: "iPad Air 11\" M2", category: "Tablet", brand: "Apple" },
-  { name: "iPad Pro 13\" M2", category: "Tablet", brand: "Apple" },
-  { name: "iPad Pro 11\" M2", category: "Tablet", brand: "Apple" },
-  { name: "iPad Air 5th Gen", category: "Tablet", brand: "Apple" },
-  { name: "iPad 10th Gen", category: "Tablet", brand: "Apple" },
-];
+
 
 // ─── Trade-In CTA Section ──────────────────────────────────────────────────
 const getGlowClass = (slug: string) => {
@@ -694,371 +642,363 @@ function TradeInCTASection() {
 }
 
 // ─── Hero ─────────────────────────────────────────────────────────────────────
-function Hero() {
-  const grades = ["New", "A Grade", "B Grade", "C Grade", "F Grade"];
-  const [gradeIdx, setGradeIdx] = useState(0);
-  const [heroSearchQuery, setHeroSearchQuery] = useState("");
-  const [isHeroSearchFocused, setIsHeroSearchFocused] = useState(false);
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [showcase, setShowcase] = useState<any[]>([]);
-  const [sectionRef, trigger] = useLazyFetchTrigger();
+// function Hero() {
+//   const grades = ["New", "A Grade", "B Grade", "C Grade", "F Grade"];
+//   const [gradeIdx, setGradeIdx] = useState(0);
+//   const [heroSearchQuery, setHeroSearchQuery] = useState("");
+//   const [isHeroSearchFocused, setIsHeroSearchFocused] = useState(false);
+//   const [searchResults, setSearchResults] = useState<any[]>([]);
+//   const [showcase, setShowcase] = useState<any[]>([]);
+//   const [sectionRef, trigger] = useLazyFetchTrigger();
 
-  useEffect(() => {
-    if (trigger === 0) return;
-    productsApi.list({ limit: 3 }).then(r => setShowcase(r.items)).catch(() => {});
-  }, [trigger]);
+//   useEffect(() => {
+//     if (trigger === 0) return;
+//     productsApi.list({ limit: 3 }).then(r => setShowcase(r.items)).catch(() => {});
+//   }, [trigger]);
 
-  useEffect(() => {
-    if (!heroSearchQuery.trim()) { setSearchResults([]); return; }
-    const t = setTimeout(() => {
-      productsApi.list({ search: heroSearchQuery, limit: 6 })
-        .then(r => setSearchResults(r.items))
-        .catch(() => {});
-    }, 300);
-    return () => clearTimeout(t);
-  }, [heroSearchQuery]);
+//   useEffect(() => {
+//     if (!heroSearchQuery.trim()) { setSearchResults([]); return; }
+//     const t = setTimeout(() => {
+//       productsApi.list({ search: heroSearchQuery, limit: 6 })
+//         .then(r => setSearchResults(r.items))
+//         .catch(() => {});
+//     }, 300);
+//     return () => clearTimeout(t);
+//   }, [heroSearchQuery]);
 
-  const POPULAR_HERO_SEARCHES = [
-    "iPhone 15 Pro",
-    "Nintendo Switch OLED",
-    "MacBook Air M2",
-    "Galaxy Watch",
-    "PS5 Console",
-  ];
+//   useEffect(() => {
+//     const t = setInterval(() => setGradeIdx(i => (i + 1) % grades.length), 2000);
+//     return () => clearInterval(t);
+//   }, []);
 
-  useEffect(() => {
-    const t = setInterval(() => setGradeIdx(i => (i + 1) % grades.length), 2000);
-    return () => clearInterval(t);
-  }, []);
+//   const getSearchLink = () => {
+//     if (!heroSearchQuery) return "/shop/phones";
+//     const match = searchResults[0];
+//     return match ? `/shop/${match.category.toLowerCase()}/${match.slug}` : `/shop/phones`;
+//   };
 
-  const getSearchLink = () => {
-    if (!heroSearchQuery) return "/shop/phones";
-    const match = searchResults[0];
-    return match ? `/shop/${match.category.toLowerCase()}/${match.slug}` : `/shop/phones`;
-  };
+//   return (
+//     <section ref={sectionRef} className="relative bg-white overflow-hidden">
+//       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+//         <div className="grid lg:grid-cols-2 min-h-[85vh] items-center gap-8 py-20 lg:py-24">
 
-  return (
-    <section ref={sectionRef} className="relative bg-white overflow-hidden">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="grid lg:grid-cols-2 min-h-[85vh] items-center gap-8 py-20 lg:py-24">
+//           {/* Left */}
+//           <div className="relative z-10 lg:pr-12">
+//             <motion.div
+//               initial={{ opacity: 0, y: 16 }}
+//               animate={{ opacity: 1, y: 0 }}
+//               transition={{ duration: 0.5 }}
+//               className="inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-zinc-50 px-4 py-1.5 mb-8"
+//             >
+//               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+//               <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-zinc-500">2.4M devices saved from landfill</span>
+//             </motion.div>
 
-          {/* Left */}
-          <div className="relative z-10 lg:pr-12">
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-zinc-50 px-4 py-1.5 mb-8"
-            >
-              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-zinc-500">2.4M devices saved from landfill</span>
-            </motion.div>
+//             <motion.h1
+//               initial={{ opacity: 0, y: 24 }}
+//               animate={{ opacity: 1, y: 0 }}
+//               transition={{ duration: 0.55, delay: 0.05 }}
+//               className="font-sans text-[clamp(3rem,7vw,5.5rem)] font-extrabold leading-[0.92] tracking-tight text-zinc-950 mb-8"
+//             >
+//               Tech worth<br />
+//               having.<br />
+//               <span className="relative inline-block">
+//                 <AnimatePresence mode="wait">
+//                   <motion.span
+//                     key={gradeIdx}
+//                     initial={{ opacity: 0, y: 12 }}
+//                     animate={{ opacity: 1, y: 0 }}
+//                     exit={{ opacity: 0, y: -12 }}
+//                     transition={{ duration: 0.3 }}
+//                     className="text-zinc-400"
+//                   >
+//                     {grades[gradeIdx]}.
+//                   </motion.span>
+//                 </AnimatePresence>
+//               </span>
+//             </motion.h1>
 
-            <motion.h1
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.55, delay: 0.05 }}
-              className="font-sans text-[clamp(3rem,7vw,5.5rem)] font-extrabold leading-[0.92] tracking-tight text-zinc-950 mb-8"
-            >
-              Tech worth<br />
-              having.<br />
-              <span className="relative inline-block">
-                <AnimatePresence mode="wait">
-                  <motion.span
-                    key={gradeIdx}
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -12 }}
-                    transition={{ duration: 0.3 }}
-                    className="text-zinc-400"
-                  >
-                    {grades[gradeIdx]}.
-                  </motion.span>
-                </AnimatePresence>
-              </span>
-            </motion.h1>
+//             <motion.p
+//               initial={{ opacity: 0, y: 16 }}
+//               animate={{ opacity: 1, y: 0 }}
+//               transition={{ duration: 0.5, delay: 0.15 }}
+//               className="text-lg text-zinc-500 max-w-[42ch] mb-6 leading-relaxed font-medium"
+//             >
+//               Every device on TechStop is certified by expert refurbishers — rigorously tested, graded honestly, and priced fairly.
+//             </motion.p>
 
-            <motion.p
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.15 }}
-              className="text-lg text-zinc-500 max-w-[42ch] mb-6 leading-relaxed font-medium"
-            >
-              Every device on TechStop is certified by expert refurbishers — rigorously tested, graded honestly, and priced fairly.
-            </motion.p>
+//             {/* Search bar with dynamic dropdown preview */}
+//             <motion.div
+//               initial={{ opacity: 0, y: 12 }}
+//               animate={{ opacity: 1, y: 0 }}
+//               transition={{ duration: 0.5, delay: 0.18 }}
+//               className="mb-8 max-w-[520px] relative"
+//             >
+//               <div className="flex items-center gap-3 h-14 px-5 rounded-2xl bg-zinc-50 border border-zinc-200 focus-within:ring-2 focus-within:ring-accent focus-within:border-transparent focus-within:bg-background transition-all">
+//                 <Search className="h-5 w-5 text-zinc-400 flex-shrink-0" />
+//                 <input
+//                   type="text"
+//                   value={heroSearchQuery}
+//                   onChange={(e) => setHeroSearchQuery(e.target.value)}
+//                   onFocus={() => setIsHeroSearchFocused(true)}
+//                   onBlur={() => {
+//                     setTimeout(() => setIsHeroSearchFocused(false), 200);
+//                   }}
+//                   placeholder='Try "iPhone 15 Pro" or "MacBook Air"'
+//                   className="flex-1 bg-transparent text-sm font-medium outline-none placeholder:text-zinc-400"
+//                 />
+//                 <a href={getSearchLink()} className="h-9 px-3 sm:px-5 bg-zinc-950 text-white rounded-xl font-bold text-xs flex-shrink-0 flex items-center justify-center gap-1">
+//                   <span className="hidden sm:inline">Search</span>
+//                   <ArrowRight className="h-3.5 w-3.5 sm:hidden" />
+//                 </a>
+//               </div>
 
-            {/* Search bar with dynamic dropdown preview */}
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.18 }}
-              className="mb-8 max-w-[520px] relative"
-            >
-              <div className="flex items-center gap-3 h-14 px-5 rounded-2xl bg-zinc-50 border border-zinc-200 focus-within:ring-2 focus-within:ring-accent focus-within:border-transparent focus-within:bg-background transition-all">
-                <Search className="h-5 w-5 text-zinc-400 flex-shrink-0" />
-                <input
-                  type="text"
-                  value={heroSearchQuery}
-                  onChange={(e) => setHeroSearchQuery(e.target.value)}
-                  onFocus={() => setIsHeroSearchFocused(true)}
-                  onBlur={() => {
-                    setTimeout(() => setIsHeroSearchFocused(false), 200);
-                  }}
-                  placeholder='Try "iPhone 15 Pro" or "MacBook Air"'
-                  className="flex-1 bg-transparent text-sm font-medium outline-none placeholder:text-zinc-400"
-                />
-                <a href={getSearchLink()} className="h-9 px-3 sm:px-5 bg-zinc-950 text-white rounded-xl font-bold text-xs flex-shrink-0 flex items-center justify-center gap-1">
-                  <span className="hidden sm:inline">Search</span>
-                  <ArrowRight className="h-3.5 w-3.5 sm:hidden" />
-                </a>
-              </div>
+//               {/* Suggestions dropdown */}
+//               <AnimatePresence>
+//                 {isHeroSearchFocused && (
+//                   <motion.div
+//                     initial={{ opacity: 0, y: 10 }}
+//                     animate={{ opacity: 1, y: 0 }}
+//                     exit={{ opacity: 0, y: 10 }}
+//                     className="absolute left-0 right-0 top-full mt-2 bg-white border border-zinc-200 rounded-[24px] shadow-2xl overflow-hidden z-30 p-5"
+//                   >
+//                     {heroSearchQuery === "" ? (
+//                       <div>
+//                         <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2.5">Popular Searches</p>
+//                         <div className="flex flex-wrap gap-2">
+//                           {POPULAR_HERO_SEARCHES.map((term) => (
+//                             <button
+//                               key={term}
+//                               onClick={() => setHeroSearchQuery(term)}
+//                               className="px-3.5 py-1.5 rounded-xl bg-zinc-50 border border-zinc-200 text-xs font-bold hover:border-black hover:bg-white transition-colors"
+//                             >
+//                               {term}
+//                             </button>
+//                           ))}
+//                         </div>
+//                       </div>
+//                     ) : (
+//                       <div>
+//                         <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-3">Refurbished Matching Items</p>
+//                         <div className="space-y-2 max-h-[240px] overflow-y-auto pr-1">
+//                           {searchResults.map((item) => (
+//                             <a
+//                               key={item.id}
+//                               href={`/shop/${item.category.toLowerCase()}/${item.slug}`}
+//                               className="flex items-center gap-4 p-2 rounded-xl hover:bg-zinc-50 transition-colors group"
+//                             >
+//                               <div className="relative h-10 w-10 bg-zinc-100 rounded-lg overflow-hidden shrink-0">
+//                                 <ProductImage src={item.images?.[0]} alt={item.name} hover={false} sizes="40px" />
+//                               </div>
+//                               <div className="min-w-0 flex-1">
+//                                 <p className="text-xs font-bold text-zinc-950 group-hover:text-black">{item.name}</p>
+//                                 <p className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider mt-0.5">{item.brand} • {item.category}</p>
+//                               </div>
+//                               <span className="text-xs font-extrabold text-zinc-950">£{item.price}</span>
+//                             </a>
+//                           ))}
+//                           {searchResults.length === 0 && (
+//                             <p className="text-xs font-bold text-zinc-400 py-4 text-center">No matching refurbished items found.</p>
+//                           )}
+//                         </div>
+//                       </div>
+//                     )}
+//                   </motion.div>
+//                 )}
+//               </AnimatePresence>
 
-              {/* Suggestions dropdown */}
-              <AnimatePresence>
-                {isHeroSearchFocused && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 10 }}
-                    className="absolute left-0 right-0 top-full mt-2 bg-white border border-zinc-200 rounded-[24px] shadow-2xl overflow-hidden z-30 p-5"
-                  >
-                    {heroSearchQuery === "" ? (
-                      <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2.5">Popular Searches</p>
-                        <div className="flex flex-wrap gap-2">
-                          {POPULAR_HERO_SEARCHES.map((term) => (
-                            <button
-                              key={term}
-                              onClick={() => setHeroSearchQuery(term)}
-                              className="px-3.5 py-1.5 rounded-xl bg-zinc-50 border border-zinc-200 text-xs font-bold hover:border-black hover:bg-white transition-colors"
-                            >
-                              {term}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    ) : (
-                      <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-3">Refurbished Matching Items</p>
-                        <div className="space-y-2 max-h-[240px] overflow-y-auto pr-1">
-                          {searchResults.map((item) => (
-                            <a
-                              key={item.id}
-                              href={`/shop/${item.category.toLowerCase()}/${item.slug}`}
-                              className="flex items-center gap-4 p-2 rounded-xl hover:bg-zinc-50 transition-colors group"
-                            >
-                              <div className="relative h-10 w-10 bg-zinc-100 rounded-lg overflow-hidden shrink-0">
-                                <ProductImage src={item.images?.[0]} alt={item.name} hover={false} sizes="40px" />
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <p className="text-xs font-bold text-zinc-950 group-hover:text-black">{item.name}</p>
-                                <p className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider mt-0.5">{item.brand} • {item.category}</p>
-                              </div>
-                              <span className="text-xs font-extrabold text-zinc-950">£{item.price}</span>
-                            </a>
-                          ))}
-                          {searchResults.length === 0 && (
-                            <p className="text-xs font-bold text-zinc-400 py-4 text-center">No matching refurbished items found.</p>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+//               <div className="flex flex-col gap-3 mt-4">
+//                 <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Quick Categories:</span>
+//                 <div className="flex flex-wrap gap-2">
+//                   {[
+//                     { name: "iPhones", icon: Smartphone, slug: "phones" },
+//                     { name: "MacBooks", icon: Laptop, slug: "laptops" },
+//                     { name: "Tablets", icon: Tablet, slug: "tablets" },
+//                     { name: "Audio", icon: Headphones, slug: "audio" },
+//                     { name: "Gaming", icon: Gamepad2, slug: "consoles" }
+//                   ].map((cat) => (
+//                     <a key={cat.name} href={`/shop/${cat.slug}`} className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl bg-zinc-100 hover:bg-zinc-950 text-zinc-600 hover:text-white transition-colors border border-zinc-200 hover:border-zinc-950">
+//                       <cat.icon className="h-3.5 w-3.5" />
+//                       {cat.name}
+//                     </a>
+//                   ))}
+//                 </div>
+//               </div>
+//             </motion.div>
 
-              <div className="flex flex-col gap-3 mt-4">
-                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Quick Categories:</span>
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    { name: "iPhones", icon: Smartphone, slug: "phones" },
-                    { name: "MacBooks", icon: Laptop, slug: "laptops" },
-                    { name: "Tablets", icon: Tablet, slug: "tablets" },
-                    { name: "Audio", icon: Headphones, slug: "audio" },
-                    { name: "Gaming", icon: Gamepad2, slug: "consoles" }
-                  ].map((cat) => (
-                    <a key={cat.name} href={`/shop/${cat.slug}`} className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl bg-zinc-100 hover:bg-zinc-950 text-zinc-600 hover:text-white transition-colors border border-zinc-200 hover:border-zinc-950">
-                      <cat.icon className="h-3.5 w-3.5" />
-                      {cat.name}
-                    </a>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
+//             <motion.div
+//               initial={{ opacity: 0, y: 16 }}
+//               animate={{ opacity: 1, y: 0 }}
+//               transition={{ duration: 0.5, delay: 0.2 }}
+//               className="flex flex-col sm:flex-row gap-3 mb-14"
+//             >
+//               <a
+//                 href="/shop/phones"
+//                 className="h-14 px-8 bg-zinc-950 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]"
+//               >
+//                 Shop all devices <ArrowRight className="h-4 w-4" />
+//               </a>
+//               <a
+//                 href="/trade-in"
+//                 className="h-14 px-8 border border-zinc-200 text-zinc-950 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-zinc-50 transition-colors"
+//               >
+//                 Sell your device
+//               </a>
+//             </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="flex flex-col sm:flex-row gap-3 mb-14"
-            >
-              <a
-                href="/shop/phones"
-                className="h-14 px-8 bg-zinc-950 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-transform hover:scale-[1.03] active:scale-[0.97]"
-              >
-                Shop all devices <ArrowRight className="h-4 w-4" />
-              </a>
-              <a
-                href="/trade-in"
-                className="h-14 px-8 border border-zinc-200 text-zinc-950 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-zinc-50 transition-colors"
-              >
-                Sell your device
-              </a>
-            </motion.div>
+//             <motion.div
+//               initial={{ opacity: 0 }}
+//               animate={{ opacity: 1 }}
+//               transition={{ delay: 0.35 }}
+//               className="grid grid-cols-3 gap-4 sm:gap-6 border-t border-zinc-100 pt-10"
+//             >
+//               {[
+//                 { val: "47K+", label: "Devices in stock" },
+//                 { val: "4.8", label: "Trustpilot score" },
+//                 { val: "£30M+", label: "Saved by buyers" },
+//               ].map((s, i) => (
+//                 <div key={i}>
+//                   <p className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-950">{s.val}</p>
+//                   <p className="text-[9px] sm:text-[11px] font-bold uppercase tracking-widest text-zinc-400 mt-1">{s.label}</p>
+//                 </div>
+//               ))}
+//             </motion.div>
+//           </div>
 
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.35 }}
-              className="grid grid-cols-3 gap-4 sm:gap-6 border-t border-zinc-100 pt-10"
-            >
-              {[
-                { val: "47K+", label: "Devices in stock" },
-                { val: "4.8", label: "Trustpilot score" },
-                { val: "£30M+", label: "Saved by buyers" },
-              ].map((s, i) => (
-                <div key={i}>
-                  <p className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-950">{s.val}</p>
-                  <p className="text-[9px] sm:text-[11px] font-bold uppercase tracking-widest text-zinc-400 mt-1">{s.label}</p>
-                </div>
-              ))}
-            </motion.div>
-          </div>
+//           {/* Right — product showcase */}
+//           <motion.div
+//             initial={{ opacity: 0, scale: 0.95 }}
+//             animate={{ opacity: 1, scale: 1 }}
+//             transition={{ duration: 0.7, delay: 0.1 }}
+//             className="relative hidden lg:flex items-center justify-center"
+//           >
+//             {/* BG decoration */}
+//             <div className="absolute inset-0 bg-accent/20 rounded-[4rem] rotate-3 scale-95 z-0 blur-sm" />
+//             <div className="absolute inset-0 bg-zinc-50/50 backdrop-blur-3xl rounded-[4rem] -rotate-1 z-0 ring-1 ring-zinc-200" />
 
-          {/* Right — product showcase */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.7, delay: 0.1 }}
-            className="relative hidden lg:flex items-center justify-center"
-          >
-            {/* BG decoration */}
-            <div className="absolute inset-0 bg-accent/20 rounded-[4rem] rotate-3 scale-95 z-0 blur-sm" />
-            <div className="absolute inset-0 bg-zinc-50/50 backdrop-blur-3xl rounded-[4rem] -rotate-1 z-0 ring-1 ring-zinc-200" />
+//             <div className="relative z-10 p-8 w-full max-w-[540px]">
+//               {showcase[0] && (() => {
+//                 const p = showcase[0];
+//                 const comparePrice = (p.comparePrice && p.comparePrice > p.price) ? p.comparePrice : null;
+//                 const saving = comparePrice ? comparePrice - p.price : 0;
+//                 const gradeConf = getGradeConfig(p.condition ?? '');
+//                 return (
+//                   <Link href={`/shop/${p.category.toLowerCase()}/${p.slug}`} className="block">
+//                     <div className="bg-white rounded-[2.5rem] p-6 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.08)] mb-4 ring-1 ring-zinc-100 group cursor-pointer hover:shadow-[0_48px_80px_-16px_rgba(0,0,0,0.12)] transition-all duration-500">
+//                       <div className="flex items-center gap-6">
+//                         <div className="relative h-32 w-32 rounded-3xl overflow-hidden bg-image-light flex-shrink-0">
+//                           <ProductImage
+//                             src={p.images?.[0]}
+//                             alt={p.name}
+//                             mode={isOtherProduct(p.category, p.images?.[0]) ? "product" : "cover"}
+//                             sizes="128px"
+//                           />
+//                         </div>
+//                         <div className="flex-1 min-w-0">
+//                           <div className="flex items-center justify-between mb-3">
+//                             <GradeBadge condition={p.condition ?? ''} />
+//                             {saving > 0 && <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2.5 py-1.5 rounded-full">Save £{saving}</span>}
+//                           </div>
+//                           <h3 className="font-bold text-xl text-zinc-950 mb-1 truncate">{p.name}</h3>
+//                           <p className="text-[13px] text-zinc-400 font-medium truncate">{String((p.specs as any)?.storage ?? p.model ?? p.condition)}</p>
+//                           <div className="flex items-baseline gap-2.5 mt-3">
+//                             {p.price > 0 ? (
+//                               <>
+//                                 <span className="text-2xl font-black text-zinc-950">£{p.price}</span>
+//                                 {comparePrice && <span className="text-sm text-zinc-300 line-through font-medium">£{comparePrice}</span>}
+//                               </>
+//                             ) : (
+//                               <span className="text-lg font-bold text-zinc-400 italic">Price on request</span>
+//                             )}
+//                           </div>
+//                         </div>
+//                       </div>
+//                     </div>
+//                   </Link>
+//                 );
+//               })()}
 
-            <div className="relative z-10 p-8 w-full max-w-[540px]">
-              {showcase[0] && (() => {
-                const p = showcase[0];
-                const comparePrice = (p.comparePrice && p.comparePrice > p.price) ? p.comparePrice : null;
-                const saving = comparePrice ? comparePrice - p.price : 0;
-                const gradeConf = getGradeConfig(p.condition ?? '');
-                return (
-                  <Link href={`/shop/${p.category.toLowerCase()}/${p.slug}`} className="block">
-                    <div className="bg-white rounded-[2.5rem] p-6 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.08)] mb-4 ring-1 ring-zinc-100 group cursor-pointer hover:shadow-[0_48px_80px_-16px_rgba(0,0,0,0.12)] transition-all duration-500">
-                      <div className="flex items-center gap-6">
-                        <div className="relative h-32 w-32 rounded-3xl overflow-hidden bg-image-light flex-shrink-0">
-                          <ProductImage
-                            src={p.images?.[0]}
-                            alt={p.name}
-                            mode={isOtherProduct(p.category, p.images?.[0]) ? "product" : "cover"}
-                            sizes="128px"
-                          />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-3">
-                            <GradeBadge condition={p.condition ?? ''} />
-                            {saving > 0 && <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2.5 py-1.5 rounded-full">Save £{saving}</span>}
-                          </div>
-                          <h3 className="font-bold text-xl text-zinc-950 mb-1 truncate">{p.name}</h3>
-                          <p className="text-[13px] text-zinc-400 font-medium truncate">{String((p.specs as any)?.storage ?? p.model ?? p.condition)}</p>
-                          <div className="flex items-baseline gap-2.5 mt-3">
-                            {p.price > 0 ? (
-                              <>
-                                <span className="text-2xl font-black text-zinc-950">£{p.price}</span>
-                                {comparePrice && <span className="text-sm text-zinc-300 line-through font-medium">£{comparePrice}</span>}
-                              </>
-                            ) : (
-                              <span className="text-lg font-bold text-zinc-400 italic">Price on request</span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                );
-              })()}
+//               {/* Two smaller cards */}
+//               <div className="grid grid-cols-2 gap-4">
+//                 {showcase.slice(1, 3).map((p, i) => {
+//                   const comparePrice = (p.comparePrice && p.comparePrice > p.price) ? p.comparePrice : null;
+//                   const pct = comparePrice ? Math.round((1 - p.price / comparePrice) * 100) : 0;
+//                   const gradeConf = getGradeConfig(p.condition ?? '');
+//                   return (
+//                     <Link key={i} href={`/shop/${p.category.toLowerCase()}/${p.slug}`} className="block">
+//                       <div className="bg-white rounded-[2rem] p-5 shadow-[0_20px_40px_-12px_rgba(0,0,0,0.06)] ring-1 ring-zinc-100 group cursor-pointer hover:shadow-[0_32px_50px_-12px_rgba(0,0,0,0.1)] transition-all duration-500">
+//                         <div className="relative h-28 w-full rounded-2xl overflow-hidden bg-image-light mb-4">
+//                           <ProductImage
+//                             src={p.images?.[0]}
+//                             alt={p.name}
+//                             mode={isOtherProduct(p.category, p.images?.[0]) ? "product" : "cover"}
+//                             sizes="(max-width: 1024px) 50vw, 25vw"
+//                           />
+//                         </div>
+//                         <p className="font-bold text-sm text-zinc-950 truncate mb-1.5">{p.name}</p>
+//                         <div className="flex items-center justify-between">
+//                           {p.price > 0 ? (
+//                             <>
+//                               <span className="text-lg font-black text-zinc-950">£{p.price}</span>
+//                               {pct > 0 && <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border ${gradeConf.badgeClass}`}>-{pct}%</span>}
+//                             </>
+//                           ) : (
+//                             <span className="text-sm font-bold text-zinc-400 italic">Price on request</span>
+//                           )}
+//                         </div>
+//                       </div>
+//                     </Link>
+//                   );
+//                 })}
+//               </div>
+//             </div>
 
-              {/* Two smaller cards */}
-              <div className="grid grid-cols-2 gap-4">
-                {showcase.slice(1, 3).map((p, i) => {
-                  const comparePrice = (p.comparePrice && p.comparePrice > p.price) ? p.comparePrice : null;
-                  const pct = comparePrice ? Math.round((1 - p.price / comparePrice) * 100) : 0;
-                  const gradeConf = getGradeConfig(p.condition ?? '');
-                  return (
-                    <Link key={i} href={`/shop/${p.category.toLowerCase()}/${p.slug}`} className="block">
-                      <div className="bg-white rounded-[2rem] p-5 shadow-[0_20px_40px_-12px_rgba(0,0,0,0.06)] ring-1 ring-zinc-100 group cursor-pointer hover:shadow-[0_32px_50px_-12px_rgba(0,0,0,0.1)] transition-all duration-500">
-                        <div className="relative h-28 w-full rounded-2xl overflow-hidden bg-image-light mb-4">
-                          <ProductImage
-                            src={p.images?.[0]}
-                            alt={p.name}
-                            mode={isOtherProduct(p.category, p.images?.[0]) ? "product" : "cover"}
-                            sizes="(max-width: 1024px) 50vw, 25vw"
-                          />
-                        </div>
-                        <p className="font-bold text-sm text-zinc-950 truncate mb-1.5">{p.name}</p>
-                        <div className="flex items-center justify-between">
-                          {p.price > 0 ? (
-                            <>
-                              <span className="text-lg font-black text-zinc-950">£{p.price}</span>
-                              {pct > 0 && <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border ${gradeConf.badgeClass}`}>-{pct}%</span>}
-                            </>
-                          ) : (
-                            <span className="text-sm font-bold text-zinc-400 italic">Price on request</span>
-                          )}
-                        </div>
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
+//             {/* Floating badges */}
+//             <motion.div
+//               animate={{ y: [0, -10, 0] }}
+//               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+//               className="absolute top-12 -left-8 z-20 bg-white border border-zinc-100 rounded-2xl px-4 py-3 shadow-xl flex items-center gap-3"
+//             >
+//               <div className="h-9 w-9 rounded-xl bg-emerald-50 flex items-center justify-center">
+//                 <BadgeCheck className="h-5 w-5 text-emerald-600" />
+//               </div>
+//               <div>
+//                 <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-0.5">Verified</p>
+//                 <p className="text-sm font-black text-zinc-950">Expert Grade</p>
+//               </div>
+//             </motion.div>
 
-            {/* Floating badges */}
-            <motion.div
-              animate={{ y: [0, -10, 0] }}
-              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute top-12 -left-8 z-20 bg-white border border-zinc-100 rounded-2xl px-4 py-3 shadow-xl flex items-center gap-3"
-            >
-              <div className="h-9 w-9 rounded-xl bg-emerald-50 flex items-center justify-center">
-                <BadgeCheck className="h-5 w-5 text-emerald-600" />
-              </div>
-              <div>
-                <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-0.5">Verified</p>
-                <p className="text-sm font-black text-zinc-950">Expert Grade</p>
-              </div>
-            </motion.div>
+//             <motion.div
+//               animate={{ y: [0, 10, 0] }}
+//               transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+//               className="absolute bottom-32 -right-8 z-20 bg-zinc-950 rounded-2xl px-5 py-4 shadow-2xl"
+//             >
+//               <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Saved vs new</p>
+//               <p className="text-xl font-black text-white tracking-tight">
+//                 - £{showcase[0]?.comparePrice && showcase[0].comparePrice > showcase[0].price ? showcase[0].comparePrice - showcase[0].price : "—"}
+//               </p>
+//             </motion.div>
 
-            <motion.div
-              animate={{ y: [0, 10, 0] }}
-              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-              className="absolute bottom-32 -right-8 z-20 bg-zinc-950 rounded-2xl px-5 py-4 shadow-2xl"
-            >
-              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Saved vs new</p>
-              <p className="text-xl font-black text-white tracking-tight">
-                - £{showcase[0]?.comparePrice && showcase[0].comparePrice > showcase[0].price ? showcase[0].comparePrice - showcase[0].price : "—"}
-              </p>
-            </motion.div>
-
-            <motion.div
-              animate={{ y: [0, -6, 0] }}
-              transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-              className="absolute -bottom-4 right-12 z-20 bg-white border border-zinc-100 rounded-2xl px-4 py-3 shadow-xl flex items-center gap-3"
-            >
-              <div className="flex -space-x-1.5">
-                {[1, 2, 3].map(i => (
-                  <div key={i} className="h-7 w-7 rounded-full border-2 border-white bg-zinc-200 overflow-hidden">
-                    <img src={`https://i.pravatar.cc/100?u=${i+10}`} alt="" className="h-full w-full object-cover" />
-                  </div>
-                ))}
-              </div>
-              <p className="text-[11px] font-black text-zinc-950">1.2K bought</p>
-            </motion.div>
-          </motion.div>
-        </div>
-      </div>
-    </section>
-  );
-}
+//             <motion.div
+//               animate={{ y: [0, -6, 0] }}
+//               transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+//               className="absolute -bottom-4 right-12 z-20 bg-white border border-zinc-100 rounded-2xl px-4 py-3 shadow-xl flex items-center gap-3"
+//             >
+//               <div className="flex -space-x-1.5">
+//                 {[1, 2, 3].map(i => (
+//                   <div key={i} className="h-7 w-7 rounded-full border-2 border-white bg-zinc-200 overflow-hidden">
+//                     <img src={`https://i.pravatar.cc/100?u=${i+10}`} alt="" className="h-full w-full object-cover" />
+//                   </div>
+//                 ))}
+//               </div>
+//               <p className="text-[11px] font-black text-zinc-950">1.2K bought</p>
+//             </motion.div>
+//           </motion.div>
+//         </div>
+//       </div>
+//     </section>
+//   );
+// }
 
 // ─── Category Bento ───────────────────────────────────────────────────────────
 const CATEGORY_SLUG_META: Record<string, { Icon: React.ElementType; iconBg: string }> = {
@@ -2529,7 +2469,7 @@ function TopBrandsSplit() {
   useEffect(() => {
     bannersApi.random(1).then(b => setDeskImg(b[0]?.url ?? null)).catch(() => {});
     catalogApi.listBrands()
-      .then(res => setBrands(res.filter(b => MAIN_BRANDS.has(b.slug.toLowerCase()))))
+      .then(res => setBrands(res.filter(b => b.isActive && b.logo).sort((a, b) => (b.productCount ?? 0) - (a.productCount ?? 0))))
       .catch(() => {});
     // Fetch "all" — larger limit so filtering out "others" still leaves ~20 main products
     setLoading(true);

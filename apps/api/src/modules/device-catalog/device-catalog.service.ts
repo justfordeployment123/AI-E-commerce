@@ -109,6 +109,31 @@ export class DeviceCatalogService {
         return item;
     }
 
+    // Flat list of all active tradeable models for client-side fuzzy search
+    async listForSearch(): Promise<{ model: string; brand: string; category: string }[]> {
+        const items = await this.prisma.deviceCatalog.findMany({
+            where: { isActive: true, tradeInEnabled: true },
+            select: {
+                model: true,
+                brandCategory: {
+                    select: {
+                        brand:    { select: { name: true } },
+                        category: { select: { name: true } },
+                    },
+                },
+            },
+            orderBy: [
+                { brandCategory: { brand: { name: 'asc' } } },
+                { model: 'asc' },
+            ],
+        });
+        return items.map(i => ({
+            model:    i.model,
+            brand:    i.brandCategory.brand.name,
+            category: i.brandCategory.category.name,
+        }));
+    }
+
     async remove(id: string) {
         if (id === 'all') {
             const products = await this.prisma.product.findMany({ select: { images: true } });

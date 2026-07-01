@@ -161,7 +161,10 @@
       "Bash(grep -E \"\\\\.\\(md|yml|yaml|json|sql\\)$\")",
       "Bash(xargs wc -l)",
       "PowerShell(cd \"d:\\\\CODE\\\\Projects\\\\Markhor System\\\\AI-E-commerce\"; npx tsc --project apps/scraper/tsconfig.json --noEmit 2>&1 | Where-Object { $_ -notmatch \"e2e-spec\" -and $_ -notmatch \"test/\" })",
-      "Bash(echo \"EXIT:$?\")"
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(npx ts-node --project tsconfig.json -e ' *)",
+      "Bash(node scripts/backfill-descriptions.mjs)",
+      "Bash(npx ts-node *)"
     ],
     "additionalDirectories": [
       "d:\\CODE\\Projects\\Markhor Systems Projects\\Ai-Ecommerce\\apps\\web\\app\\account\\repairs",

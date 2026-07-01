@@ -8,11 +8,13 @@ import {
   catalogBrandCategoryApi,
   otherSubcategoriesApi,
   otherBrandsApi,
+  tradeInDevicesApi,
   type CatalogCategoryItem,
   type CatalogBrandItem,
   type BrandCategoryOption,
   type OtherSubcategory,
   type OtherBrand,
+  type TradeInDeviceItem,
 } from "../../lib/api";
 import {
   Tag,
@@ -24,6 +26,7 @@ import {
   ArrowRight,
   Sparkles,
   Package,
+  Search,
 } from "lucide-react";
 
 export default function CatalogMgmtPage() {
@@ -32,6 +35,7 @@ export default function CatalogMgmtPage() {
   const [bcs, setBcs]                     = useState<BrandCategoryOption[]>([]);
   const [otherSubcats, setOtherSubcats]   = useState<OtherSubcategory[]>([]);
   const [otherBrandList, setOtherBrandList] = useState<OtherBrand[]>([]);
+  const [searchDevices, setSearchDevices] = useState<TradeInDeviceItem[]>([]);
   const [loading, setLoading]             = useState(true);
 
   useEffect(() => {
@@ -41,13 +45,15 @@ export default function CatalogMgmtPage() {
       catalogBrandCategoryApi.list({ includeInactive: true }),
       otherSubcategoriesApi.list(),
       otherBrandsApi.list(),
+      tradeInDevicesApi.list(true),
     ])
-      .then(([cats, brandList, bcList, subcats, oBrands]) => {
+      .then(([cats, brandList, bcList, subcats, oBrands, devices]) => {
         setCategories(cats);
         setBrands(brandList);
         setBcs(bcList);
         setOtherSubcats(subcats);
         setOtherBrandList(oBrands);
+        setSearchDevices(devices);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -90,7 +96,7 @@ export default function CatalogMgmtPage() {
       </div>
 
       {/* Main Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Categories Card */}
         <Link 
           href="/catalog-mgmt/categories"
@@ -253,6 +259,44 @@ export default function CatalogMgmtPage() {
             )}
           </div>
         </Link>
+        {/* Search Devices Card */}
+        <Link
+          href="/catalog-mgmt/search-devices"
+          className="group relative bg-white border border-zinc-100 rounded-3xl p-6 shadow-sm hover:border-zinc-300 hover:shadow-md transition-all duration-300 flex flex-col justify-between min-h-[200px]"
+        >
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="p-3 bg-zinc-50 rounded-2xl group-hover:bg-accent/10 transition-colors">
+                <Search className="h-5 w-5 text-zinc-400 group-hover:text-accent transition-colors" />
+              </div>
+              <ArrowRight className="h-4 w-4 text-zinc-300 group-hover:text-zinc-900 group-hover:translate-x-1 transition-all" />
+            </div>
+            <div>
+              <div className="text-4xl font-black text-zinc-900">{searchDevices.length}</div>
+              <div className="font-bold text-zinc-700 text-sm mt-1">Search Devices</div>
+              <p className="text-xs text-zinc-400 mt-1 font-medium">
+                {searchDevices.filter(d => d.isActive).length} active · shown in trade-in search bar
+              </p>
+            </div>
+          </div>
+
+          {/* Category breakdown preview */}
+          <div className="flex flex-wrap gap-1 mt-4 pt-4 border-t border-zinc-50">
+            {Array.from(new Set(searchDevices.map(d => d.category))).slice(0, 4).map(cat => (
+              <span
+                key={cat}
+                className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-zinc-50 text-zinc-600 border border-zinc-100 group-hover:border-zinc-200 transition-colors"
+              >
+                {cat}
+              </span>
+            ))}
+            {new Set(searchDevices.map(d => d.category)).size > 4 && (
+              <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-accent/5 text-accent border border-accent/10">
+                +{new Set(searchDevices.map(d => d.category)).size - 4} more
+              </span>
+            )}
+          </div>
+        </Link>
       </div>
 
       {/* Quick Action Operations Dashboard */}
@@ -261,7 +305,16 @@ export default function CatalogMgmtPage() {
           Quick Catalog Actions
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-          <Link 
+          <Link
+            href="/catalog-mgmt/search-devices"
+            className="flex items-center gap-3 p-3 rounded-2xl border border-zinc-100 hover:border-zinc-300 hover:bg-zinc-50/50 transition-all font-bold text-xs text-zinc-700 hover:text-black group"
+          >
+            <div className="h-8 w-8 rounded-xl bg-zinc-50 flex items-center justify-center text-zinc-400 group-hover:text-black group-hover:bg-zinc-100 transition-colors shrink-0">
+              <Search className="h-4 w-4" />
+            </div>
+            Manage Search Devices
+          </Link>
+          <Link
             href="/catalog-mgmt/brands?create=true"
             className="flex items-center gap-3 p-3 rounded-2xl border border-zinc-100 hover:border-zinc-300 hover:bg-zinc-50/50 transition-all font-bold text-xs text-zinc-700 hover:text-black group animate-fade-in"
           >
