@@ -342,6 +342,34 @@ Respond with ONLY: {"price": <number rounded to nearest 5, minimum 10>}`;
         return { price: applyMargin(marketPrice, marginPct), aiUsed: true, source: 'ai' };
     }
 
+    async suggestSpecs(brand: string, model: string, category: string): Promise<{ label: string; options: string[] }[]> {
+        const apiKey = process.env.OPENAI_API_KEY;
+        if (!apiKey) return [];
+
+        const openai = new OpenAI({ apiKey });
+
+        const prompt = `Device trade-in assistant. Customer wants to sell: brand="${brand}", model="${model}", category="${category}".
+Return JSON with 2-4 relevant specification fields and their options so we can log key details about this device.
+Example: { "specs": [{ "label": "Storage", "options": ["64GB","128GB","256GB","512GB"] }, { "label": "Connectivity", "options": ["Wi-Fi Only","Wi-Fi + Cellular"] }] }
+For unknown/other categories use generic fields like Storage, Condition Notes, Accessories Included.
+Respond only with valid JSON.`;
+
+        try {
+            const response = await openai.chat.completions.create({
+                model: 'gpt-4o-mini',
+                temperature: 0,
+                max_tokens: 400,
+                response_format: { type: 'json_object' },
+                messages: [{ role: 'user', content: prompt }],
+            });
+
+            const parsed = JSON.parse(response.choices[0]?.message?.content ?? '{}') as { specs?: { label: string; options: string[] }[] };
+            return parsed.specs ?? [];
+        } catch {
+            return [];
+        }
+    }
+
     async complete(id: string) {
         const tradeIn = await this.findById(id);
         if (tradeIn.status !== 'APPROVED') {

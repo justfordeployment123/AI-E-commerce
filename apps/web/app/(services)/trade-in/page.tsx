@@ -1,15 +1,17 @@
 ﻿"use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import Fuse from "fuse.js";
 import { tradeInsApi, storesApi, uploadsApi, catalogApi, productsApi, type Store, type CatalogCategory, type Product } from "@/lib/api";
+import DeviceSearchBox from "@/components/DeviceSearchBox";
 import {
   Smartphone, Tablet, Gamepad2, Laptop, ArrowLeft, ArrowRight,
   Check, ChevronRight, MapPin, Zap, Shield, Clock,
   Star, CheckCircle2, Truck, Gift, RefreshCw,
   Search, ChevronDown, Sparkles, HelpCircle, Watch, Headphones,
-  Upload, X, Plus
+  Upload, X, Plus, Package, Loader2
 } from "lucide-react";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/context/auth-context";
@@ -54,12 +56,33 @@ const CAT_NAME_MOOD: Record<string, string> = {
 };
 
 const BRANDS: Record<string, string[]> = {
-  Phone: ["Apple", "Samsung", "Google", "OnePlus", "Nothing", "Motorola"],
-  Tablet: ["Apple", "Samsung", "Microsoft"],
-  Console: ["Sony PlayStation", "Microsoft Xbox", "Nintendo"],
-  Laptop: ["Apple", "Dell", "Lenovo", "HP", "ASUS"],
-  Smartwatch: ["Apple", "Samsung", "Fitbit"],
-  Audio: ["Apple", "Sony", "Bose"],
+  Phone: [
+    "Apple", "Samsung", "Google", "OnePlus", "Nothing", "Motorola",
+    "Xiaomi", "Redmi", "Huawei", "Nokia", "Sony", "LG", "HTC", "ASUS",
+    "Realme", "Oppo", "Vivo", "Honor", "Fairphone", "Alcatel",
+    "BlackBerry", "CAT", "Crosscall", "Doogee", "Doro", "ZTE", "TCL",
+  ],
+  Tablet: [
+    "Apple", "Samsung", "Microsoft", "Amazon", "Lenovo",
+    "Huawei", "ASUS", "Google",
+  ],
+  Console: [
+    "Sony PlayStation", "Microsoft Xbox", "Nintendo", "Sega", "Atari",
+  ],
+  Laptop: [
+    "Apple", "Dell", "Lenovo", "HP", "ASUS", "Microsoft",
+    "Acer", "Samsung", "Toshiba", "MSI", "Razer", "LG",
+    "Huawei", "Google", "Xiaomi",
+  ],
+  Smartwatch: [
+    "Apple", "Samsung", "Fitbit", "Garmin", "Fossil",
+    "Huawei", "Xiaomi", "Amazfit", "Suunto", "Polar",
+  ],
+  Audio: [
+    "Apple", "Sony", "Bose", "Samsung", "Jabra",
+    "Sennheiser", "Bang & Olufsen", "Beats", "JBL", "Anker",
+    "Skullcandy", "Marshall", "Razer",
+  ],
 };
 
 const MODELS: Record<string, Record<string, string[]>> = {
@@ -176,6 +199,12 @@ const CONDITION_QUESTIONS: Record<string, { id: string; question: string; option
     { id: "body", question: "How is the cosmetic condition?", options: ["Like new - clean pads/tips", "Minor scratches or wear on case", "Heavy wear or staining"] },
     { id: "battery", question: "How is the battery health?", options: ["Excellent charge", "Low capacity - drains fast"] },
     { id: "charging", question: "Does the charging case work?", options: ["Yes, charges fully", "No / faulty connection"] },
+  ],
+  Other: [
+    { id: "power",    question: "Does the device power on and work?",    options: ["Yes, fully working", "Powers on but has issues", "No, won't power on"] },
+    { id: "physical", question: "What is the physical condition?",        options: ["Like new — no damage", "Minor wear or scratches", "Heavy wear or damage"] },
+    { id: "function", question: "Is all functionality working?",          options: ["Yes, fully working", "Partial issues", "Major issues"] },
+    { id: "reset",    question: "Will you factory reset before sending?", options: ["Yes, already done", "I'll do it before sending"] },
   ],
 };
 
@@ -385,6 +414,13 @@ export default function TradeInPage() {
   const [dynamicBrands, setDynamicBrands] = useState<string[]>([]);
   const [dynamicModelData, setDynamicModelData] = useState<{ model: string; tradeInMode: 'auto' | 'manual_price' | 'unpriced' }[]>([]);
 
+  // Custom / unlisted device state
+  const [brandFilter, setBrandFilter] = useState("");
+  const [showCustomBrand, setShowCustomBrand] = useState(false);
+  const [customBrandInput, setCustomBrandInput] = useState("");
+  const [aiSpecs, setAiSpecs] = useState<{ label: string; options: string[] }[]>([]);
+  const [aiSpecsLoading, setAiSpecsLoading] = useState(false);
+
   useEffect(() => {
     setDynamicBrands([]); setDynamicModelData([]);
     const slug = CATEGORY_SLUG_MAP[state.category];
@@ -408,6 +444,18 @@ export default function TradeInPage() {
       )
       .catch(() => {});
   }, [state.category, state.brand]);
+
+  // Fetch AI-generated specs for all unlisted/unpriced devices — gives device-specific options
+  // (e.g. Xiaomi Redmi Note 13 → Storage: 128GB/256GB, RAM: 6GB/8GB vs generic Phone options)
+  useEffect(() => {
+    if (!state.model || !state.brand || state.tradeInMode !== 'unpriced') { setAiSpecs([]); return; }
+    setAiSpecs([]);
+    setAiSpecsLoading(true);
+    tradeInsApi.suggestSpecs({ brand: state.brand, model: state.model, category: state.category })
+      .then(specs => setAiSpecs(specs))
+      .catch(() => {})
+      .finally(() => setAiSpecsLoading(false));
+  }, [state.model, state.brand, state.tradeInMode, state.category]);
 
   const [catalogCats, setCatalogCats] = useState<CatalogCategory[]>([]);
   const [catFallbackImages, setCatFallbackImages] = useState<Record<string, string>>({});
@@ -464,7 +512,10 @@ export default function TradeInPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const modalScrollRef = useRef<HTMLDivElement>(null);
 
-  // Restore wizard state on mount (after settings redirect or Google OAuth)
+  // Device pre-selection from home page search or login redirect
+  const [pendingDevice, setPendingDevice] = useState<{ brand: string; model: string; category: string } | null>(null);
+
+  // Restore wizard state on mount; also pick up URL params / pending device from login redirect
   useEffect(() => {
     const saved = sessionStorage.getItem("ts_wizard_tradein");
     if (saved) {
@@ -477,13 +528,70 @@ export default function TradeInPage() {
         if (savedBatchId) setBatchId(savedBatchId);
         setIsWizardActive(true);
       } catch {}
+    } else {
+      // No saved wizard — check if we arrived here with a device to pre-select
+      const params = new URLSearchParams(window.location.search);
+      const brand = params.get("brand");
+      const model = params.get("model");
+      const category = params.get("category");
+
+      if (brand && model && category) {
+        setPendingDevice({ brand, model, category });
+      } else {
+        // Check sessionStorage for intent that survived a login redirect
+        const pending = sessionStorage.getItem("ts_pending_device");
+        if (pending) {
+          try {
+            sessionStorage.removeItem("ts_pending_device");
+            setPendingDevice(JSON.parse(pending));
+          } catch {}
+        } else {
+          // ?q= param: manual / unlisted device — skip category selection by using "Other"
+          const q = params.get("q");
+          const cat = params.get("cat"); // "Other" when coming from the search bar escape hatch
+          if (q) {
+            setPendingDevice({ brand: "", model: q, category: cat ?? "Other" });
+          }
+        }
+      }
     }
 
-    // Fetch stores on mount to show real info in the dropoff card
-    storesApi.list()
-      .then(setStores)
-      .catch(() => {});
+    storesApi.list().then(setStores).catch(() => {});
   }, []);
+
+  // Auto-open wizard once auth resolves and there is a pending device selection
+  useEffect(() => {
+    if (authLoading || !pendingDevice || isWizardActive) return;
+    if (!user) {
+      // Not logged in — save intent so it survives the login redirect
+      sessionStorage.setItem("ts_pending_device", JSON.stringify(pendingDevice));
+      sessionStorage.setItem("ts_login_redirect", "/trade-in");
+      router.push("/login?redirect=%2Ftrade-in");
+      setPendingDevice(null);
+      return;
+    }
+    // Logged in — open wizard with pre-selected device
+    const isFullDevice = !!pendingDevice.brand; // brand known → jump to Phase 2
+    setState({
+      category: pendingDevice.category,
+      brand: pendingDevice.brand,
+      model: isFullDevice ? pendingDevice.model : "",
+      tradeInMode: "auto",
+      specs: {}, condition: "", answers: {},
+      fulfillment: "", storeId: "",
+      contact: {
+        name: user.name || "", email: user.email || "",
+        phone: user.phone || "", address: user.address || "", postcode: "",
+      },
+    });
+    if (!isFullDevice) {
+      // Manual entry: category set but no brand — land on brand step (Phase 1, category already set)
+      setWizardModelSearch(pendingDevice.model);
+    }
+    setPhase(isFullDevice ? 2 : 1);
+    setIsWizardActive(true);
+    setPendingDevice(null);
+  }, [authLoading, pendingDevice, user, isWizardActive]);
 
   // Auto-save wizard state to sessionStorage whenever anything changes
   useEffect(() => {
@@ -505,8 +613,6 @@ export default function TradeInPage() {
   }, [isWizardActive]);
 
   // Search autocomplete states
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   // Model search query inside Phase 1 wizard
@@ -534,6 +640,10 @@ export default function TradeInPage() {
       answers: {},
     }));
     setWizardModelSearch("");
+    setBrandFilter("");
+    setShowCustomBrand(false);
+    setCustomBrandInput("");
+    setAiSpecs([]);
     scrollToTop();
   };
 
@@ -546,7 +656,11 @@ export default function TradeInPage() {
       specs: {},
       answers: {},
     }));
-    setWizardModelSearch("");
+    // intentionally NOT resetting wizardModelSearch here so any pre-filled
+    // model query from the search bar is preserved into the model step
+    setShowCustomBrand(false);
+    setCustomBrandInput("");
+    setAiSpecs([]);
     scrollToTop();
   };
 
@@ -641,7 +755,7 @@ export default function TradeInPage() {
     action();
   };
 
-  const startWizard = (catId?: string) => {
+  const startWizard = (catId?: string, prefilledModelQuery?: string) => {
     guardedOpen(() => {
       setState({
         category: catId ?? "",
@@ -654,14 +768,18 @@ export default function TradeInPage() {
         fulfillment: "", storeId: "",
         contact: { name: "", email: "", phone: "", address: "", postcode: "" },
       });
-      setWizardModelSearch("");
+      setWizardModelSearch(prefilledModelQuery ?? "");
+      setBrandFilter("");
+      setShowCustomBrand(false);
+      setCustomBrandInput("");
+      setAiSpecs([]);
       setPhase(1);
       setIsWizardActive(true);
       scrollToTop();
     });
   };
 
-  const handleSelectSuggestion = (suggestion: typeof ALL_MODELS[0]) => {
+  const handleSelectSuggestion = (suggestion: { name: string; category: string; brand: string }) => {
     guardedOpen(() => {
       setState({
         category: suggestion.category,
@@ -676,7 +794,6 @@ export default function TradeInPage() {
       });
       setPhase(2);
       setIsWizardActive(true);
-      setSearchQuery("");
       scrollToTop();
     });
   };
@@ -690,9 +807,6 @@ export default function TradeInPage() {
     "Done"
   ];
 
-  const suggestions = searchQuery.trim() === ""
-    ? []
-    : ALL_MODELS.filter(m => m.name.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 5);
 
 
 
@@ -774,54 +888,13 @@ export default function TradeInPage() {
                   Get an instant online offer on your phone, tablet, laptop, or gaming console. Free fully-insured Royal Mail shipping is included with every trade.
                 </p>
 
-                {/* Premium Search Autocomplete Bar */}
-                <div className="relative w-full max-w-xl mb-4 z-20">
-                  <div className="relative group">
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      onFocus={() => setIsSearchFocused(true)}
-                      onBlur={() => setTimeout(() => setIsSearchFocused(false), 220)}
-                      placeholder="Search your device (e.g. iPhone 15 Pro...)"
-                      className="h-14 w-full rounded-2xl bg-zinc-100 dark:bg-zinc-900 border-2 border-transparent focus:border-accent focus:bg-white focus:dark:bg-zinc-900 pl-12 pr-6 text-sm font-semibold outline-none text-foreground transition-all shadow-sm"
-                    />
-                    <Search className="absolute left-4.5 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400 group-focus-within:text-accent transition-colors" />
-                  </div>
-
-                  <AnimatePresence>
-                    {isSearchFocused && suggestions.length > 0 && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 12 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 12 }}
-                        className="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden text-left z-30 p-2"
-                      >
-                        {suggestions.map((sug, i) => (
-                          <button
-                            key={i}
-                            type="button"
-                            onClick={() => handleSelectSuggestion(sug)}
-                            className="w-full flex items-center justify-between p-3.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 rounded-xl transition-colors text-left"
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className="h-8 w-8 bg-zinc-100 dark:bg-zinc-800 rounded-lg flex items-center justify-center text-zinc-500">
-                                <Smartphone className="h-4.5 w-4.5" />
-                              </div>
-                              <div>
-                                <p className="text-xs font-extrabold text-zinc-950 dark:text-white">{sug.name}</p>
-                                <p className="text-[9px] text-zinc-400 font-bold uppercase tracking-wider mt-0.5">{sug.brand} · {sug.category}</p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-1.5 text-[10px] font-bold text-zinc-400 hover:text-black dark:hover:text-white">
-                              Get Cash <ChevronRight className="h-3.5 w-3.5" />
-                            </div>
-                          </button>
-                        ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
+                {/* Shared DeviceSearchBox — same component as home page */}
+                <DeviceSearchBox
+                  className="w-full max-w-xl mb-4 z-20"
+                  placeholder="Search your device (e.g. iPhone 15 Pro...)"
+                  onSelect={(sug) => handleSelectSuggestion(sug)}
+                  onManualEntry={(q) => startWizard("Other", q)}
+                />
 
                 {/* Popular quick links */}
                 <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-semibold text-zinc-500 mb-8">
@@ -1221,6 +1294,22 @@ export default function TradeInPage() {
                                     </motion.button>
                                   );
                                 })}
+                                {/* Other Device tile */}
+                                <motion.button
+                                  key="other"
+                                  whileHover={{ y: -4, scale: 1.02 }}
+                                  whileTap={{ scale: 0.98 }}
+                                  onClick={() => handleCategorySelect("Other")}
+                                  className="flex flex-col items-center gap-4 p-6 rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-700 hover:border-zinc-950 dark:hover:border-white transition-all text-center group bg-zinc-50 dark:bg-zinc-900 hover:bg-white dark:hover:bg-zinc-950 hover:shadow-lg"
+                                >
+                                  <div className="h-14 w-14 rounded-2xl bg-white dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 flex items-center justify-center shadow-sm transition-all">
+                                    <Package className="h-6 w-6 text-zinc-400 dark:text-zinc-500" strokeWidth={1.5} />
+                                  </div>
+                                  <div>
+                                    <p className="text-sm font-extrabold text-zinc-900 dark:text-zinc-100">Other Device</p>
+                                    <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-wider mt-0.5">Not listed above</p>
+                                  </div>
+                                </motion.button>
                               </div>
                             </motion.div>
                           ) : !state.brand ? (
@@ -1232,19 +1321,84 @@ export default function TradeInPage() {
                               transition={{ duration: 0.2 }}
                               className="space-y-6"
                             >
-                              <StepHeader label="Which brand is it?" sub={`Choose the manufacturer for your ${state.category.toLowerCase()}.`} />
-                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                {(dynamicBrands.length > 0 ? dynamicBrands : (BRANDS[state.category] ?? [])).map((brand) => (
-                                  <motion.button
-                                    key={brand}
-                                    whileHover={{ y: -3, scale: 1.02, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.05)" }}
-                                    whileTap={{ scale: 0.98 }}
-                                    onClick={() => handleBrandSelect(brand)}
-                                    className="p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-zinc-950 dark:hover:border-white text-center font-extrabold text-sm text-zinc-800 dark:text-zinc-200 transition-all hover:shadow-md"
+                              <StepHeader label="Which brand is it?" sub={`Choose the manufacturer for your ${state.category === "Other" ? "device" : state.category.toLowerCase()}.`} />
+
+                              {/* Brand filter / search */}
+                              {(() => {
+                                const allBrands = dynamicBrands.length > 0 ? dynamicBrands : (BRANDS[state.category] ?? []);
+                                const filtered = brandFilter.trim()
+                                  ? allBrands.filter(b => b.toLowerCase().includes(brandFilter.toLowerCase()))
+                                  : allBrands;
+                                return (
+                                  <>
+                                    {allBrands.length > 6 && (
+                                      <div className="relative">
+                                        <input
+                                          type="text"
+                                          value={brandFilter}
+                                          onChange={(e) => setBrandFilter(e.target.value)}
+                                          placeholder="Filter brands..."
+                                          className="h-11 w-full rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 pl-10 pr-4 text-xs font-semibold outline-none focus:border-accent text-zinc-900 dark:text-white transition-all"
+                                        />
+                                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                                        {brandFilter && (
+                                          <button onClick={() => setBrandFilter("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-950 dark:hover:text-white">
+                                            <X className="h-4 w-4" />
+                                          </button>
+                                        )}
+                                      </div>
+                                    )}
+
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-64 overflow-y-auto pr-1 custom-scrollbar">
+                                      {filtered.map((brand) => (
+                                        <motion.button
+                                          key={brand}
+                                          whileHover={{ scale: 1.02 }}
+                                          whileTap={{ scale: 0.97 }}
+                                          onClick={() => handleBrandSelect(brand)}
+                                          className="p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-zinc-950 dark:hover:border-white text-center font-extrabold text-sm text-zinc-800 dark:text-zinc-200 transition-all hover:shadow-md"
+                                        >
+                                          {brand}
+                                        </motion.button>
+                                      ))}
+                                      {filtered.length === 0 && (
+                                        <p className="col-span-3 text-xs text-zinc-400 text-center py-4">No brands match &quot;{brandFilter}&quot;</p>
+                                      )}
+                                    </div>
+                                  </>
+                                );
+                              })()}
+
+                              {/* Custom brand entry */}
+                              <div className="border-t border-zinc-100 dark:border-zinc-800 pt-4">
+                                {!showCustomBrand ? (
+                                  <button
+                                    onClick={() => setShowCustomBrand(true)}
+                                    className="w-full flex items-center justify-center gap-2 text-xs font-bold text-zinc-400 hover:text-zinc-950 dark:hover:text-white transition-colors"
                                   >
-                                    {brand}
-                                  </motion.button>
-                                ))}
+                                    <Plus className="h-3.5 w-3.5" />
+                                    My brand isn&apos;t listed — enter it manually
+                                  </button>
+                                ) : (
+                                  <div className="flex gap-2">
+                                    <input
+                                      autoFocus
+                                      type="text"
+                                      value={customBrandInput}
+                                      onChange={(e) => setCustomBrandInput(e.target.value)}
+                                      onKeyDown={(e) => { if (e.key === 'Enter' && customBrandInput.trim()) handleBrandSelect(customBrandInput.trim()); }}
+                                      placeholder="e.g. Fairphone, DJI, Caterpillar..."
+                                      className="flex-1 h-12 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 px-4 text-sm font-semibold outline-none focus:border-accent text-zinc-900 dark:text-white"
+                                    />
+                                    <button
+                                      disabled={!customBrandInput.trim()}
+                                      onClick={() => handleBrandSelect(customBrandInput.trim())}
+                                      className="h-12 px-5 rounded-xl bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 text-xs font-black disabled:opacity-40 transition-all hover:bg-zinc-800 dark:hover:bg-zinc-100"
+                                    >
+                                      Continue →
+                                    </button>
+                                  </div>
+                                )}
                               </div>
                             </motion.div>
                           ) : (
@@ -1256,66 +1410,105 @@ export default function TradeInPage() {
                               transition={{ duration: 0.2 }}
                               className="space-y-6"
                             >
-                              <StepHeader label="Select model" sub={`Choose your ${state.brand} ${state.category.toLowerCase()} model.`} />
-                              
-                              <div className="relative">
-                                <input
-                                  type="text"
-                                  placeholder={`Filter ${state.brand} models...`}
-                                  value={wizardModelSearch}
-                                  onChange={(e) => setWizardModelSearch(e.target.value)}
-                                  className="h-12 w-full rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 pl-11 pr-4 text-xs font-semibold outline-none focus:border-accent focus:bg-white dark:focus:bg-zinc-950 text-zinc-900 dark:text-white transition-all"
-                                />
-                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-zinc-400" />
-                                {wizardModelSearch && (
-                                  <button
-                                    onClick={() => setWizardModelSearch("")}
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
-                                  >
-                                    Clear
-                                  </button>
-                                )}
-                              </div>
+                              <StepHeader label="Which model is it?" sub="Search by name — we'll find the closest match, or you can enter it manually." />
 
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-72 overflow-y-auto pr-1 custom-scrollbar">
-                                {(dynamicModelData.length > 0
+                              {/* Smart fuzzy search */}
+                              {(() => {
+                                const modelPool = dynamicModelData.length > 0
                                   ? dynamicModelData
-                                  : (MODELS[state.category]?.[state.brand] ?? []).map(m => ({ model: m, tradeInMode: 'unpriced' as const }))
-                                )
-                                  .filter(({ model }) => model.toLowerCase().includes(wizardModelSearch.toLowerCase()))
-                                  .map(({ model, tradeInMode }) => (
-                                    <motion.button
-                                      key={model}
-                                      whileHover={{ x: 4 }}
-                                      onClick={() => {
-                                        setState(s => ({ ...s, model, tradeInMode }));
-                                        goToPhase(2);
-                                      }}
-                                      className="flex items-center justify-between px-5 py-4 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:border-zinc-950 dark:hover:border-white hover:bg-zinc-50 dark:hover:bg-zinc-950 bg-white dark:bg-zinc-900 text-xs font-bold text-left transition-all hover:shadow-sm group text-zinc-800 dark:text-zinc-200"
-                                    >
-                                      <span>{model}</span>
-                                      <div className="flex items-center gap-2 shrink-0">
-                                        {tradeInMode === 'auto' && (
-                                          <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-                                            Auto-price
-                                          </span>
-                                        )}
-                                        {tradeInMode === 'manual_price' && (
-                                          <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                                            Manual Price
-                                          </span>
-                                        )}
-                                        {tradeInMode === 'unpriced' && (
-                                          <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
-                                            Manual Review
-                                          </span>
-                                        )}
-                                        <ChevronRight className="h-4 w-4 text-zinc-400 group-hover:text-zinc-950 dark:group-hover:text-white group-hover:translate-x-0.5 transition-all" />
+                                  : (MODELS[state.category]?.[state.brand] ?? []).map(m => ({ model: m, tradeInMode: 'unpriced' as const }));
+
+                                const fuse = new Fuse(modelPool, {
+                                  keys: ['model'],
+                                  threshold: 0.45,
+                                  ignoreLocation: true,
+                                  includeScore: true,
+                                });
+
+                                const suggestions = wizardModelSearch.trim()
+                                  ? fuse.search(wizardModelSearch).slice(0, 6).map(r => r.item)
+                                  : modelPool.slice(0, 8);
+
+                                return (
+                                  <>
+                                    {/* Search input */}
+                                    <div className="relative">
+                                      <input
+                                        type="text"
+                                        autoFocus={modelPool.length === 0}
+                                        placeholder={modelPool.length === 0 ? "Type your model name..." : `Search ${state.brand} models...`}
+                                        value={wizardModelSearch}
+                                        onChange={(e) => setWizardModelSearch(e.target.value)}
+                                        className="h-12 w-full rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 pl-11 pr-10 text-xs font-semibold outline-none focus:border-accent focus:bg-white dark:focus:bg-zinc-950 text-zinc-900 dark:text-white transition-all"
+                                      />
+                                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-zinc-400" />
+                                      {wizardModelSearch && (
+                                        <button
+                                          onClick={() => setWizardModelSearch("")}
+                                          className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
+                                        >
+                                          Clear
+                                        </button>
+                                      )}
+                                    </div>
+
+                                    {/* Suggestion list */}
+                                    {suggestions.length > 0 && (
+                                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-64 overflow-y-auto pr-1 custom-scrollbar">
+                                        {suggestions.map(({ model, tradeInMode }) => (
+                                          <motion.button
+                                            key={model}
+                                            whileHover={{ x: 4 }}
+                                            onClick={() => {
+                                              setState(s => ({ ...s, model, tradeInMode }));
+                                              goToPhase(2);
+                                            }}
+                                            className="flex items-center justify-between px-5 py-4 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:border-zinc-950 dark:hover:border-white hover:bg-zinc-50 dark:hover:bg-zinc-950 bg-white dark:bg-zinc-900 text-xs font-bold text-left transition-all hover:shadow-sm group text-zinc-800 dark:text-zinc-200"
+                                          >
+                                            <span>{model}</span>
+                                            <div className="flex items-center gap-2 shrink-0">
+                                              {tradeInMode === 'auto' && (
+                                                <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">Auto-price</span>
+                                              )}
+                                              {tradeInMode === 'manual_price' && (
+                                                <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">Manual Price</span>
+                                              )}
+                                              {tradeInMode === 'unpriced' && (
+                                                <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">Manual Review</span>
+                                              )}
+                                              <ChevronRight className="h-4 w-4 text-zinc-400 group-hover:text-zinc-950 dark:group-hover:text-white group-hover:translate-x-0.5 transition-all" />
+                                            </div>
+                                          </motion.button>
+                                        ))}
                                       </div>
-                                    </motion.button>
-                                  ))
-                                }
-                              </div>
+                                    )}
+
+                                    {/* Empty state for unknown brand */}
+                                    {modelPool.length === 0 && !wizardModelSearch && (
+                                      <p className="text-xs text-zinc-400 text-center py-3">
+                                        We don&apos;t have models for this brand yet — type your model name above to continue.
+                                      </p>
+                                    )}
+
+                                    {/* "Use this name" escape hatch */}
+                                    {wizardModelSearch.trim() && (
+                                      <motion.button
+                                        initial={{ opacity: 0, y: 6 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        onClick={() => {
+                                          setState(s => ({ ...s, model: wizardModelSearch.trim(), tradeInMode: 'unpriced' }));
+                                          goToPhase(2);
+                                        }}
+                                        className="w-full flex items-center gap-3 px-5 py-4 rounded-xl border-2 border-dashed border-zinc-300 dark:border-zinc-700 hover:border-zinc-950 dark:hover:border-white text-xs font-bold text-zinc-500 hover:text-zinc-950 dark:hover:text-white transition-all group"
+                                      >
+                                        <Plus className="h-4 w-4 shrink-0 text-zinc-400 group-hover:text-zinc-950 dark:group-hover:text-white" />
+                                        <span>Use &quot;<strong>{wizardModelSearch}</strong>&quot; — submit for manual review</span>
+                                        <span className="ml-auto text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-400 dark:bg-zinc-800 shrink-0">Manual Review</span>
+                                      </motion.button>
+                                    )}
+                                  </>
+                                );
+                              })()}
                             </motion.div>
                           )}
                         </AnimatePresence>
@@ -1323,89 +1516,136 @@ export default function TradeInPage() {
                     )}
 
                     {/* ── PHASE 2: Configuration & Grading ── */}
-                    {phase === 2 && (
-                      <div className="space-y-8 flex-1 flex flex-col justify-between">
-                        <div className="space-y-6">
-                          <StepHeader label="Device Specifications & Condition" sub="Choose your configuration and select the overall physical state of the unit." />
+                    {phase === 2 && (() => {
+                      const specsToShow = aiSpecs.length > 0 ? aiSpecs : currentSpecs;
+                      const specsComplete = specsToShow.length === 0 || specsToShow.every(s => !!state.specs[s.label]);
+                      const canProceedPhase2 = specsComplete && !!state.condition;
+                      return (
+                        <div className="space-y-8 flex-1 flex flex-col justify-between">
+                          <div className="space-y-6">
+                            <StepHeader label="Device Specifications & Condition" sub="Choose your configuration and select the overall physical state of the unit." />
 
-                          {/* Render Specification Selectors */}
-                          {currentSpecs.length > 0 && (
-                            <div className="space-y-4 border-b border-zinc-100 dark:border-zinc-800 pb-6">
-                              <h4 className="text-xs font-black uppercase tracking-widest text-zinc-400">Specifications</h4>
-                              <div className="grid gap-4 sm:grid-cols-2">
-                                {currentSpecs.map((spec) => (
-                                  <div key={spec.label} className="space-y-2">
-                                    <span className="text-xs font-extrabold text-zinc-800 dark:text-zinc-200">{spec.label}</span>
-                                    <div className="flex flex-wrap gap-1.5">
-                                      {spec.options.map((opt) => {
-                                        const isSelected = state.specs[spec.label] === opt;
-                                        return (
-                                          <button
-                                            key={opt}
-                                            onClick={() => setState(s => ({
-                                              ...s,
-                                              specs: { ...s.specs, [spec.label]: opt }
-                                            }))}
-                                            className={`px-3 py-2 rounded-xl border text-xs font-bold transition-all ${
-                                              isSelected
-                                                ? "border-zinc-950 bg-zinc-950 text-white shadow-sm dark:border-white dark:bg-white dark:text-zinc-950"
-                                                : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-950 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-white"
-                                            }`}
-                                          >
-                                            {opt}
-                                          </button>
-                                        );
-                                      })}
+                            {/* Manual review banner for unlisted devices */}
+                            {state.tradeInMode === 'unpriced' && (
+                              <div className="flex items-start gap-3 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-800/40">
+                                <div className="h-8 w-8 rounded-xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center shrink-0 mt-0.5">
+                                  <Sparkles className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                                </div>
+                                <div>
+                                  <p className="text-xs font-black text-amber-900 dark:text-amber-300 uppercase tracking-wider">Manual Review</p>
+                                  <p className="text-xs text-amber-700 dark:text-amber-400 font-semibold mt-0.5 leading-relaxed">
+                                    This device will be personally reviewed by our team. Fill in the details below and upload clear photos — we&apos;ll come back with a fair offer within 24 hours.
+                                  </p>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Specification selectors — skeleton while AI loads, then pills */}
+                            {aiSpecsLoading ? (
+                              <div className="space-y-4 border-b border-zinc-100 dark:border-zinc-800 pb-6">
+                                <div className="flex items-center gap-2 text-xs text-zinc-400">
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                  <span className="font-semibold">Getting relevant specs for your device...</span>
+                                </div>
+                                <div className="grid gap-4 sm:grid-cols-2">
+                                  {[1, 2].map(i => (
+                                    <div key={i} className="space-y-2">
+                                      <div className="h-3 w-20 bg-zinc-100 dark:bg-zinc-800 rounded animate-pulse" />
+                                      <div className="flex gap-2">
+                                        {[1, 2, 3].map(j => (
+                                          <div key={j} className="h-9 w-16 bg-zinc-100 dark:bg-zinc-800 rounded-xl animate-pulse" />
+                                        ))}
+                                      </div>
                                     </div>
-                                  </div>
-                                ))}
+                                  ))}
+                                </div>
+                              </div>
+                            ) : specsToShow.length > 0 ? (
+                              <div className="space-y-4 border-b border-zinc-100 dark:border-zinc-800 pb-6">
+                                <h4 className="text-xs font-black uppercase tracking-widest text-zinc-400">
+                                  Specifications
+                                  {aiSpecs.length > 0 && (
+                                    <span className="ml-2 normal-case font-bold text-amber-500 tracking-normal text-[9px]">
+                                      · AI suggested for your device
+                                    </span>
+                                  )}
+                                </h4>
+                                <div className="grid gap-4 sm:grid-cols-2">
+                                  {specsToShow.map((spec) => (
+                                    <div key={spec.label} className="space-y-2">
+                                      <span className="text-xs font-extrabold text-zinc-800 dark:text-zinc-200">{spec.label}</span>
+                                      <div className="flex flex-wrap gap-1.5">
+                                        {spec.options.map((opt) => {
+                                          const isSelected = state.specs[spec.label] === opt;
+                                          return (
+                                            <button
+                                              key={opt}
+                                              onClick={() => setState(s => ({ ...s, specs: { ...s.specs, [spec.label]: opt } }))}
+                                              className={`px-3 py-2 rounded-xl border text-xs font-bold transition-all ${
+                                                isSelected
+                                                  ? "border-zinc-950 bg-zinc-950 text-white shadow-sm dark:border-white dark:bg-white dark:text-zinc-950"
+                                                  : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-950 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-white"
+                                              }`}
+                                            >
+                                              {opt}
+                                            </button>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            ) : (
+                              <p className="text-xs text-zinc-400 font-semibold pb-2">
+                                No specific configuration options for this device — just select the physical grade below.
+                              </p>
+                            )}
+
+                            {/* Condition grade selector */}
+                            <div className="space-y-4">
+                              <h4 className="text-xs font-black uppercase tracking-widest text-zinc-400">Physical Grade</h4>
+                              <div className="grid gap-3 sm:grid-cols-2">
+                                {CONDITIONS.map((c) => {
+                                  const isSelected = state.condition === c.id;
+                                  return (
+                                    <button
+                                      key={c.id}
+                                      onClick={() => setState(s => ({ ...s, condition: c.id }))}
+                                      className={`p-4 w-full rounded-2xl border text-left transition-all flex items-start gap-3 ${
+                                        isSelected
+                                          ? "border-zinc-950 bg-zinc-950 text-white shadow-md dark:border-white dark:bg-white dark:text-zinc-950"
+                                          : `${c.color} hover:border-zinc-300 dark:hover:border-zinc-700 text-zinc-800 dark:text-zinc-200`
+                                      }`}
+                                    >
+                                      <div className={`h-3 w-3 rounded-full mt-1 shrink-0 ${c.dot}`} />
+                                      <div className="flex-1">
+                                        <p className={`text-xs font-black ${isSelected ? "text-white dark:text-zinc-950" : "text-zinc-900 dark:text-zinc-100"}`}>{c.label}</p>
+                                        <p className={`text-[10px] leading-snug mt-1 ${isSelected ? "text-white/70 dark:text-zinc-950/70" : c.descColor}`}>{c.desc}</p>
+                                      </div>
+                                    </button>
+                                  );
+                                })}
                               </div>
                             </div>
-                          )}
+                          </div>
 
-                          {/* Render Condition Selector */}
-                          <div className="space-y-4">
-                            <h4 className="text-xs font-black uppercase tracking-widest text-zinc-400">Physical Grade</h4>
-                            <div className="grid gap-3 sm:grid-cols-2">
-                              {CONDITIONS.map((c) => {
-                                const isSelected = state.condition === c.id;
-                                return (
-                                  <button
-                                    key={c.id}
-                                    onClick={() => setState(s => ({ ...s, condition: c.id }))}
-                                    className={`p-4 w-full rounded-2xl border text-left transition-all flex items-start gap-3 ${
-                                      isSelected
-                                        ? "border-zinc-950 bg-zinc-950 text-white shadow-md dark:border-white dark:bg-white dark:text-zinc-950"
-                                        : `${c.color} hover:border-zinc-300 dark:hover:border-zinc-700 text-zinc-800 dark:text-zinc-200`
-                                    }`}
-                                  >
-                                    <div className={`h-3 w-3 rounded-full mt-1 shrink-0 ${c.dot}`} />
-                                    <div className="flex-1">
-                                      <p className={`text-xs font-black ${isSelected ? "text-white dark:text-zinc-950" : "text-zinc-900 dark:text-zinc-100"}`}>{c.label}</p>
-                                      <p className={`text-[10px] leading-snug mt-1 ${isSelected ? "text-white/70 dark:text-zinc-950/70" : c.descColor}`}>{c.desc}</p>
-                                    </div>
-                                  </button>
-                                );
-                              })}
-                            </div>
+                          {/* Continue Button */}
+                          <div className="pt-6 border-t border-zinc-100 dark:border-zinc-800 flex flex-col sm:flex-row sm:justify-end">
+                            <motion.button
+                              whileHover={{ y: -2 }}
+                              whileTap={{ scale: 0.98 }}
+                              disabled={!canProceedPhase2}
+                              onClick={() => goToPhase(3)}
+                              className="w-full sm:w-auto h-12 px-8 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:opacity-50 disabled:pointer-events-none rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 shadow-lg shrink-0"
+                            >
+                              <span className="whitespace-nowrap">Quick Check</span>
+                              <ArrowRight className="h-4 w-4 shrink-0" />
+                            </motion.button>
                           </div>
                         </div>
-
-                        {/* Continue Button */}
-                        <div className="pt-6 border-t border-zinc-100 dark:border-zinc-800 flex flex-col sm:flex-row sm:justify-end">
-                          <motion.button
-                            whileHover={{ y: -2 }}
-                            whileTap={{ scale: 0.98 }}
-                            disabled={!(currentSpecs.every(s => state.specs[s.label]) && state.condition)}
-                            onClick={() => goToPhase(3)}
-                            className="w-full sm:w-auto h-12 px-8 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:opacity-50 disabled:pointer-events-none rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 shadow-lg shrink-0"
-                          >
-                            <span className="whitespace-nowrap">Quick Check</span>
-                            <ArrowRight className="h-4 w-4 shrink-0" />
-                          </motion.button>
-                        </div>
-                      </div>
-                    )}
+                      );
+                    })()}
 
                     {/* ── PHASE 3: Diagnostics (one question at a time) ── */}
                     {phase === 3 && (() => {

@@ -85,6 +85,7 @@ import { productsApi, reviewsApi, bannersApi, catalogApi, storesApi, type Store 
 import type { CatalogBrand } from "../lib/api";
 import { getGradeConfig } from "../lib/grades";
 import { GradeBadge } from "../components/GradeBadge";
+import DeviceSearchBox from "../components/DeviceSearchBox";
 import { useCart } from "../context/cart-context";
 import ProductImage from "../components/ProductImage";
 const Footer = dynamic(() => import("../components/Footer"));
@@ -553,8 +554,6 @@ const getGlowClass = (slug: string) => {
 };
 
 function TradeInCTASection() {
-  const [searchVal, setSearchVal] = useState("");
-  const [isFocused, setIsFocused] = useState(false);
   const router = useRouter();
   const [categories, setCategories] = useState<import('../lib/api').CatalogCategory[]>([]);
   const [fallbacks, setFallbacks] = useState<Record<string, string>>({});
@@ -582,15 +581,6 @@ function TradeInCTASection() {
       .catch(() => {});
   }, []);
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchVal.trim()) {
-      router.push(`/trade-in?search=${encodeURIComponent(searchVal)}`);
-    } else {
-      router.push(`/trade-in`);
-    }
-  };
-
   const getCatBg = (slug: string) => {
     switch (slug) {
       case "phones":   return "bg-sky-50 dark:bg-sky-950/20 text-sky-900 dark:text-sky-400";
@@ -611,18 +601,14 @@ function TradeInCTASection() {
     }
   };
 
-  const suggestions = searchVal.trim() === ""
-    ? []
-    : HOME_TRADE_IN_MODELS.filter(m => m.name.toLowerCase().includes(searchVal.toLowerCase())).slice(0, 5);
-
   return (
-    <section className="bg-white dark:bg-zinc-950 py-20 border-b border-zinc-100 dark:border-zinc-900 relative overflow-hidden font-sans">
-      {/* Ambient decorative orbs */}
-      <div className="absolute top-1/2 left-0 -translate-y-1/2 w-[500px] h-[500px] bg-zinc-150/40 dark:bg-zinc-900/30 rounded-full blur-[120px] pointer-events-none -z-10" />
-      <div className="absolute top-0 right-[-10%] w-[450px] h-[450px] bg-sky-500/5 dark:bg-sky-500/10 blur-[130px] rounded-full pointer-events-none -z-10" />
-
-      {/* Grid Pattern Overlay */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808006_1px,transparent_1px),linear-gradient(to_bottom,#80808006_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
+    <section className="bg-white dark:bg-zinc-950 py-20 border-b border-zinc-100 dark:border-zinc-900 relative font-sans">
+      {/* Decorative orbs — clipped in their own container so the dropdown can overflow the section */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/2 left-0 -translate-y-1/2 w-[500px] h-[500px] bg-zinc-150/40 dark:bg-zinc-900/30 rounded-full blur-[120px] -z-10" />
+        <div className="absolute top-0 right-[-10%] w-[450px] h-[450px] bg-sky-500/5 dark:bg-sky-500/10 blur-[130px] rounded-full -z-10" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808006_1px,transparent_1px),linear-gradient(to_bottom,#80808006_1px,transparent_1px)] bg-[size:32px_32px]" />
+      </div>
       
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid lg:grid-cols-12 gap-12 lg:gap-16 items-center">
@@ -643,60 +629,17 @@ function TradeInCTASection() {
               We pay premium market rates for used smartphones, laptops, tablets, and gaming consoles. Trade in online with free insured Royal Mail shipping or drop off in-store.
             </p>
             
-            {/* Functional search bar */}
-            <form onSubmit={handleSearchSubmit} className="w-full max-w-md mb-8 relative">
-              <div className="relative group">
-                <input
-                  type="text"
-                  value={searchVal}
-                  onChange={(e) => setSearchVal(e.target.value)}
-                  onFocus={() => setIsFocused(true)}
-                  onBlur={() => setTimeout(() => setIsFocused(false), 200)}
-                  placeholder="Search your device (e.g. iPhone 15, PS5...)"
-                  className="w-full h-14 rounded-2xl bg-zinc-50 dark:bg-zinc-900/40 border-2 border-zinc-200 dark:border-zinc-800/85 focus:border-red-500 focus:bg-white dark:focus:bg-zinc-900 pl-12 pr-4 text-sm font-semibold outline-none text-zinc-900 dark:text-white transition-all shadow-sm"
-                />
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400 group-focus-within:text-accent transition-colors" />
-                <button type="submit" className="absolute right-2 top-2 bottom-2 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 rounded-xl px-4 font-bold text-xs hover:bg-zinc-850 dark:hover:bg-zinc-50 transition-colors cursor-pointer">
-                  Search
-                </button>
-              </div>
-
-              {/* Suggestions dropdown */}
-              <AnimatePresence>
-                {isFocused && searchVal.trim() !== "" && suggestions.length > 0 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 10 }}
-                    className="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden z-30 p-2 text-left"
-                  >
-                    {suggestions.map((sug, i) => (
-                      <button
-                        key={i}
-                        type="button"
-                        onClick={() => {
-                          router.push(`/trade-in?search=${encodeURIComponent(sug.name)}`);
-                        }}
-                        className="w-full flex items-center justify-between p-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 rounded-xl transition-colors text-left cursor-pointer text-foreground"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 bg-zinc-100 dark:bg-zinc-800 rounded-lg flex items-center justify-center text-zinc-500">
-                            <Smartphone className="h-4.5 w-4.5" />
-                          </div>
-                          <div>
-                            <p className="text-xs font-extrabold text-zinc-950 dark:text-white">{sug.name}</p>
-                            <p className="text-[9px] text-zinc-400 font-bold uppercase tracking-wider mt-0.5">{sug.brand} · {sug.category}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-zinc-400">
-                          Get Cash <ChevronRight className="h-3.5 w-3.5" />
-                        </div>
-                      </button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </form>
+            {/* Shared DeviceSearchBox — navigates to trade-in page with device pre-selected */}
+            <DeviceSearchBox
+              className="w-full max-w-md mb-8"
+              placeholder="Search your device (e.g. iPhone 15, PS5...)"
+              showSearchButton
+              onSelect={(sug) => router.push(
+                `/trade-in?brand=${encodeURIComponent(sug.brand)}&model=${encodeURIComponent(sug.name)}&category=${encodeURIComponent(sug.category)}`
+              )}
+              onManualEntry={(q) => router.push(`/trade-in?cat=Other&q=${encodeURIComponent(q)}`)}
+              onSubmit={(q) => router.push(q.trim() ? `/trade-in?cat=Other&q=${encodeURIComponent(q)}` : `/trade-in`)}
+            />
             
           </div>
           

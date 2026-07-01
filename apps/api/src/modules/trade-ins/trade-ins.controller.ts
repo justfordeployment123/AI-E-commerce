@@ -22,6 +22,7 @@ import { ApproveTradeInDto } from './dto/approve-trade-in.dto';
 import { RejectTradeInDto } from './dto/reject-trade-in.dto';
 import { CounterOfferTradeInDto } from './dto/counter-offer-trade-in.dto';
 import { AiPriceDto } from './dto/ai-price.dto';
+import { SuggestSpecsDto } from './dto/suggest-specs.dto';
 
 @Controller('trade-ins')
 export class TradeInsController {
@@ -63,6 +64,12 @@ export class TradeInsController {
     @Post('ai-price')
     aiPrice(@Body() dto: AiPriceDto) {
         return this.tradeInsService.aiPrice(dto);
+    }
+
+    // Public — AI-generated spec fields for unlisted/custom devices
+    @Post('suggest-specs')
+    suggestSpecs(@Body() dto: SuggestSpecsDto) {
+        return this.tradeInsService.suggestSpecs(dto.brand, dto.model, dto.category);
     }
 
     // Public reference lookup (for confirmation page)

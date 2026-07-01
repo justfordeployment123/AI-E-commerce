@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/context/auth-context";
+import DeviceSearchBox from "@/components/DeviceSearchBox";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002";
 
@@ -28,11 +29,16 @@ function GoogleIcon() {
 }
 
 // Visual metadata keyed by category slug — the list itself comes from the API
-const DEVICE_TYPE_META: Record<string, { oldId: string; Icon: React.ElementType; img: string; mood: string; glow: string }> = {
-  phones:   { oldId: "Phone",   Icon: Smartphone, img: "/bento_smartphones.png", mood: "bg-sky-500/10 border-sky-500/20",    glow: "hover:shadow-sky-500/10"    },
-  tablets:  { oldId: "Tablet",  Icon: Tablet,     img: "/bento_tablets.png",     mood: "bg-rose-500/10 border-rose-500/20",  glow: "hover:shadow-rose-500/10"   },
-  consoles: { oldId: "Console", Icon: Gamepad2,   img: "/bento_gaming.png",      mood: "bg-violet-500/10 border-violet-500/20",glow: "hover:shadow-violet-500/10"},
-  laptops:  { oldId: "Laptop",  Icon: Laptop,     img: "/bento_laptops.png",     mood: "bg-amber-500/10 border-amber-500/20", glow: "hover:shadow-amber-500/10"  },
+const DEVICE_TYPE_META: Record<string, {
+  oldId: string; Icon: React.ElementType;
+  gradient: string; glow: string; accent: string;
+}> = {
+  phones:   { oldId: "Phone",   Icon: Smartphone, gradient: "from-sky-700 via-blue-900 to-zinc-950",     glow: "hover:shadow-sky-500/30",    accent: "bg-sky-500"    },
+  tablets:  { oldId: "Tablet",  Icon: Tablet,     gradient: "from-rose-600 via-pink-900 to-zinc-950",    glow: "hover:shadow-rose-500/30",   accent: "bg-rose-500"   },
+  consoles: { oldId: "Console", Icon: Gamepad2,   gradient: "from-violet-700 via-purple-900 to-zinc-950",glow: "hover:shadow-violet-500/30", accent: "bg-violet-500" },
+  laptops:  { oldId: "Laptop",  Icon: Laptop,     gradient: "from-amber-600 via-orange-900 to-zinc-950", glow: "hover:shadow-amber-500/30",  accent: "bg-amber-500"  },
+  audio:    { oldId: "Audio",   Icon: Package,    gradient: "from-indigo-600 via-blue-900 to-zinc-950",  glow: "hover:shadow-indigo-500/30", accent: "bg-indigo-500" },
+  smartwatches: { oldId: "Smartwatch", Icon: Package, gradient: "from-emerald-600 via-teal-900 to-zinc-950", glow: "hover:shadow-emerald-500/30", accent: "bg-emerald-500" },
 };
 
 const BRANDS: Record<string, string[]> = {
@@ -117,10 +123,12 @@ export default function RepairPage() {
       .then(cats => {
         const repairable = cats.filter(c => c.isRepairable);
         setCatalogCats(repairable);
-        repairable.filter(c => !c.image).forEach(c => {
-          productsApi.list({ category: c.name, limit: 1 })
+        repairable.forEach(c => {
+          productsApi.list({ category: c.name, limit: 12 })
             .then(r => {
-              const img = r.items[0]?.images?.[0];
+              const pool = r.items.flatMap(p => p.images ?? []);
+              if (c.image) pool.push(c.image);
+              const img = pool[Math.floor(Math.random() * pool.length)];
               if (img) setCatFallbackImages(prev => ({ ...prev, [c.slug]: img }));
             })
             .catch(() => {});
@@ -141,13 +149,16 @@ export default function RepairPage() {
   const [imageUploading, setImageUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [missingDetailsOpen, setMissingDetailsOpen] = useState(false);
   const [missingFields, setMissingFields] = useState<string[]>([]);
   const modalScrollRef = useRef<HTMLDivElement>(null);
 
-  // Restore wizard state on mount (after settings redirect or Google OAuth)
+  // Device pre-selection from search or login redirect
+  const [pendingRepair, setPendingRepair] = useState<{ brand: string; model: string; deviceType: string } | null>(null);
+
+  // Restore wizard state on mount; also pick up URL params / pending device
   useEffect(() => {
     const saved = sessionStorage.getItem("ts_wizard_repair");
     if (saved) {
@@ -159,13 +170,54 @@ export default function RepairPage() {
         if (savedBatchId) setBatchId(savedBatchId);
         setIsWizardActive(true);
       } catch {}
+    } else {
+      // Check URL params for device pre-selection
+      const params = new URLSearchParams(window.location.search);
+      const brand = params.get("brand");
+      const model = params.get("model");
+      const category = params.get("category");
+      const CAT_TO_DEVICE: Record<string, string> = {
+        Phone: "Phone", Tablet: "Tablet", Console: "Console", Laptop: "Laptop",
+      };
+      if (brand && model && category && CAT_TO_DEVICE[category]) {
+        setPendingRepair({ brand, model, deviceType: CAT_TO_DEVICE[category] });
+      } else {
+        const pending = sessionStorage.getItem("ts_pending_repair");
+        if (pending) {
+          try {
+            sessionStorage.removeItem("ts_pending_repair");
+            setPendingRepair(JSON.parse(pending));
+          } catch {}
+        }
+      }
     }
 
-    // Fetch stores on mount to show real info in the dropoff card
-    storesApi.list()
-      .then(setStores)
-      .catch(() => {});
+    storesApi.list().then(setStores).catch(() => {});
   }, []);
+
+  // Auto-open wizard once auth resolves and there is a pending repair device
+  useEffect(() => {
+    if (authLoading || !pendingRepair || isWizardActive) return;
+    if (!user) {
+      sessionStorage.setItem("ts_pending_repair", JSON.stringify(pendingRepair));
+      sessionStorage.setItem("ts_login_redirect", "/repair");
+      router.push("/login?redirect=%2Frepair");
+      setPendingRepair(null);
+      return;
+    }
+    setState(prev => ({
+      ...prev,
+      deviceType: pendingRepair.deviceType,
+      brand: pendingRepair.brand,
+      model: pendingRepair.model,
+      issue: [], issueNotes: "", fulfillment: "",
+    }));
+    setImages([]);
+    setBatchId(crypto.randomUUID());
+    setStep(1);
+    setIsWizardActive(true);
+    setPendingRepair(null);
+  }, [authLoading, pendingRepair, user, isWizardActive]);
 
   // Auto-save wizard state to sessionStorage whenever anything changes
   useEffect(() => {
@@ -262,6 +314,7 @@ export default function RepairPage() {
   }
 
   const guardedOpen = (action: () => void) => {
+    if (authLoading) return;
     if (!user) {
       sessionStorage.setItem("ts_login_redirect", "/repair");
       router.push("/login?redirect=%2Frepair");
@@ -345,6 +398,48 @@ export default function RepairPage() {
                   Certified technicians. Premium OEM-grade parts. 1-year warranty on all repairs. Same-day service in Leicester, or free mail-in postage UK-wide.
                 </p>
 
+                {/* Device search — finds device and opens repair wizard with it pre-filled */}
+                <DeviceSearchBox
+                  className="w-full max-w-md mb-6"
+                  placeholder="Search device to repair (e.g. iPhone, Galaxy S24...)"
+                  filterCategories={["Phone", "Tablet", "Console", "Laptop"]}
+                  onSelect={(sug) => {
+                    const CAT_TO_DEVICE: Record<string, string> = {
+                      Phone: "Phone", Tablet: "Tablet", Console: "Console", Laptop: "Laptop",
+                    };
+                    const deviceType = CAT_TO_DEVICE[sug.category];
+                    if (!deviceType) return;
+                    guardedOpen(() => {
+                      setState(prev => ({
+                        ...prev,
+                        deviceType,
+                        brand: sug.brand,
+                        model: sug.name,
+                        issue: [], issueNotes: "", fulfillment: "",
+                      }));
+                      setImages([]);
+                      setBatchId(crypto.randomUUID());
+                      setStep(1);
+                      setIsWizardActive(true);
+                    });
+                  }}
+                  onManualEntry={(q) => {
+                    guardedOpen(() => {
+                      setState(prev => ({
+                        ...prev,
+                        deviceType: "Phone",
+                        brand: "",
+                        model: q,
+                        issue: [], issueNotes: "", fulfillment: "",
+                      }));
+                      setImages([]);
+                      setBatchId(crypto.randomUUID());
+                      setStep(1);
+                      setIsWizardActive(true);
+                    });
+                  }}
+                />
+
                 <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-semibold text-zinc-500 mb-8">
                   <span className="text-zinc-500 font-extrabold">Popular:</span>
                   {[
@@ -381,49 +476,64 @@ export default function RepairPage() {
                   </h2>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 text-left">
+                {/* auto-fill grid: min 200px per card, scales gracefully to any count */}
+                <div
+                  className="grid gap-4 text-left"
+                  style={{ gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))" }}
+                >
                   {catalogCats.map((cat) => {
                     const meta = DEVICE_TYPE_META[cat.slug] ?? {
                       oldId: cat.slug,
                       Icon: Package,
-                      img: "",
-                      mood: "bg-zinc-500/10 border-zinc-500/20",
-                      glow: "hover:shadow-zinc-500/10",
+                      gradient: "from-zinc-700 via-zinc-800 to-zinc-950",
+                      glow: "hover:shadow-zinc-500/20",
+                      accent: "bg-zinc-500",
                     };
-                    const img = cat.image ?? catFallbackImages[cat.slug] ?? meta.img;
-                    const isProductFallback = !cat.image && !!catFallbackImages[cat.slug];
+                    const img = catFallbackImages[cat.slug] ?? cat.image ?? "";
                     const modelCount = cat.modelCount > 0 ? `${cat.modelCount}+ models` : null;
                     return (
                       <motion.button
                         key={cat.id}
-                        whileHover={{ y: -6, scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
+                        whileHover={{ y: -5, scale: 1.02 }}
+                        whileTap={{ scale: 0.97 }}
                         onClick={() => guardedOpen(() => openWizardWithDevice(meta.oldId))}
-                        className={`flex flex-col rounded-[2.5rem] border border-zinc-250 dark:border-zinc-800 bg-white dark:bg-zinc-900/40 backdrop-blur-md shadow-sm hover:shadow-xl hover:border-zinc-400 dark:hover:border-zinc-700 transition-all duration-300 group overflow-hidden w-full text-left ${meta.glow}`}
+                        className={`relative rounded-[1.75rem] overflow-hidden h-44 flex flex-col justify-between p-5 text-left group shadow-md hover:shadow-2xl transition-all duration-300 w-full ${meta.glow}`}
                       >
-                        <div className="w-full aspect-[4/3] bg-gradient-to-b from-zinc-50 to-white border-b border-zinc-100 dark:from-zinc-950/20 dark:border-zinc-850 flex items-center justify-center relative overflow-hidden">
-                          {img && (
-                            <img
-                              src={img}
-                              alt={cat.name}
-                              className={`transition-transform duration-500 group-hover:scale-105 ${
-                                isProductFallback 
-                                  ? "h-[70%] w-[70%] object-contain drop-shadow-md p-3" 
-                                  : "h-full w-full object-cover"
-                              }`}
-                            />
-                          )}
-                          {!isProductFallback && (
-                            <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-white/60 to-transparent dark:from-zinc-900/60 pointer-events-none" />
-                          )}
-                        </div>
-                        <div className="px-3.5 py-3 flex items-center justify-between">
-                          <div className="min-w-0">
-                            <h3 className="font-extrabold text-xs sm:text-sm text-zinc-950 dark:text-white leading-tight truncate">{cat.name}</h3>
-                            {modelCount && <p className="text-[9px] text-zinc-400 mt-0.5 truncate">{modelCount}</p>}
+                        {/* Dark fallback background when no image */}
+                        <div className="absolute inset-0 bg-zinc-900" />
+
+                        {/* Product image — full opacity, no tint */}
+                        {img && (
+                          <img
+                            src={img}
+                            alt={cat.name}
+                            className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-all duration-700"
+                          />
+                        )}
+
+                        {/* Readability gradient overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+
+                        {/* Top: category badge with icon */}
+                        <div className="relative z-10 flex items-center gap-2">
+                          <div className={`h-8 w-8 rounded-xl ${meta.accent} bg-opacity-30 backdrop-blur-sm flex items-center justify-center shrink-0`}>
+                            <meta.Icon className="h-4 w-4 text-white" strokeWidth={1.8} />
                           </div>
-                          <div className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 group-hover:scale-105 transition-transform duration-200">
-                            <ChevronRight className="h-3 w-3 text-zinc-400 group-hover:translate-x-0.5 transition-transform" />
+                          <span className="text-[9px] font-black uppercase tracking-widest text-white/70">
+                            Repair
+                          </span>
+                        </div>
+
+                        {/* Bottom: name + CTA */}
+                        <div className="relative z-10 flex items-end justify-between gap-2">
+                          <div>
+                            <p className="text-base font-extrabold text-white leading-tight">{cat.name}</p>
+                            {modelCount && (
+                              <p className="text-[9px] text-white/50 font-bold mt-0.5 uppercase tracking-wider">{modelCount}</p>
+                            )}
+                          </div>
+                          <div className="shrink-0 h-8 w-8 rounded-full bg-white/15 backdrop-blur-sm group-hover:bg-white flex items-center justify-center transition-all duration-300">
+                            <ChevronRight className="h-4 w-4 text-white group-hover:text-zinc-900 group-hover:translate-x-0.5 transition-all" />
                           </div>
                         </div>
                       </motion.button>

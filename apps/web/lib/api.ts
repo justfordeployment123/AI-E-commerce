@@ -220,6 +220,12 @@ export const tradeInsApi = {
     body: JSON.stringify(data),
   }),
 
+  suggestSpecs: (data: { brand: string; model: string; category: string }) =>
+    apiFetch<{ label: string; options: string[] }[]>('/trade-ins/suggest-specs', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
   stats: () =>
     apiFetch<{ devicesRepurposed: number; lifespanExtension: number; idleElectronics: number }>('/trade-ins/stats'),
 };
