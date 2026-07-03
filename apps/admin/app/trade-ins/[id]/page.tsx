@@ -187,6 +187,14 @@ export default function TradeInDetailPage() {
                 </div>
               </div>
             )}
+
+            {/* Customer notes */}
+            {item.customerNotes && (
+              <div className="bg-amber-50 border border-amber-100 rounded-3xl p-6">
+                <h2 className="text-sm font-bold uppercase tracking-widest text-amber-600 mb-3">Customer Notes</h2>
+                <p className="text-sm text-zinc-700 leading-relaxed whitespace-pre-wrap">{item.customerNotes}</p>
+              </div>
+            )}
           </div>
 
           {/* ── Right column: Offer + Customer + Actions ── */}

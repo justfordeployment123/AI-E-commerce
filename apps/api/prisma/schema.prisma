@@ -180,6 +180,7 @@ model TradeIn {
   status          TradeInStatus @default(SUBMITTED)
   contact         Json
   storeId         String?
+  customerNotes   String?   // extra notes from customer at submission
   adminNotes      String?
   counterOffer    Float?
   trackingNumber  String?
@@ -254,6 +255,7 @@ model Store {
   postcode     String
   phone        String?
   openingHours String?
+  mapsEmbedUrl String?
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt

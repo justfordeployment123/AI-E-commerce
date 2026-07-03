@@ -3,13 +3,13 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { repairsApi, storesApi, uploadsApi, catalogApi, productsApi, type Store, type CatalogCategory } from "@/lib/api";
+import { repairsApi, storesApi, uploadsApi, catalogApi, productsApi, authApi, type Store, type CatalogCategory } from "@/lib/api";
 import {
   Smartphone, Tablet, Gamepad2, Laptop, Package, ArrowLeft, ArrowRight,
   Check, MapPin, Truck, Wrench, Clock, Shield, X,
   Monitor, Zap, Battery, Wifi, HardDrive, CircleAlert,
   Star, HelpCircle, ChevronDown, Sparkles, ChevronRight, Upload, Plus,
-  CheckCircle2
+  CheckCircle2, UserCircle
 } from "lucide-react";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/context/auth-context";
@@ -151,6 +151,7 @@ export default function RepairPage() {
 
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const [profileGateOpen, setProfileGateOpen] = useState(false);
   const [missingDetailsOpen, setMissingDetailsOpen] = useState(false);
   const [missingFields, setMissingFields] = useState<string[]>([]);
   const modalScrollRef = useRef<HTMLDivElement>(null);
@@ -320,7 +321,22 @@ export default function RepairPage() {
       router.push("/login?redirect=%2Frepair");
       return;
     }
-    action();
+    // Always fetch fresh profile — context can be stale after settings updates
+    authApi.me()
+      .then(fresh => {
+        const filled = (v: unknown) => typeof v === "string" && v.trim().length > 0;
+        const complete = filled(fresh.name) && filled(fresh.phone) &&
+                         filled(fresh.address) && filled(fresh.city) && filled(fresh.postcode);
+        if (!complete) { setProfileGateOpen(true); return; }
+        action();
+      })
+      .catch(() => {
+        const filled = (v: unknown) => typeof v === "string" && v.trim().length > 0;
+        const complete = filled(user.name) && filled(user.phone) &&
+                         filled(user.address) && filled(user.city) && filled(user.postcode);
+        if (!complete) { setProfileGateOpen(true); return; }
+        action();
+      });
   };
 
   const openWizardWithDevice = (deviceId: string) => {
@@ -344,9 +360,11 @@ export default function RepairPage() {
 
   const activeStore = stores.find(s => s.id === selectedStoreId) || stores[0];
   const storeName = activeStore?.name || "TechStop Leicester";
-  const storeAddress = activeStore ? `${activeStore.address}, ${activeStore.city} ${activeStore.postcode}` : "104 High St, Leicester LE1 5YP";
+  const storeAddress = activeStore ? `${activeStore.address}, ${activeStore.city} ${activeStore.postcode}` : "148B Melton Rd, Leicester LE4 5EE";
   const storeHours = activeStore?.openingHours || "Mon–Sat, 9:00 AM – 6:00 PM";
-  const mapsLink = activeStore ? `https://maps.google.com/?q=${encodeURIComponent(`${activeStore.name}, ${activeStore.address}, ${activeStore.city} ${activeStore.postcode}`)}` : "https://maps.google.com/?q=104+High+St,+Leicester+LE1+5YP";
+  const mapsLink = activeStore
+    ? `https://maps.google.com/?q=${encodeURIComponent(`${activeStore.name}, ${activeStore.address}, ${activeStore.city} ${activeStore.postcode}`)}`
+    : "https://maps.app.goo.gl/fyc8Zuy4hjh3tG3x8";
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground font-sans relative overflow-x-hidden selection:bg-accent selection:text-white">
@@ -657,9 +675,9 @@ export default function RepairPage() {
                         height="100%"
                         frameBorder="0"
                         style={{ border: 0 }}
-                        src={`https://maps.google.com/maps?q=${encodeURIComponent(storeAddress)}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
+                        src={activeStore?.mapsEmbedUrl ?? `https://maps.google.com/maps?q=${encodeURIComponent(`${storeName}, ${storeAddress}`)}&t=&z=17&ie=UTF8&iwloc=&output=embed`}
                         allowFullScreen
-                        className="grayscale opacity-90 dark:opacity-85 contrast-[0.95] group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500"
+                        className="transition-all duration-500"
                       />
                     </div>
                   </div>
@@ -677,6 +695,72 @@ export default function RepairPage() {
           </section>
         </div>
       </main>
+
+      {/* ─── Profile Gate Modal ───────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {profileGateOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/60 backdrop-blur-md"
+            onClick={() => setProfileGateOpen(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 16 }}
+              transition={{ type: "spring", duration: 0.35 }}
+              onClick={e => e.stopPropagation()}
+              className="bg-white dark:bg-zinc-900 rounded-3xl p-8 max-w-sm w-full shadow-2xl border border-zinc-200 dark:border-zinc-800"
+            >
+              <div className="text-center space-y-4">
+                <div className="h-14 w-14 bg-amber-50 dark:bg-amber-950/30 rounded-2xl flex items-center justify-center mx-auto">
+                  <UserCircle className="h-7 w-7 text-amber-500" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-extrabold text-zinc-900 dark:text-white">Complete your profile first</h2>
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed mt-2">
+                    We need a few details to book your repair and keep you updated.
+                  </p>
+                </div>
+                <div className="bg-zinc-50 dark:bg-zinc-800 rounded-2xl p-4 text-left space-y-2">
+                  {[
+                    { field: user?.name,     label: "Full name" },
+                    { field: user?.phone,    label: "Phone number" },
+                    { field: user?.address,  label: "Street address" },
+                    { field: user?.city,     label: "City" },
+                    { field: user?.postcode, label: "Postcode" },
+                  ].filter(({ field }) => !(typeof field === "string" && field.trim().length > 0))
+                   .map(({ label }) => (
+                    <div key={label} className="flex items-center gap-2 text-xs font-bold text-red-500">
+                      <X className="h-3.5 w-3.5 shrink-0" /> {label} is missing or empty
+                    </div>
+                  ))}
+                </div>
+                <div className="flex flex-col gap-2 pt-1">
+                  <button
+                    onClick={() => {
+                      setProfileGateOpen(false);
+                      sessionStorage.setItem("ts_login_redirect", "/repair");
+                      router.push("/account/settings");
+                    }}
+                    className="h-12 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 rounded-xl text-sm font-black hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors"
+                  >
+                    Update Profile
+                  </button>
+                  <button
+                    onClick={() => setProfileGateOpen(false)}
+                    className="h-10 text-xs font-bold text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors"
+                  >
+                    Not now
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <Footer />
 

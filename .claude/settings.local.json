@@ -164,7 +164,10 @@
       "Bash(echo \"EXIT:$?\")",
       "Bash(npx ts-node --project tsconfig.json -e ' *)",
       "Bash(node scripts/backfill-descriptions.mjs)",
-      "Bash(npx ts-node *)"
+      "Bash(npx ts-node *)",
+      "WebFetch(domain:maps.app.goo.gl)",
+      "Bash(xargs grep -l \"stores\\\\|Store\")",
+      "Bash(xargs grep -l \"apple-pencil\\\\|product.*\\\\[slug\\\\]\\\\|\\\\[slug\\\\]\")"
     ],
     "additionalDirectories": [
       "d:\\CODE\\Projects\\Markhor Systems Projects\\Ai-Ecommerce\\apps\\web\\app\\account\\repairs",

@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Star, ShoppingCart, Heart, Shield, RefreshCw, Truck,
   Check, ChevronDown, ChevronUp, ArrowLeft,
-  Award, Info, Camera, X, Send, Loader2, MessageSquare, Package
+  Award, Info, Camera, X, Send, Loader2, MessageSquare
 } from "lucide-react";
 import Footer from "@/components/Footer";
 import { getGradeConfig } from "@/lib/grades";
@@ -159,7 +159,7 @@ export default function ProductDetailPage() {
           <div className="text-center">
             <p className="text-2xl font-bold mb-4">Product not found</p>
             <a href={`/shop/${categorySlug}`} className="h-12 px-8 bg-black text-white rounded-2xl font-bold inline-flex items-center">
-              Back to {categorySlug}
+              Back to {decodeURIComponent(categorySlug)}
             </a>
           </div>
         </main>
@@ -179,7 +179,7 @@ export default function ProductDetailPage() {
       <div className="bg-white border-b border-zinc-200 sticky top-0 z-30">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 flex items-center gap-2 text-xs font-bold text-zinc-500 uppercase tracking-wide">
           <a href={`/shop/${categorySlug}`} className="hover:text-black flex items-center gap-1">
-            <ArrowLeft className="h-3.5 w-3.5" /> {categorySlug}
+            <ArrowLeft className="h-3.5 w-3.5" /> {decodeURIComponent(categorySlug)}
           </a>
           <span>/</span>
           <span className="text-black line-clamp-1">{product.name}</span>
@@ -199,7 +199,6 @@ export default function ProductDetailPage() {
                 <Heart className={`h-5 w-5 transition-colors ${wishlisted ? "fill-red-500 text-red-500" : "text-black"}`} />
               </button>
               <div className="w-full max-w-[400px] aspect-square relative flex items-center justify-center bg-image-light rounded-[24px] p-6">
-                <Package className="absolute h-16 w-16 text-zinc-200" strokeWidth={1.5} />
                 <AnimatePresence mode="wait">
                   <motion.img
                     key={activeImage}

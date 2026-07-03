@@ -229,6 +229,7 @@ export interface Store {
   postcode: string;
   phone?: string;
   openingHours?: string;
+  mapsEmbedUrl?: string;
   isActive: boolean;
   createdAt: string;
 }
@@ -659,6 +660,7 @@ export interface TradeIn {
   storeId?: string;
   contact: { name: string; email: string; phone: string; address?: string; postcode?: string };
   answers: Record<string, string>;
+  customerNotes?: string;
   adminNotes?: string;
   trackingNumber?: string;
   labelUrl?: string;

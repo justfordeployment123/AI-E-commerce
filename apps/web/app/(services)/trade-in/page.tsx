@@ -4,14 +4,14 @@ import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import Fuse from "fuse.js";
-import { tradeInsApi, storesApi, uploadsApi, catalogApi, productsApi, type Store, type CatalogCategory, type Product } from "@/lib/api";
+import { tradeInsApi, storesApi, uploadsApi, catalogApi, productsApi, authApi, type Store, type CatalogCategory, type Product } from "@/lib/api";
 import DeviceSearchBox from "@/components/DeviceSearchBox";
 import {
   Smartphone, Tablet, Gamepad2, Laptop, ArrowLeft, ArrowRight,
   Check, ChevronRight, MapPin, Zap, Shield, Clock,
   Star, CheckCircle2, Truck, Gift, RefreshCw,
   Search, ChevronDown, Sparkles, HelpCircle, Watch, Headphones,
-  Upload, X, Plus, Package, Loader2
+  Upload, X, Plus, Package, Loader2, UserCircle
 } from "lucide-react";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/context/auth-context";
@@ -224,6 +224,7 @@ interface TradeInState {
   specs: Record<string, string>;
   condition: string;
   answers: Record<string, string>;
+  customerNotes: string;
   fulfillment: string;
   storeId: string;
   contact: { name: string; email: string; phone: string; address: string; postcode: string };
@@ -364,7 +365,7 @@ export default function TradeInPage() {
   const [dir, setDir] = useState(1);
   const [state, setState] = useState<TradeInState>({
     category: "", brand: "", model: "", tradeInMode: "auto", specs: {}, condition: "",
-    answers: {}, fulfillment: "", storeId: "",
+    answers: {}, customerNotes: "", fulfillment: "", storeId: "",
     contact: { name: "", email: "", phone: "", address: "", postcode: "" },
   });
   const [stores, setStores] = useState<Store[]>([]);
@@ -498,6 +499,7 @@ export default function TradeInPage() {
   const [submitRef, setSubmitRef] = useState("");
   const [submitError, setSubmitError] = useState("");
   const [serverOfferPrice, setServerOfferPrice] = useState<number | null>(null);
+  const [profileGateOpen, setProfileGateOpen] = useState(false);
   const [missingDetailsOpen, setMissingDetailsOpen] = useState(false);
   const [missingFields, setMissingFields] = useState<string[]>([]);
 
@@ -521,7 +523,8 @@ export default function TradeInPage() {
     if (saved) {
       try {
         const { state: s, phase: savedPhase, aiPrice: savedAiPrice, images: savedImages, batchId: savedBatchId } = JSON.parse(saved);
-        setState(s);
+        // Backfill fields that may be missing from old saved state
+        setState({ ...s, customerNotes: s.customerNotes ?? "" });
         setPhase(savedPhase);
         if (savedAiPrice != null) setAiPrice(savedAiPrice);
         if (savedImages?.length) setImages(savedImages);
@@ -577,7 +580,7 @@ export default function TradeInPage() {
       brand: pendingDevice.brand,
       model: isFullDevice ? pendingDevice.model : "",
       tradeInMode: "auto",
-      specs: {}, condition: "", answers: {},
+      specs: {}, condition: "", answers: {}, customerNotes: "",
       fulfillment: "", storeId: "",
       contact: {
         name: user.name || "", email: user.email || "",
@@ -614,6 +617,7 @@ export default function TradeInPage() {
 
   // Search autocomplete states
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [storeDropOpen, setStoreDropOpen] = useState(false);
 
   // Model search query inside Phase 1 wizard
   const [wizardModelSearch, setWizardModelSearch] = useState("");
@@ -638,6 +642,7 @@ export default function TradeInPage() {
       tradeInMode: "auto",
       specs: {},
       answers: {},
+      customerNotes: "",
     }));
     setWizardModelSearch("");
     setBrandFilter("");
@@ -655,6 +660,7 @@ export default function TradeInPage() {
       tradeInMode: "auto",
       specs: {},
       answers: {},
+      customerNotes: "",
     }));
     // intentionally NOT resetting wizardModelSearch here so any pre-filled
     // model query from the search bar is preserved into the model step
@@ -752,7 +758,22 @@ export default function TradeInPage() {
       router.push("/login?redirect=%2Ftrade-in");
       return;
     }
-    action();
+    // Always fetch fresh profile — context can be stale after settings updates
+    authApi.me()
+      .then(fresh => {
+        const filled = (v: unknown) => typeof v === "string" && v.trim().length > 0;
+        const complete = filled(fresh.name) && filled(fresh.phone) &&
+                         filled(fresh.address) && filled(fresh.city) && filled(fresh.postcode);
+        if (!complete) { setProfileGateOpen(true); return; }
+        action();
+      })
+      .catch(() => {
+        const filled = (v: unknown) => typeof v === "string" && v.trim().length > 0;
+        const complete = filled(user.name) && filled(user.phone) &&
+                         filled(user.address) && filled(user.city) && filled(user.postcode);
+        if (!complete) { setProfileGateOpen(true); return; }
+        action();
+      });
   };
 
   const startWizard = (catId?: string, prefilledModelQuery?: string) => {
@@ -765,6 +786,7 @@ export default function TradeInPage() {
         specs: {},
         condition: "",
         answers: {},
+        customerNotes: "",
         fulfillment: "", storeId: "",
         contact: { name: "", email: "", phone: "", address: "", postcode: "" },
       });
@@ -790,6 +812,7 @@ export default function TradeInPage() {
         specs: {},
         condition: "",
         answers: {},
+        customerNotes: "",
         fulfillment: "", storeId: "",
         contact: { name: "", email: "", phone: "", address: "", postcode: "" },
       });
@@ -839,9 +862,11 @@ export default function TradeInPage() {
 
   const activeStore = stores.find(s => s.id === selectedStoreId) || stores[0];
   const storeName = activeStore?.name || "TechStop Leicester";
-  const storeAddress = activeStore ? `${activeStore.address}, ${activeStore.city} ${activeStore.postcode}` : "104 High St, Leicester LE1 5YP";
+  const storeAddress = activeStore ? `${activeStore.address}, ${activeStore.city} ${activeStore.postcode}` : "148B Melton Rd, Leicester LE4 5EE";
   const storeHours = activeStore?.openingHours || "Mon–Sat, 9:00 AM – 6:00 PM";
-  const mapsLink = activeStore ? `https://maps.google.com/?q=${encodeURIComponent(`${activeStore.name}, ${activeStore.address}, ${activeStore.city} ${activeStore.postcode}`)}` : "https://maps.google.com/?q=104+High+St,+Leicester+LE1+5YP";
+  const mapsLink = activeStore
+    ? `https://maps.google.com/?q=${encodeURIComponent(`${activeStore.name}, ${activeStore.address}, ${activeStore.city} ${activeStore.postcode}`)}`
+    : "https://maps.app.goo.gl/fyc8Zuy4hjh3tG3x8";
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground font-sans relative overflow-x-hidden selection:bg-accent selection:text-white">
@@ -1080,17 +1105,49 @@ export default function TradeInPage() {
                       Prefer instant hand-to-hand transactions? Bring your device directly to our retail store. Our on-site diagnostics team will inspect your hardware on the spot and hand you cash or apply a 10% bonus store credit index in under 15 minutes.
                     </p>
                     {stores.length > 1 && (
-                      <div className="mb-4">
+                      <div className="mb-4 relative">
                         <label className="text-[10px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500 block mb-1.5">Select Store Location</label>
-                        <select
-                          value={selectedStoreId}
-                          onChange={(e) => setSelectedStoreId(e.target.value)}
-                          className="h-10 w-full rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/60 dark:border-zinc-800/80 px-3 text-xs font-bold text-zinc-800 dark:text-zinc-200 outline-none focus:border-accent"
+                        <button
+                          type="button"
+                          onClick={() => setStoreDropOpen(o => !o)}
+                          className="w-full h-11 px-4 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs font-bold text-zinc-900 dark:text-zinc-100 flex items-center justify-between gap-2 hover:border-zinc-400 dark:hover:border-zinc-600 transition-colors"
                         >
-                          {stores.map(s => (
-                            <option key={s.id} value={s.id}>{s.name} ({s.city})</option>
-                          ))}
-                        </select>
+                          <span className="truncate">
+                            {(stores.find(s => s.id === selectedStoreId) || stores[0])?.name}
+                            {" "}({(stores.find(s => s.id === selectedStoreId) || stores[0])?.city})
+                          </span>
+                          <ChevronDown className={`h-4 w-4 text-zinc-400 shrink-0 transition-transform duration-200 ${storeDropOpen ? "rotate-180" : ""}`} />
+                        </button>
+                        <AnimatePresence>
+                          {storeDropOpen && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -4 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -4 }}
+                              transition={{ duration: 0.15 }}
+                              className="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-xl z-50 overflow-hidden"
+                            >
+                              {stores.map(s => {
+                                const isSelected = selectedStoreId === s.id || (!selectedStoreId && s.id === stores[0]?.id);
+                                return (
+                                  <button
+                                    key={s.id}
+                                    type="button"
+                                    onClick={() => { setSelectedStoreId(s.id); setStoreDropOpen(false); }}
+                                    className={`w-full text-left px-4 py-3 text-xs font-bold flex items-center justify-between transition-colors ${
+                                      isSelected
+                                        ? "bg-zinc-950 dark:bg-white text-white dark:text-zinc-950"
+                                        : "text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                                    }`}
+                                  >
+                                    <span>{s.name}</span>
+                                    <span className={`text-[10px] font-semibold ${isSelected ? "opacity-60" : "text-zinc-400"}`}>{s.city}</span>
+                                  </button>
+                                );
+                              })}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </div>
                     )}
                     <div className="bg-zinc-50 dark:bg-zinc-950/40 rounded-2xl p-4 border border-zinc-200/60 dark:border-zinc-800/80 space-y-2 mb-6">
@@ -1103,19 +1160,35 @@ export default function TradeInPage() {
                         <span className="text-zinc-900 dark:text-zinc-200 font-black">{storeHours}</span>
                       </div>
                     </div>
-                    {/* Interactive Store Location Map */}
-                    <div className="w-full h-40 rounded-2xl overflow-hidden border border-zinc-200/80 dark:border-zinc-850 mb-6 shadow-inner relative group bg-zinc-100 dark:bg-zinc-950">
-                      <iframe
-                        title="Store Location Map"
-                        width="100%"
-                        height="100%"
-                        frameBorder="0"
-                        style={{ border: 0 }}
-                        src={`https://maps.google.com/maps?q=${encodeURIComponent(storeAddress)}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
-                        allowFullScreen
-                        className="grayscale opacity-90 dark:opacity-85 contrast-[0.95] group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500"
-                      />
-                    </div>
+                    {/* Interactive Store Location Map — click overlay prevents ctrl+scroll dark filter */}
+                    {(() => {
+                      const [mapActive, setMapActive] = useState(false);
+                      return (
+                        <div className="w-full h-40 rounded-2xl overflow-hidden border border-zinc-200/80 dark:border-zinc-800 mb-6 shadow-inner relative bg-zinc-100 dark:bg-zinc-950">
+                          <iframe
+                            title="Store Location Map"
+                            width="100%"
+                            height="100%"
+                            frameBorder="0"
+                            style={{ border: 0 }}
+                            src={activeStore?.mapsEmbedUrl ?? `https://maps.google.com/maps?q=${encodeURIComponent(`${storeName}, ${storeAddress}`)}&t=&z=17&ie=UTF8&iwloc=&output=embed`}
+                            allowFullScreen
+                            className="transition-all duration-500"
+                          />
+                          {/* Transparent overlay — blocks scroll hijack until user clicks to activate */}
+                          {!mapActive && (
+                            <div
+                              onClick={() => setMapActive(true)}
+                              className="absolute inset-0 z-10 flex items-center justify-center cursor-pointer group"
+                            >
+                              <span className="bg-zinc-950/70 text-white text-[10px] font-bold px-3 py-1.5 rounded-full backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity select-none">
+                                Click to interact with map
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
                   <a
                     href={mapsLink}
@@ -1130,6 +1203,72 @@ export default function TradeInPage() {
             </div>
           </section>
         </div>
+
+      {/* ─── Profile Gate Modal ───────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {profileGateOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/60 backdrop-blur-md"
+            onClick={() => setProfileGateOpen(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 16 }}
+              transition={{ type: "spring", duration: 0.35 }}
+              onClick={e => e.stopPropagation()}
+              className="bg-white dark:bg-zinc-900 rounded-3xl p-8 max-w-sm w-full shadow-2xl border border-zinc-200 dark:border-zinc-800"
+            >
+              <div className="text-center space-y-4">
+                <div className="h-14 w-14 bg-amber-50 dark:bg-amber-950/30 rounded-2xl flex items-center justify-center mx-auto">
+                  <UserCircle className="h-7 w-7 text-amber-500" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-extrabold text-zinc-900 dark:text-white">Complete your profile first</h2>
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed mt-2">
+                    We need a few details to process your trade-in and send you an offer.
+                  </p>
+                </div>
+                <div className="bg-zinc-50 dark:bg-zinc-800 rounded-2xl p-4 text-left space-y-2">
+                  {[
+                    { field: user?.name,     label: "Full name" },
+                    { field: user?.phone,    label: "Phone number" },
+                    { field: user?.address,  label: "Street address" },
+                    { field: user?.city,     label: "City" },
+                    { field: user?.postcode, label: "Postcode" },
+                  ].filter(({ field }) => !(typeof field === "string" && field.trim().length > 0))
+                   .map(({ label }) => (
+                    <div key={label} className="flex items-center gap-2 text-xs font-bold text-red-500">
+                      <X className="h-3.5 w-3.5 shrink-0" /> {label} is missing or empty
+                    </div>
+                  ))}
+                </div>
+                <div className="flex flex-col gap-2 pt-1">
+                  <button
+                    onClick={() => {
+                      setProfileGateOpen(false);
+                      sessionStorage.setItem("ts_login_redirect", "/trade-in");
+                      router.push("/account/settings");
+                    }}
+                    className="h-12 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 rounded-xl text-sm font-black hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors"
+                  >
+                    Update Profile
+                  </button>
+                  <button
+                    onClick={() => setProfileGateOpen(false)}
+                    className="h-10 text-xs font-bold text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors"
+                  >
+                    Not now
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ─── HIGH-FIDELITY OVERHAULED WIZARD MODAL ─────────────────────────── */}
       <AnimatePresence>
@@ -1671,7 +1810,10 @@ export default function TradeInPage() {
                     {phase === 3 && (() => {
                       const q = currentQuestions[diagIndex];
                       const isLast = diagIndex === currentQuestions.length - 1;
-                      const allAnswered = Object.keys(state.answers).length >= currentQuestions.length;
+                      // Check each question individually — more reliable than counting keys
+                      const allAnswered = currentQuestions.length > 0 &&
+                        currentQuestions.every(cq => typeof state.answers[cq.id] === "string" && state.answers[cq.id].length > 0);
+
                       if (!q) {
                         // No questions for this category — skip straight to offer
                         goToPhase(4);
@@ -1680,13 +1822,13 @@ export default function TradeInPage() {
                       return (
                         <div className="flex-1 flex flex-col justify-between gap-6">
                           <div className="space-y-5">
-                            {/* Progress dots */}
+                            {/* Progress dots — green when answered, dark for current, grey for future */}
                             <div className="flex gap-1.5">
-                              {currentQuestions.map((_, i) => (
+                              {currentQuestions.map((cq, i) => (
                                 <div
                                   key={i}
                                   className={`h-1.5 rounded-full flex-1 transition-all duration-300 ${
-                                    i < diagIndex ? "bg-emerald-500" :
+                                    state.answers[cq.id] ? "bg-emerald-500" :
                                     i === diagIndex ? "bg-zinc-950 dark:bg-white" :
                                     "bg-zinc-200 dark:bg-zinc-800"
                                   }`}
@@ -1717,10 +1859,21 @@ export default function TradeInPage() {
                                       key={opt}
                                       type="button"
                                       onClick={() => {
-                                        setState(s => ({ ...s, answers: { ...s.answers, [q.id]: opt } }));
-                                        setTimeout(() => {
-                                          if (!isLast) setDiagIndex(i => i + 1);
-                                        }, 260);
+                                        // Build new answers with this answer included
+                                        const newAnswers = { ...state.answers, [q.id]: opt };
+                                        setState(s => ({ ...s, answers: newAnswers }));
+
+                                        if (isLast) {
+                                          // Last question: auto-advance to offer once all are answered
+                                          const nowComplete = currentQuestions.every(
+                                            cq => typeof newAnswers[cq.id] === "string" && newAnswers[cq.id].length > 0
+                                          );
+                                          if (nowComplete) {
+                                            setTimeout(() => goToPhase(4), 350);
+                                          }
+                                        } else {
+                                          setTimeout(() => setDiagIndex(i => i + 1), 260);
+                                        }
                                       }}
                                       className={`w-full px-5 py-4 rounded-2xl border text-sm font-semibold text-left transition-all flex items-center justify-between ${
                                         isSelected
@@ -1847,6 +2000,22 @@ export default function TradeInPage() {
                                 )}
                               </div>
 
+                              {/* Additional notes */}
+                              <div className="max-w-md mx-auto w-full space-y-2">
+                                <label className="text-xs font-black uppercase tracking-widest text-zinc-400 block">
+                                  Additional Notes <span className="text-zinc-300 font-bold normal-case tracking-normal">(optional)</span>
+                                </label>
+                                <textarea
+                                  rows={3}
+                                  maxLength={1000}
+                                  placeholder="Any extra info about the device — damage, accessories included, original box, etc."
+                                  value={state.customerNotes ?? ""}
+                                  onChange={e => setState(s => ({ ...s, customerNotes: e.target.value }))}
+                                  className="w-full rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 px-4 py-3 text-sm font-semibold outline-none focus:border-zinc-950 dark:focus:border-white text-zinc-900 dark:text-white resize-none transition-colors placeholder:font-normal placeholder:text-zinc-400"
+                                />
+                                <p className="text-[10px] text-zinc-400 text-right">{(state.customerNotes ?? "").length}/1000</p>
+                              </div>
+
                               <div className="max-w-md mx-auto bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-5 text-left space-y-3">
                                 <div className="flex justify-between items-center text-xs">
                                   <span className="font-extrabold text-zinc-400 uppercase tracking-wide">Device Model</span>
@@ -1867,8 +2036,9 @@ export default function TradeInPage() {
 
                             <div className="pt-6 border-t border-zinc-100 dark:border-zinc-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
                               <button
+                                disabled={images.length === 0}
                                 onClick={() => goToPhase(5)}
-                                className="w-full sm:w-auto h-12 px-8 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-200 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 shadow-lg shrink-0"
+                                className="w-full sm:w-auto h-12 px-8 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:opacity-50 disabled:pointer-events-none rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 shadow-lg shrink-0"
                               >
                                 <span className="whitespace-nowrap">Submit for Review</span>
                                 <ArrowRight className="h-4 w-4 shrink-0" />
@@ -2096,6 +2266,7 @@ export default function TradeInPage() {
                                 fulfillment: state.fulfillment,
                                 offerPrice: state.tradeInMode === 'unpriced' ? 0 : (aiPrice ?? 0),
                                 images: images.map(i => i.filePath),
+                                customerNotes: state.customerNotes || undefined,
                                 storeId: state.storeId || undefined,
                                 contact: state.contact,
                               });

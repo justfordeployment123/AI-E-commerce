@@ -538,21 +538,23 @@ async function seedStores() {
         where: { id: 'leicester-central' },
         update: {
             name: 'TechStop Leicester',
-            address: '104 High St',
+            address: '148B Melton Rd',
             city: 'Leicester',
-            postcode: 'LE1 5YP',
-            phone: '07343055398',
+            postcode: 'LE4 5EE',
+            phone: '+447343055398',
             openingHours: 'Mon–Sat, 9:00 AM – 6:00 PM',
+            mapsEmbedUrl: 'https://maps.google.com/maps?q=TechStop+Leicester&ftid=0x487761ad81f139e7:0x56323f6a6627c65e&t=&z=17&ie=UTF8&iwloc=&output=embed',
             isActive: true,
         },
         create: {
             id: 'leicester-central',
             name: 'TechStop Leicester',
-            address: '104 High St',
+            address: '148B Melton Rd',
             city: 'Leicester',
-            postcode: 'LE1 5YP',
-            phone: '07343055398',
+            postcode: 'LE4 5EE',
+            phone: '+447343055398',
             openingHours: 'Mon–Sat, 9:00 AM – 6:00 PM',
+            mapsEmbedUrl: 'https://maps.google.com/maps?q=TechStop+Leicester&ftid=0x487761ad81f139e7:0x56323f6a6627c65e&t=&z=17&ie=UTF8&iwloc=&output=embed',
             isActive: true,
         }
     });
@@ -564,14 +566,14 @@ async function seedHelplines() {
         where: { id: 'helpline-store' },
         update: {
             label: 'Leicester Store Helpline',
-            number: '07343055398',
+            number: '+447343055398',
             isActive: true,
             order: 0,
         },
         create: {
             id: 'helpline-store',
             label: 'Leicester Store Helpline',
-            number: '07343055398',
+            number: '+447343055398',
             isActive: true,
             order: 0,
         }

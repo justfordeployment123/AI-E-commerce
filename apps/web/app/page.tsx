@@ -3027,10 +3027,10 @@ function StoreLocationSection() {
 
   const activeStore = stores.find(s => s.id === selectedStoreId) || stores[0];
   const storeName = activeStore?.name || "TechStop Leicester";
-  const storeAddress = activeStore ? `${activeStore.address}, ${activeStore.city} ${activeStore.postcode}` : "104 High St, Leicester LE1 5YP";
+  const storeAddress = activeStore ? `${activeStore.address}, ${activeStore.city} ${activeStore.postcode}` : "148B Melton Rd, Leicester LE4 5EE";
   const storeHours = activeStore?.openingHours || "Mon–Sat, 9:00 AM – 6:00 PM";
-  const storePhone = activeStore?.phone || "07343055398";
-  const mapsLink = activeStore ? `https://maps.google.com/?q=${encodeURIComponent(`${activeStore.name}, ${activeStore.address}, ${activeStore.city} ${activeStore.postcode}`)}` : "https://maps.google.com/?q=104+High+St,+Leicester+LE1+5YP";
+  const storePhone = activeStore?.phone || "+447343055398";
+  const mapsLink = activeStore ? `https://maps.google.com/?q=${encodeURIComponent(`${activeStore.name}, ${activeStore.address}, ${activeStore.city} ${activeStore.postcode}`)}` : "https://maps.app.goo.gl/fyc8Zuy4hjh3tG3x8";
 
   return (
     <section className="relative py-24 bg-zinc-50 dark:bg-zinc-950 overflow-hidden font-sans border-t border-b border-zinc-200/60 dark:border-zinc-900/80">
@@ -3147,7 +3147,7 @@ function StoreLocationSection() {
               height="100%"
               frameBorder="0"
               style={{ border: 0 }}
-              src={`https://maps.google.com/maps?q=${encodeURIComponent(storeAddress)}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
+              src={activeStore?.mapsEmbedUrl ?? `https://maps.google.com/maps?q=${encodeURIComponent(`${storeName}, ${storeAddress}`)}&t=&z=17&ie=UTF8&iwloc=&output=embed`}
               allowFullScreen
               className="w-full h-full transition-all duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)]"
             />

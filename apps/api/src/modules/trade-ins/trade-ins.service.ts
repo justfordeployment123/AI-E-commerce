@@ -58,6 +58,7 @@ export class TradeInsService {
                 offerPrice: dto.offerPrice,
                 images: dto.images,
                 storeId: dto.storeId ?? null,
+                customerNotes: dto.customerNotes ?? null,
                 contact,
             },
         });

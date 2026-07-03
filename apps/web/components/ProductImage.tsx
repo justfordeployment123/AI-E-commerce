@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { Package } from "lucide-react";
 
@@ -10,7 +10,6 @@ interface ProductImageProps {
   hover?: boolean;
   mode?: "product" | "cover";
   sizes?: string;
-  /** Set on the first few above-the-fold images so they load immediately, not lazily */
   priority?: boolean;
   className?: string;
 }
@@ -26,21 +25,34 @@ export default function ProductImage({
 }: ProductImageProps) {
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  // Also catch already-cached images where onLoad fires before React can attach the handler
+  useEffect(() => {
+    if (!src || failed) return;
+    const img = wrapperRef.current?.querySelector("img");
+    if (img?.complete && img.naturalWidth > 0) {
+      setLoaded(true);
+    }
+  }, [src, failed]);
+
+  // Reset when src changes
+  useEffect(() => {
+    setLoaded(false);
+    setFailed(false);
+  }, [src]);
+
+  const showPlaceholder = !src || failed || !loaded;
 
   const imgClass =
     mode === "cover"
       ? `object-cover transition-transform duration-500 z-10 ${hover ? "group-hover:scale-105" : ""} ${className}`
       : `object-contain mix-blend-multiply transition-transform duration-500 z-10 ${hover ? "group-hover:scale-105" : ""} ${className}`;
 
-  // Show placeholder only while loading or when there is no image / image errored.
-  // Must be removed from the DOM once loaded — mix-blend-multiply makes white
-  // areas of product images transparent, so anything behind bleeds through.
-  const showPlaceholder = !src || failed || !loaded;
-
   return (
-    <>
+    <div ref={wrapperRef} className="contents">
       {showPlaceholder && (
-        <div className="absolute inset-0 flex items-center justify-center">
+        <div className="absolute inset-0 flex items-center justify-center z-0">
           <Package className="h-8 w-8 text-zinc-200" strokeWidth={1.5} />
         </div>
       )}
@@ -57,6 +69,6 @@ export default function ProductImage({
           onError={() => setFailed(true)}
         />
       )}
-    </>
+    </div>
   );
 }

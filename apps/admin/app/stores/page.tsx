@@ -6,7 +6,7 @@ import { storesApi, type Store } from "../../lib/api";
 
 const EMPTY: Omit<Store, "id" | "createdAt"> = {
   name: "", address: "", city: "", postcode: "",
-  phone: "", openingHours: "", isActive: true,
+  phone: "", openingHours: "", mapsEmbedUrl: "", isActive: true,
 };
 
 export default function StoresPage() {
@@ -37,7 +37,9 @@ export default function StoresPage() {
     setForm({
       name: store.name, address: store.address, city: store.city,
       postcode: store.postcode, phone: store.phone ?? "",
-      openingHours: store.openingHours ?? "", isActive: store.isActive,
+      openingHours: store.openingHours ?? "",
+      mapsEmbedUrl: store.mapsEmbedUrl ?? "",
+      isActive: store.isActive,
     });
     setEditing(store);
     setAdding(false);
@@ -116,6 +118,7 @@ export default function StoresPage() {
               { key: "postcode", label: "Postcode", placeholder: "e.g. LE1 1AA" },
               { key: "phone", label: "Phone (optional)", placeholder: "e.g. +44 116 123 4567" },
               { key: "openingHours", label: "Opening Hours (optional)", placeholder: "e.g. Mon–Sat 9am–6pm" },
+              { key: "mapsEmbedUrl", label: "Maps Embed URL (optional)", placeholder: "https://maps.google.com/maps?q=...&output=embed", span: true },
             ] as { key: string; label: string; placeholder: string; span?: boolean }[]).map(f => (
               <div key={f.key} className={f.span ? "md:col-span-2" : ""}>
                 <label className="text-xs font-bold text-zinc-700 block mb-1.5">{f.label}</label>
@@ -213,6 +216,15 @@ export default function StoresPage() {
                 )}
                 {store.openingHours && (
                   <p className="flex items-center gap-1.5"><Clock className="h-3 w-3" />{store.openingHours}</p>
+                )}
+                {store.mapsEmbedUrl ? (
+                  <p className="flex items-center gap-1.5 text-emerald-600 font-bold">
+                    <MapPin className="h-3 w-3" /> Map embed set
+                  </p>
+                ) : (
+                  <p className="flex items-center gap-1.5 text-amber-500 font-bold">
+                    <MapPin className="h-3 w-3" /> No map embed URL
+                  </p>
                 )}
               </div>
             </div>

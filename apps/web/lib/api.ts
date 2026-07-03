@@ -190,6 +190,7 @@ export interface Store {
   postcode: string;
   phone?: string;
   openingHours?: string;
+  mapsEmbedUrl?: string;
 }
 
 export const storesApi = {
@@ -456,6 +457,7 @@ export interface TradeIn {
 export interface TradeInDetail extends TradeIn {
   specs: Record<string, string>;
   answers: Record<string, string>;
+  customerNotes?: string;
   adminNotes?: string;
   trackingNumber?: string;
   images: string[];
@@ -496,6 +498,7 @@ export interface TradeInPayload {
   fulfillment: string;
   offerPrice: number;
   images: string[];
+  customerNotes?: string;
   storeId?: string;
   contact: { name: string; email: string; phone: string; address?: string; postcode?: string };
 }
