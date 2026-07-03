@@ -208,7 +208,7 @@ export default function ProductDetailPage() {
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.3 }}
-                    className="h-full w-full object-contain mix-blend-multiply"
+                    className="h-full w-full object-contain mix-blend-multiply dark:mix-blend-normal"
                   />
                 </AnimatePresence>
               </div>

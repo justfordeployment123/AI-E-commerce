@@ -66,6 +66,9 @@ export class CatalogService {
         return Promise.all(categories.map(async c => ({
             ...c,
             image: c.image ? await this.storage.resolveImageUrl(c.image) : null,
+            images: await Promise.all(
+                ((c.images as string[]) ?? []).map(img => this.storage.resolveImageUrl(img)),
+            ),
             productCount: countMap.get(c.id) ?? 0,
             minPrice: priceMap.get(c.id) ?? null,
             modelCount: modelCountMap.get(c.id) ?? 0,
@@ -107,7 +110,33 @@ export class CatalogService {
     }
 
     async saveCategoryImageKey(id: string, key: string) {
-        return this.prisma.category.update({ where: { id }, data: { image: key } });
+        const cat = await this.getCategory(id);
+        // Add to images array and set as primary image if first
+        const images = [...new Set([...cat.images, key])];
+        return this.prisma.category.update({
+            where: { id },
+            data: { image: cat.image ?? key, images },
+        });
+    }
+
+    async addCategoryImage(id: string, key: string) {
+        const cat = await this.getCategory(id);
+        const images = [...new Set([...cat.images, key])];
+        return this.prisma.category.update({
+            where: { id },
+            data: { image: cat.image ?? key, images },
+        });
+    }
+
+    async deleteCategoryImage(id: string, imageKey: string) {
+        const cat = await this.getCategory(id);
+        const images = (cat.images as string[]).filter(img => img !== imageKey);
+        const newPrimary = cat.image === imageKey ? (images[0] ?? null) : cat.image;
+        await this.storage.deleteFiles([imageKey]).catch(() => {});
+        return this.prisma.category.update({
+            where: { id },
+            data: { image: newPrimary, images },
+        });
     }
 
     async deleteCategory(id: string) {

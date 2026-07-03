@@ -105,7 +105,7 @@ export const deviceCatalogApi = {
 // ── Catalog management (categories, brands, brand-categories) ─────────────────
 export interface CatalogCategoryItem {
   id: string; name: string; slug: string; description?: string;
-  image?: string; isActive: boolean;
+  image?: string; images: string[]; isActive: boolean;
   isSellable: boolean; isRepairable: boolean;
   createdAt: string; updatedAt: string;
 }
@@ -123,20 +123,20 @@ export const catalogCategoriesApi = {
     apiFetch<CatalogCategoryItem>(`/catalog/categories/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   delete: (id: string) => apiFetch<void>(`/catalog/categories/${id}`, { method: 'DELETE' }),
   uploadImage: async (id: string, file: File) => {
-    const { key } = await (async () => {
-      const q = new URLSearchParams({ filename: file.name, contentType: file.type || 'application/octet-stream' });
-      const token = getToken();
-      const r = await fetch(`${API_BASE}/catalog/categories/${id}/image-presign?${q}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      if (!r.ok) throw new Error('Failed to get upload URL');
-      const { uploadUrl, key } = await r.json();
-      const put = await fetch(uploadUrl, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file });
-      if (!put.ok) throw new Error('Upload failed');
-      return { key };
-    })();
-    return apiFetch(`/catalog/categories/${id}/image`, { method: 'POST', body: JSON.stringify({ key }) });
+    const q = new URLSearchParams({ filename: file.name, contentType: file.type || 'application/octet-stream' });
+    const token = getToken();
+    const r = await fetch(`${API_BASE}/catalog/categories/${id}/image-presign?${q}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!r.ok) throw new Error('Failed to get upload URL');
+    const { uploadUrl, key } = await r.json();
+    const put = await fetch(uploadUrl, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file });
+    if (!put.ok) throw new Error('Upload failed');
+    // Adds to images array (and sets primary if first)
+    return apiFetch(`/catalog/categories/${id}/images`, { method: 'POST', body: JSON.stringify({ key }) });
   },
+  deleteImage: (id: string, imageKey: string) =>
+    apiFetch<void>(`/catalog/categories/${id}/images/${encodeURIComponent(imageKey)}`, { method: 'DELETE' }),
 };
 
 export const catalogBrandsApi = {

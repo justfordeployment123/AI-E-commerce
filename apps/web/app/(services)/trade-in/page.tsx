@@ -549,11 +549,14 @@ export default function TradeInPage() {
             setPendingDevice(JSON.parse(pending));
           } catch {}
         } else {
-          // ?q= param: manual / unlisted device — skip category selection by using "Other"
-          const q = params.get("q");
-          const cat = params.get("cat"); // "Other" when coming from the search bar escape hatch
+          const q   = params.get("q");
+          const cat = params.get("cat");
           if (q) {
+            // Manual/unlisted device from search bar — jump straight to brand step
             setPendingDevice({ brand: "", model: q, category: cat ?? "Other" });
+          } else if (cat) {
+            // Category card clicked on home page — open wizard at brand step for that category
+            setPendingDevice({ brand: "", model: "", category: cat });
           }
         }
       }
@@ -974,8 +977,12 @@ export default function TradeInPage() {
                     const meta = CAT_METADATA[cat.slug];
                     const mood = meta?.mood ?? "bg-zinc-500/10 border-zinc-500/20";
                     const moodIcon = meta?.moodIcon ?? "text-zinc-500";
-                    const img = cat.image ?? catFallbackImages[cat.slug] ?? "";
-                    const isProductFallback = !cat.image && !!catFallbackImages[cat.slug];
+                    // Pick a random image from the category's images array, or fall back to single image
+                    const catImgs = (cat.images ?? []).length > 0 ? cat.images : (cat.image ? [cat.image] : []);
+                    const img = catImgs.length > 0
+                      ? catImgs[Math.floor(Math.random() * catImgs.length)]
+                      : (catFallbackImages[cat.slug] ?? "");
+                    const isProductFallback = catImgs.length === 0 && !!catFallbackImages[cat.slug];
                     const sub = cat.description ?? meta?.sub ?? "";
                     const catId = meta?.oldId ?? cat.slug;
                     const modelCount = cat.modelCount > 0 ? `${cat.modelCount}+ models` : null;

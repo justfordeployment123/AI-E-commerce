@@ -515,7 +515,13 @@ function TradeInCTASection() {
         setCategories(filtered);
 
         filtered.forEach(c => {
-          if (!c.image) {
+          // Pick a random image from the category's images[] array first
+          const catImages = (c.images ?? []).filter(Boolean);
+          if (catImages.length > 0) {
+            const img = catImages[Math.floor(Math.random() * catImages.length)];
+            setFallbacks(prev => ({ ...prev, [c.slug]: img }));
+          } else {
+            // Fall back to a random product image if no category images exist
             productsApi.list({ category: c.name, limit: 12 })
               .then(r => {
                 const pool = r.items.flatMap(p => p.images ?? []);
@@ -594,13 +600,19 @@ function TradeInCTASection() {
           {/* Right Column: Visual peeking category cards */}
           <div className="lg:col-span-7 grid sm:grid-cols-2 gap-6 w-full">
             {categories.map((c) => {
-              const img = c.image ?? fallbacks[c.slug] ?? "";
+              const img = fallbacks[c.slug] ?? c.image ?? "";
               const label = getDisplayLabel(c.slug) || c.name;
+              // Map catalog slug → trade-in wizard category ID
+              const catId: Record<string, string> = {
+                phones: "Phone", laptops: "Laptop", consoles: "Console",
+                tablets: "Tablet", audio: "Audio", smartwatches: "Smartwatch",
+              };
+              const wizardCat = catId[c.slug] ?? "Other";
               return (
                 <Link
                   key={c.slug}
-                  href={`/trade-in`}
-                  className={`relative group rounded-[2.2rem] border border-zinc-200/80 dark:border-zinc-800/80 bg-zinc-950 overflow-hidden h-44 flex flex-col justify-between p-6 text-left hover:-translate-y-1.5 transition-all duration-300 ${getGlowClass(c.slug)}`}
+                  href={`/trade-in?cat=${encodeURIComponent(wizardCat)}`}
+                  className={`relative group rounded-[2.2rem] border border-zinc-200/80 dark:border-zinc-800/80 bg-zinc-950 overflow-hidden h-52 flex flex-col justify-end p-5 text-left hover:-translate-y-1.5 transition-all duration-300 ${getGlowClass(c.slug)}`}
                 >
                   {/* Full Card Background Image */}
                   {img && (
@@ -608,26 +620,27 @@ function TradeInCTASection() {
                       <img
                         src={img}
                         alt={label}
-                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 brightness-[1.08] contrast-[1.03] group-hover:brightness-[1.12] transition-all duration-700"
+                        className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-all duration-700"
                       />
-                      {/* Smooth modern gradient overlay for readability and contrast */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-zinc-950/85 via-zinc-950/20 to-transparent z-10" />
+                      {/* Bottom-left gradient for text readability, right side stays clear to show image */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/90 via-zinc-950/30 to-transparent z-10" />
+                      <div className="absolute inset-0 bg-gradient-to-r from-zinc-950/60 via-transparent to-transparent z-10" />
                     </>
                   )}
                   
-                  <div className="relative z-20 flex flex-col h-full justify-between text-white w-full">
-                    <span className="inline-flex items-center justify-center px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-wider bg-white/10 dark:bg-black/25 backdrop-blur-md border border-white/10 w-max text-white shadow-sm">
-                      {label}
-                    </span>
-                    
-                    <div className="flex items-center justify-between w-full mt-2">
-                      <div>
-                        <p className="text-[9px] font-black text-zinc-300 uppercase tracking-widest leading-none">Trade-In</p>
-                        <p className="text-sm font-extrabold text-white mt-1 group-hover:text-red-500 dark:group-hover:text-red-400 transition-colors">Start Quote</p>
-                      </div>
-                      <div className="h-8 w-8 rounded-full bg-white/10 group-hover:bg-white dark:group-hover:bg-white text-white group-hover:text-black flex items-center justify-center transition-all duration-300 shrink-0">
-                        <ArrowRight className="h-4.5 w-4.5 transition-transform duration-300 group-hover:translate-x-0.5" />
-                      </div>
+                  {/* Category badge — top left */}
+                  <span className="absolute top-4 left-4 z-20 inline-flex items-center px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-wider bg-black/40 backdrop-blur-md border border-white/10 text-white shadow-sm">
+                    {label}
+                  </span>
+
+                  {/* CTA row — bottom */}
+                  <div className="relative z-20 flex items-center justify-between w-full">
+                    <div>
+                      <p className="text-[9px] font-black text-zinc-300 uppercase tracking-widest leading-none">Trade-In</p>
+                      <p className="text-sm font-extrabold text-white mt-1 group-hover:text-red-400 transition-colors">Start Quote</p>
+                    </div>
+                    <div className="h-8 w-8 rounded-full bg-white/15 group-hover:bg-white text-white group-hover:text-black flex items-center justify-center transition-all duration-300 shrink-0">
+                      <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
                     </div>
                   </div>
                 </Link>

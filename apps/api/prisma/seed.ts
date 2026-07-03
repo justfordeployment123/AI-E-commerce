@@ -131,18 +131,28 @@ async function seedCategories() {
             console.log(`  Description set: ${catSlug}`);
         }
 
-        // Hero image — first image at root of category folder
-        if (!cat.image) {
-            const heroFile = fs.readdirSync(catPath)
-                .find(f => isImage(f) && fs.statSync(path.join(catPath, f)).isFile());
-            if (heroFile) {
+        // All images at root of category folder
+        const imageFiles = fs.readdirSync(catPath)
+            .filter(f => isImage(f) && fs.statSync(path.join(catPath, f)).isFile())
+            .sort();
+
+        if (imageFiles.length > 0 && cat.images.length === 0) {
+            const keys: string[] = [];
+            for (const imgFile of imageFiles) {
                 const key = await uploadFile(
-                    path.join(catPath, heroFile),
-                    `catalog/categories/${catSlug}/${heroFile}`,
+                    path.join(catPath, imgFile),
+                    `catalog/categories/${catSlug}/${imgFile}`,
                 );
-                cat = await prisma.category.update({ where: { id: cat.id }, data: { image: key } });
-                console.log(`  Category image: ${catSlug}/${heroFile}`);
+                keys.push(key);
             }
+            cat = await prisma.category.update({
+                where: { id: cat.id },
+                data: {
+                    image:  keys[0],   // first image stays as primary hero
+                    images: keys,      // all images stored for carousel/random pick
+                },
+            });
+            console.log(`  Category images (${keys.length}): ${catSlug}`);
         }
 
         // Brand subfolders → brand-category images

@@ -137,7 +137,7 @@ export default function CategoriesPage() {
                 <tr className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
                   <th className="text-left px-5 py-3">Name</th>
                   <th className="text-left px-5 py-3">Slug</th>
-                  <th className="text-left px-5 py-3">Image</th>
+                  <th className="text-left px-5 py-3">Images</th>
                   <th className="text-left px-5 py-3">Status</th>
                   <th className="text-center px-3 py-3">Sellable</th>
                   <th className="text-center px-3 py-3">Repairable</th>
@@ -150,13 +150,29 @@ export default function CategoriesPage() {
                     <td className="px-5 py-3 font-semibold text-zinc-900">{cat.name}</td>
                     <td className="px-5 py-3 text-zinc-400 font-mono text-xs">{cat.slug}</td>
                     <td className="px-5 py-3">
-                      {cat.image
-                        ? <img src={cat.image} alt="" className="h-8 w-8 rounded-lg object-cover" />
-                        : <button onClick={() => { pendingUploadId.current = cat.id; fileRef.current?.click(); }}
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {(cat.images ?? []).map((img, i) => (
+                          <div key={i} className="relative group">
+                            <img src={img} alt="" className="h-8 w-8 rounded-lg object-cover border border-zinc-100" />
+                            <button
+                              onClick={async () => {
+                                setUploadingId(cat.id);
+                                try { await catalogCategoriesApi.deleteImage(cat.id, img); load(); }
+                                catch (e: any) { setError(e.message); }
+                                finally { setUploadingId(null); }
+                              }}
+                              className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 rounded-full text-white text-[8px] font-bold opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                            >×</button>
+                          </div>
+                        ))}
+                        {(cat.images ?? []).length < 10 && (
+                          <button onClick={() => { pendingUploadId.current = cat.id; fileRef.current?.click(); }}
                             disabled={uploadingId === cat.id}
-                            className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700">
-                            <Upload className="h-3 w-3" />{uploadingId === cat.id ? "…" : "Upload"}
-                          </button>}
+                            className="h-8 w-8 rounded-lg border-2 border-dashed border-zinc-200 hover:border-zinc-400 flex items-center justify-center text-zinc-300 hover:text-zinc-500 transition-colors">
+                            {uploadingId === cat.id ? <div className="h-3 w-3 border-2 border-zinc-300 border-t-zinc-600 rounded-full animate-spin" /> : <Upload className="h-3 w-3" />}
+                          </button>
+                        )}
+                      </div>
                     </td>
                     <td className="px-5 py-3">
                       <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${cat.isActive ? "bg-emerald-50 text-emerald-700" : "bg-zinc-100 text-zinc-400"}`}>

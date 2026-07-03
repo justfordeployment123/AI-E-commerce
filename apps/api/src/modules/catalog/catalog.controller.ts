@@ -73,6 +73,20 @@ export class CategoriesController {
         throw new BadRequestException('Provide a file or a key');
     }
 
+    @Post(':id/images')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('ADMIN')
+    addImage(@Param('id') id: string, @Body('key') key: string) {
+        return this.catalog.addCategoryImage(id, key);
+    }
+
+    @Delete(':id/images/:imageKey')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('ADMIN')
+    deleteImage(@Param('id') id: string, @Param('imageKey') imageKey: string) {
+        return this.catalog.deleteCategoryImage(id, decodeURIComponent(imageKey));
+    }
+
     @Delete(':id')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles('ADMIN')

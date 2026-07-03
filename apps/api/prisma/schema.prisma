@@ -269,6 +269,7 @@ model Category {
   slug            String          @unique
   description     String?
   image           String?
+  images          String[]        @default([])
   isActive        Boolean         @default(true)
   isSellable      Boolean         @default(false)
   isRepairable    Boolean         @default(false)

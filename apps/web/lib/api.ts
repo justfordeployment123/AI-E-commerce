@@ -522,6 +522,7 @@ export interface CatalogCategory {
   slug: string;
   description?: string;
   image?: string;
+  images: string[];
   isActive: boolean;
   productCount: number;
   minPrice: number | null;
