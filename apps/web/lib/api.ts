@@ -519,7 +519,8 @@ export interface Review {
 export interface CatalogCategory {
   id: string;
   name: string;
-  slug: string;
+  slug: string;        // computed from name.toLowerCase() — not stored in DB
+  displayName?: string;
   description?: string;
   image?: string;
   images: string[];

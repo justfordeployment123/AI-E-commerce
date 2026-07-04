@@ -25,7 +25,7 @@ export class DeviceCatalogService {
         if (params?.forTradeIn) where.tradeInEnabled = true;
         if (params?.categorySlug || params?.brandSlug) {
             const bc: Record<string, unknown> = {};
-            if (params?.categorySlug) bc.category = { slug: params.categorySlug };
+            if (params?.categorySlug) bc.category = { name: { equals: params.categorySlug, mode: 'insensitive' } };
             if (params?.brandSlug)    bc.brand    = { slug: params.brandSlug };
             where.brandCategory = bc;
         }

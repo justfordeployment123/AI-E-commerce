@@ -162,23 +162,27 @@ export default function CategoryPage() {
   const categorySlug = (params?.category as string)?.toLowerCase();
 
   // All category content comes from the API — admin panel is the single source of truth
-  const [dynamicCat, setDynamicCat] = useState<{ name: string; description?: string } | null>(null);
+  const [dynamicCat, setDynamicCat] = useState<{ name: string; displayName?: string; description?: string } | null>(null);
   const [catNotFound, setCatNotFound] = useState(false);
   useEffect(() => {
     catalogApi.listCategories({ includeInactive: false } as any)
       .then(cats => {
         const found = cats.find(c => c.slug === categorySlug);
-        if (found) setDynamicCat({ name: found.name, description: found.description ?? undefined });
+        if (found) setDynamicCat({
+          name: found.name,
+          displayName: found.displayName ?? undefined,
+          description: found.description ?? undefined,
+        });
         else setCatNotFound(true);
       })
       .catch(() => setCatNotFound(true));
   }, [categorySlug]);
 
-  // meta is purely derived from the API — no hardcoded content
+  // meta — name = short nav label, plural = full display heading
   const meta = dynamicCat
     ? {
-        label: dynamicCat.name,
-        plural: dynamicCat.name,
+        label:       dynamicCat.name,
+        plural:      dynamicCat.displayName ?? dynamicCat.name,
         description: dynamicCat.description ?? "",
       }
     : null;
@@ -204,7 +208,7 @@ export default function CategoryPage() {
   useEffect(() => {
     setLoading(true);
     catalogApi.listCategories()
-      .then(cats => cats.find(c => c.slug === categorySlug)?.name ?? null)
+      .then(cats => cats.find(c => c.name.toLowerCase() === categorySlug.toLowerCase())?.name ?? null)
       .catch(() => null)
       .then(async (apiCategory) => {
         if (!apiCategory) { setLoading(false); return; }

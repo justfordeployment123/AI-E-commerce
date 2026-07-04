@@ -65,6 +65,7 @@ export class CatalogService {
 
         return Promise.all(categories.map(async c => ({
             ...c,
+            slug: c.name.toLowerCase(),   // computed from name — slug column was removed from DB
             image: c.image ? await this.storage.resolveImageUrl(c.image) : null,
             images: await Promise.all(
                 ((c.images as string[]) ?? []).map(img => this.storage.resolveImageUrl(img)),
@@ -95,13 +96,13 @@ export class CatalogService {
 
     async uploadCategoryImage(id: string, file: any) {
         const cat = await this.getCategory(id);
-        const { filePath } = await this.storage.uploadFile(file, `catalog/categories/${cat.slug}`);
+        const { filePath } = await this.storage.uploadFile(file, `catalog/categories/${cat.name.toLowerCase()}`);
         return this.prisma.category.update({ where: { id }, data: { image: filePath } });
     }
 
     async presignCategoryImage(id: string, filename: string, contentType: string) {
         const cat = await this.getCategory(id);
-        const key = this.storage.buildKey(`catalog/categories/${cat.slug}`, filename);
+        const key = this.storage.buildKey(`catalog/categories/${cat.name.toLowerCase()}`, filename);
         const [uploadUrl, viewUrl] = await Promise.all([
             this.storage.presignPut(key, contentType),
             this.storage.generatePresignedUrl(key),
@@ -304,7 +305,7 @@ export class CatalogService {
         if (images.length >= MAX_BRAND_CATEGORY_IMAGES) {
             throw new BadRequestException(`Maximum ${MAX_BRAND_CATEGORY_IMAGES} images allowed per brand-category`);
         }
-        const { filePath } = await this.storage.uploadFile(file, `catalog/categories/${bc.category.slug}/${bc.brand.slug}`);
+        const { filePath } = await this.storage.uploadFile(file, `catalog/categories/${bc.category.name.toLowerCase()}/${bc.brand.slug}`);
         return this.prisma.brandCategory.update({
             where: { id },
             data: { images: [...images, filePath] },
@@ -318,7 +319,7 @@ export class CatalogService {
         if (images.length >= MAX_BRAND_CATEGORY_IMAGES) {
             throw new BadRequestException(`Maximum ${MAX_BRAND_CATEGORY_IMAGES} images allowed per brand-category`);
         }
-        const key = this.storage.buildKey(`catalog/categories/${bc.category.slug}/${bc.brand.slug}`, filename);
+        const key = this.storage.buildKey(`catalog/categories/${bc.category.name.toLowerCase()}/${bc.brand.slug}`, filename);
         const [uploadUrl, viewUrl] = await Promise.all([
             this.storage.presignPut(key, contentType),
             this.storage.generatePresignedUrl(key),

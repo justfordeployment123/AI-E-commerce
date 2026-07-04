@@ -167,7 +167,11 @@
       "Bash(npx ts-node *)",
       "WebFetch(domain:maps.app.goo.gl)",
       "Bash(xargs grep -l \"stores\\\\|Store\")",
-      "Bash(xargs grep -l \"apple-pencil\\\\|product.*\\\\[slug\\\\]\\\\|\\\\[slug\\\\]\")"
+      "Bash(xargs grep -l \"apple-pencil\\\\|product.*\\\\[slug\\\\]\\\\|\\\\[slug\\\\]\")",
+      "Bash(cd \"d:/CODE/Projects/Markhor System/AI-E-commerce/apps/web\" && npx tsc --noEmit 2>&1 | head -15 && cd ../admin && npx tsc --noEmit 2>&1 | head -15 && cd ../api && npx tsc --noEmit 2>&1 | head -15)",
+      "Read(//d/CODE/Projects/Markhor System/**)",
+      "Bash(PRISMA_MIGRATE_SKIP_GENERATE=1 npx prisma migrate dev --name remove_slug_from_categories)",
+      "Bash(grep -n \"CAT_ICON\\\\|icon: Icon\\\\|icon: CAT\\\\|{ label, href, icon\" apps/web/components/Navbar.tsx)"
     ],
     "additionalDirectories": [
       "d:\\CODE\\Projects\\Markhor Systems Projects\\Ai-Ecommerce\\apps\\web\\app\\account\\repairs",

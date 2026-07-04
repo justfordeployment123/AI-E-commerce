@@ -90,18 +90,17 @@ async function uploadFile(localPath: string, s3Key: string): Promise<string> {
     return s3Key;
 }
 
-// ─── Category descriptions — editable in admin panel, seeded as defaults ──────
-const CATEGORY_DESCRIPTIONS: Record<string, string> = {
-    phones:       'Certified refurbished smartphones with warranty. Every handset is unlocked, tested, and backed by our quality guarantee.',
-    tablets:      'Refurbished iPads, Samsung Galaxy Tabs and Surface devices. Fully tested, screen checked, and sold with a warranty.',
-    consoles:     'Certified refurbished PlayStation, Xbox and Nintendo consoles. Disc drives tested, HDMI verified, controllers included.',
-    laptops:      'Refurbished MacBooks, ThinkPads, Dell XPS and more. Every laptop is battery-tested, keyboard-checked, and ships with a warranty.',
-    audio:        'Genuine refurbished headphones, earbuds and speakers. Ultrasonic cleaned, battery-tested, and quality-graded.',
-    accessories:  'Chargers, cables, memory, storage, mice, graphics cards and more — quality-checked accessories at great prices.',
-    smartwatches: 'Certified refurbished smartwatches from Apple, Samsung and more. Battery-tested and quality-graded.',
-    gaming:       'Pre-owned video games and gaming accessories. Fully tested, disc drives verified, and ready to play.',
-    games:        'Pre-owned video games at great prices. Fully tested and ready to play.',
-    films:        'Pre-owned Blu-rays and DVDs at brilliant prices. Fully tested and ready to watch.',
+// ─── Category names + descriptions — seeded as defaults, editable in admin ──────
+// name        = short nav label  (e.g. "Audio")
+// displayName = full page heading (e.g. "Audio & Headphones")
+// Only main navbar categories — others (accessories, smartwatches, games, films) are admin-managed
+const CATEGORY_META_SEED: Record<string, { name: string; displayName: string; description: string }> = {
+    phones:   { name: 'Phones',    displayName: 'Smartphones',        description: 'Certified refurbished smartphones with warranty. Every handset is unlocked, tested, and backed by our quality guarantee.' },
+    tablets:  { name: 'Tablets',   displayName: 'Tablets',            description: 'Refurbished iPads, Samsung Galaxy Tabs and Surface devices. Fully tested, screen checked, and sold with a warranty.' },
+    consoles: { name: 'Consoles',  displayName: 'Gaming Consoles',    description: 'Certified refurbished PlayStation, Xbox and Nintendo consoles. Disc drives tested, HDMI verified, controllers included.' },
+    laptops:  { name: 'Laptops',   displayName: 'Laptops & MacBooks', description: 'Refurbished MacBooks, ThinkPads, Dell XPS and more. Every laptop is battery-tested, keyboard-checked, and ships with a warranty.' },
+    audio:    { name: 'Audio',     displayName: 'Audio & Headphones', description: 'Genuine refurbished headphones, earbuds and speakers. Ultrasonic cleaned, battery-tested, and quality-graded.' },
+    gaming:   { name: 'Gaming',    displayName: 'Gaming',             description: 'Pre-owned video games and gaming accessories at great prices.' },
 };
 
 // ─── Phase 1: Categories + brand-category images ──────────────────────────────
@@ -115,17 +114,17 @@ async function seedCategories() {
 
     for (const catSlug of catFolders) {
         const catPath = path.join(catDir, catSlug);
-        const catName = cap(catSlug);
-        const desc = CATEGORY_DESCRIPTIONS[catSlug];
+        const meta    = CATEGORY_META_SEED[catSlug];
+        const catName = meta?.name ?? cap(catSlug);
+        const desc    = meta?.description;
 
-        // Upsert category
+        // Upsert category — always set name + displayName; backfill description if not yet customised
         let cat = await prisma.category.upsert({
-            where:  { slug: catSlug },
-            update: {},
-            create: { name: catName, slug: catSlug, description: desc },
+            where:  { name: catName },
+            update: { name: catName, displayName: meta?.displayName ?? catName },
+            create: { name: catName, description: desc, displayName: meta?.displayName ?? catName },
         });
 
-        // Backfill description if not yet set — preserves any admin-edited description
         if (!cat.description && desc) {
             cat = await prisma.category.update({ where: { id: cat.id }, data: { description: desc } });
             console.log(`  Description set: ${catSlug}`);

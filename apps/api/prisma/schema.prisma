@@ -266,8 +266,8 @@ model Store {
 model Category {
   id              String          @id @default(uuid())
   name            String          @unique
-  slug            String          @unique
   description     String?
+  displayName     String?   // full plural heading e.g. "Audio & Headphones", "Gaming Consoles"
   image           String?
   images          String[]        @default([])
   isActive        Boolean         @default(true)

@@ -332,10 +332,11 @@ export class SeedService {
                 update: {},
                 create: { name: dev.brand, slug: brandSlug },
             });
+            const catName = capitalize(categorySlug);
             const cat = await this.prisma.category.upsert({
-                where: { slug: categorySlug },
+                where: { name: catName },
                 update: { ...categoryFlags(categorySlug) },
-                create: { name: capitalize(categorySlug), slug: categorySlug, ...categoryFlags(categorySlug) },
+                create: { name: catName, ...categoryFlags(categorySlug) },
             });
 
             const bcKey = `${brand.id}::${cat.id}`;
@@ -366,10 +367,11 @@ export class SeedService {
             const catDir = path.join(categoriesDir, categorySlug);
 
             // Upsert category
+            const catNameFromSlug = capitalize(categorySlug);
             let cat = await this.prisma.category.upsert({
-                where: { slug: categorySlug },
+                where: { name: catNameFromSlug },
                 update: { ...categoryFlags(categorySlug) },
-                create: { name: capitalize(categorySlug), slug: categorySlug, ...categoryFlags(categorySlug) },
+                create: { name: catNameFromSlug, ...categoryFlags(categorySlug) },
             });
 
             // Root-level images → category hero (first one wins)
@@ -720,9 +722,9 @@ export class SeedService {
                     });
                     const catName = categorySlug.charAt(0).toUpperCase() + categorySlug.slice(1);
                     const catRecord = await this.prisma.category.upsert({
-                        where: { slug: categorySlug },
+                        where: { name: catName },
                         update: { ...categoryFlags(categorySlug) },
-                        create: { name: catName, slug: categorySlug, ...categoryFlags(categorySlug) },
+                        create: { name: catName, ...categoryFlags(categorySlug) },
                     });
                     const bc = await this.prisma.brandCategory.upsert({
                         where: { brandId_categoryId: { brandId: brandRecord.id, categoryId: catRecord.id } },

@@ -3,8 +3,7 @@
 import React, { useRef, useState, useEffect } from "react";
 import {
   ShoppingCart, Search, Menu, ChevronRight, X, Zap, ArrowRight,
-  Smartphone, Tablet, Gamepad2, Laptop, Headphones, RefreshCw, Wrench,
-  Package, Settings, LogOut, LogIn, Sun, Moon, MoreHorizontal
+  RefreshCw, Wrench, Package, Settings, LogOut, LogIn, Sun, Moon, MoreHorizontal
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
@@ -14,57 +13,14 @@ import { useCart } from "../context/cart-context";
 import { NotificationBell } from "./NotificationBell";
 import { catalogApi, productsApi, otherSubcategoriesApi } from "../lib/api";
 
-const SLUG_ICON_MAP: Record<string, React.ElementType> = {
-  phones:   Smartphone,
-  tablets:  Tablet,
-  consoles: Gamepad2,
-  laptops:  Laptop,
-  audio:    Headphones,
-  other:    MoreHorizontal,
-};
-
-const CATEGORY_DROPDOWN_META: Record<string, {
-  plural: string;
-  description: string;
-  brands: string[];
-}> = {
-  phones: {
-    plural: "Smartphones",
-    description: "Certified refurbished smartphones with 2-year warranty. Every handset is unlocked, tested, and backed by our quality guarantee.",
-    brands: ["Apple", "Samsung", "Google", "OnePlus"],
-  },
-  tablets: {
-    plural: "Tablets",
-    description: "Refurbished iPads, Samsung Galaxy Tabs and Surface devices. Fully tested, screen checked, and sold with a 2-year warranty.",
-    brands: ["Apple", "Samsung", "Microsoft"],
-  },
-  consoles: {
-    plural: "Gaming Consoles",
-    description: "Certified refurbished PlayStation, Xbox and Nintendo consoles. Disc drives tested, HDMI verified, controllers included.",
-    brands: ["Sony", "Microsoft", "Nintendo"],
-  },
-  laptops: {
-    plural: "Laptops & MacBooks",
-    description: "Refurbished MacBooks, ThinkPads, Dell XPS and more. Every laptop is battery-tested, keyboard-checked, and ships with a warranty.",
-    brands: ["Apple", "Dell", "Lenovo", "HP"],
-  },
-  audio: {
-    plural: "Audio & Headphones",
-    description: "Genuine refurbished headphones, earbuds and speakers. Ultrasonic cleaned, battery-tested, and quality-graded.",
-    brands: ["Sony", "Apple", "Bose", "Samsung"],
-  },
-  other: {
-    plural: "Other Tech",
-    description: "Cables, chargers, memory, storage, smart watches, games, films and more — quality accessories at great prices.",
-    brands: ["Apple", "Samsung", "Crucial", "Canon"],
-  },
-};
 
 export default function Navbar() {
   const { count: itemsCount } = useCart();
   const [isOpen, setIsOpen] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<{ slug: string; name: string; brand: string; category: string; price: number | null; image: string | null }[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
@@ -74,9 +30,10 @@ export default function Navbar() {
   const [mounted, setMounted] = useState(false);
   const [hoveredCat, setHoveredCat] = useState<string | null>(null);
   const closeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [shopCategories, setShopCategories] = useState<{ label: string; href: string; slug: string; icon: React.ElementType }[]>([]);
+  const [shopCategories, setShopCategories] = useState<{ label: string; href: string; slug: string }[]>([]);
   const [categoryBrands, setCategoryBrands] = useState<Record<string, string[]>>({});
   const [categoryDescriptions, setCategoryDescriptions] = useState<Record<string, string>>({});
+  const [categoryDisplayNames, setCategoryDisplayNames] = useState<Record<string, string>>({});
   const [otherSubcats, setOtherSubcats] = useState<{ label: string; slug: string }[]>([]);
 
   function openDropdown(slug: string) {
@@ -109,28 +66,31 @@ export default function Navbar() {
       catalogApi.listCategories()
         .then(cats => {
           const mainCats = cats
-            .filter(c => !OTHERS_SLUGS.has(c.slug))
+            .filter(c => !OTHERS_SLUGS.has(c.name.toLowerCase()))
             .map(c => ({
               label: c.name,
-              href: `/shop/${c.slug}`,
-              slug: c.slug,
-              icon: SLUG_ICON_MAP[c.slug] ?? MoreHorizontal,
+              href: `/shop/${c.name.toLowerCase()}`,
+              slug: c.name.toLowerCase(),
             }));
-          mainCats.push({ label: "Others", href: `/shop/others`, slug: "other", icon: MoreHorizontal });
+          mainCats.push({ label: "Others", href: `/shop/others`, slug: "other" });
           setShopCategories(mainCats);
 
-          // Store descriptions from DB — admin can update these in the admin panel
+          // Store descriptions + displayNames from DB
           const descs: Record<string, string> = {};
-          cats.filter(c => !OTHERS_SLUGS.has(c.slug)).forEach(c => {
-            if (c.description) descs[c.slug] = c.description;
+          const displayNames: Record<string, string> = {};
+          cats.filter(c => !OTHERS_SLUGS.has(c.name.toLowerCase())).forEach(c => {
+            const key = c.name.toLowerCase();
+            if (c.description) descs[key] = c.description;
+            if (c.displayName)  displayNames[key] = c.displayName;
           });
           setCategoryDescriptions(descs);
+          setCategoryDisplayNames(displayNames);
 
           cats
-            .filter(c => !OTHERS_SLUGS.has(c.slug))
+            .filter(c => !OTHERS_SLUGS.has(c.name.toLowerCase()))
             .forEach(c => {
               productsApi.brands(c.name)
-                .then(brands => setCategoryBrands(prev => ({ ...prev, [c.slug]: brands.map(b => b.brand) })))
+                .then(brands => setCategoryBrands(prev => ({ ...prev, [c.name.toLowerCase()]: brands.map(b => b.brand) })))
                 .catch(() => {});
             });
         })
@@ -144,6 +104,23 @@ export default function Navbar() {
       .catch(() => {});
   }, []);
 
+  // Live search — fetch real products from API as user types
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (!q) { setSearchResults([]); return; }
+    const t = setTimeout(() => {
+      setSearchLoading(true);
+      productsApi.list({ search: q, limit: 6 })
+        .then(r => setSearchResults(r.items.map(p => ({
+          slug: p.slug, name: p.name, brand: p.brand,
+          category: p.category, price: p.price ?? null, image: p.images?.[0] ?? null,
+        }))))
+        .catch(() => {})
+        .finally(() => setSearchLoading(false));
+    }, 280);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
+
   const toggleTheme = () => {
     const nextTheme = theme === "dark" ? "light" : "dark";
     setTheme(nextTheme);
@@ -156,22 +133,6 @@ export default function Navbar() {
     localStorage.setItem("ts-theme", nextTheme);
   };
 
-  const MOCK_SEARCH_ITEMS = [
-    { id: "iphone-15-pro", title: "iPhone 15 Pro", category: "phones", brand: "Apple", price: "739", image: "https://picsum.photos/seed/iphone_wanted/100/100" },
-    { id: "iphone-13-pro-max", title: "iPhone 13 Pro Max", category: "phones", brand: "Apple", price: "529", image: "https://picsum.photos/seed/custphone1/100/100" },
-    { id: "galaxy-s24-ultra", title: "Galaxy S24 Ultra", category: "phones", brand: "Samsung", price: "819", image: "https://picsum.photos/seed/samsung_wanted/100/100" },
-    { id: "google-pixel-7", title: "Google Pixel 7", category: "phones", brand: "Google", price: "349", image: "https://picsum.photos/seed/google_wanted/100/100" },
-    { id: "macbook-air-m2", title: "MacBook Air M2", category: "laptops", brand: "Apple", price: "849", image: "https://picsum.photos/seed/macbook_wanted/100/100" },
-    { id: "playstation-5", title: "PlayStation 5 Disc Edition", category: "consoles", brand: "Sony", price: "389", image: "https://picsum.photos/seed/ps5_wanted/100/100" },
-  ];
-
-  const POPULAR_SEARCHES = [
-    "iPhone 15 Pro",
-    "Nintendo Switch OLED",
-    "MacBook Air M2",
-    "Galaxy Watch",
-    "PS5 Console",
-  ];
 
   return (
     <>
@@ -241,66 +202,37 @@ export default function Navbar() {
                     className="absolute left-0 right-0 top-full mt-2 bg-background border border-border rounded-[24px] shadow-2xl overflow-hidden z-50 p-5 text-foreground"
                   >
                     {searchQuery === "" ? (
-                      <div className="space-y-4">
-                        <div>
-                          <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2.5">Popular Searches</p>
-                          <div className="flex flex-wrap gap-2">
-                            {POPULAR_SEARCHES.map((term) => (
-                              <button
-                                key={term}
-                                onClick={() => setSearchQuery(term)}
-                                className="px-3.5 py-1.5 rounded-xl bg-muted border border-border text-xs font-bold hover:border-accent hover:bg-background transition-colors text-foreground"
-                              >
-                                {term}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div>
-                          <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2.5">Shop Categories</p>
-                          <div className="grid grid-cols-5 gap-3">
-                            {shopCategories.map(({ label, href, icon: Icon }) => (
-                              <Link
-                                key={label}
-                                href={href}
-                                className="flex flex-col items-center justify-center p-3 rounded-2xl bg-muted hover:bg-accent hover:text-white border border-border/40 hover:border-accent transition-all group text-foreground"
-                              >
-                                <Icon className="h-5 w-5 text-zinc-400 group-hover:text-white transition-colors mb-1.5" />
-                                <span className="text-[10px] font-extrabold">{label}</span>
-                              </Link>
-                            ))}
-                          </div>
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2.5">Shop Categories</p>
+                        <div className="grid grid-cols-5 gap-3">
+                          {shopCategories.map(({ label, href }) => (
+                            <Link key={label} href={href} className="flex items-center justify-center p-3 rounded-2xl bg-muted hover:bg-accent hover:text-white border border-border/40 hover:border-accent transition-all text-foreground">
+                              <span className="text-[10px] font-extrabold text-center">{label}</span>
+                            </Link>
+                          ))}
                         </div>
                       </div>
                     ) : (
                       <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-3">Matching Products</p>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-3">
+                          {searchLoading ? "Searching…" : "Matching Products"}
+                        </p>
                         <div className="space-y-2 max-h-[280px] overflow-y-auto pr-1">
-                          {MOCK_SEARCH_ITEMS.filter((item) =>
-                            item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            item.brand.toLowerCase().includes(searchQuery.toLowerCase())
-                          ).map((item) => (
-                            <Link
-                              key={item.id}
-                              href={`/shop/${item.category}`}
-                              className="flex items-center gap-4 p-2 rounded-xl hover:bg-muted transition-colors group text-foreground"
-                            >
+                          {searchResults.map(item => (
+                            <Link key={item.slug} href={`/shop/${item.category.toLowerCase()}/${item.slug}`}
+                              className="flex items-center gap-4 p-2 rounded-xl hover:bg-muted transition-colors group text-foreground">
                               <div className="h-10 w-10 bg-image-light rounded-lg p-1.5 flex items-center justify-center shrink-0">
-                                <img src={item.image} alt={item.title} className="h-full w-full object-contain mix-blend-multiply dark:brightness-95" />
+                                {item.image && <img src={item.image} alt={item.name} className="h-full w-full object-contain mix-blend-multiply dark:mix-blend-normal" />}
                               </div>
                               <div className="min-w-0 flex-1">
-                                <p className="text-xs font-bold text-foreground group-hover:text-accent">{item.title}</p>
-                                <p className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider mt-0.5">{item.brand} • {item.category}</p>
+                                <p className="text-xs font-bold text-foreground group-hover:text-accent truncate">{item.name}</p>
+                                <p className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider mt-0.5">{item.brand} · {item.category}</p>
                               </div>
-                              <span className="text-xs font-extrabold text-foreground">£{item.price}</span>
+                              {item.price != null && <span className="text-xs font-extrabold text-foreground shrink-0">£{item.price}</span>}
                             </Link>
                           ))}
-                          {MOCK_SEARCH_ITEMS.filter((item) =>
-                            item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            item.brand.toLowerCase().includes(searchQuery.toLowerCase())
-                          ).length === 0 && (
-                            <p className="text-xs font-bold text-zinc-400 py-4 text-center">No matching refurbished items found.</p>
+                          {!searchLoading && searchResults.length === 0 && (
+                            <p className="text-xs font-bold text-zinc-400 py-4 text-center">No results for &quot;{searchQuery}&quot;</p>
                           )}
                         </div>
                       </div>
@@ -440,7 +372,7 @@ export default function Navbar() {
                   <Link
                     key={label}
                     href={href}
-                    onMouseEnter={() => slug && CATEGORY_DROPDOWN_META[slug] ? openDropdown(slug) : setHoveredCat(null)}
+                    onMouseEnter={() => slug ? openDropdown(slug) : setHoveredCat(null)}
                     className={`relative px-4 py-2 rounded-full transition-colors duration-250 ${
                       isActive ? "text-white z-10 font-extrabold" : "text-zinc-500 dark:text-zinc-400 hover:text-foreground font-semibold"
                     }`}
@@ -484,88 +416,94 @@ export default function Navbar() {
             </div>
           </div>
 
-          {/* ── Mega Menu Dropdown ── */}
+          {/* ── Mega Menu Dropdown — 100% from DB, no static fallbacks ── */}
           <AnimatePresence>
-            {hoveredCat && CATEGORY_DROPDOWN_META[hoveredCat] && (
-              <motion.div
-                key={hoveredCat}
-                initial={{ opacity: 0, y: -6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.18, ease: "easeOut" }}
-                onMouseEnter={cancelClose}
-                onMouseLeave={scheduleClose}
-                className="absolute top-full left-0 right-0 z-50 bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 shadow-xl"
-              >
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
-                  {/* Breadcrumb */}
-                  <div className="flex items-center gap-1.5 text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3">
-                    <Link href="/" className="hover:text-zinc-700 transition-colors">Home</Link>
-                    <span>/</span>
-                    <span className="text-zinc-800 dark:text-zinc-200">
-                      {CATEGORY_DROPDOWN_META[hoveredCat].plural}
-                    </span>
-                  </div>
+            {hoveredCat && (() => {
+              // navLabel = short (e.g. "Audio"), heading = full display name (e.g. "Audio & Headphones")
+              const navLabel = shopCategories.find(c => c.slug === hoveredCat)?.label ?? hoveredCat;
+              const catLabel = categoryDisplayNames[hoveredCat] ?? navLabel;
+              const desc     = categoryDescriptions[hoveredCat];
+              const brands   = categoryBrands[hoveredCat] ?? [];
+              const hasContent = hoveredCat === "other"
+                ? otherSubcats.length > 0
+                : brands.length > 0;
 
-                  <div className="flex items-end justify-between gap-8">
-                    <div className="flex-1 min-w-0">
-                      {/* Title */}
-                      <h2 className="text-2xl font-bold tracking-tight text-zinc-950 dark:text-white mb-1.5">
-                        {CATEGORY_DROPDOWN_META[hoveredCat].plural}
-                      </h2>
-                      {/* Description — from admin panel (DB), no hardcoded fallback */}
-                      {(categoryDescriptions[hoveredCat] ?? CATEGORY_DROPDOWN_META[hoveredCat]?.description) && (
-                        <p className="text-sm font-medium text-zinc-500 max-w-2xl leading-relaxed">
-                          {categoryDescriptions[hoveredCat] ?? CATEGORY_DROPDOWN_META[hoveredCat]?.description}
-                        </p>
-                      )}
+              if (!hasContent && !desc && hoveredCat !== "other") return null;
 
-                      {/* For "other": show subcategory chips; for main cats: show brand chips */}
-                      {hoveredCat === "other" ? (
-                        otherSubcats.length > 0 && (
-                          <div className="flex items-center gap-2 mt-4 flex-wrap">
-                            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest shrink-0">Browse by type:</span>
-                            {otherSubcats.map(sub => (
-                              <Link
-                                key={sub.slug}
-                                href="/shop/others"
-                                className="px-3 py-1.5 rounded-full border border-zinc-200 dark:border-zinc-700 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:border-zinc-900 hover:bg-zinc-900 hover:text-white dark:hover:bg-white dark:hover:text-zinc-950 transition-all"
-                              >
-                                {sub.label}
-                              </Link>
-                            ))}
-                          </div>
-                        )
-                      ) : (
-                        (categoryBrands[hoveredCat]?.length ?? 0) > 0 && (
-                          <div className="flex items-center gap-2 mt-4 flex-wrap">
-                            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest shrink-0">Shop by brand:</span>
-                            {categoryBrands[hoveredCat].map(brand => (
-                              <Link
-                                key={brand}
-                                href={`/shop/${hoveredCat}`}
-                                className="px-3 py-1.5 rounded-full border border-zinc-200 dark:border-zinc-700 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:border-zinc-900 hover:bg-zinc-900 hover:text-white dark:hover:bg-white dark:hover:text-zinc-950 transition-all"
-                              >
-                                {brand}
-                              </Link>
-                            ))}
-                          </div>
-                        )
-                      )}
+              return (
+                <motion.div
+                  key={hoveredCat}
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.18, ease: "easeOut" }}
+                  onMouseEnter={cancelClose}
+                  onMouseLeave={scheduleClose}
+                  className="absolute top-full left-0 right-0 z-50 bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 shadow-xl"
+                >
+                  <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
+                    {/* Breadcrumb */}
+                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3">
+                      <Link href="/" className="hover:text-zinc-700 transition-colors">Home</Link>
+                      <span>/</span>
+                      <span className="text-zinc-800 dark:text-zinc-200">{catLabel}</span>
                     </div>
 
-                    {/* CTA */}
-                    <Link
-                      href={hoveredCat === "other" ? "/shop/others" : `/shop/${hoveredCat}`}
-                      className="shrink-0 flex items-center gap-2 h-11 px-6 rounded-full bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 text-xs font-bold hover:opacity-90 transition-opacity"
-                    >
-                      Shop all {CATEGORY_DROPDOWN_META[hoveredCat].plural}
-                      <ArrowRight className="h-3.5 w-3.5" />
-                    </Link>
+                    <div className="flex items-end justify-between gap-8">
+                      <div className="flex-1 min-w-0">
+                        {/* Title — from DB name */}
+                        <h2 className="text-2xl font-bold tracking-tight text-zinc-950 dark:text-white mb-1.5">
+                          {catLabel}
+                        </h2>
+
+                        {/* Description — only shown if set in admin panel */}
+                        {desc && (
+                          <p className="text-sm font-medium text-zinc-500 max-w-2xl leading-relaxed">
+                            {desc}
+                          </p>
+                        )}
+
+                        {/* Brands / subcategory chips */}
+                        {hoveredCat === "other" ? (
+                          otherSubcats.length > 0 && (
+                            <div className="flex items-center gap-2 mt-4 flex-wrap">
+                              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest shrink-0">Browse by type:</span>
+                              {otherSubcats.map(sub => (
+                                <Link key={sub.slug} href="/shop/others"
+                                  className="px-3 py-1.5 rounded-full border border-zinc-200 dark:border-zinc-700 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:border-zinc-900 hover:bg-zinc-900 hover:text-white dark:hover:bg-white dark:hover:text-zinc-950 transition-all">
+                                  {sub.label}
+                                </Link>
+                              ))}
+                            </div>
+                          )
+                        ) : (
+                          brands.length > 0 && (
+                            <div className="flex items-center gap-2 mt-4 flex-wrap">
+                              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest shrink-0">Shop by brand:</span>
+                              {brands.map(brand => (
+                                <Link key={brand} href={`/shop/${hoveredCat}`}
+                                  className="px-3 py-1.5 rounded-full border border-zinc-200 dark:border-zinc-700 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:border-zinc-900 hover:bg-zinc-900 hover:text-white dark:hover:bg-white dark:hover:text-zinc-950 transition-all">
+                                  {brand}
+                                </Link>
+                              ))}
+                            </div>
+                          )
+                        )}
+                      </div>
+
+                      {/* CTA */}
+                      <Link
+                        href={hoveredCat === "other" ? "/shop/others" : `/shop/${hoveredCat}`}
+                        className="shrink-0 flex items-center gap-2 h-11 px-6 rounded-full bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 text-xs font-bold hover:opacity-90 transition-opacity"
+                      >
+                        Shop all {catLabel}
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </Link>
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            )}
+                </motion.div>
+              );
+            })()}
           </AnimatePresence>
         </div>
 
@@ -606,55 +544,29 @@ export default function Navbar() {
                         className="absolute left-0 right-0 top-full mt-2 bg-background border border-border rounded-[24px] shadow-2xl overflow-hidden z-50 p-5 text-foreground max-h-[350px] overflow-y-auto"
                       >
                         {searchQuery === "" ? (
-                          <div className="space-y-4">
-                            <div>
-                              <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2.5">Popular Searches</p>
-                              <div className="flex flex-wrap gap-2">
-                                {POPULAR_SEARCHES.map((term) => (
-                                  <button
-                                    key={term}
-                                    type="button"
-                                    onClick={() => setSearchQuery(term)}
-                                    className="px-3.5 py-1.5 rounded-xl bg-muted border border-border text-xs font-bold hover:border-accent hover:bg-background transition-colors text-foreground"
-                                  >
-                                    {term}
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
+                          <p className="text-xs font-semibold text-zinc-400 py-4 text-center">Type to search products…</p>
                         ) : (
                           <div>
-                            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-3">Matching Products</p>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-3">
+                              {searchLoading ? "Searching…" : "Matching Products"}
+                            </p>
                             <div className="space-y-2">
-                              {MOCK_SEARCH_ITEMS.filter((item) =>
-                                item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                item.brand.toLowerCase().includes(searchQuery.toLowerCase())
-                              ).map((item) => (
-                                <Link
-                                  key={item.id}
-                                  href={`/shop/${item.category}`}
-                                  onClick={() => {
-                                    setIsOpen(false);
-                                    setIsSearchFocused(false);
-                                  }}
-                                  className="flex items-center gap-4 p-2 rounded-xl hover:bg-muted transition-colors group text-foreground"
-                                >
+                              {searchResults.map(item => (
+                                <Link key={item.slug} href={`/shop/${item.category.toLowerCase()}/${item.slug}`}
+                                  onClick={() => { setIsOpen(false); setIsSearchFocused(false); }}
+                                  className="flex items-center gap-4 p-2 rounded-xl hover:bg-muted transition-colors group text-foreground">
                                   <div className="h-10 w-10 bg-image-light rounded-lg p-1.5 flex items-center justify-center shrink-0">
-                                    <img src={item.image} alt={item.title} className="h-full w-full object-contain mix-blend-multiply dark:brightness-95" />
+                                    {item.image && <img src={item.image} alt={item.name} className="h-full w-full object-contain mix-blend-multiply dark:mix-blend-normal" />}
                                   </div>
                                   <div className="min-w-0 flex-1">
-                                    <p className="text-xs font-bold text-foreground group-hover:text-accent truncate">{item.title}</p>
-                                    <p className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider mt-0.5">{item.brand} • {item.category}</p>
+                                    <p className="text-xs font-bold text-foreground group-hover:text-accent truncate">{item.name}</p>
+                                    <p className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider mt-0.5">{item.brand} · {item.category}</p>
                                   </div>
-                                  <span className="text-xs font-extrabold text-foreground">£{item.price}</span>
+                                  {item.price != null && <span className="text-xs font-extrabold text-foreground shrink-0">£{item.price}</span>}
                                 </Link>
                               ))}
-                              {MOCK_SEARCH_ITEMS.filter((item) =>
-                                item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                item.brand.toLowerCase().includes(searchQuery.toLowerCase())
-                              ).length === 0 && (
-                                <p className="text-xs font-bold text-zinc-400 py-4 text-center">No matching refurbished items found.</p>
+                              {!searchLoading && searchResults.length === 0 && (
+                                <p className="text-xs font-bold text-zinc-400 py-4 text-center">No results for &quot;{searchQuery}&quot;</p>
                               )}
                             </div>
                           </div>
@@ -676,18 +588,11 @@ export default function Navbar() {
                   All Products
                   <ChevronRight className={`h-4 w-4 ml-auto ${pathname === "/" ? "text-white" : "text-zinc-400"}`} />
                 </Link>
-                {shopCategories.map(({ label, href, icon: Icon }) => {
+                {shopCategories.map(({ label, href }) => {
                   const isActive = pathname?.startsWith(href);
                   return (
-                    <Link
-                      key={label}
-                      href={href}
-                      onClick={() => setIsOpen(false)}
-                      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
-                        isActive ? "bg-accent text-white" : "hover:bg-muted text-foreground"
-                      }`}
-                    >
-                      <Icon className={`h-4 w-4 ${isActive ? "text-white" : "text-zinc-400"}`} strokeWidth={1.8} />
+                    <Link key={label} href={href} onClick={() => setIsOpen(false)}
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${isActive ? "bg-accent text-white" : "hover:bg-muted text-foreground"}`}>
                       <span className="text-sm font-bold">{label}</span>
                       <ChevronRight className={`h-4 w-4 ml-auto ${isActive ? "text-white" : "text-zinc-400"}`} />
                     </Link>

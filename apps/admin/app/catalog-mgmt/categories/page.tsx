@@ -5,8 +5,8 @@ import { catalogCategoriesApi, type CatalogCategoryItem } from "../../../lib/api
 import { Plus, Pencil, Trash2, Upload, Check, X, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
-type Form = { name: string; slug: string; description: string; isActive: boolean };
-const empty: Form = { name: "", slug: "", description: "", isActive: true };
+type Form = { name: string; slug: string; displayName: string; description: string; isActive: boolean };
+const empty: Form = { name: "", slug: "", displayName: "", description: "", isActive: true };
 const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
 // Slugs that belong to the "Others" group — mirrors the Navbar grouping
@@ -36,7 +36,7 @@ export default function CategoriesPage() {
 
   function startEdit(c: CatalogCategoryItem) {
     setEditing(c.id); setError("");
-    setForm({ name: c.name, slug: c.slug, description: c.description ?? "", isActive: c.isActive });
+    setForm({ name: c.name, slug: c.slug, displayName: c.displayName ?? "", description: c.description ?? "", isActive: c.isActive });
   }
   function startCreate() { setEditing("new"); setForm(empty); setError(""); }
   function cancel() { setEditing(null); setError(""); }
@@ -45,9 +45,9 @@ export default function CategoriesPage() {
     setSaving(true); setError("");
     try {
       if (editing === "new") {
-        await catalogCategoriesApi.create({ name: form.name, slug: form.slug, description: form.description || undefined, isActive: form.isActive });
+        await catalogCategoriesApi.create({ name: form.name, slug: form.slug, displayName: form.displayName || undefined, description: form.description || undefined, isActive: form.isActive });
       } else if (editing) {
-        await catalogCategoriesApi.update(editing, { name: form.name, slug: form.slug, description: form.description || undefined, isActive: form.isActive });
+        await catalogCategoriesApi.update(editing, { name: form.name, slug: form.slug, displayName: form.displayName || undefined, description: form.description || undefined, isActive: form.isActive });
       }
       cancel(); load();
     } catch (e: any) { setError(e.message); }
@@ -87,16 +87,19 @@ export default function CategoriesPage() {
         <div className="bg-white border border-zinc-200 rounded-2xl p-5 mb-6">
           <h2 className="font-bold mb-4 text-sm">{editing === "new" ? "New category" : "Edit category"}</h2>
           <div className="grid grid-cols-2 gap-3 mb-3">
-            <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 block mb-1">Name</label>
+            <div className="col-span-2 sm:col-span-1">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 block mb-1">Name <span className="text-zinc-300 font-normal normal-case tracking-normal">(short nav label)</span></label>
               <input className="w-full h-9 border border-zinc-200 rounded-xl px-3 text-sm"
                 value={form.name}
                 onChange={e => setForm(f => ({ ...f, name: e.target.value, slug: editing === "new" ? slugify(e.target.value) : f.slug }))} />
             </div>
-            <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 block mb-1">Slug</label>
-              <input className="w-full h-9 border border-zinc-200 rounded-xl px-3 text-sm font-mono"
-                value={form.slug} onChange={e => setForm(f => ({ ...f, slug: e.target.value }))} />
+            <div className="col-span-2">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 block mb-1">
+                Display Name <span className="text-zinc-300 font-normal normal-case tracking-normal">(shown as page heading, e.g. "Audio & Headphones")</span>
+              </label>
+              <input className="w-full h-9 border border-zinc-200 rounded-xl px-3 text-sm"
+                placeholder="e.g. Audio & Headphones"
+                value={form.displayName} onChange={e => setForm(f => ({ ...f, displayName: e.target.value }))} />
             </div>
             <div className="col-span-2">
               <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 block mb-1">Description</label>
@@ -136,7 +139,6 @@ export default function CategoriesPage() {
               <thead className="border-b border-zinc-100 bg-zinc-50">
                 <tr className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
                   <th className="text-left px-5 py-3">Name</th>
-                  <th className="text-left px-5 py-3">Slug</th>
                   <th className="text-left px-5 py-3">Images</th>
                   <th className="text-left px-5 py-3">Status</th>
                   <th className="text-center px-3 py-3">Sellable</th>
@@ -148,7 +150,6 @@ export default function CategoriesPage() {
                 {rows.map(cat => (
                   <tr key={cat.id} className="hover:bg-zinc-50/50">
                     <td className="px-5 py-3 font-semibold text-zinc-900">{cat.name}</td>
-                    <td className="px-5 py-3 text-zinc-400 font-mono text-xs">{cat.slug}</td>
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         {(cat.images ?? []).map((img, i) => (
