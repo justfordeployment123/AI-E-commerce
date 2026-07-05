@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { Save, Check, Zap, Eye, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
-import { paymentSettingsApi, type PaymentSettings } from "../../lib/api";
+import { paymentSettingsApi, type PaymentSettings, shippingSettingsApi, type ShippingSettings } from "../../lib/api";
 
 type TestResult = { ok: true; accountId: string } | { ok: false; error: string } | null;
+type ShippingTestResult = { ok: true } | { ok: false; error: string } | null;
 
 interface FieldState {
   masked: string | null;
@@ -102,6 +103,57 @@ export default function SettingsPage() {
     }
   }
 
+  // ── Shippo section — deliberately isolated state, independent of the Stripe fields above ──
+  const [shippingLoading, setShippingLoading] = useState(true);
+  const [shippingSaving, setShippingSaving] = useState(false);
+  const [shippingSaved, setShippingSaved] = useState(false);
+  const [shippingTesting, setShippingTesting] = useState(false);
+  const [shippingTestResult, setShippingTestResult] = useState<ShippingTestResult>(null);
+  const [shippoKeyMasked, setShippoKeyMasked] = useState<string | null>(null);
+  const [shippoKeyEditing, setShippoKeyEditing] = useState(false);
+  const [shippoKeyDraft, setShippoKeyDraft] = useState("");
+  const [shippoServiceLevel, setShippoServiceLevel] = useState("");
+
+  useEffect(() => {
+    shippingSettingsApi.get()
+      .then((s: ShippingSettings) => {
+        setShippoKeyMasked(s.shippoApiKey);
+        setShippoServiceLevel(s.shippoServiceLevel ?? "");
+      })
+      .catch(() => {})
+      .finally(() => setShippingLoading(false));
+  }, []);
+
+  async function handleShippingSave() {
+    setShippingSaving(true);
+    setShippingTestResult(null);
+    try {
+      const payload: Record<string, string> = { shippoServiceLevel };
+      if (shippoKeyEditing && shippoKeyDraft.trim()) payload.shippoApiKey = shippoKeyDraft.trim();
+      const updated = await shippingSettingsApi.update(payload);
+      setShippoKeyMasked(updated.shippoApiKey);
+      setShippoServiceLevel(updated.shippoServiceLevel ?? "");
+      setShippoKeyEditing(false);
+      setShippoKeyDraft("");
+      setShippingSaved(true);
+      setTimeout(() => setShippingSaved(false), 2500);
+    } catch { /* ignore */ }
+    finally { setShippingSaving(false); }
+  }
+
+  async function handleShippingTest() {
+    setShippingTesting(true);
+    setShippingTestResult(null);
+    try {
+      await shippingSettingsApi.test();
+      setShippingTestResult({ ok: true });
+    } catch (err: any) {
+      setShippingTestResult({ ok: false, error: err?.message ?? "Connection failed" });
+    } finally {
+      setShippingTesting(false);
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -114,8 +166,8 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-zinc-50 p-4 sm:p-6 lg:p-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Payment Settings</h1>
-          <p className="text-sm text-zinc-500 mt-1">Manage Stripe API keys and payment mode.</p>
+          <h1 className="text-2xl font-bold tracking-tight">Integrations</h1>
+          <p className="text-sm text-zinc-500 mt-1">Manage Stripe payment keys and the Shippo shipping API key.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <button
@@ -193,6 +245,86 @@ export default function SettingsPage() {
             onCancelEdit={cancelEdit}
             onDraftChange={setDraft}
           />
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-zinc-100 shadow-sm p-6 max-w-2xl mt-6">
+        <div className="flex items-center justify-between mb-5">
+          <p className="text-sm font-bold">Shippo Shipping Key</p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleShippingTest}
+              disabled={shippingTesting}
+              className="flex items-center gap-2 h-9 px-4 rounded-xl border border-zinc-200 bg-white text-xs font-semibold hover:border-zinc-400 transition-colors disabled:opacity-60"
+            >
+              {shippingTesting
+                ? <div className="h-3.5 w-3.5 border-2 border-zinc-400 border-t-transparent rounded-full animate-spin" />
+                : <Zap className="h-3.5 w-3.5" />}
+              Test Connection
+            </button>
+            <button
+              onClick={handleShippingSave}
+              disabled={shippingSaving}
+              className={`flex items-center gap-2 h-9 px-4 rounded-xl text-xs font-bold transition-all disabled:opacity-60 ${shippingSaved ? "bg-emerald-500 text-white" : "bg-black text-white hover:bg-zinc-800"}`}
+            >
+              {shippingSaved ? <><Check className="h-3.5 w-3.5" /> Saved!</> : <><Save className="h-3.5 w-3.5" /> Save</>}
+            </button>
+          </div>
+        </div>
+
+        {shippingTestResult && (
+          <div className={`mb-5 flex items-center gap-3 p-3 rounded-xl border text-xs font-medium ${shippingTestResult.ok ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-red-50 border-red-200 text-red-700"}`}>
+            {shippingTestResult.ok
+              ? <><CheckCircle className="h-3.5 w-3.5 shrink-0" /> Connected to Shippo</>
+              : <><XCircle className="h-3.5 w-3.5 shrink-0" /> {shippingTestResult.error}</>}
+          </div>
+        )}
+
+        <div className="space-y-3">
+          <div>
+            <label className="text-xs font-semibold text-zinc-500 block mb-1.5">API Key</label>
+            {shippoKeyEditing ? (
+              <div className="flex gap-2">
+                <input
+                  autoFocus
+                  type="text"
+                  value={shippoKeyDraft}
+                  onChange={e => setShippoKeyDraft(e.target.value)}
+                  placeholder="shippo_test_..."
+                  className="flex-1 h-10 px-3 rounded-xl border-2 border-black font-mono text-sm outline-none"
+                />
+                <button
+                  onClick={() => { setShippoKeyEditing(false); setShippoKeyDraft(""); }}
+                  className="h-10 px-3 rounded-xl border border-zinc-200 text-xs font-bold text-zinc-500 hover:bg-zinc-50"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-2 items-center">
+                <div className="flex-1 h-10 px-3 rounded-xl border border-zinc-200 bg-zinc-50 flex items-center font-mono text-sm text-zinc-500">
+                  {shippingLoading ? "Loading…" : (shippoKeyMasked ?? <span className="text-zinc-300 italic text-xs">Not configured</span>)}
+                </div>
+                <button
+                  onClick={() => setShippoKeyEditing(true)}
+                  className="h-10 px-4 rounded-xl border border-zinc-200 text-xs font-bold text-zinc-600 hover:border-zinc-400 hover:bg-zinc-50 transition-colors flex items-center gap-1.5"
+                >
+                  <Eye className="h-3.5 w-3.5" /> Edit
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold text-zinc-500 block mb-1.5">Service Level</label>
+            <input
+              type="text"
+              value={shippoServiceLevel}
+              onChange={e => setShippoServiceLevel(e.target.value)}
+              placeholder="royalmail_tracked48"
+              className="w-full h-10 px-3 rounded-xl border border-zinc-200 font-mono text-sm outline-none focus:border-black"
+            />
+          </div>
         </div>
       </div>
     </div>

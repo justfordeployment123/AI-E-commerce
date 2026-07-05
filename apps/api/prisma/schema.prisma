@@ -145,6 +145,7 @@ model Order {
 
   items OrderItem[]
 
+  @@unique([paymentIntentId])
   @@index([userId])
   @@index([status])
   @@index([createdAt])

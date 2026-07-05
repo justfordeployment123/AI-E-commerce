@@ -1,10 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { EmailService } from '../../common/services/email.service';
 import { PrismaService } from '../database/prisma.service';
+import { SettingsService } from '../settings/settings.service';
 
-const SHIPPO_BASE          = 'https://api.goshippo.com';
-const SHIPPO_API_KEY       = process.env.SHIPPO_API_KEY ?? '';
-const SHIPPO_SERVICE_LEVEL = process.env.SHIPPO_SERVICE_LEVEL || 'royalmail_tracked48';
+const SHIPPO_BASE = 'https://api.goshippo.com';
+const DEFAULT_SERVICE_LEVEL = 'royalmail_tracked48';
 
 export interface ShipmentRequest {
     reference:      string;
@@ -26,11 +26,21 @@ export class ShippingService {
     constructor(
         private readonly email: EmailService,
         private readonly prisma: PrismaService,
+        private readonly settingsService: SettingsService,
     ) {}
 
-    private get headers() {
+    private async getApiKey(): Promise<string | null> {
+        return this.settingsService.get('SHIPPO_API_KEY');
+    }
+
+    private async getServiceLevel(): Promise<string> {
+        return (await this.settingsService.get('SHIPPO_SERVICE_LEVEL')) ?? DEFAULT_SERVICE_LEVEL;
+    }
+
+    private async getHeaders(): Promise<Record<string, string>> {
+        const key = await this.getApiKey();
         return {
-            'Authorization': `ShippoToken ${SHIPPO_API_KEY}`,
+            'Authorization': `ShippoToken ${key ?? ''}`,
             'Content-Type':  'application/json',
         };
     }
@@ -48,17 +58,19 @@ export class ShippingService {
     }
 
     async generatePrepaidLabel(req: ShipmentRequest): Promise<ShipmentResult> {
-        if (!SHIPPO_API_KEY) {
+        const apiKey = await this.getApiKey();
+        if (!apiKey) {
             this.logger.warn('SHIPPO_API_KEY not set — using mock label');
             return this.mockLabel(req.reference);
         }
 
         const storeAddress = await this.getStoreAddress();
+        const headers = await this.getHeaders();
 
         // Step 1: Create shipment and get rates (async: false = wait for rates inline)
         const shipmentRes = await fetch(`${SHIPPO_BASE}/shipments/`, {
             method:  'POST',
-            headers: this.headers,
+            headers,
             body: JSON.stringify({
                 address_from: {
                     name:    req.customerName,
@@ -94,7 +106,8 @@ export class ShippingService {
         };
 
         // Step 2: Pick the configured service level, fall back to first available rate
-        const rate = shipment.rates.find(r => r.servicelevel.token === SHIPPO_SERVICE_LEVEL)
+        const serviceLevel = await this.getServiceLevel();
+        const rate = shipment.rates.find(r => r.servicelevel.token === serviceLevel)
                   ?? shipment.rates[0];
 
         if (!rate) {
@@ -105,7 +118,7 @@ export class ShippingService {
         // Step 3: Purchase the label
         const txRes = await fetch(`${SHIPPO_BASE}/transactions/`, {
             method:  'POST',
-            headers: this.headers,
+            headers,
             body: JSON.stringify({
                 rate:            rate.object_id,
                 label_file_type: 'PDF',
@@ -150,10 +163,11 @@ export class ShippingService {
     }
 
     async trackShipment(trackingNumber: string): Promise<{ status: string; events: any[] }> {
-        if (!SHIPPO_API_KEY) return { status: 'unknown', events: [] };
+        const apiKey = await this.getApiKey();
+        if (!apiKey) return { status: 'unknown', events: [] };
 
         const res = await fetch(`${SHIPPO_BASE}/tracks/shippo/${trackingNumber}`, {
-            headers: this.headers,
+            headers: await this.getHeaders(),
         });
 
         if (!res.ok) return { status: 'unknown', events: [] };
@@ -170,5 +184,39 @@ export class ShippingService {
         const labelPdf = Buffer.from('%PDF-1.4 mock label for ' + reference);
         this.logger.warn(`Mock label generated for ${reference} — set SHIPPO_API_KEY for real labels`);
         return { trackingNumber, labelPdf };
+    }
+
+    // ─── Admin-managed settings ────────────────────────────────────────────────────
+
+    async getSettings() {
+        const [key, serviceLevel] = await Promise.all([
+            this.getApiKey(),
+            this.getServiceLevel(),
+        ]);
+        return {
+            shippoApiKey:       this.settingsService.mask(key),
+            shippoServiceLevel: serviceLevel,
+        };
+    }
+
+    async updateSettings(dto: { shippoApiKey?: string; shippoServiceLevel?: string }) {
+        const map: Record<string, string | undefined> = {
+            SHIPPO_API_KEY:       dto.shippoApiKey,
+            SHIPPO_SERVICE_LEVEL: dto.shippoServiceLevel,
+        };
+        await Promise.all(
+            Object.entries(map)
+                .filter(([, v]) => v !== undefined && v !== '')
+                .map(([key, value]) => this.settingsService.set(key, value!)),
+        );
+        return this.getSettings();
+    }
+
+    async testConnection() {
+        const key = await this.getApiKey();
+        if (!key) throw new BadRequestException('Shippo API key is not configured');
+        const res = await fetch(`${SHIPPO_BASE}/carrier_accounts/`, { headers: await this.getHeaders() });
+        if (!res.ok) throw new BadRequestException(`Shippo connection failed (status ${res.status})`);
+        return { ok: true };
     }
 }

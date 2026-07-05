@@ -3,10 +3,10 @@ import { resolve } from 'node:path';
 import { config as loadEnv } from 'dotenv';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { IoAdapter } from '@nestjs/platform-socket.io';
 import cookieParser from 'cookie-parser';
 import compression from 'compression';
-import { json, urlencoded } from 'express';
 
 const appEnvPath = resolve(__dirname, '..', '.env');
 if (existsSync(appEnvPath)) {
@@ -29,13 +29,19 @@ async function bootstrap() {
   // Lazy-load AppModule after dotenv has been applied.
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { AppModule } = require('./app.module') as typeof import('./app.module');
-  const app = await NestFactory.create(AppModule, { rawBody: true });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { rawBody: true });
 
   app.useWebSocketAdapter(new IoAdapter(app));
   app.use(compression());
   app.use(cookieParser());
-  app.use(json({ limit: '10mb' }));
-  app.use(urlencoded({ extended: true, limit: '10mb' }));
+  // Use Nest's own body-parser hooks (not raw `express.json()`/`urlencoded()`) so the
+  // `rawBody: true` capture above actually takes effect — a plain `app.use(json(...))`
+  // parses and drains the request stream itself without stashing req.rawBody, which
+  // silently broke Stripe webhook signature verification (confirmed via a live test:
+  // a correctly-signed payload was rejected as "Invalid webhook signature" until this
+  // was fixed to go through Nest's raw-body-aware parser instead).
+  app.useBodyParser('json', { limit: '10mb' });
+  app.useBodyParser('urlencoded', { extended: true, limit: '10mb' });
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.enableCors({
     origin: (process.env.ALLOWED_REDIRECT_URLS ?? 'http://localhost:3000')

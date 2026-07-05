@@ -1,13 +1,12 @@
 import {
     IsArray,
+    IsIn,
     IsInt,
     IsNotEmpty,
-    IsNumber,
     IsObject,
     IsOptional,
     IsPositive,
     IsString,
-    Min,
     ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -41,18 +40,17 @@ export class CreateOrderDto {
     @Type(() => ShippingAddressDto)
     shippingAddress!: ShippingAddressDto;
 
-    @IsString()
-    @IsOptional()
-    paymentMethod?: string;
+    @IsIn(['stripe', 'dev'])
+    @IsNotEmpty()
+    paymentMethod!: string;
 
     @IsString()
     @IsOptional()
     paymentIntentId?: string;
 
-    @IsNumber()
-    @Min(0)
+    @IsString()
     @IsOptional()
-    discount?: number;
+    promoCode?: string;
 
     @IsString()
     @IsOptional()

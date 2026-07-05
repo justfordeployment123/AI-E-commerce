@@ -1,9 +1,12 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { ShipOrderDto } from './dto/ship-order.dto';
 import { EmailService } from '../../common/services/email.service';
+import { PaymentsService } from '../payments/payments.service';
+import { computeDiscount } from '../payments/promo-codes.constant';
 
 const ORDER_INCLUDE = {
     items: {
@@ -21,6 +24,7 @@ export class OrdersService {
     constructor(
         private readonly prisma: PrismaService,
         private readonly email: EmailService,
+        private readonly paymentsService: PaymentsService,
     ) {}
 
     async create(dto: CreateOrderDto, userId?: string) {
@@ -44,36 +48,67 @@ export class OrdersService {
 
         const subtotal = lineItems.reduce((sum, li) => sum + li.price * li.quantity, 0);
         const shipping = subtotal >= 100 ? 0 : 5.99;
-        const discount = dto.discount ?? 0;
+        const discount = computeDiscount(subtotal, dto.promoCode);
         const total = subtotal - discount + shipping;
+        const amountPence = Math.round(total * 100);
 
-        const order = await this.prisma.$transaction(async (tx) => {
-            // Decrement stock
-            for (const li of lineItems) {
-                await tx.product.update({
-                    where: { id: li.productId },
-                    data: { stock: { decrement: li.quantity } },
-                });
+        // Never trust the client's claim about payment state — verify it server-side.
+        if (dto.paymentMethod === 'stripe') {
+            if (!dto.paymentIntentId) {
+                throw new BadRequestException('paymentIntentId is required for stripe payments');
             }
+            await this.paymentsService.verifyPayment(dto.paymentIntentId, amountPence);
+        } else if (dto.paymentMethod === 'dev') {
+            if (await this.paymentsService.isConfigured()) {
+                throw new BadRequestException('Stripe is configured; dev payment method is not permitted');
+            }
+        }
 
-            return tx.order.create({
-                data: {
-                    userId,
-                    subtotal,
-                    shipping,
-                    discount,
-                    total,
-                    shippingAddress: dto.shippingAddress as object,
-                    paymentMethod: dto.paymentMethod,
-                    paymentIntentId: dto.paymentIntentId,
-                    notes: dto.notes,
-                    items: {
-                        create: lineItems,
+        let order;
+        try {
+            order = await this.prisma.$transaction(async (tx) => {
+                // Decrement stock
+                for (const li of lineItems) {
+                    await tx.product.update({
+                        where: { id: li.productId },
+                        data: { stock: { decrement: li.quantity } },
+                    });
+                }
+
+                return tx.order.create({
+                    data: {
+                        userId,
+                        subtotal,
+                        shipping,
+                        discount,
+                        total,
+                        shippingAddress: dto.shippingAddress as object,
+                        paymentMethod: dto.paymentMethod,
+                        paymentIntentId: dto.paymentIntentId,
+                        notes: dto.notes,
+                        items: {
+                            create: lineItems,
+                        },
                     },
-                },
-                include: ORDER_INCLUDE,
+                    include: ORDER_INCLUDE,
+                });
             });
-        });
+        } catch (err) {
+            if (
+                err instanceof Prisma.PrismaClientKnownRequestError &&
+                err.code === 'P2002' &&
+                // Prisma's P2002 error shape varies by client/adapter version — the
+                // driver-level `target`/`fields` field isn't reliably present (confirmed:
+                // this client version nests it under meta.driverAdapterError.cause.constraint.fields
+                // instead of the documented meta.target), so match on the stringified
+                // meta as a version-robust fallback. Order has only one unique
+                // constraint besides its id, so this is unambiguous.
+                JSON.stringify(err.meta ?? {}).includes('paymentIntentId')
+            ) {
+                throw new BadRequestException('This payment has already been used for an order');
+            }
+            throw err;
+        }
 
         // Send confirmation email (non-blocking)
         if (order.user?.email) {

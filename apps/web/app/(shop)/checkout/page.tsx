@@ -193,7 +193,7 @@ function CheckoutInner() {
         },
         paymentMethod: devMode ? "dev" : "stripe",
         paymentIntentId: intentId ?? undefined,
-        discount: savedDiscount || (promoApplied ? Math.round(subtotal * 0.1 * 100) / 100 : 0),
+        promoCode: promoApplied ? promoCode : undefined,
       });
 
       setOrderId(order.id);

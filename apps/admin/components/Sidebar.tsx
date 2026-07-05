@@ -22,7 +22,7 @@ const NAV = [
   { href: "/repairs", label: "Repairs", icon: Wrench },
   { href: "/orders", label: "Orders", icon: ShoppingBag },
   { href: "/pricing", label: "Pricing Rules", icon: SlidersHorizontal, section: "Settings" },
-  { href: "/settings", label: "Payment Settings", icon: Settings },
+  { href: "/settings", label: "Integrations", icon: Settings },
   ...(SCRAPER_ENABLED ? [{ href: "/scraper", label: "Competitor Prices", icon: TrendingUp }] : []),
   { href: "/stores", label: "Store Locations", icon: MapPin, section: "Other" },
   { href: "/helplines", label: "Helplines", icon: Phone },

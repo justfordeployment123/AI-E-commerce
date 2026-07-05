@@ -9,5 +9,6 @@ import { EmailModule } from '../../common/services/email.module';
     imports: [DatabaseModule, SettingsModule, EmailModule],
     controllers: [PaymentsController],
     providers: [PaymentsService],
+    exports: [PaymentsService],
 })
 export class PaymentsModule {}

@@ -417,9 +417,9 @@ export interface CreateOrderPayload {
     postcode: string;
     country: string;
   };
-  paymentMethod?: string;
+  paymentMethod: string;
   paymentIntentId?: string;
-  discount?: number;
+  promoCode?: string;
   notes?: string;
 }
 

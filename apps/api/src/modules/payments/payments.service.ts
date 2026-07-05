@@ -2,13 +2,10 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { PrismaService } from '../database/prisma.service';
 import { SettingsService } from '../settings/settings.service';
 import { EmailService } from '../../common/services/email.service';
+import { computeDiscount } from './promo-codes.constant';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const StripeLib = require('stripe');
-
-const VALID_PROMO_CODES: Record<string, number> = {
-    TECHSTOP10: 0.10,
-};
 
 @Injectable()
 export class PaymentsService {
@@ -39,6 +36,37 @@ export class PaymentsService {
         );
     }
 
+    /** Whether Stripe is actually configured for the active mode — used by orders.service.ts
+     *  to decide whether a "dev" payment method is legitimately allowed, instead of trusting
+     *  the client's own claim about devMode. */
+    async isConfigured(): Promise<boolean> {
+        return (await this.getStripe()) !== null;
+    }
+
+    /** Confirms a PaymentIntent actually succeeded and matches the server-computed order
+     *  total before an order is allowed to be created against it. */
+    async verifyPayment(paymentIntentId: string, expectedAmountPence: number): Promise<void> {
+        const stripe = await this.getStripe();
+        if (!stripe) throw new BadRequestException('Stripe is not configured');
+
+        let intent: any;
+        try {
+            intent = await stripe.paymentIntents.retrieve(paymentIntentId);
+        } catch {
+            throw new BadRequestException('Payment could not be verified');
+        }
+
+        if (intent.status !== 'succeeded') {
+            throw new BadRequestException(`Payment has not succeeded (status: ${intent.status})`);
+        }
+        if (intent.currency !== 'gbp') {
+            throw new BadRequestException('Unexpected payment currency');
+        }
+        if (intent.amount !== expectedAmountPence) {
+            throw new BadRequestException('Payment amount does not match order total');
+        }
+    }
+
     async createIntent(items: { productId: string; quantity: number }[], promoCode?: string) {
         const productIds = items.map(i => i.productId);
         const products = await this.prisma.product.findMany({
@@ -60,8 +88,7 @@ export class PaymentsService {
 
         const shipping = subtotal >= 100 ? 0 : 5.99;
 
-        const discountRate = promoCode ? (VALID_PROMO_CODES[promoCode.toUpperCase()] ?? 0) : 0;
-        const discount = Math.round(subtotal * discountRate * 100) / 100;
+        const discount = computeDiscount(subtotal, promoCode);
         const total = subtotal - discount + shipping;
         const amountPence = Math.round(total * 100);
 

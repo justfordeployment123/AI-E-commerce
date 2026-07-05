@@ -12,7 +12,31 @@
       "Bash(dir /s /b \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\\\\app\\\\*page.tsx\")",
       "Bash(mkdir -p \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\\\\app\\\\shop\\\\[category]\" && mkdir -p \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\admin\\\\app\\\\catalog\" && echo \"done\")",
       "Bash(powershell -Command ' *)",
-      "Bash(Remove-Item -Recurse -Force \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\\\\app\\\\shop\\\\[slug]\")"
+      "Bash(Remove-Item -Recurse -Force \"d:\\\\CODE\\\\Projects\\\\Markhor Systems Projects\\\\Ai-Ecommerce\\\\apps\\\\web\\\\app\\\\shop\\\\[slug]\")",
+      "Bash(curl -s -w '\\\\nHTTP %{http_code}\\\\n' -X POST http://localhost:3002/orders -H 'Content-Type: application/json' -d '{\"items\":[{\"productId\":\"4df7af71-0f32-45ca-861c-ad4aff130ecc\",\"quantity\":1}],\"shippingAddress\":{\"name\":\"Test User\",\"address\":\"1 Test St\",\"city\":\"Leicester\",\"postcode\":\"LE1 1AA\",\"country\":\"GB\"},\"paymentMethod\":\"stripe\",\"paymentIntentId\":\"pi_fake_does_not_exist\"}')",
+      "Bash(curl -s -w '\\\\nHTTP %{http_code}\\\\n' -X POST http://localhost:3002/orders -H 'Content-Type: application/json' -d '{\"items\":[{\"productId\":\"4df7af71-0f32-45ca-861c-ad4aff130ecc\",\"quantity\":1}],\"shippingAddress\":{\"name\":\"Test User\",\"address\":\"1 Test St\",\"city\":\"Leicester\",\"postcode\":\"LE1 1AA\",\"country\":\"GB\"},\"paymentMethod\":\"dev\"}')",
+      "Bash(curl -s -w '\\\\nHTTP %{http_code}\\\\n' -X POST http://localhost:3002/orders -H 'Content-Type: application/json' -d '{\"items\":[{\"productId\":\"4df7af71-0f32-45ca-861c-ad4aff130ecc\",\"quantity\":1}],\"shippingAddress\":{\"name\":\"Test User\",\"address\":\"1 Test St\",\"city\":\"Leicester\",\"postcode\":\"LE1 1AA\",\"country\":\"GB\"},\"paymentMethod\":\"stripe\",\"paymentIntentId\":\"pi_3TppxLR7SvezL7n32GgETtqV\"}')",
+      "Bash(npx tsc *)",
+      "Bash(powershell -Command \"Get-Process -Id 18696 -ErrorAction SilentlyContinue | Stop-Process -Force\")",
+      "Bash(taskkill //F //PID 18696)",
+      "Bash(netstat -ano)",
+      "PowerShell(Get-NetTCPConnection -LocalPort 3002 -ErrorAction SilentlyContinue)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3002/health)",
+      "Bash(npm run *)",
+      "Bash(echo \"Started with PID $!\")",
+      "Bash(break)",
+      "Bash(curl -s -X PUT http://localhost:3002/payments/settings -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4NGFlYmVhMy0wNmE1LTQ2NDktYjYzMC1jNDQyOGIyYWEwMTkiLCJlbWFpbCI6ImFkbWluQHRlY2hzdG9wLmNvLnVrIiwicm9sZSI6IkFETUlOIiwiaWF0IjoxNzgzMjU3MzUwLCJleHAiOjE3ODM4NjIxNTB9.b0I5_g7jZb4zq63Q2_iaJK5YxXX-b6ngNaz_8V2c8d8' -H 'Content-Type: application/json' -d '{\"stripeWebhookSecretTest\":\"whsec_test_signing_secret_for_smoke_test_only\"}')",
+      "Bash(node C:/Users/HP/AppData/Local/Temp/claude/d--CODE-Projects-Markhor-System-AI-E-commerce/0b651c2d-5213-4bcb-b6be-47b9c2ae602b/scratchpad/sign-webhook.js C:/Users/HP/AppData/Local/Temp/claude/d--CODE-Projects-Markhor-System-AI-E-commerce/0b651c2d-5213-4bcb-b6be-47b9c2ae602b/scratchpad)",
+      "Bash(curl -s -w '\\\\nHTTP %{http_code}\\\\n' -X POST http://localhost:3002/payments/webhook -H 'Content-Type: application/json' -H 'stripe-signature: __CMDSUB_OUTPUT__' --data-binary @C:/Users/HP/AppData/Local/Temp/claude/d--CODE-Projects-Markhor-System-AI-E-commerce/0b651c2d-5213-4bcb-b6be-47b9c2ae602b/scratchpad/webhook-payload.json)",
+      "Bash(curl -s -w '\\\\nHTTP %{http_code}\\\\n' -X POST http://localhost:3002/payments/webhook -H 'Content-Type: application/json' -H 'stripe-signature: __CMDSUB_OUTPUT__' -d '{\"id\":\"evt_tampered\",\"type\":\"payment_intent.succeeded\",\"data\":{\"object\":{\"id\":\"pi_tampered\"}}}')",
+      "Bash(xxd C:/Users/HP/AppData/Local/Temp/claude/d--CODE-Projects-Markhor-System-AI-E-commerce/0b651c2d-5213-4bcb-b6be-47b9c2ae602b/scratchpad/webhook-payload.json)",
+      "Bash(node -e ' *)",
+      "Bash(curl -s -v -X POST http://localhost:3002/payments/webhook -H 'Content-Type: application/json' -H 'stripe-signature: __CMDSUB_OUTPUT__' --data-binary @C:/Users/HP/AppData/Local/Temp/claude/d--CODE-Projects-Markhor-System-AI-E-commerce/0b651c2d-5213-4bcb-b6be-47b9c2ae602b/scratchpad/webhook-payload.json)",
+      "Bash(curl -s http://localhost:3002/payments/settings -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4NGFlYmVhMy0wNmE1LTQ2NDktYjYzMC1jNDQyOGIyYWEwMTkiLCJlbWFpbCI6ImFkbWluQHRlY2hzdG9wLmNvLnVrIiwicm9sZSI6IkFETUlOIiwiaWF0IjoxNzgzMjU3MzUwLCJleHAiOjE3ODM4NjIxNTB9.b0I5_g7jZb4zq63Q2_iaJK5YxXX-b6ngNaz_8V2c8d8')",
+      "Bash(docker exec *)",
+      "Bash(node -e \"console.log\\(require\\('@nestjs/core/package.json'\\).version\\)\")",
+      "Bash(powershell -Command \"Get-Process -Id 17332 -ErrorAction SilentlyContinue | Stop-Process -Force\")",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" http://localhost:3002/health)"
     ],
     "additionalDirectories": [
       "d:\\CODE\\Projects\\Markhor Systems Projects\\Ai-Ecommerce\\apps\\web\\app\\shop",
@@ -39,17 +63,6 @@
             "type": "command",
             "command": "code-review-graph status",
             "timeout": 3000
-          }
-        ]
-      }
-    ],
-    "PreCommit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "code-review-graph detect-changes --brief",
-            "timeout": 10000
           }
         ]
       }

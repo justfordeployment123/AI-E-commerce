@@ -511,6 +511,19 @@ export const paymentSettingsApi = {
     }),
 };
 
+// ── Shipping Settings ─────────────────────────────────────────────────────────
+export interface ShippingSettings {
+  shippoApiKey: string | null;
+  shippoServiceLevel: string;
+}
+
+export const shippingSettingsApi = {
+  get: () => apiFetch<ShippingSettings>('/shipping/settings'),
+  update: (data: Partial<{ shippoApiKey: string; shippoServiceLevel: string }>) =>
+    apiFetch<ShippingSettings>('/shipping/settings', { method: 'PUT', body: JSON.stringify(data) }),
+  test: () => apiFetch<{ ok: boolean }>('/shipping/settings/test', { method: 'POST' }),
+};
+
 // ── Trade-ins ─────────────────────────────────────────────────────────────────
 export const tradeInsApi = {
   list: (params?: { status?: string; search?: string; page?: number; limit?: number }) => {
