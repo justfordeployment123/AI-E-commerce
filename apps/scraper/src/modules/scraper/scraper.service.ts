@@ -23,6 +23,34 @@ interface DevicePrices {
 type Reason = 'ok' | 'not-found' | 'timeout' | 'error' | 'rate-limit';
 interface JinaResult { price: number | null; reason: Reason; }
 
+// Chromium flags that cut CPU/GPU overhead for a headless, single-tab scraper —
+// we never render or screenshot anything, so compositing/GPU work is pure waste.
+const CHROMIUM_ARGS = [
+    '--no-sandbox',
+    '--disable-setuid-sandbox',
+    '--disable-blink-features=AutomationControlled',
+    '--disable-dev-shm-usage',
+    '--no-first-run',
+    '--disable-gpu',
+    '--disable-software-rasterizer',
+    '--disable-extensions',
+    '--mute-audio',
+];
+
+// We only need the JSON/text a page's own JS fetches — not what it looks like.
+// Dropping images/fonts/media/stylesheets avoids the decode+layout+paint work
+// that was the main source of sustained CPU load on the VPS.
+const BLOCKED_RESOURCE_TYPES = new Set(['image', 'media', 'font', 'stylesheet']);
+
+async function blockHeavyResources(context: BrowserContext): Promise<void> {
+    await context.route('**/*', route => {
+        if (BLOCKED_RESOURCE_TYPES.has(route.request().resourceType())) {
+            return route.abort();
+        }
+        return route.continue();
+    });
+}
+
 @Injectable()
 export class ScraperService implements OnApplicationBootstrap {
     private readonly logger = new Logger(ScraperService.name);
@@ -179,13 +207,7 @@ export class ScraperService implements OnApplicationBootstrap {
 
         const browser = await chromium.launch({
             headless: true,
-            args: [
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-blink-features=AutomationControlled',
-                '--disable-dev-shm-usage',
-                '--no-first-run',
-            ],
+            args: CHROMIUM_ARGS,
         });
 
         const context = await browser.newContext({
@@ -201,6 +223,7 @@ export class ScraperService implements OnApplicationBootstrap {
             Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
             globalThis.chrome = { runtime: {} };
         });
+        await blockHeavyResources(context);
 
         const results: Record<string, DevicePrices> = {};
         const total   = itemsToScrape.length;
@@ -293,7 +316,9 @@ export class ScraperService implements OnApplicationBootstrap {
                 console.log('');
 
                 if (i < total - 1) {
-                    await this.delay(1000 + Math.random() * 1000);
+                    // Spread devices out further so the browser isn't kept busy
+                    // back-to-back — trades run time for a lower average CPU load.
+                    await this.delay(3000 + Math.random() * 2000);
                 }
             }
         } catch (err: any) {
@@ -501,7 +526,7 @@ export class ScraperService implements OnApplicationBootstrap {
         const storageOptions = device?.storageOptions?.length ? device.storageOptions as string[] : [''];
         const browser = await chromium.launch({
             headless: true,
-            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-blink-features=AutomationControlled', '--disable-dev-shm-usage'],
+            args: CHROMIUM_ARGS,
         });
         const context = await browser.newContext({
             userAgent:  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
@@ -514,6 +539,7 @@ export class ScraperService implements OnApplicationBootstrap {
             Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
             globalThis.chrome = { runtime: {} };
         });
+        await blockHeavyResources(context);
 
         try {
             for (const storage of storageOptions) {
