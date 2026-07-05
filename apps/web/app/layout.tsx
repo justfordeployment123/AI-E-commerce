@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { Geist, Geist_Mono, Inter, Plus_Jakarta_Sans, Playfair_Display, Lora } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "../context/auth-context";
@@ -53,11 +54,13 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
+
   return (
     <html
       lang="en"
@@ -66,6 +69,16 @@ export default function RootLayout({
     >
       <head>
         <script
+          nonce={nonce}
+          // Browsers deliberately return "" for the `nonce` IDL property once
+          // a script element is connected to the DOM (to stop the value being
+          // read back out by injected scripts) — the real `nonce` *attribute*
+          // in the rendered HTML is correct and CSP still validates against
+          // it. React's dev-mode hydration diff compares the property, not
+          // the attribute, so it flags a false-positive mismatch here. This
+          // only ever appears in `next dev`; it doesn't affect production
+          // behavior or security.
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
