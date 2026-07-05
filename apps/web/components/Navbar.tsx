@@ -11,6 +11,7 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "../context/auth-context";
 import { useCart } from "../context/cart-context";
 import { NotificationBell } from "./NotificationBell";
+import ProductImage from "./ProductImage";
 import { catalogApi, productsApi, otherSubcategoriesApi } from "../lib/api";
 
 
@@ -222,7 +223,7 @@ export default function Navbar() {
                             <Link key={item.slug} href={`/shop/${item.category.toLowerCase()}/${item.slug}`}
                               className="flex items-center gap-4 p-2 rounded-xl hover:bg-muted transition-colors group text-foreground">
                               <div className="h-10 w-10 bg-image-light rounded-lg p-1.5 flex items-center justify-center shrink-0">
-                                {item.image && <img src={item.image} alt={item.name} className="h-full w-full object-contain mix-blend-multiply dark:mix-blend-normal" />}
+                                <ProductImage src={item.image} alt={item.name} width={28} height={28} iconClassName="h-4 w-4" bg="" />
                               </div>
                               <div className="min-w-0 flex-1">
                                 <p className="text-xs font-bold text-foreground group-hover:text-accent truncate">{item.name}</p>
@@ -556,7 +557,7 @@ export default function Navbar() {
                                   onClick={() => { setIsOpen(false); setIsSearchFocused(false); }}
                                   className="flex items-center gap-4 p-2 rounded-xl hover:bg-muted transition-colors group text-foreground">
                                   <div className="h-10 w-10 bg-image-light rounded-lg p-1.5 flex items-center justify-center shrink-0">
-                                    {item.image && <img src={item.image} alt={item.name} className="h-full w-full object-contain mix-blend-multiply dark:mix-blend-normal" />}
+                                    <ProductImage src={item.image} alt={item.name} width={28} height={28} iconClassName="h-4 w-4" bg="" />
                                   </div>
                                   <div className="min-w-0 flex-1">
                                     <p className="text-xs font-bold text-foreground group-hover:text-accent truncate">{item.name}</p>

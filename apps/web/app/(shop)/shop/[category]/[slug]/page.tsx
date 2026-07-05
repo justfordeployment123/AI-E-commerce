@@ -14,11 +14,18 @@ import Footer from "@/components/Footer";
 import { getGradeConfig } from "@/lib/grades";
 import { GradeBadge } from "@/components/GradeBadge";
 import ProductImage from "@/components/ProductImage";
+import { isOtherCategory } from "@/lib/other-categories";
 
 export default function ProductDetailPage() {
   const params = useParams();
   const categorySlug = params?.category as string;
   const slug = params?.slug as string;
+  // "films", "games", "storage" etc. don't have their own /shop/<category>
+  // page — they're subsections of /shop/others, so the back-link must point
+  // there instead (with a hash to jump straight to that section).
+  const backHref = isOtherCategory(categorySlug)
+    ? `/shop/others#${categorySlug?.toLowerCase()}`
+    : `/shop/${categorySlug}`;
 
   const [product, setProduct] = useState<Product | null>(null);
   const [loadingProduct, setLoadingProduct] = useState(true);
@@ -158,7 +165,7 @@ export default function ProductDetailPage() {
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <p className="text-2xl font-bold mb-4">Product not found</p>
-            <a href={`/shop/${categorySlug}`} className="h-12 px-8 bg-black text-white rounded-2xl font-bold inline-flex items-center">
+            <a href={backHref} className="h-12 px-8 bg-black text-white rounded-2xl font-bold inline-flex items-center">
               Back to {decodeURIComponent(categorySlug)}
             </a>
           </div>
@@ -178,7 +185,7 @@ export default function ProductDetailPage() {
       {/* Breadcrumb */}
       <div className="bg-white border-b border-zinc-200 sticky top-0 z-30">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 flex items-center gap-2 text-xs font-bold text-zinc-500 uppercase tracking-wide">
-          <a href={`/shop/${categorySlug}`} className="hover:text-black flex items-center gap-1">
+          <a href={backHref} className="hover:text-black flex items-center gap-1">
             <ArrowLeft className="h-3.5 w-3.5" /> {decodeURIComponent(categorySlug)}
           </a>
           <span>/</span>
@@ -200,16 +207,16 @@ export default function ProductDetailPage() {
               </button>
               <div className="w-full max-w-[400px] aspect-square relative flex items-center justify-center bg-image-light rounded-[24px] p-6">
                 <AnimatePresence mode="wait">
-                  <motion.img
+                  <motion.div
                     key={activeImage}
-                    src={images[activeImage]}
-                    alt={product.name}
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.3 }}
-                    className="h-full w-full object-contain mix-blend-multiply dark:mix-blend-normal"
-                  />
+                    className="h-full w-full"
+                  >
+                    <ProductImage src={images[activeImage]} alt={product.name} hover={false} />
+                  </motion.div>
                 </AnimatePresence>
               </div>
             </div>
@@ -681,11 +688,16 @@ export default function ProductDetailPage() {
                       {review.images.length > 0 && (
                         <div className="flex gap-2 mt-4 flex-wrap">
                           {review.images.map((img, i) => (
-                            <img
+                            <ProductImage
                               key={i}
                               src={img}
                               alt=""
-                              className="h-20 w-20 rounded-2xl object-cover border border-zinc-200"
+                              mode="cover"
+                              hover={false}
+                              width={80}
+                              height={80}
+                              wrapperClassName="rounded-2xl border border-zinc-200"
+                              iconClassName="h-5 w-5"
                             />
                           ))}
                         </div>

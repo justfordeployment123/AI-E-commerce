@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft, CheckCircle, XCircle, Clock, RefreshCw,
@@ -13,6 +12,7 @@ import { tradeInsApi, type TradeInDetail } from "@/lib/api";
 import { useAuth } from "@/context/auth-context";
 import { fmtDate } from "../../_utils";
 import { GradeBadge } from "@/components/GradeBadge";
+import ProductImage from "@/components/ProductImage";
 
 const CONDITION_QUESTIONS: Record<string, { id: string; question: string }[]> = {
   Phone: [
@@ -364,9 +364,9 @@ export default function TradeInDetailPage() {
                 <button
                   key={i}
                   onClick={() => setLightbox(url)}
-                  className="relative aspect-square rounded-xl overflow-hidden bg-zinc-100 hover:opacity-90 transition-opacity"
+                  className="aspect-square rounded-xl overflow-hidden hover:opacity-90 transition-opacity"
                 >
-                  <Image src={url} alt={`Photo ${i + 1}`} fill className="object-cover" sizes="25vw" />
+                  <ProductImage src={url} alt={`Photo ${i + 1}`} mode="cover" hover={false} sizes="25vw" />
                 </button>
               ))}
             </div>

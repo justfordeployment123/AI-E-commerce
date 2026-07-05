@@ -57,6 +57,19 @@ export default function OthersPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  // The category sections don't exist in the DOM until the data above has
+  // loaded, so the browser's native #hash scroll-on-navigation has nothing to
+  // scroll to yet and silently gives up. Do it ourselves once the matching
+  // section has actually rendered.
+  useEffect(() => {
+    if (loading) return;
+    const hash = window.location.hash.slice(1);
+    if (!hash) return;
+    requestAnimationFrame(() => {
+      document.getElementById(hash)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }, [loading, categories]);
+
   function handleAddToCart(p: Product) {
     addItem({ productId: p.id, quantity: 1, price: p.price, name: p.name, slug: p.slug, image: p.images?.[0] });
     setAddedIds(prev => new Set(prev).add(p.id));
@@ -133,7 +146,7 @@ export default function OthersPage() {
                 const catProducts = products.filter(p => p.category === cat && filterProduct(p));
                 if (catProducts.length === 0) return null;
                 return (
-                  <div key={cat}>
+                  <div key={cat} id={cat.toLowerCase()} className="scroll-mt-24">
                     <div className="flex items-center gap-3 mb-6 border-b border-zinc-100 pb-3">
                       <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-zinc-950">{cat}</h2>
                       <span className="px-2.5 py-0.5 bg-accent text-white text-[10px] font-bold uppercase tracking-widest rounded-full">{catProducts.length} items</span>

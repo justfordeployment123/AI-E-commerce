@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
+import ProductImage from "@/components/ProductImage";
 import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft, CheckCircle, XCircle, Clock, Wrench,
@@ -263,9 +263,9 @@ export default function RepairDetailPage() {
                 <button
                   key={i}
                   onClick={() => setLightbox(url)}
-                  className="relative aspect-square rounded-xl overflow-hidden bg-zinc-100 hover:opacity-90 transition-opacity"
+                  className="aspect-square rounded-xl overflow-hidden hover:opacity-90 transition-opacity"
                 >
-                  <Image src={url} alt={`Photo ${i + 1}`} fill className="object-cover" sizes="25vw" />
+                  <ProductImage src={url} alt={`Photo ${i + 1}`} mode="cover" hover={false} sizes="25vw" />
                 </button>
               ))}
             </div>

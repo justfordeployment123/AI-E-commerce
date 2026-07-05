@@ -7,7 +7,6 @@ import { catalogApi, CatalogBrand, CatalogBrandCategory } from "@/lib/api";
 import Footer from "@/components/Footer";
 import { ArrowRight, ShoppingCart, Star } from "lucide-react";
 import { useCart } from "@/context/cart-context";
-import NextImage from "next/image";
 import ProductImage from "@/components/ProductImage";
 
 type BrandWithCategories = CatalogBrand & {
@@ -87,11 +86,11 @@ export default function BrandPage() {
       <section className="relative bg-zinc-950 text-white overflow-hidden">
         <div className="absolute inset-0 opacity-20">
           {heroImage && (
-            <NextImage
-              fill
+            <ProductImage
               src={heroImage}
               alt=""
-              className="object-cover"
+              mode="cover"
+              bg="bg-zinc-950"
               sizes="100vw"
             />
           )}
@@ -100,7 +99,7 @@ export default function BrandPage() {
           <div className="flex-1">
             {data.logo && (
               <div className="inline-flex bg-white rounded-2xl p-3 mb-6">
-                <NextImage src={data.logo} alt={data.name} width={96} height={48} className="object-contain" />
+                <ProductImage src={data.logo} alt={data.name} width={96} height={48} bg="bg-white" iconClassName="h-6 w-6" />
               </div>
             )}
             <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">
@@ -119,12 +118,12 @@ export default function BrandPage() {
             </div>
           </div>
           {heroImage && (
-            <div className="relative w-64 h-64 rounded-3xl overflow-hidden shrink-0 bg-white/5">
-              <NextImage
-                fill
+            <div className="w-64 h-64 rounded-3xl overflow-hidden shrink-0">
+              <ProductImage
                 src={heroImage}
                 alt={data.name}
-                className="object-cover"
+                mode="cover"
+                bg="bg-white/5"
                 sizes="(max-width: 768px) 100vw, 33vw"
               />
             </div>
@@ -168,12 +167,11 @@ export default function BrandPage() {
                 {/* Left: brand-category images (random pick shown as featured) */}
                 {(bc.images as string[]).length > 0 && (
                   <div className="hidden lg:block w-52 shrink-0">
-                    <div className="relative aspect-[3/4] rounded-[24px] overflow-hidden bg-zinc-100">
-                      <NextImage
-                        fill
+                    <div className="aspect-[3/4] rounded-[24px] overflow-hidden">
+                      <ProductImage
                         src={pickRandom(bc.images as string[])}
                         alt={`${data.name} ${bc.category.name}`}
-                        className="object-cover"
+                        mode="cover"
                         sizes="(max-width: 768px) 100vw, 33vw"
                       />
                     </div>

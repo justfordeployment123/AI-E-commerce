@@ -88,18 +88,8 @@ import { GradeBadge } from "../components/GradeBadge";
 import DeviceSearchBox from "../components/DeviceSearchBox";
 import { useCart } from "../context/cart-context";
 import ProductImage from "../components/ProductImage";
+import { isOtherProduct } from "../lib/other-categories";
 const Footer = dynamic(() => import("../components/Footer"));
-
-const isOtherProduct = (category?: string, imgUrl?: string) => {
-  const cat = (category || '').toLowerCase();
-  const url = (imgUrl || '').toLowerCase();
-  const otherCats = [
-    'other', 'others', 'accessories', 'cables', 'chargers', 'memory', 'storage',
-    'mouse', 'pen', 'graphics', 'lens', 'smartwatches', 'games', 'films',
-    'camera lenses', 'graphics cards', 'mouse & peripherals', 'stylus & pens'
-  ];
-  return otherCats.includes(cat) || url.includes('/other/') || url.includes('/others/');
-};
 
 // ─── Promo Carousel Banner ───────────────────────────────────────────────────
 function PromoCarouselBanner() {
@@ -601,10 +591,14 @@ function TradeInCTASection() {
                   {/* Full Card Background Image */}
                   {img && (
                     <>
-                      <img
+                      <ProductImage
                         src={img}
                         alt={label}
-                        className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-all duration-700"
+                        mode="cover"
+                        bg="bg-zinc-950"
+                        position="absolute"
+                        wrapperClassName="inset-0"
+                        iconClassName="h-10 w-10"
                       />
                       {/* Bottom-left gradient for text readability, right side stays clear to show image */}
                       <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/90 via-zinc-950/30 to-transparent z-10" />
@@ -701,11 +695,11 @@ function CategoryBento() {
                 className={`group relative overflow-hidden rounded-[2rem] bg-zinc-100 cursor-pointer border border-zinc-200/50 hover:border-zinc-300 hover:shadow-2xl transition-all duration-500 ${i === 0 ? "col-span-2 lg:col-span-2 lg:row-span-2 h-[260px] sm:h-[320px] lg:h-auto" : "h-[180px] sm:h-[220px] lg:h-auto"}`}
               >
                 {cat.image && (
-                  <NextImage
-                    fill
+                  <ProductImage
                     src={cat.image}
                     alt={cat.name}
-                    className="object-cover group-hover:scale-105 transition-transform duration-1000 ease-out"
+                    mode="cover"
+                    className="transition-transform duration-1000 ease-out"
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   />
                 )}
@@ -826,11 +820,11 @@ function TrendingDeals() {
               className="group relative overflow-hidden rounded-[2.5rem] bg-zinc-100 cursor-pointer block lg:h-full"
             >
               <div className="aspect-[4/3] lg:aspect-auto lg:h-full w-full relative">
-                <NextImage
-                  fill
+                <ProductImage
                   src={featured.images?.[0] || "https://picsum.photos/seed/featured/800/600"}
                   alt={featured.name}
-                  className="object-cover group-hover:scale-105 transition-transform duration-700"
+                  mode="cover"
+                  className="transition-transform duration-700"
                   sizes="(max-width: 1024px) 100vw, 50vw"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/80 via-zinc-950/20 to-transparent" />
@@ -1061,8 +1055,8 @@ function Reviews() {
                   </div>
                   <p className="text-zinc-700 leading-relaxed text-[15px] flex-1">"{r.body}"</p>
                   {r.images?.length > 0 && (
-                    <div className="relative w-full h-44 rounded-2xl overflow-hidden">
-                      <NextImage src={r.images[0]} alt="" fill className="object-cover" sizes="(max-width: 768px) 90vw, 400px" />
+                    <div className="w-full h-44 rounded-2xl overflow-hidden">
+                      <ProductImage src={r.images[0]} alt="" mode="cover" hover={false} sizes="(max-width: 768px) 90vw, 400px" />
                     </div>
                   )}
                   <div className="pt-4 border-t border-zinc-100 flex items-center gap-3">
@@ -1448,14 +1442,14 @@ function BestDealsSplit() {
 
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 lg:items-start">
           {/* Left Image — static banner for All, product image for categories */}
-          <div className={`w-full lg:w-[340px] xl:w-[380px] flex-shrink-0 relative rounded-2xl overflow-hidden aspect-[4/3] lg:aspect-auto lg:h-[390px] ${isAllSelected ? "bg-zinc-900" : "bg-[#f5f5f7]"}`}>
+          <div className="w-full lg:w-[340px] xl:w-[380px] flex-shrink-0 rounded-2xl overflow-hidden aspect-[4/3] lg:aspect-auto lg:h-[390px]">
             {leftImage && (
-              <NextImage
-                fill
+              <ProductImage
                 src={leftImage}
                 alt="Featured product"
-                suppressHydrationWarning
-                className={isAllSelected ? "object-cover" : "object-contain p-6"}
+                mode={isAllSelected ? "cover" : "product"}
+                bg={isAllSelected ? "bg-zinc-900" : "bg-image-light"}
+                className={isAllSelected ? "" : "p-6"}
                 sizes="(max-width: 1024px) 100vw, 380px"
               />
             )}
@@ -1712,13 +1706,14 @@ function GradeGuide() {
               }`}
             >
               {/* Photo */}
-              <div className="relative h-[340px] overflow-hidden flex-shrink-0">
+              <div className="h-[340px] overflow-hidden flex-shrink-0">
                 {g.img && (
-                  <NextImage
-                    fill
+                  <ProductImage
                     src={g.img}
                     alt={g.name}
-                    className="object-cover group-hover:scale-105 transition-transform duration-700"
+                    mode="cover"
+                    bg="bg-zinc-950"
+                    className="transition-transform duration-700"
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 20vw"
                   />
                 )}
@@ -2122,13 +2117,12 @@ function TopBrandsSplit() {
 
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 lg:items-start">
           {/* Left Image */}
-          <div className="w-full lg:w-[320px] xl:w-[360px] flex-shrink-0 relative rounded-2xl overflow-hidden aspect-[4/3] lg:aspect-auto lg:h-[420px]">
+          <div className="w-full lg:w-[320px] xl:w-[360px] flex-shrink-0 rounded-2xl overflow-hidden aspect-[4/3] lg:aspect-auto lg:h-[420px]">
             {deskImg && (
-              <NextImage
-                fill
+              <ProductImage
                 src={deskImg}
                 alt="Desk with tech"
-                className="object-cover"
+                mode="cover"
                 sizes="(max-width: 1024px) 100vw, 360px"
               />
             )}
