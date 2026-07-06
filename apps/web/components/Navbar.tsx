@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useMemo } from "react";
 import {
   ShoppingCart, Search, Menu, ChevronRight, X, Zap, ArrowRight,
   RefreshCw, Wrench, Package, Settings, LogOut, LogIn, Sun, Moon, MoreHorizontal
@@ -13,6 +13,68 @@ import { useCart } from "../context/cart-context";
 import { NotificationBell } from "./NotificationBell";
 import ProductImage from "./ProductImage";
 import { catalogApi, productsApi, otherSubcategoriesApi } from "../lib/api";
+import { searchProducts, type SearchableItem } from "../lib/search";
+
+// Shown in the search dropdown when it's focused but empty. Recent searches
+// + trending products are more useful here than repeating the category
+// pills already visible in the navbar itself.
+function SearchEmptyState({
+  recentSearches, trending, onPickRecent, onNavigate,
+}: {
+  recentSearches: string[];
+  trending: SearchableItem[];
+  onPickRecent: (q: string) => void;
+  onNavigate: () => void;
+}) {
+  if (recentSearches.length === 0 && trending.length === 0) {
+    return <p className="text-xs font-semibold text-zinc-400 py-4 text-center">Start typing to search products…</p>;
+  }
+  return (
+    <div className="space-y-5">
+      {recentSearches.length > 0 && (
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2.5">Recent Searches</p>
+          <div className="flex flex-wrap gap-2">
+            {recentSearches.map(q => (
+              <button
+                key={q}
+                type="button"
+                onClick={() => onPickRecent(q)}
+                className="px-3 py-1.5 rounded-full bg-muted hover:bg-accent hover:text-white border border-border/40 hover:border-accent transition-all text-xs font-bold text-foreground"
+              >
+                {q}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      {trending.length > 0 && (
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2.5">Trending Now</p>
+          <div className="space-y-2">
+            {trending.map(item => (
+              <Link
+                key={item.slug}
+                href={`/shop/${item.category.toLowerCase()}/${item.slug}`}
+                onClick={onNavigate}
+                className="flex items-center gap-4 p-2 rounded-xl hover:bg-muted transition-colors group text-foreground"
+              >
+                <div className="h-10 w-10 bg-image-light rounded-lg p-1.5 flex items-center justify-center shrink-0">
+                  <ProductImage src={item.image} alt={item.name} width={28} height={28} iconClassName="h-4 w-4" bg="" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-bold text-foreground group-hover:text-accent truncate">{item.name}</p>
+                  <p className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider mt-0.5">{item.brand} · {item.category}</p>
+                </div>
+                {item.price != null && <span className="text-xs font-extrabold text-foreground shrink-0">£{item.price}</span>}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 
 export default function Navbar() {
@@ -20,8 +82,8 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<{ slug: string; name: string; brand: string; category: string; price: number | null; image: string | null }[]>([]);
-  const [searchLoading, setSearchLoading] = useState(false);
+  const [productIndex, setProductIndex] = useState<SearchableItem[]>([]);
+  const [indexLoading, setIndexLoading] = useState(true);
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
@@ -105,22 +167,58 @@ export default function Navbar() {
       .catch(() => {});
   }, []);
 
-  // Live search — fetch real products from API as user types
+  // Smart search: fetch the (small) catalog once, then score/rank matches
+  // entirely client-side — instant per keystroke, and tolerant of reordered
+  // words, extra words, and typos (see lib/search.ts for the algorithm).
   useEffect(() => {
-    const q = searchQuery.trim();
-    if (!q) { setSearchResults([]); return; }
-    const t = setTimeout(() => {
-      setSearchLoading(true);
-      productsApi.list({ search: q, limit: 6 })
-        .then(r => setSearchResults(r.items.map(p => ({
-          slug: p.slug, name: p.name, brand: p.brand,
-          category: p.category, price: p.price ?? null, image: p.images?.[0] ?? null,
-        }))))
-        .catch(() => {})
-        .finally(() => setSearchLoading(false));
-    }, 280);
-    return () => clearTimeout(t);
-  }, [searchQuery]);
+    productsApi.list({ limit: 300 })
+      .then(r => setProductIndex(r.items.map(p => ({
+        id: p.id, slug: p.slug, name: p.name, brand: p.brand,
+        category: p.category, price: p.price ?? null, image: p.images?.[0] ?? null,
+        stock: p.stock, rating: p.rating, reviewCount: p.reviewCount,
+      }))))
+      .catch(() => {})
+      .finally(() => setIndexLoading(false));
+  }, []);
+
+  const searchResults = useMemo(
+    () => searchProducts(productIndex, searchQuery, 10),
+    [productIndex, searchQuery],
+  );
+  const searchLoading = indexLoading && searchQuery.trim().length > 0;
+
+  // Shown instead of the search results once the box is focused but empty —
+  // recent searches (so re-finding something you searched before is one
+  // click) plus a few trending items, rather than repeating the category
+  // pills that are already visible in the navbar itself.
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("ts_recent_searches");
+      if (raw) setRecentSearches(JSON.parse(raw));
+    } catch { /* ignore corrupt/blocked storage */ }
+  }, []);
+
+  function recordSearch(q: string) {
+    const trimmed = q.trim();
+    if (trimmed.length < 2) return;
+    setRecentSearches(prev => {
+      const next = [trimmed, ...prev.filter(s => s.toLowerCase() !== trimmed.toLowerCase())].slice(0, 5);
+      try { localStorage.setItem("ts_recent_searches", JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
+  }
+
+  const trendingProducts = useMemo(() => {
+    return [...productIndex]
+      .filter(p => (p.stock ?? 0) > 0)
+      .sort((a, b) => {
+        const scoreA = (a.rating ?? 0) * Math.log((a.reviewCount ?? 0) + 2);
+        const scoreB = (b.rating ?? 0) * Math.log((b.reviewCount ?? 0) + 2);
+        return scoreB - scoreA;
+      })
+      .slice(0, 10);
+  }, [productIndex]);
 
   const toggleTheme = () => {
     const nextTheme = theme === "dark" ? "light" : "dark";
@@ -200,27 +298,24 @@ export default function Navbar() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 10 }}
-                    className="absolute left-0 right-0 top-full mt-2 bg-background border border-border rounded-[24px] shadow-2xl overflow-hidden z-50 p-5 text-foreground"
+                    className="absolute left-0 right-0 top-full mt-2 max-h-[78vh] overflow-y-auto bg-background border border-border rounded-[24px] shadow-2xl z-50 p-5 text-foreground"
                   >
                     {searchQuery === "" ? (
-                      <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2.5">Shop Categories</p>
-                        <div className="grid grid-cols-5 gap-3">
-                          {shopCategories.map(({ label, href }) => (
-                            <Link key={label} href={href} className="flex items-center justify-center p-3 rounded-2xl bg-muted hover:bg-accent hover:text-white border border-border/40 hover:border-accent transition-all text-foreground">
-                              <span className="text-[10px] font-extrabold text-center">{label}</span>
-                            </Link>
-                          ))}
-                        </div>
-                      </div>
+                      <SearchEmptyState
+                        recentSearches={recentSearches}
+                        trending={trendingProducts}
+                        onPickRecent={q => setSearchQuery(q)}
+                        onNavigate={() => setIsSearchFocused(false)}
+                      />
                     ) : (
                       <div>
                         <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-3">
                           {searchLoading ? "Searching…" : "Matching Products"}
                         </p>
-                        <div className="space-y-2 max-h-[280px] overflow-y-auto pr-1">
+                        <div className="space-y-2 pr-1">
                           {searchResults.map(item => (
                             <Link key={item.slug} href={`/shop/${item.category.toLowerCase()}/${item.slug}`}
+                              onClick={() => recordSearch(searchQuery)}
                               className="flex items-center gap-4 p-2 rounded-xl hover:bg-muted transition-colors group text-foreground">
                               <div className="h-10 w-10 bg-image-light rounded-lg p-1.5 flex items-center justify-center shrink-0">
                                 <ProductImage src={item.image} alt={item.name} width={28} height={28} iconClassName="h-4 w-4" bg="" />
@@ -542,10 +637,15 @@ export default function Navbar() {
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 8 }}
-                        className="absolute left-0 right-0 top-full mt-2 bg-background border border-border rounded-[24px] shadow-2xl overflow-hidden z-50 p-5 text-foreground max-h-[350px] overflow-y-auto"
+                        className="absolute left-0 right-0 top-full mt-2 max-h-[70vh] overflow-y-auto bg-background border border-border rounded-[24px] shadow-2xl z-50 p-5 text-foreground"
                       >
                         {searchQuery === "" ? (
-                          <p className="text-xs font-semibold text-zinc-400 py-4 text-center">Type to search products…</p>
+                          <SearchEmptyState
+                            recentSearches={recentSearches}
+                            trending={trendingProducts}
+                            onPickRecent={q => setSearchQuery(q)}
+                            onNavigate={() => { setIsOpen(false); setIsSearchFocused(false); }}
+                          />
                         ) : (
                           <div>
                             <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-3">
@@ -554,7 +654,7 @@ export default function Navbar() {
                             <div className="space-y-2">
                               {searchResults.map(item => (
                                 <Link key={item.slug} href={`/shop/${item.category.toLowerCase()}/${item.slug}`}
-                                  onClick={() => { setIsOpen(false); setIsSearchFocused(false); }}
+                                  onClick={() => { recordSearch(searchQuery); setIsOpen(false); setIsSearchFocused(false); }}
                                   className="flex items-center gap-4 p-2 rounded-xl hover:bg-muted transition-colors group text-foreground">
                                   <div className="h-10 w-10 bg-image-light rounded-lg p-1.5 flex items-center justify-center shrink-0">
                                     <ProductImage src={item.image} alt={item.name} width={28} height={28} iconClassName="h-4 w-4" bg="" />
