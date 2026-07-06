@@ -79,7 +79,15 @@
       "Bash(grep -n 'href={\\\\`/shop/\\\\${categorySlug}\\\\`}' \"d:/CODE/Projects/Markhor System/AI-E-commerce/apps/web/app/\\(shop\\)/shop/[category]/[slug]/page.tsx\")",
       "Bash(taskkill //F //PID 15168)",
       "Bash(curl -s -D - -o /dev/null \"http://localhost:3000/shop/films/marvel-deadpool-2016\")",
-      "Bash(curl -s \"http://localhost:3000/shop/films/marvel-deadpool-2016\")"
+      "Bash(curl -s \"http://localhost:3000/shop/films/marvel-deadpool-2016\")",
+      "Bash(npx prisma *)",
+      "Bash(python3 -c ' *)",
+      "Bash(npx ts-node *)",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" \"http://localhost:9000/ai-ecommerce/banners/grade/a/a_1.png\")",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" \"http://localhost:9000/ai-ecommerce/banners/grade/new/new_1.png\")",
+      "Bash(echo \"api PID $!\")",
+      "PowerShell(Get-NetTCPConnection -LocalPort 3000,3001,3002 -ErrorAction SilentlyContinue)",
+      "Bash(curl -s \"http://localhost:3002/banners/grade/preview\")"
     ],
     "additionalDirectories": [
       "d:\\CODE\\Projects\\Markhor Systems Projects\\Ai-Ecommerce\\apps\\web\\app\\shop",

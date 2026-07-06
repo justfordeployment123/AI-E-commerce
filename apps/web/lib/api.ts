@@ -276,6 +276,8 @@ export const bannersApi = {
     ),
   promoSlides: () =>
     apiFetch<PromoSlide[]>(`/banners/promo-slides`),
+  gradePreview: () =>
+    apiFetch<{ grade: string; url: string | null }[]>(`/banners/grade/preview`),
 };
 
 // ── Catalog (admin + public) ──────────────────────────────────────────────────

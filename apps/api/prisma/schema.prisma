@@ -457,6 +457,24 @@ model Banner {
   @@map("banners")
 }
 
+// Images for the homepage "Grade Guide" section — one small gallery per
+// condition grade (NEW/A/B/C/F), unlike Banner's single flat undifferentiated
+// pool. Admin can upload several per grade; the homepage picks one at random
+// per grade, same "random pick from an active pool" pattern Banner already uses.
+model GradeBanner {
+  id        String   @id @default(uuid())
+  grade     String   // "NEW" | "A" | "B" | "C" | "F"
+  key       String   @unique  // S3 key: "banners/grade/a/xxxx-a_1.png"
+  label     String?
+  isActive  Boolean  @default(true)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([grade])
+  @@map("grade_banners")
+}
+
 model OtherBrand {
   id        String    @id @default(uuid())
   name      String    @unique

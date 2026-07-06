@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
@@ -1167,35 +1167,19 @@ export default function TradeInPage() {
                         <span className="text-zinc-900 dark:text-zinc-200 font-black">{storeHours}</span>
                       </div>
                     </div>
-                    {/* Interactive Store Location Map — click overlay prevents ctrl+scroll dark filter */}
-                    {(() => {
-                      const [mapActive, setMapActive] = useState(false);
-                      return (
-                        <div className="w-full h-40 rounded-2xl overflow-hidden border border-zinc-200/80 dark:border-zinc-800 mb-6 shadow-inner relative bg-zinc-100 dark:bg-zinc-950">
-                          <iframe
-                            title="Store Location Map"
-                            width="100%"
-                            height="100%"
-                            frameBorder="0"
-                            style={{ border: 0 }}
-                            src={activeStore?.mapsEmbedUrl ?? `https://maps.google.com/maps?q=${encodeURIComponent(`${storeName}, ${storeAddress}`)}&t=&z=17&ie=UTF8&iwloc=&output=embed`}
-                            allowFullScreen
-                            className="transition-all duration-500"
-                          />
-                          {/* Transparent overlay — blocks scroll hijack until user clicks to activate */}
-                          {!mapActive && (
-                            <div
-                              onClick={() => setMapActive(true)}
-                              className="absolute inset-0 z-10 flex items-center justify-center cursor-pointer group"
-                            >
-                              <span className="bg-zinc-950/70 text-white text-[10px] font-bold px-3 py-1.5 rounded-full backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity select-none">
-                                Click to interact with map
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })()}
+                    {/* Interactive Store Location Map */}
+                    <div className="w-full h-40 rounded-2xl overflow-hidden border border-zinc-200/80 dark:border-zinc-800 mb-6 shadow-inner relative bg-zinc-100 dark:bg-zinc-950">
+                      <iframe
+                        title="Store Location Map"
+                        width="100%"
+                        height="100%"
+                        frameBorder="0"
+                        style={{ border: 0 }}
+                        src={activeStore?.mapsEmbedUrl ?? `https://maps.google.com/maps?q=${encodeURIComponent(`${storeName}, ${storeAddress}`)}&t=&z=17&ie=UTF8&iwloc=&output=embed`}
+                        allowFullScreen
+                        className="transition-all duration-500 pointer-events-none"
+                      />
+                    </div>
                   </div>
                   <a
                     href={mapsLink}

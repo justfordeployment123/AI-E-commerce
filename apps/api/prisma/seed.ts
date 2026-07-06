@@ -8,6 +8,8 @@
  *   seed/brands/{slug}/              → logo.png + brand images
  *   seed/banners/                    → background banner images (all images)
  *   seed/banners/promo_banners/      → slides.json + promo images
+ *   seed/banners/Grade/              → grade guide images, filename prefix
+ *                                       (a/b/c/f/new) picks the grade
  *   seed/products/                   → products.json + product images
  */
 
@@ -256,6 +258,52 @@ async function seedBanners() {
     console.log('✓ Banners done');
 }
 
+// ─── Phase 3b: Grade banners (homepage "Grade Guide" section) ────────────────
+// seed/banners/Grade/{a,b,c,f,new}_N.png → one small gallery per condition
+// grade, uploaded to banners/grade/{grade}/ (lowercase, matching the existing
+// banners/promo convention) and rows in the GradeBanner table.
+
+function parseGradeFromFilename(filename: string): string | null {
+    const base = filename.toLowerCase();
+    if (base.startsWith('new')) return 'NEW';
+    if (base.startsWith('a')) return 'A';
+    if (base.startsWith('b')) return 'B';
+    if (base.startsWith('c')) return 'C';
+    if (base.startsWith('f')) return 'F';
+    return null;
+}
+
+async function seedGradeBanners() {
+    const gradeDir = path.join(SEED_DIR, 'banners', 'Grade');
+    if (!fs.existsSync(gradeDir)) return;
+
+    const files = fs.readdirSync(gradeDir)
+        .filter(f => isImage(f) && fs.statSync(path.join(gradeDir, f)).isFile());
+
+    const orderByGrade: Record<string, number> = {};
+
+    for (const filename of files) {
+        const grade = parseGradeFromFilename(filename);
+        if (!grade) {
+            console.log(`  Skipping ${filename} — filename doesn't start with a/b/c/f/new`);
+            continue;
+        }
+
+        const s3Key = `banners/grade/${grade.toLowerCase()}/${filename}`;
+        const existing = await prisma.gradeBanner.findUnique({ where: { key: s3Key } });
+        if (!existing) {
+            const order = orderByGrade[grade] ?? 0;
+            await uploadFile(path.join(gradeDir, filename), s3Key);
+            await prisma.gradeBanner.create({
+                data: { grade, key: s3Key, label: filename.replace(/\.[^.]+$/, ''), order },
+            });
+            orderByGrade[grade] = order + 1;
+            console.log(`  Grade banner (${grade}): ${filename}`);
+        }
+    }
+    console.log('✓ Grade banners done');
+}
+
 // ─── Phase 4: Promo slides (reads slides.json) ────────────────────────────────
 
 async function seedPromoSlides() {
@@ -351,9 +399,9 @@ async function seedDeviceCatalog(productsData: any[]) {
         });
         // Ensure category exists
         const cat = await prisma.category.upsert({
-            where:  { slug: data.catSlug },
+            where:  { name: cap(data.catSlug) },
             update: {},
-            create: { name: cap(data.catSlug), slug: data.catSlug },
+            create: { name: cap(data.catSlug) },
         });
         // Ensure brand-category link
         const bc = await prisma.brandCategory.upsert({
@@ -775,6 +823,7 @@ async function main() {
     await seedCategories();    // categories + brand-category images
     await seedBrands();        // brand logos + brand images
     await seedBanners();       // background banners
+    await seedGradeBanners();  // grade guide images (NEW/A/B/C/F)
     await seedPromoSlides();   // promo carousel from slides.json
     await seedStores();        // TechStop retail stores
     await seedHelplines();     // Store Helpline numbers

@@ -73,6 +73,71 @@ export class BannersService {
         await this.prisma.banner.delete({ where: { id } });
     }
 
+    // ── Grade Banners ────────────────────────────────────────────────────────
+    // Homepage "Grade Guide" section — one small gallery per condition grade
+    // (NEW/A/B/C/F) instead of Banner's single undifferentiated pool.
+
+    async getGradePreview() {
+        const grades = ['NEW', 'A', 'B', 'C', 'F'];
+        const all = await this.prisma.gradeBanner.findMany({ where: { isActive: true } });
+        return Promise.all(
+            grades.map(async (grade) => {
+                const pool = all.filter((b) => b.grade === grade);
+                const pick = pool[Math.floor(Math.random() * pool.length)];
+                if (!pick) return { grade, url: null };
+                return { grade, url: await this.storage.resolveImageUrl(pick.key) };
+            }),
+        );
+    }
+
+    async listAllGradeBanners() {
+        const banners = await this.prisma.gradeBanner.findMany({
+            orderBy: [{ grade: 'asc' }, { order: 'asc' }],
+        });
+        return Promise.all(
+            banners.map(async (b) => ({
+                ...b,
+                url: await this.storage.resolveImageUrl(b.key),
+            })),
+        );
+    }
+
+    async uploadGradeBanner(grade: string, file: any, label?: string) {
+        const { filePath, url } = await this.storage.uploadFile(file, `banners/grade/${grade.toLowerCase()}`);
+        const banner = await this.prisma.gradeBanner.create({
+            data: { grade, key: filePath, label: label ?? null, isActive: true, order: 0 },
+        });
+        return { ...banner, url };
+    }
+
+    async presignGradeBanner(grade: string, filename: string, contentType: string) {
+        const key = this.storage.buildKey(`banners/grade/${grade.toLowerCase()}`, filename);
+        const [uploadUrl, viewUrl] = await Promise.all([
+            this.storage.presignPut(key, contentType),
+            this.storage.generatePresignedUrl(key),
+        ]);
+        return { uploadUrl, key, viewUrl };
+    }
+
+    async saveGradeBannerKey(grade: string, key: string, label?: string) {
+        const banner = await this.prisma.gradeBanner.create({
+            data: { grade, key, label: label ?? null, isActive: true, order: 0 },
+        });
+        const url = await this.storage.generatePresignedUrl(key);
+        return { ...banner, url };
+    }
+
+    async toggleGradeBanner(id: string) {
+        const b = await this.prisma.gradeBanner.findUniqueOrThrow({ where: { id } });
+        return this.prisma.gradeBanner.update({ where: { id }, data: { isActive: !b.isActive } });
+    }
+
+    async deleteGradeBanner(id: string) {
+        const banner = await this.prisma.gradeBanner.findUniqueOrThrow({ where: { id } });
+        await this.storage.deleteFiles([banner.key]).catch(() => {});
+        await this.prisma.gradeBanner.delete({ where: { id } });
+    }
+
     // ── Promo Slides ─────────────────────────────────────────────────────────
 
     private async serializeSlide(s: any) {

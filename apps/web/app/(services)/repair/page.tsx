@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
@@ -677,7 +677,7 @@ export default function RepairPage() {
                         style={{ border: 0 }}
                         src={activeStore?.mapsEmbedUrl ?? `https://maps.google.com/maps?q=${encodeURIComponent(`${storeName}, ${storeAddress}`)}&t=&z=17&ie=UTF8&iwloc=&output=embed`}
                         allowFullScreen
-                        className="transition-all duration-500"
+                        className="transition-all duration-500 pointer-events-none"
                       />
                     </div>
                   </div>

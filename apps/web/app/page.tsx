@@ -1623,14 +1623,13 @@ function NewArrivals() {
 
 // ─── Grade Guide ──────────────────────────────────────────────────────────────
 function GradeGuide() {
-  const [gradeImgs, setGradeImgs] = useState<(string | null)[]>([null, null, null, null, null]);
+  const [gradeImgs, setGradeImgs] = useState<Record<string, string | null>>({});
   const [sectionRef, trigger] = useLazyFetchTrigger();
 
   useEffect(() => {
     if (trigger === 0) return;
-    bannersApi.random(100).then(b => {
-      const shuffled = [...b].sort(() => Math.random() - 0.5);
-      setGradeImgs(shuffled.slice(0, 5).map(x => x.url ?? null));
+    bannersApi.gradePreview().then(rows => {
+      setGradeImgs(Object.fromEntries(rows.map(r => [r.grade, r.url])));
     }).catch(() => {});
   }, [trigger]);
 
@@ -1647,32 +1646,32 @@ function GradeGuide() {
     {
       condition: "NEW",
       num: "01", name: "New", tagline: "Brand new, sealed or equivalent.",
-     featured: false, img: gradeImgs[0],
+     featured: false, img: gradeImgs["NEW"] ?? null,
       textClass: "text-zinc-300", featuredRing: "",
     },
     {
       condition: "A",
       num: "02", name: "A Grade", tagline: "Used but like new — zero visible marks.",
-       featured: true, img: gradeImgs[1],
+       featured: true, img: gradeImgs["A"] ?? null,
       textClass: "text-emerald-400",
       featuredRing: "border-emerald-500/60 shadow-[0_0_30px_rgba(16,185,129,0.15)] ring-1 ring-emerald-500/20",
     },
     {
       condition: "B",
       num: "03", name: "B Grade", tagline: "Minor signs of usage, small scratches.",
-      featured: false, img: gradeImgs[2],
+      featured: false, img: gradeImgs["B"] ?? null,
       textClass: "text-blue-400", featuredRing: "",
     },
     {
       condition: "C",
       num: "04", name: "C Grade", tagline: "Heavy scratches or marks, fully working.",
-       featured: false, img: gradeImgs[3],
+       featured: false, img: gradeImgs["C"] ?? null,
       textClass: "text-amber-400", featuredRing: "",
     },
     {
       condition: "F",
       num: "05", name: "F Grade", tagline: "Non-working — for parts or repair only.",
-       featured: false, img: gradeImgs[4],
+       featured: false, img: gradeImgs["F"] ?? null,
       textClass: "text-red-400", featuredRing: "",
     },
   ];
@@ -2730,7 +2729,6 @@ function StoreLocationSection() {
 
           {/* Right map column */}
           <div className="lg:col-span-7 w-full h-[450px] lg:h-[600px] rounded-[2.5rem] overflow-hidden border-[6px] border-white/50 dark:border-zinc-800/30 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] dark:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] relative group bg-zinc-100 dark:bg-zinc-950 backdrop-blur-sm z-10">
-            <div className="absolute inset-0 bg-red-500/5 pointer-events-none z-10 mix-blend-overlay"></div>
             <iframe
               title="TechStop Store Locations Map"
               width="100%"
@@ -2739,7 +2737,7 @@ function StoreLocationSection() {
               style={{ border: 0 }}
               src={activeStore?.mapsEmbedUrl ?? `https://maps.google.com/maps?q=${encodeURIComponent(`${storeName}, ${storeAddress}`)}&t=&z=17&ie=UTF8&iwloc=&output=embed`}
               allowFullScreen
-              className="w-full h-full transition-all duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)]"
+              className="w-full h-full transition-all duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none"
             />
           </div>
 

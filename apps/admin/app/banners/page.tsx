@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Image as ImageIcon, SlidersHorizontal, ArrowRight, Play, Eye, Sparkles } from "lucide-react";
-import { bannerImagesApi, promoSlidesApi, type BannerItem, type PromoSlideItem } from "../../lib/api";
+import { Image as ImageIcon, SlidersHorizontal, ArrowRight, Play, Eye, Sparkles, Award } from "lucide-react";
+import { bannerImagesApi, promoSlidesApi, gradeBannersApi, type BannerItem, type PromoSlideItem, type GradeBannerItem } from "../../lib/api";
 
 export default function BannersHubPage() {
   const [banners, setBanners] = useState<BannerItem[]>([]);
   const [promoSlides, setPromoSlides] = useState<PromoSlideItem[]>([]);
+  const [gradeBanners, setGradeBanners] = useState<GradeBannerItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeSlideIdx, setActiveSlideIdx] = useState(0);
 
@@ -15,10 +16,12 @@ export default function BannersHubPage() {
     Promise.all([
       bannerImagesApi.list(),
       promoSlidesApi.list(),
+      gradeBannersApi.list(),
     ])
-      .then(([bannerList, slideList]) => {
+      .then(([bannerList, slideList, gradeList]) => {
         setBanners(bannerList);
         setPromoSlides(slideList);
+        setGradeBanners(gradeList);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -39,7 +42,8 @@ export default function BannersHubPage() {
 
   const activeBannersCount = banners.filter(b => b.isActive).length;
   const activeSlidesCount = promoSlides.filter(s => s.isActive).length;
-  
+  const activeGradeBannersCount = gradeBanners.filter(b => b.isActive).length;
+
   // Find current preview slide
   const currentSlide = promoSlides[activeSlideIdx] || promoSlides[0];
 
@@ -57,7 +61,7 @@ export default function BannersHubPage() {
       </div>
 
       {/* Cards Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Banner Images Card */}
         <Link 
           href="/banners/images"
@@ -145,6 +149,58 @@ export default function BannersHubPage() {
             {promoSlides.length > 4 && (
               <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-zinc-50 text-zinc-400 border border-zinc-100">
                 +{promoSlides.length - 4} more
+              </span>
+            )}
+          </div>
+        </Link>
+
+        {/* Grade Guide Images Card */}
+        <Link
+          href="/banners/grade"
+          className="group relative bg-white border border-zinc-100 rounded-3xl p-6 shadow-sm hover:border-zinc-300 hover:shadow-md transition-all duration-300 flex flex-col justify-between min-h-[220px]"
+        >
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="p-3 bg-zinc-50 rounded-2xl group-hover:bg-accent/10 transition-colors">
+                <Award className="h-5 w-5 text-zinc-400 group-hover:text-accent transition-colors" />
+              </div>
+              <ArrowRight className="h-4 w-4 text-zinc-300 group-hover:text-zinc-900 group-hover:translate-x-1 transition-all" />
+            </div>
+            <div>
+              <div className="text-4xl font-black text-zinc-900">{gradeBanners.length}</div>
+              <div className="font-bold text-zinc-700 text-sm mt-1">Grade Guide Images</div>
+              <p className="text-xs text-zinc-400 mt-1 font-medium">
+                {activeGradeBannersCount} active photos across New/A/B/C/F on the homepage
+              </p>
+            </div>
+          </div>
+
+          {/* Image Previews */}
+          <div className="flex items-center gap-1.5 mt-4 pt-4 border-t border-zinc-50 overflow-hidden">
+            {gradeBanners.slice(0, 4).map(b => (
+              <div
+                key={b.id}
+                className="h-10 w-16 rounded-xl border border-zinc-100 bg-zinc-50 overflow-hidden shrink-0 relative"
+              >
+                {b.url ? (
+                  <img src={b.url} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <div className="h-full w-full flex items-center justify-center text-[8px] text-zinc-400 font-bold bg-zinc-100">
+                    No image
+                  </div>
+                )}
+                {!b.isActive && (
+                  <div className="absolute inset-0 bg-zinc-950/30 flex items-center justify-center">
+                    <span className="text-[7px] text-white font-extrabold uppercase bg-zinc-900/60 px-1 rounded-sm">
+                      Off
+                    </span>
+                  </div>
+                )}
+              </div>
+            ))}
+            {gradeBanners.length > 4 && (
+              <span className="text-xs text-zinc-400 font-extrabold ml-1 shrink-0">
+                +{gradeBanners.length - 4}
               </span>
             )}
           </div>

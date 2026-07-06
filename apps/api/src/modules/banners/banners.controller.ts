@@ -58,6 +58,72 @@ export class BannersController {
         return this.banners.deleteBanner(id);
     }
 
+    // ── Grade Banners ────────────────────────────────────────────────────────
+    // Static sub-paths declared BEFORE parameterised :id paths.
+
+    private static readonly VALID_GRADES = new Set(['NEW', 'A', 'B', 'C', 'F']);
+
+    private assertValidGrade(grade: string) {
+        if (!BannersController.VALID_GRADES.has(grade)) {
+            throw new BadRequestException('grade must be one of NEW, A, B, C, F');
+        }
+    }
+
+    @Get('grade/preview')
+    getGradePreview() {
+        return this.banners.getGradePreview();
+    }
+
+    @Get('grade')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('ADMIN')
+    listAllGradeBanners() {
+        return this.banners.listAllGradeBanners();
+    }
+
+    @Get('grade/presign-upload')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('ADMIN')
+    presignGradeBanner(
+        @Query('grade') grade: string,
+        @Query('filename') filename: string,
+        @Query('contentType') contentType: string,
+    ) {
+        if (!filename || !contentType) throw new BadRequestException('filename and contentType required');
+        this.assertValidGrade(grade);
+        return this.banners.presignGradeBanner(grade, filename, contentType);
+    }
+
+    @Post('grade')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('ADMIN')
+    @UseInterceptors(FileInterceptor('file'))
+    uploadGradeBanner(
+        @UploadedFile() file: any,
+        @Body('grade') grade: string,
+        @Body('label') label?: string,
+        @Body('key') key?: string,
+    ) {
+        this.assertValidGrade(grade);
+        if (key) return this.banners.saveGradeBannerKey(grade, key, label);
+        if (file) return this.banners.uploadGradeBanner(grade, file, label);
+        throw new BadRequestException('Provide a file or a key');
+    }
+
+    @Patch('grade/:id/toggle')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('ADMIN')
+    toggleGradeBanner(@Param('id') id: string) {
+        return this.banners.toggleGradeBanner(id);
+    }
+
+    @Delete('grade/:id')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('ADMIN')
+    deleteGradeBanner(@Param('id') id: string) {
+        return this.banners.deleteGradeBanner(id);
+    }
+
     // ── Promo Slides ─────────────────────────────────────────────────────────
     // Static sub-paths declared BEFORE parameterised :id paths.
 

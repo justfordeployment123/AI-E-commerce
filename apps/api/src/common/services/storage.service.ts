@@ -19,6 +19,7 @@ const FOLDERS = [
   'review-images',
   'banners',
   'banners/promo',
+  'banners/grade',
 ] as const;
 
 // These paths contain user-submitted content and must stay private.

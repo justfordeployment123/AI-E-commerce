@@ -776,6 +776,18 @@ export interface BannerItem {
   updatedAt: string;
 }
 
+export interface GradeBannerItem {
+  id: string;
+  grade: string;
+  key: string;
+  label: string | null;
+  isActive: boolean;
+  order: number;
+  url: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface PromoSlideItem {
   id: string;
   order: number;
@@ -821,6 +833,26 @@ export const bannerImagesApi = {
     const put = await fetch(uploadUrl, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file });
     if (!put.ok) throw new Error('Upload failed');
     return apiFetch<BannerItem>('/banners', { method: 'POST', body: JSON.stringify({ key, label }) });
+  },
+};
+
+export const GRADE_OPTIONS = ['NEW', 'A', 'B', 'C', 'F'] as const;
+
+export const gradeBannersApi = {
+  list: () => apiFetch<GradeBannerItem[]>('/banners/grade'),
+  toggle: (id: string) => apiFetch<GradeBannerItem>(`/banners/grade/${id}/toggle`, { method: 'PATCH' }),
+  delete: (id: string) => apiFetch<void>(`/banners/grade/${id}`, { method: 'DELETE' }),
+  upload: async (grade: string, file: File, label?: string) => {
+    const q = new URLSearchParams({ grade, filename: file.name, contentType: file.type || 'application/octet-stream' });
+    const token = getToken();
+    const r = await fetch(`${API_BASE}/banners/grade/presign-upload?${q}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!r.ok) throw new Error('Failed to get upload URL');
+    const { uploadUrl, key } = await r.json();
+    const put = await fetch(uploadUrl, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file });
+    if (!put.ok) throw new Error('Upload failed');
+    return apiFetch<GradeBannerItem>('/banners/grade', { method: 'POST', body: JSON.stringify({ grade, key, label }) });
   },
 };
 
