@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ProductImage from "@/components/ProductImage";
 import {
@@ -19,23 +19,36 @@ import { useCart } from "@/context/cart-context";
 import { useAuth } from "@/context/auth-context";
 import { ordersApi, paymentsApi } from "@/lib/api";
 
-const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
-  ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
-  : null;
-
 const STEPS = ["Delivery", "Payment", "Review"];
 
 export default function CheckoutPage() {
+  const [publishableKey, setPublishableKey] = useState<string | null>(null);
+  const [stripeConfigLoaded, setStripeConfigLoaded] = useState(false);
+
+  useEffect(() => {
+    paymentsApi.publicConfig()
+      .then(({ publishableKey }) => setPublishableKey(publishableKey))
+      .catch(() => setPublishableKey(null))
+      .finally(() => setStripeConfigLoaded(true));
+  }, []);
+
+  // Elements supports lazily upgrading from a null stripe instance once the key resolves.
+  const stripePromise = useMemo(
+    () => (publishableKey ? loadStripe(publishableKey) : null),
+    [publishableKey],
+  );
+  const stripeConfigured = stripeConfigLoaded && Boolean(publishableKey);
+
   return (
     <Elements stripe={stripePromise}>
-      <CheckoutInner />
+      <CheckoutInner stripeConfigured={stripeConfigured} stripeConfigLoaded={stripeConfigLoaded} />
     </Elements>
   );
 }
 
 const UK_POSTCODE = /^[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}$/i;
 
-function CheckoutInner() {
+function CheckoutInner({ stripeConfigured, stripeConfigLoaded }: { stripeConfigured: boolean; stripeConfigLoaded: boolean }) {
   const { items, subtotal, clearCart, loading: cartLoading } = useCart();
   const { user } = useAuth();
   const stripe = useStripe();
@@ -114,7 +127,7 @@ function CheckoutInner() {
   }
 
   async function handleAdvanceToReview() {
-    if (stripePromise && stripe && elements) {
+    if (stripeConfigured && stripe && elements) {
       setCardError("");
       const cardElement = elements.getElement(CardElement);
       if (!cardElement) { setCardError("Card details missing."); return; }
@@ -143,7 +156,7 @@ function CheckoutInner() {
     try {
       // Reuse the existing payment intent if we already created one (idempotency on retry)
       let clientSecret = savedClientSecret;
-      let devMode = !stripePromise;
+      let devMode = !stripeConfigured;
 
       if (!clientSecret) {
         const intent = await paymentsApi.createIntent(
@@ -430,12 +443,12 @@ function CheckoutInner() {
                     </button>
                     <h2 className="text-3xl font-bold mb-8">Payment</h2>
 
-                    {!stripePromise && (
+                    {stripeConfigLoaded && !stripeConfigured && (
                       <div className="flex items-start gap-3 rounded-[1.5rem] bg-amber-50 border border-amber-200 p-5 mb-6">
                         <AlertCircle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
                         <div>
                           <p className="font-bold text-sm text-amber-800">Stripe not configured</p>
-                          <p className="text-xs text-amber-700 mt-1">Add <code className="font-mono bg-amber-100 px-1 rounded">NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY</code> to your <code className="font-mono bg-amber-100 px-1 rounded">.env.local</code> file. In dev mode, payment will be skipped.</p>
+                          <p className="text-xs text-amber-700 mt-1">Add a publishable key in Admin → Settings → Stripe Payment Keys. In dev mode, payment will be skipped.</p>
                         </div>
                       </div>
                     )}
@@ -452,7 +465,7 @@ function CheckoutInner() {
                         </div>
                       </div>
                       <div className="rounded-[1rem] border-2 border-zinc-200 px-5 py-4 focus-within:border-black transition-colors">
-                        {stripePromise ? (
+                        {stripeConfigured ? (
                           <CardElement
                             options={{
                               style: {
@@ -486,7 +499,7 @@ function CheckoutInner() {
                     )}
                     <button
                       onClick={handleAdvanceToReview}
-                      disabled={stripePromise ? !cardComplete : false}
+                      disabled={stripeConfigured ? !cardComplete : false}
                       className="w-full h-16 bg-black text-white rounded-[1.5rem] font-bold text-base flex items-center justify-center gap-2 hover:bg-zinc-800 transition-colors active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       Review order <ChevronRight className="h-5 w-5" />
@@ -516,7 +529,7 @@ function CheckoutInner() {
                       {[
                         { label: "Delivering to", value: `${delivery.firstName} ${delivery.lastName}, ${delivery.address}, ${delivery.city} ${delivery.postcode}`.trim().replace(/^,\s*/, "") || "—" },
                         { label: "Email", value: delivery.email || "—" },
-                        { label: "Payment", value: stripePromise ? "Card (Stripe)" : "Dev mode" },
+                        { label: "Payment", value: stripeConfigured ? "Card (Stripe)" : "Dev mode" },
                       ].map(({ label, value }) => (
                         <div key={label} className="flex justify-between py-4 border-b border-zinc-100">
                           <span className="text-xs font-bold uppercase tracking-widest text-zinc-400">{label}</span>

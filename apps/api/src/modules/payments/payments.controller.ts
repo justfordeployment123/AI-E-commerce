@@ -27,6 +27,11 @@ export class PaymentsController {
         return this.paymentsService.handleWebhook(req.rawBody!, sig);
     }
 
+    @Get('public-config')
+    getPublicConfig() {
+        return this.paymentsService.getPublicConfig();
+    }
+
     @Get('settings')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles('ADMIN')

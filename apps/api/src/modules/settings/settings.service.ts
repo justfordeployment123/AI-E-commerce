@@ -2,7 +2,7 @@ import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
 import { PrismaService } from '../database/prisma.service';
 
-const PLAINTEXT_KEYS = new Set(['STRIPE_MODE', 'SHIPPO_SERVICE_LEVEL']);
+const PLAINTEXT_KEYS = new Set(['STRIPE_MODE', 'SHIPPO_MODE', 'SHIPPO_SERVICE_LEVEL']);
 
 @Injectable()
 export class SettingsService implements OnModuleInit {
@@ -63,9 +63,7 @@ export class SettingsService implements OnModuleInit {
             return value;
         }
 
-        const envVal = process.env[key] ?? null;
-        if (envVal) this.cache.set(key, envVal);
-        return envVal;
+        return null;
     }
 
     async set(key: string, plaintext: string): Promise<void> {

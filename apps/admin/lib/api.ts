@@ -491,6 +491,8 @@ export interface PaymentSettings {
   stripeSecretKeyLive: string | null;
   stripeWebhookSecretTest: string | null;
   stripeWebhookSecretLive: string | null;
+  stripePublishableKeyTest: string | null;
+  stripePublishableKeyLive: string | null;
 }
 
 export const paymentSettingsApi = {
@@ -501,6 +503,8 @@ export const paymentSettingsApi = {
     stripeSecretKeyLive: string;
     stripeWebhookSecretTest: string;
     stripeWebhookSecretLive: string;
+    stripePublishableKeyTest: string;
+    stripePublishableKeyLive: string;
   }>) =>
     apiFetch<PaymentSettings>('/payments/settings', { method: 'PUT', body: JSON.stringify(data) }),
   test: () => apiFetch<{ ok: boolean; accountId: string }>('/payments/settings/test', { method: 'POST' }),
@@ -513,13 +517,20 @@ export const paymentSettingsApi = {
 
 // ── Shipping Settings ─────────────────────────────────────────────────────────
 export interface ShippingSettings {
-  shippoApiKey: string | null;
+  mode: 'test' | 'live';
+  shippoApiKeyTest: string | null;
+  shippoApiKeyLive: string | null;
   shippoServiceLevel: string;
 }
 
 export const shippingSettingsApi = {
   get: () => apiFetch<ShippingSettings>('/shipping/settings'),
-  update: (data: Partial<{ shippoApiKey: string; shippoServiceLevel: string }>) =>
+  update: (data: Partial<{
+    mode: string;
+    shippoApiKeyTest: string;
+    shippoApiKeyLive: string;
+    shippoServiceLevel: string;
+  }>) =>
     apiFetch<ShippingSettings>('/shipping/settings', { method: 'PUT', body: JSON.stringify(data) }),
   test: () => apiFetch<{ ok: boolean }>('/shipping/settings/test', { method: 'POST' }),
 };

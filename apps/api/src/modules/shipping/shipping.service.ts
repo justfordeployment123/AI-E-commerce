@@ -29,8 +29,13 @@ export class ShippingService {
         private readonly settingsService: SettingsService,
     ) {}
 
+    private async getMode(): Promise<string> {
+        return (await this.settingsService.get('SHIPPO_MODE')) ?? 'test';
+    }
+
     private async getApiKey(): Promise<string | null> {
-        return this.settingsService.get('SHIPPO_API_KEY');
+        const mode = await this.getMode();
+        return this.settingsService.get(`SHIPPO_API_KEY_${mode.toUpperCase()}`);
     }
 
     private async getServiceLevel(): Promise<string> {
@@ -43,6 +48,14 @@ export class ShippingService {
             'Authorization': `ShippoToken ${key ?? ''}`,
             'Content-Type':  'application/json',
         };
+    }
+
+    /** Configuration snapshot for the health check — never exposes the key itself. */
+    async getHealthStatus(): Promise<{ configured: boolean; mode: string; keyMode: 'test' | 'live' | 'unknown' }> {
+        const mode = await this.getMode();
+        const key = await this.getApiKey();
+        const keyMode = key?.startsWith('shippo_live_') ? 'live' : key?.startsWith('shippo_test_') ? 'test' : 'unknown';
+        return { configured: Boolean(key), mode, keyMode };
     }
 
     private async getStoreAddress() {
@@ -60,7 +73,7 @@ export class ShippingService {
     async generatePrepaidLabel(req: ShipmentRequest): Promise<ShipmentResult> {
         const apiKey = await this.getApiKey();
         if (!apiKey) {
-            this.logger.warn('SHIPPO_API_KEY not set — using mock label');
+            this.logger.warn('Shippo API key not configured — using mock label');
             return this.mockLabel(req.reference);
         }
 
@@ -182,26 +195,32 @@ export class ShippingService {
     private mockLabel(reference: string): ShipmentResult {
         const trackingNumber = `MOCK${reference.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10)}GB`;
         const labelPdf = Buffer.from('%PDF-1.4 mock label for ' + reference);
-        this.logger.warn(`Mock label generated for ${reference} — set SHIPPO_API_KEY for real labels`);
+        this.logger.warn(`Mock label generated for ${reference} — configure a Shippo key in Admin Settings for real labels`);
         return { trackingNumber, labelPdf };
     }
 
     // ─── Admin-managed settings ────────────────────────────────────────────────────
 
     async getSettings() {
-        const [key, serviceLevel] = await Promise.all([
-            this.getApiKey(),
+        const [mode, keyTest, keyLive, serviceLevel] = await Promise.all([
+            this.getMode(),
+            this.settingsService.get('SHIPPO_API_KEY_TEST'),
+            this.settingsService.get('SHIPPO_API_KEY_LIVE'),
             this.getServiceLevel(),
         ]);
         return {
-            shippoApiKey:       this.settingsService.mask(key),
+            mode,
+            shippoApiKeyTest:   this.settingsService.mask(keyTest),
+            shippoApiKeyLive:   this.settingsService.mask(keyLive),
             shippoServiceLevel: serviceLevel,
         };
     }
 
-    async updateSettings(dto: { shippoApiKey?: string; shippoServiceLevel?: string }) {
+    async updateSettings(dto: { mode?: string; shippoApiKeyTest?: string; shippoApiKeyLive?: string; shippoServiceLevel?: string }) {
         const map: Record<string, string | undefined> = {
-            SHIPPO_API_KEY:       dto.shippoApiKey,
+            SHIPPO_MODE:          dto.mode,
+            SHIPPO_API_KEY_TEST:  dto.shippoApiKeyTest,
+            SHIPPO_API_KEY_LIVE:  dto.shippoApiKeyLive,
             SHIPPO_SERVICE_LEVEL: dto.shippoServiceLevel,
         };
         await Promise.all(

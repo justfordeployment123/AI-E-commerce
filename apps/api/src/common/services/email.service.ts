@@ -18,6 +18,21 @@ export class EmailService {
         });
     }
 
+    isConfigured(): boolean {
+        return Boolean(process.env.SMTP_USER && process.env.SMTP_PASS);
+    }
+
+    /** Connects + authenticates against the SMTP server without sending anything — used by the health check. */
+    async verifyConnection(): Promise<{ ok: boolean; error?: string }> {
+        if (!this.isConfigured()) return { ok: false, error: 'SMTP_USER/SMTP_PASS not configured' };
+        try {
+            await this.transporter.verify();
+            return { ok: true };
+        } catch (error) {
+            return { ok: false, error: error instanceof Error ? error.message : 'Unknown SMTP error' };
+        }
+    }
+
     async sendOrderConfirmation(opts: {
         to: string;
         customerName: string;

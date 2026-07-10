@@ -36,11 +36,44 @@ export class PaymentsService {
         );
     }
 
+    /** Publishable key is not secret — it's meant to ship to the browser — so it's exposed
+     *  unauthenticated for the storefront to initialize Stripe.js with the mode currently active. */
+    async getPublicConfig(): Promise<{ mode: string; publishableKey: string | null }> {
+        const mode = await this.getMode();
+        const publishableKey = await this.settingsService.get(`STRIPE_PUBLISHABLE_KEY_${mode.toUpperCase()}`);
+        return { mode, publishableKey };
+    }
+
     /** Whether Stripe is actually configured for the active mode — used by orders.service.ts
      *  to decide whether a "dev" payment method is legitimately allowed, instead of trusting
      *  the client's own claim about devMode. */
     async isConfigured(): Promise<boolean> {
         return (await this.getStripe()) !== null;
+    }
+
+    /** Configuration snapshot for the health check — never exposes the keys themselves. */
+    async getHealthStatus(): Promise<{
+        configured: boolean;
+        mode: string;
+        keyMode: 'test' | 'live' | 'unknown';
+        webhookConfigured: boolean;
+        publishableKeyConfigured: boolean;
+    }> {
+        const mode = await this.getMode();
+        const [key, webhookSecret, publishableKey] = await Promise.all([
+            this.settingsService.get(`STRIPE_SECRET_KEY_${mode.toUpperCase()}`)
+                .then(v => v ?? this.settingsService.get('STRIPE_SECRET_KEY')),
+            this.getWebhookSecret(),
+            this.settingsService.get(`STRIPE_PUBLISHABLE_KEY_${mode.toUpperCase()}`),
+        ]);
+        const keyMode = key?.startsWith('sk_live_') ? 'live' : key?.startsWith('sk_test_') ? 'test' : 'unknown';
+        return {
+            configured: Boolean(key),
+            mode,
+            keyMode,
+            webhookConfigured: Boolean(webhookSecret),
+            publishableKeyConfigured: Boolean(publishableKey),
+        };
     }
 
     /** Confirms a PaymentIntent actually succeeded and matches the server-computed order
@@ -188,11 +221,13 @@ export class PaymentsService {
     }
 
     async getSettings() {
-        const [skTest, skLive, wsTest, wsLive, mode] = await Promise.all([
+        const [skTest, skLive, wsTest, wsLive, pkTest, pkLive, mode] = await Promise.all([
             this.settingsService.get('STRIPE_SECRET_KEY_TEST'),
             this.settingsService.get('STRIPE_SECRET_KEY_LIVE'),
             this.settingsService.get('STRIPE_WEBHOOK_SECRET_TEST'),
             this.settingsService.get('STRIPE_WEBHOOK_SECRET_LIVE'),
+            this.settingsService.get('STRIPE_PUBLISHABLE_KEY_TEST'),
+            this.settingsService.get('STRIPE_PUBLISHABLE_KEY_LIVE'),
             this.settingsService.get('STRIPE_MODE'),
         ]);
         return {
@@ -201,6 +236,9 @@ export class PaymentsService {
             stripeSecretKeyLive: this.settingsService.mask(skLive),
             stripeWebhookSecretTest: this.settingsService.mask(wsTest),
             stripeWebhookSecretLive: this.settingsService.mask(wsLive),
+            // Publishable keys aren't secret — they ship to the browser — so return them in full.
+            stripePublishableKeyTest: pkTest,
+            stripePublishableKeyLive: pkLive,
         };
     }
 
@@ -210,6 +248,8 @@ export class PaymentsService {
         stripeSecretKeyLive?: string;
         stripeWebhookSecretTest?: string;
         stripeWebhookSecretLive?: string;
+        stripePublishableKeyTest?: string;
+        stripePublishableKeyLive?: string;
     }) {
         const map: Record<string, string | undefined> = {
             STRIPE_MODE: dto.mode,
@@ -217,6 +257,8 @@ export class PaymentsService {
             STRIPE_SECRET_KEY_LIVE: dto.stripeSecretKeyLive,
             STRIPE_WEBHOOK_SECRET_TEST: dto.stripeWebhookSecretTest,
             STRIPE_WEBHOOK_SECRET_LIVE: dto.stripeWebhookSecretLive,
+            STRIPE_PUBLISHABLE_KEY_TEST: dto.stripePublishableKeyTest,
+            STRIPE_PUBLISHABLE_KEY_LIVE: dto.stripePublishableKeyLive,
         };
         await Promise.all(
             Object.entries(map)

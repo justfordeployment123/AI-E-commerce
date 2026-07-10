@@ -68,11 +68,11 @@ describe('SettingsService', () => {
             expect(prismaMock.appSetting.findUnique).not.toHaveBeenCalled();
         });
 
-        it('falls back to process.env when DB has no row', async () => {
+        it('does not fall back to process.env when DB has no row', async () => {
             process.env['STRIPE_SECRET_KEY_TEST'] = 'env_fallback_value';
             (prismaMock.appSetting.findUnique as any).mockResolvedValueOnce(null);
             const result = await service.get('STRIPE_SECRET_KEY_TEST');
-            expect(result).toBe('env_fallback_value');
+            expect(result).toBeNull();
             delete process.env['STRIPE_SECRET_KEY_TEST'];
         });
 

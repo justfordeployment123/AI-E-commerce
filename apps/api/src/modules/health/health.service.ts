@@ -3,6 +3,24 @@ import OpenAI from 'openai';
 import { PrismaService } from '../database/prisma.service';
 import { RedisService } from '../cache/redis.service';
 import { S3Client, HeadBucketCommand } from '@aws-sdk/client-s3';
+import { PaymentsService } from '../payments/payments.service';
+import { ShippingService } from '../shipping/shipping.service';
+import { EmailService } from '../../common/services/email.service';
+
+export interface IntegrationStatus {
+    /** Whether credentials/env vars are present at all. */
+    configured: boolean;
+    /** For providers with separate test/live keys — omitted when not applicable. */
+    mode?: 'test' | 'live' | 'unknown';
+    error?: string;
+}
+
+export interface StripeIntegrationStatus extends IntegrationStatus {
+    /** Secret key is set for the active mode — same as `configured`, kept separate for clarity alongside the other two. */
+    secretKeyConfigured?: boolean;
+    webhookConfigured?: boolean;
+    publishableKeyConfigured?: boolean;
+}
 
 @Injectable()
 export class HealthService {
@@ -11,6 +29,9 @@ export class HealthService {
     constructor(
         private readonly prisma: PrismaService,
         private readonly redisService: RedisService,
+        private readonly paymentsService: PaymentsService,
+        private readonly shippingService: ShippingService,
+        private readonly emailService: EmailService,
     ) { }
 
     async getStatus(): Promise<{
@@ -32,14 +53,26 @@ export class HealthService {
         garageConfigured: boolean;
         openAiKeyConfigured: boolean;
         database?: { tableCount: number; tables: string[] };
+        /** Business integrations — informational only, never flip `status` to degraded
+         *  since it's normal for e.g. Stripe/Shippo to be unconfigured in dev. */
+        integrations: {
+            stripe: StripeIntegrationStatus;
+            shippo: IntegrationStatus;
+            email: IntegrationStatus;
+            googleOAuth: IntegrationStatus;
+            socket: IntegrationStatus;
+        };
         timestamp: string;
     }> {
-        const [postgresCheck, redisCheck, garageCheck, openAiCheck, scraperCheck] = await Promise.all([
+        const [postgresCheck, redisCheck, garageCheck, openAiCheck, scraperCheck, stripeCheck, shippoCheck, emailCheck] = await Promise.all([
             this.checkPostgres(),
             this.checkRedis(),
             this.checkGarage(),
             this.checkOpenAi(),
             this.checkScraper(),
+            this.checkStripe(),
+            this.checkShippo(),
+            this.checkEmail(),
         ]);
 
         const scraperUrl = process.env.SCRAPER_URL || 'http://localhost:3003';
@@ -64,6 +97,13 @@ export class HealthService {
             garageConfigured: Boolean(process.env.GARAGE_ENDPOINT),
             openAiKeyConfigured: Boolean(process.env.OPENAI_API_KEY),
             database: postgresCheck.ok ? postgresCheck.database : undefined,
+            integrations: {
+                stripe: stripeCheck,
+                shippo: shippoCheck,
+                email: emailCheck,
+                googleOAuth: this.checkGoogleOAuth(),
+                socket: { configured: true },
+            },
             timestamp: new Date().toISOString(),
         };
     }
@@ -159,6 +199,42 @@ export class HealthService {
         } catch (error) {
             return { ok: false, error: this.sanitizeError(error) };
         }
+    }
+
+    private async checkStripe(): Promise<StripeIntegrationStatus> {
+        try {
+            const { configured, keyMode, webhookConfigured, publishableKeyConfigured } = await this.paymentsService.getHealthStatus();
+            return {
+                configured,
+                mode: configured ? keyMode : undefined,
+                secretKeyConfigured: configured,
+                webhookConfigured,
+                publishableKeyConfigured,
+            };
+        } catch (error) {
+            return { configured: false, error: this.sanitizeError(error) };
+        }
+    }
+
+    private async checkShippo(): Promise<IntegrationStatus> {
+        try {
+            const { configured, keyMode } = await this.shippingService.getHealthStatus();
+            return { configured, mode: configured ? keyMode : undefined };
+        } catch (error) {
+            return { configured: false, error: this.sanitizeError(error) };
+        }
+    }
+
+    private async checkEmail(): Promise<IntegrationStatus> {
+        if (!this.emailService.isConfigured()) {
+            return { configured: false };
+        }
+        const result = await this.emailService.verifyConnection();
+        return { configured: true, error: result.ok ? undefined : result.error };
+    }
+
+    private checkGoogleOAuth(): IntegrationStatus {
+        return { configured: Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) };
     }
 
     private sanitizeError(error: unknown): string {

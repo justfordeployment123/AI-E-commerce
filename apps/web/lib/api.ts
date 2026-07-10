@@ -114,6 +114,8 @@ export const paymentsApi = {
       '/payments/intent',
       { method: 'POST', body: JSON.stringify({ items, promoCode }) },
     ),
+  publicConfig: () =>
+    apiFetch<{ mode: 'test' | 'live'; publishableKey: string | null }>('/payments/public-config'),
 };
 
 // ── Orders ────────────────────────────────────────────────────────────────────
