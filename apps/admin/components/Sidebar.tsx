@@ -97,7 +97,10 @@ export default function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose
       {/* Footer */}
       <div className="px-3 py-4 border-t border-white/10">
         {user && (
-          <div className="flex items-center gap-3 px-3 mb-3">
+          <Link
+            href="/account"
+            className={`flex items-center gap-3 px-3 py-2 mb-1 rounded-xl transition-colors ${pathname === "/account" ? "bg-white/10" : "hover:bg-white/5"}`}
+          >
             <div className="h-8 w-8 rounded-full bg-accent flex items-center justify-center shrink-0">
               <span className="text-white font-bold text-xs">{user.name.charAt(0).toUpperCase()}</span>
             </div>
@@ -105,7 +108,7 @@ export default function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose
               <p className="text-xs font-bold truncate">{user.name}</p>
               <p className="text-[10px] text-white/40 truncate">{user.email}</p>
             </div>
-          </div>
+          </Link>
         )}
         <button
           onClick={handleLogout}

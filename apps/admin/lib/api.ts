@@ -411,6 +411,12 @@ export const authApi = {
     }),
 
   me: () => apiFetch<AdminUser>('/users/me'),
+
+  changePassword: (currentPassword: string, newPassword: string) =>
+    apiFetch<{ ok: boolean }>('/users/me/password', {
+      method: 'PATCH',
+      body: JSON.stringify({ currentPassword, newPassword }),
+    }),
 };
 
 // ── Products ──────────────────────────────────────────────────────────────────

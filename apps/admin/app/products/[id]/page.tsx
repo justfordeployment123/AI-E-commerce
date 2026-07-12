@@ -5,11 +5,12 @@ import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft, Check, X, Trash2, Upload, Image as ImageIcon,
   Package, Tag, Layers, ToggleLeft, ToggleRight, ExternalLink,
-  Scissors, Loader2, Sparkles,
+  Scissors, Loader2, Sparkles, Camera,
 } from "lucide-react";
 import { productsApi, ordersApi, catalogCategoriesApi, type Product } from "../../../lib/api";
 import { removeBackground } from "../../../lib/removeBackground";
 import { useBgRemoval } from "../../../context/bg-removal-context";
+import CameraCaptureModal from "../../../components/CameraCaptureModal";
 
 const CONDITIONS = [
   { value: 'NEW', label: 'New' },
@@ -56,6 +57,7 @@ export default function ProductDetailPage() {
   const [uploadingImg, setUploadingImg] = useState(false);
   const [removingBgIndex, setRemovingBgIndex] = useState<number | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [cameraOpen, setCameraOpen] = useState(false);
   const { startBgRemoval, stopBgRemoval } = useBgRemoval();
 
   const [buyers, setBuyers] = useState<{
@@ -157,9 +159,8 @@ export default function ProductDetailPage() {
     } finally { setSaving(false); }
   }
 
-  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file || !product) return;
+  async function uploadImageFile(file: File) {
+    if (!product) return;
     setUploadingImg(true);
     try {
       const { filePath } = await productsApi.uploadImage(file);
@@ -172,8 +173,14 @@ export default function ProductDetailPage() {
       setError("Image upload failed");
     } finally {
       setUploadingImg(false);
-      if (fileRef.current) fileRef.current.value = "";
     }
+  }
+
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await uploadImageFile(file);
+    if (fileRef.current) fileRef.current.value = "";
   }
 
   async function handleRemoveBg(index: number) {
@@ -217,6 +224,8 @@ export default function ProductDetailPage() {
 
   return (
     <>
+      <CameraCaptureModal open={cameraOpen} onClose={() => setCameraOpen(false)} onCapture={uploadImageFile} />
+
       {/* Lightbox */}
       {lightbox && (
         <div
@@ -280,17 +289,27 @@ export default function ProductDetailPage() {
                     Photos ({product.images.length})
                   </h2>
                 </div>
-                <button
-                  onClick={() => fileRef.current?.click()}
-                  disabled={uploadingImg}
-                  className="flex items-center gap-2 h-9 px-4 rounded-xl bg-zinc-950 text-white text-xs font-bold hover:bg-zinc-800 transition-colors disabled:opacity-60"
-                >
-                  {uploadingImg
-                    ? <div className="h-3.5 w-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    : <Upload className="h-3.5 w-3.5" />
-                  }
-                  Upload image
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => fileRef.current?.click()}
+                    disabled={uploadingImg}
+                    className="flex items-center gap-2 h-9 px-4 rounded-xl bg-zinc-950 text-white text-xs font-bold hover:bg-zinc-800 transition-colors disabled:opacity-60"
+                  >
+                    {uploadingImg
+                      ? <div className="h-3.5 w-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      : <Upload className="h-3.5 w-3.5" />
+                    }
+                    Upload image
+                  </button>
+                  <button
+                    onClick={() => setCameraOpen(true)}
+                    disabled={uploadingImg}
+                    className="flex items-center gap-2 h-9 px-4 rounded-xl border border-zinc-200 text-zinc-600 text-xs font-bold hover:border-zinc-400 transition-colors disabled:opacity-60"
+                  >
+                    <Camera className="h-3.5 w-3.5" />
+                    Take photo
+                  </button>
+                </div>
                 <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
               </div>
 
@@ -329,13 +348,26 @@ export default function ProductDetailPage() {
                   ))}
                 </div>
               ) : (
-                <button
-                  onClick={() => fileRef.current?.click()}
-                  className="w-full border-2 border-dashed border-zinc-200 rounded-2xl py-12 flex flex-col items-center gap-3 text-zinc-400 hover:border-zinc-400 hover:text-zinc-600 transition-colors"
-                >
+                <div className="w-full border-2 border-dashed border-zinc-200 rounded-2xl py-10 flex flex-col items-center gap-4 text-zinc-400">
                   <Upload className="h-8 w-8 opacity-40" />
-                  <p className="text-sm font-medium">Click to upload product photos</p>
-                </button>
+                  <p className="text-sm font-medium">Add product photos</p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => fileRef.current?.click()}
+                      className="flex items-center gap-2 h-9 px-4 rounded-xl bg-zinc-950 text-white text-xs font-bold hover:bg-zinc-800 transition-colors"
+                    >
+                      <Upload className="h-3.5 w-3.5" />
+                      Choose files
+                    </button>
+                    <button
+                      onClick={() => setCameraOpen(true)}
+                      className="flex items-center gap-2 h-9 px-4 rounded-xl border border-zinc-200 text-zinc-600 text-xs font-bold hover:border-zinc-400 hover:text-zinc-800 transition-colors"
+                    >
+                      <Camera className="h-3.5 w-3.5" />
+                      Take photo
+                    </button>
+                  </div>
+                </div>
               )}
               <p className="text-[10px] text-zinc-400 font-medium mt-3">First image is shown as the main product photo. Click any image to enlarge.</p>
               <p className="text-[10px] text-zinc-400 font-medium flex items-center gap-1.5 mt-1">

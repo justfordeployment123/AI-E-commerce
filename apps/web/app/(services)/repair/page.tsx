@@ -9,11 +9,12 @@ import {
   Check, MapPin, Truck, Wrench, Clock, Shield, X,
   Monitor, Zap, Battery, Wifi, HardDrive, CircleAlert,
   Star, HelpCircle, ChevronDown, Sparkles, ChevronRight, Upload, Plus,
-  CheckCircle2, UserCircle
+  CheckCircle2, UserCircle, Camera
 } from "lucide-react";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/context/auth-context";
 import DeviceSearchBox from "@/components/DeviceSearchBox";
+import CameraCaptureModal from "@/components/CameraCaptureModal";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002";
 
@@ -148,6 +149,7 @@ export default function RepairPage() {
   const [batchId, setBatchId] = useState(() => crypto.randomUUID());
   const [imageUploading, setImageUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [cameraOpen, setCameraOpen] = useState(false);
 
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -507,7 +509,12 @@ export default function RepairPage() {
                       glow: "hover:shadow-zinc-500/20",
                       accent: "bg-zinc-500",
                     };
-                    const img = catFallbackImages[cat.slug] ?? cat.image ?? "";
+                    // Prefer the curated category image; only fall back to a random product photo when none is set
+                    const catImgs = (cat.images ?? []).length > 0 ? cat.images : (cat.image ? [cat.image] : []);
+                    const img = catImgs.length > 0
+                      ? catImgs[Math.floor(Math.random() * catImgs.length)]
+                      : (catFallbackImages[cat.slug] ?? "");
+                    const isProductFallback = catImgs.length === 0 && !!catFallbackImages[cat.slug];
                     const modelCount = cat.modelCount > 0 ? `${cat.modelCount}+ models` : null;
                     return (
                       <motion.button
@@ -525,7 +532,11 @@ export default function RepairPage() {
                           <img
                             src={img}
                             alt={cat.name}
-                            className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-all duration-700"
+                            className={`transition-all duration-700 group-hover:scale-105 ${
+                              isProductFallback
+                                ? "absolute inset-0 m-auto h-[65%] w-[65%] object-contain drop-shadow-lg"
+                                : "absolute inset-0 h-full w-full object-cover"
+                            }`}
                           />
                         )}
 
@@ -806,6 +817,12 @@ export default function RepairPage() {
                   await handleImageFiles(files);
                 }}
               />
+              <CameraCaptureModal
+                open={cameraOpen}
+                onClose={() => setCameraOpen(false)}
+                onCapture={(file) => handleImageFiles([file])}
+                continuous
+              />
 
               {/* Scrollable content */}
               <div ref={modalScrollRef} className="p-6 md:p-10 flex-1 flex flex-col overflow-y-auto custom-scrollbar pt-14">
@@ -957,22 +974,36 @@ export default function RepairPage() {
                                   <label className="text-xs font-bold uppercase tracking-widest text-zinc-400 block">
                                     Device Photos <span className="text-red-500">*</span> <span className="text-zinc-300 font-normal normal-case tracking-normal">(min 1 required)</span>
                                   </label>
-                                  <button
-                                    type="button"
-                                    onClick={() => fileInputRef.current?.click()}
-                                    disabled={imageUploading || images.length >= 6}
-                                    className="w-full border-2 border-dashed border-zinc-200 dark:border-zinc-800 hover:border-zinc-950 dark:hover:border-white rounded-[1.5rem] p-6 flex flex-col items-center gap-2 transition-all bg-zinc-50 dark:bg-zinc-900 hover:bg-white dark:hover:bg-zinc-950 group disabled:opacity-60 disabled:pointer-events-none"
-                                  >
-                                    <div className="h-10 w-10 rounded-xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center group-hover:bg-zinc-950 dark:group-hover:bg-white group-hover:border-zinc-950 dark:group-hover:border-white transition-all">
-                                      {imageUploading ? (
-                                        <div className="h-4 w-4 border-2 border-zinc-300 dark:border-zinc-700 border-t-zinc-700 dark:border-t-zinc-200 rounded-full animate-spin" />
-                                      ) : (
-                                        <Upload className="h-4 w-4 text-zinc-400 dark:text-zinc-500 group-hover:text-white dark:group-hover:text-zinc-950 transition-colors" />
-                                      )}
-                                    </div>
-                                    <p className="text-xs font-bold text-zinc-700 dark:text-zinc-200">{imageUploading ? "Uploading…" : "Upload photos of the damage"}</p>
-                                    <p className="text-[10px] text-zinc-400 dark:text-zinc-500">JPEG or PNG · max 6</p>
-                                  </button>
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => fileInputRef.current?.click()}
+                                      disabled={imageUploading || images.length >= 6}
+                                      className="border-2 border-dashed border-zinc-200 dark:border-zinc-800 hover:border-zinc-950 dark:hover:border-white rounded-[1.5rem] p-6 flex flex-col items-center gap-2 transition-all bg-zinc-50 dark:bg-zinc-900 hover:bg-white dark:hover:bg-zinc-950 group disabled:opacity-60 disabled:pointer-events-none"
+                                    >
+                                      <div className="h-10 w-10 rounded-xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center group-hover:bg-zinc-950 dark:group-hover:bg-white group-hover:border-zinc-950 dark:group-hover:border-white transition-all">
+                                        {imageUploading ? (
+                                          <div className="h-4 w-4 border-2 border-zinc-300 dark:border-zinc-700 border-t-zinc-700 dark:border-t-zinc-200 rounded-full animate-spin" />
+                                        ) : (
+                                          <Upload className="h-4 w-4 text-zinc-400 dark:text-zinc-500 group-hover:text-white dark:group-hover:text-zinc-950 transition-colors" />
+                                        )}
+                                      </div>
+                                      <p className="text-xs font-bold text-zinc-700 dark:text-zinc-200">{imageUploading ? "Uploading…" : "Upload photos"}</p>
+                                      <p className="text-[10px] text-zinc-400 dark:text-zinc-500">JPEG or PNG · max 6</p>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setCameraOpen(true)}
+                                      disabled={imageUploading || images.length >= 6}
+                                      className="border-2 border-dashed border-zinc-200 dark:border-zinc-800 hover:border-zinc-950 dark:hover:border-white rounded-[1.5rem] p-6 flex flex-col items-center gap-2 transition-all bg-zinc-50 dark:bg-zinc-900 hover:bg-white dark:hover:bg-zinc-950 group disabled:opacity-60 disabled:pointer-events-none"
+                                    >
+                                      <div className="h-10 w-10 rounded-xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center group-hover:bg-zinc-950 dark:group-hover:bg-white group-hover:border-zinc-950 dark:group-hover:border-white transition-all">
+                                        <Camera className="h-4 w-4 text-zinc-400 dark:text-zinc-500 group-hover:text-white dark:group-hover:text-zinc-950 transition-colors" />
+                                      </div>
+                                      <p className="text-xs font-bold text-zinc-700 dark:text-zinc-200">Take photo</p>
+                                      <p className="text-[10px] text-zinc-400 dark:text-zinc-500">Use your camera</p>
+                                    </button>
+                                  </div>
                                   {images.length > 0 && (
                                     <div className="grid grid-cols-3 gap-2">
                                       {images.map((img, i) => (

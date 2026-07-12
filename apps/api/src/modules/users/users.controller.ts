@@ -5,6 +5,7 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { UsersService } from './users.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard)
@@ -19,6 +20,11 @@ export class UsersController {
     @Patch('me')
     updateMe(@CurrentUser() user: { id: string }, @Body() dto: UpdateProfileDto) {
         return this.usersService.update(user.id, dto);
+    }
+
+    @Patch('me/password')
+    changePassword(@CurrentUser() user: { id: string }, @Body() dto: ChangePasswordDto) {
+        return this.usersService.changePassword(user.id, dto);
     }
 
     @Get()

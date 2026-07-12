@@ -6,12 +6,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import Fuse from "fuse.js";
 import { tradeInsApi, storesApi, uploadsApi, catalogApi, productsApi, authApi, type Store, type CatalogCategory, type Product } from "@/lib/api";
 import DeviceSearchBox from "@/components/DeviceSearchBox";
+import CameraCaptureModal from "@/components/CameraCaptureModal";
 import {
   Smartphone, Tablet, Gamepad2, Laptop, ArrowLeft, ArrowRight,
   Check, ChevronRight, MapPin, Zap, Shield, Clock,
   Star, CheckCircle2, Truck, Gift, RefreshCw,
   Search, ChevronDown, Sparkles, HelpCircle, Watch, Headphones,
-  Upload, X, Plus, Package, Loader2, UserCircle
+  Upload, X, Plus, Package, Loader2, UserCircle, Camera
 } from "lucide-react";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/context/auth-context";
@@ -512,6 +513,7 @@ export default function TradeInPage() {
   const [aiError, setAiError] = useState(false);
   const [aiLoadingText, setAiLoadingText] = useState("Analyzing your device...");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [cameraOpen, setCameraOpen] = useState(false);
   const modalScrollRef = useRef<HTMLDivElement>(null);
 
   // Device pre-selection from home page search or login redirect
@@ -731,6 +733,26 @@ export default function TradeInPage() {
       };
       img.src = url;
     });
+  }
+
+  async function handleImageFiles(files: File[]) {
+    if (files.length === 0) return;
+    setImageUploading(true);
+    try {
+      const results = await Promise.all(
+        files.slice(0, 6 - images.length).map(async (file) => {
+          const { blob, previewUrl } = await compressToBlob(file);
+          const uploadFile = new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), { type: "image/jpeg" });
+          const { filePath } = await uploadsApi.tradeInImage(uploadFile, batchId);
+          return { filePath, previewUrl };
+        })
+      );
+      setImages(prev => [...prev, ...results].slice(0, 6));
+    } catch {
+      // silently ignore upload errors for individual images
+    } finally {
+      setImageUploading(false);
+    }
   }
 
   async function fetchAiPrice() {
@@ -1300,24 +1322,14 @@ export default function TradeInPage() {
                 onChange={async (e) => {
                   const files = Array.from(e.target.files ?? []);
                   e.target.value = "";
-                  if (files.length === 0) return;
-                  setImageUploading(true);
-                  try {
-                    const results = await Promise.all(
-                      files.slice(0, 6 - images.length).map(async (file) => {
-                        const { blob, previewUrl } = await compressToBlob(file);
-                        const uploadFile = new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), { type: "image/jpeg" });
-                        const { filePath } = await uploadsApi.tradeInImage(uploadFile, batchId);
-                        return { filePath, previewUrl };
-                      })
-                    );
-                    setImages(prev => [...prev, ...results].slice(0, 6));
-                  } catch {
-                    // silently ignore upload errors for individual images
-                  } finally {
-                    setImageUploading(false);
-                  }
+                  await handleImageFiles(files);
                 }}
+              />
+              <CameraCaptureModal
+                open={cameraOpen}
+                onClose={() => setCameraOpen(false)}
+                onCapture={(file) => handleImageFiles([file])}
+                continuous
               />
 
               {/* Wizard Content Inner wrapper with scroll */}
@@ -1945,25 +1957,42 @@ export default function TradeInPage() {
                               <div className="max-w-md mx-auto w-full space-y-3">
                                 <span className="text-xs font-black uppercase tracking-widest text-zinc-400 block">Device Photos <span className="text-red-500 dark:text-red-400">(Required · min 1)</span></span>
 
-                                <motion.button
-                                  whileHover={{ scale: 1.01 }}
-                                  whileTap={{ scale: 0.99 }}
-                                  onClick={() => fileInputRef.current?.click()}
-                                  disabled={imageUploading}
-                                  className="w-full border-2 border-dashed border-zinc-300 dark:border-zinc-800 hover:border-zinc-950 dark:hover:border-white rounded-2xl p-6 flex flex-col items-center gap-3 transition-all bg-zinc-50 dark:bg-zinc-900 hover:bg-white dark:hover:bg-zinc-950 group disabled:opacity-60 disabled:pointer-events-none"
-                                >
-                                  <div className="h-11 w-11 rounded-xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 shadow-sm flex items-center justify-center group-hover:bg-zinc-950 dark:group-hover:bg-white group-hover:border-zinc-950 dark:group-hover:border-white transition-all">
-                                    {imageUploading ? (
-                                      <div className="h-5 w-5 border-2 border-zinc-300 dark:border-zinc-700 border-t-zinc-700 dark:border-t-zinc-200 rounded-full animate-spin" />
-                                    ) : (
-                                      <Upload className="h-5 w-5 text-zinc-400 dark:text-zinc-500 group-hover:text-white dark:group-hover:text-zinc-950 transition-colors" />
-                                    )}
-                                  </div>
-                                  <div className="text-center">
-                                    <p className="text-xs font-black text-zinc-800 dark:text-zinc-200">{imageUploading ? "Uploading…" : "Tap to upload photos"}</p>
-                                    <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-bold mt-1">JPEG or PNG · up to 6 photos · helps us assess your device</p>
-                                  </div>
-                                </motion.button>
+                                <div className="grid grid-cols-2 gap-2">
+                                  <motion.button
+                                    whileHover={{ scale: 1.01 }}
+                                    whileTap={{ scale: 0.99 }}
+                                    onClick={() => fileInputRef.current?.click()}
+                                    disabled={imageUploading}
+                                    className="border-2 border-dashed border-zinc-300 dark:border-zinc-800 hover:border-zinc-950 dark:hover:border-white rounded-2xl p-6 flex flex-col items-center gap-3 transition-all bg-zinc-50 dark:bg-zinc-900 hover:bg-white dark:hover:bg-zinc-950 group disabled:opacity-60 disabled:pointer-events-none"
+                                  >
+                                    <div className="h-11 w-11 rounded-xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 shadow-sm flex items-center justify-center group-hover:bg-zinc-950 dark:group-hover:bg-white group-hover:border-zinc-950 dark:group-hover:border-white transition-all">
+                                      {imageUploading ? (
+                                        <div className="h-5 w-5 border-2 border-zinc-300 dark:border-zinc-700 border-t-zinc-700 dark:border-t-zinc-200 rounded-full animate-spin" />
+                                      ) : (
+                                        <Upload className="h-5 w-5 text-zinc-400 dark:text-zinc-500 group-hover:text-white dark:group-hover:text-zinc-950 transition-colors" />
+                                      )}
+                                    </div>
+                                    <div className="text-center">
+                                      <p className="text-xs font-black text-zinc-800 dark:text-zinc-200">{imageUploading ? "Uploading…" : "Upload photos"}</p>
+                                      <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-bold mt-1">JPEG or PNG · up to 6</p>
+                                    </div>
+                                  </motion.button>
+                                  <motion.button
+                                    whileHover={{ scale: 1.01 }}
+                                    whileTap={{ scale: 0.99 }}
+                                    onClick={() => setCameraOpen(true)}
+                                    disabled={imageUploading}
+                                    className="border-2 border-dashed border-zinc-300 dark:border-zinc-800 hover:border-zinc-950 dark:hover:border-white rounded-2xl p-6 flex flex-col items-center gap-3 transition-all bg-zinc-50 dark:bg-zinc-900 hover:bg-white dark:hover:bg-zinc-950 group disabled:opacity-60 disabled:pointer-events-none"
+                                  >
+                                    <div className="h-11 w-11 rounded-xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 shadow-sm flex items-center justify-center group-hover:bg-zinc-950 dark:group-hover:bg-white group-hover:border-zinc-950 dark:group-hover:border-white transition-all">
+                                      <Camera className="h-5 w-5 text-zinc-400 dark:text-zinc-500 group-hover:text-white dark:group-hover:text-zinc-950 transition-colors" />
+                                    </div>
+                                    <div className="text-center">
+                                      <p className="text-xs font-black text-zinc-800 dark:text-zinc-200">Take photo</p>
+                                      <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-bold mt-1">Use your camera</p>
+                                    </div>
+                                  </motion.button>
+                                </div>
 
                                 {images.length > 0 && (
                                   <div className="grid grid-cols-3 gap-2">
@@ -2079,25 +2108,42 @@ export default function TradeInPage() {
                             <div className="space-y-6">
                               <StepHeader label="Device Photos" sub="Upload at least 1 clear photo of your device — our AI uses these to assess condition and give an accurate valuation." />
 
-                              <motion.button
-                                whileHover={{ scale: 1.01 }}
-                                whileTap={{ scale: 0.99 }}
-                                onClick={() => fileInputRef.current?.click()}
-                                disabled={imageUploading}
-                                className="w-full border-2 border-dashed border-zinc-300 dark:border-zinc-800 hover:border-zinc-950 dark:hover:border-white rounded-2xl p-8 flex flex-col items-center gap-3 transition-all bg-zinc-50 dark:bg-zinc-900 hover:bg-white dark:hover:bg-zinc-950 group disabled:opacity-60 disabled:pointer-events-none"
-                              >
-                                <div className="h-12 w-12 rounded-xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 shadow-sm flex items-center justify-center group-hover:bg-zinc-950 dark:group-hover:bg-white group-hover:border-zinc-950 dark:group-hover:border-white transition-all">
-                                  {imageUploading ? (
-                                    <div className="h-5 w-5 border-2 border-zinc-300 dark:border-zinc-700 border-t-zinc-700 dark:border-t-zinc-200 rounded-full animate-spin" />
-                                  ) : (
-                                    <Upload className="h-5 w-5 text-zinc-400 dark:text-zinc-500 group-hover:text-white dark:group-hover:text-zinc-950 transition-colors" />
-                                  )}
-                                </div>
-                                <div className="text-center">
-                                  <p className="text-xs font-black text-zinc-800 dark:text-zinc-200">{imageUploading ? "Uploading…" : "Tap to upload photos"}</p>
-                                  <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-bold mt-1">JPEG or PNG · 1–6 photos required</p>
-                                </div>
-                              </motion.button>
+                              <div className="grid grid-cols-2 gap-2">
+                                <motion.button
+                                  whileHover={{ scale: 1.01 }}
+                                  whileTap={{ scale: 0.99 }}
+                                  onClick={() => fileInputRef.current?.click()}
+                                  disabled={imageUploading}
+                                  className="border-2 border-dashed border-zinc-300 dark:border-zinc-800 hover:border-zinc-950 dark:hover:border-white rounded-2xl p-8 flex flex-col items-center gap-3 transition-all bg-zinc-50 dark:bg-zinc-900 hover:bg-white dark:hover:bg-zinc-950 group disabled:opacity-60 disabled:pointer-events-none"
+                                >
+                                  <div className="h-12 w-12 rounded-xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 shadow-sm flex items-center justify-center group-hover:bg-zinc-950 dark:group-hover:bg-white group-hover:border-zinc-950 dark:group-hover:border-white transition-all">
+                                    {imageUploading ? (
+                                      <div className="h-5 w-5 border-2 border-zinc-300 dark:border-zinc-700 border-t-zinc-700 dark:border-t-zinc-200 rounded-full animate-spin" />
+                                    ) : (
+                                      <Upload className="h-5 w-5 text-zinc-400 dark:text-zinc-500 group-hover:text-white dark:group-hover:text-zinc-950 transition-colors" />
+                                    )}
+                                  </div>
+                                  <div className="text-center">
+                                    <p className="text-xs font-black text-zinc-800 dark:text-zinc-200">{imageUploading ? "Uploading…" : "Upload photos"}</p>
+                                    <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-bold mt-1">JPEG or PNG · 1–6 required</p>
+                                  </div>
+                                </motion.button>
+                                <motion.button
+                                  whileHover={{ scale: 1.01 }}
+                                  whileTap={{ scale: 0.99 }}
+                                  onClick={() => setCameraOpen(true)}
+                                  disabled={imageUploading}
+                                  className="border-2 border-dashed border-zinc-300 dark:border-zinc-800 hover:border-zinc-950 dark:hover:border-white rounded-2xl p-8 flex flex-col items-center gap-3 transition-all bg-zinc-50 dark:bg-zinc-900 hover:bg-white dark:hover:bg-zinc-950 group disabled:opacity-60 disabled:pointer-events-none"
+                                >
+                                  <div className="h-12 w-12 rounded-xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 shadow-sm flex items-center justify-center group-hover:bg-zinc-950 dark:group-hover:bg-white group-hover:border-zinc-950 dark:group-hover:border-white transition-all">
+                                    <Camera className="h-5 w-5 text-zinc-400 dark:text-zinc-500 group-hover:text-white dark:group-hover:text-zinc-950 transition-colors" />
+                                  </div>
+                                  <div className="text-center">
+                                    <p className="text-xs font-black text-zinc-800 dark:text-zinc-200">Take photo</p>
+                                    <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-bold mt-1">Use your camera</p>
+                                  </div>
+                                </motion.button>
+                              </div>
 
                               {images.length > 0 && (
                                 <div className="grid grid-cols-3 gap-2">

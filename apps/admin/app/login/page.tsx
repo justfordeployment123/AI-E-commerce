@@ -99,7 +99,7 @@ export default function AdminLoginPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-1.5">
+            <div className="space-y-1.5" suppressHydrationWarning>
               <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Email</label>
               <input
                 type="email"
@@ -112,7 +112,7 @@ export default function AdminLoginPage() {
               />
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-1.5" suppressHydrationWarning>
               <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Password</label>
               <div className="relative">
                 <input

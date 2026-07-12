@@ -1,6 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../database/prisma.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 const SAFE_SELECT = {
     id: true,
@@ -34,6 +36,22 @@ export class UsersService {
         if (dto.city     !== undefined) data.city     = dto.city;
         if (dto.postcode !== undefined) data.postcode = dto.postcode;
         return this.prisma.user.update({ where: { id }, data, select: SAFE_SELECT });
+    }
+
+    async changePassword(id: string, dto: ChangePasswordDto) {
+        const user = await this.prisma.user.findUnique({ where: { id } });
+        if (!user) throw new NotFoundException('User not found');
+
+        // Google-only accounts have no passwordHash yet — let them set one directly
+        // instead of asking for a "current password" that was never set.
+        if (user.passwordHash) {
+            const valid = await bcrypt.compare(dto.currentPassword, user.passwordHash);
+            if (!valid) throw new BadRequestException('Current password is incorrect');
+        }
+
+        const passwordHash = await bcrypt.hash(dto.newPassword, 12);
+        await this.prisma.user.update({ where: { id }, data: { passwordHash } });
+        return { ok: true };
     }
 
     async findAll(query: { page?: number; limit?: number } = {}) {

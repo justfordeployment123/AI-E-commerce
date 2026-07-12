@@ -486,7 +486,7 @@ function BrandsBar() {
 function TradeInCTASection() {
   const router = useRouter();
   const [categories, setCategories] = useState<import('../lib/api').CatalogCategory[]>([]);
-  const [fallbacks, setFallbacks] = useState<Record<string, string>>({});
+  const [fallbacks, setFallbacks] = useState<Record<string, { img: string; isProduct: boolean }>>({});
 
   useEffect(() => {
     catalogApi.listCategories()
@@ -501,14 +501,14 @@ function TradeInCTASection() {
           const catImages = (c.images ?? []).filter(Boolean);
           if (catImages.length > 0) {
             const img = catImages[Math.floor(Math.random() * catImages.length)];
-            setFallbacks(prev => ({ ...prev, [c.slug]: img }));
+            setFallbacks(prev => ({ ...prev, [c.slug]: { img, isProduct: false } }));
           } else {
             // Fall back to a random product image if no category images exist
             productsApi.list({ category: c.name, limit: 12 })
               .then(r => {
                 const pool = r.items.flatMap(p => p.images ?? []);
                 const img = pool[Math.floor(Math.random() * pool.length)];
-                if (img) setFallbacks(prev => ({ ...prev, [c.slug]: img }));
+                if (img) setFallbacks(prev => ({ ...prev, [c.slug]: { img, isProduct: true } }));
               })
               .catch(() => {});
           }
@@ -574,7 +574,9 @@ function TradeInCTASection() {
           {/* Right Column: Visual peeking category cards */}
           <div className="lg:col-span-7 grid sm:grid-cols-2 gap-6 w-full">
             {categories.map((c) => {
-              const img = fallbacks[c.slug] ?? c.image ?? "";
+              const fb = fallbacks[c.slug];
+              const img = fb?.img ?? c.image ?? "";
+              const isProductFallback = fb?.isProduct ?? false;
               const label = getDisplayLabel(c.slug) || c.name;
               // Map catalog slug → trade-in wizard category ID
               const catId: Record<string, string> = {
@@ -591,14 +593,14 @@ function TradeInCTASection() {
                   {/* Full Card Background Image */}
                   {img && (
                     <>
-                      <ProductImage
+                      <img
                         src={img}
                         alt={label}
-                        mode="cover"
-                        bg="bg-zinc-950"
-                        position="absolute"
-                        wrapperClassName="inset-0"
-                        iconClassName="h-10 w-10"
+                        className={`transition-all duration-500 group-hover:scale-105 ${
+                          isProductFallback
+                            ? "absolute inset-0 m-auto h-[70%] w-[70%] object-contain drop-shadow-xl"
+                            : "absolute inset-0 h-full w-full object-cover"
+                        }`}
                       />
                       {/* Bottom-left gradient for text readability, right side stays clear to show image */}
                       <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/90 via-zinc-950/30 to-transparent z-10" />
@@ -2737,7 +2739,7 @@ function StoreLocationSection() {
               style={{ border: 0 }}
               src={activeStore?.mapsEmbedUrl ?? `https://maps.google.com/maps?q=${encodeURIComponent(`${storeName}, ${storeAddress}`)}&t=&z=17&ie=UTF8&iwloc=&output=embed`}
               allowFullScreen
-              className="w-full h-full transition-all duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none"
+              className="w-full h-full transition-all duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)]"
             />
           </div>
 
