@@ -55,3 +55,4 @@ apps/*/.next/cache
 # Nested node_modules (hoisted to root by npm workspaces)
 apps/*/node_modules
 packages/*/node_modules
+.claude/settings.local.json
