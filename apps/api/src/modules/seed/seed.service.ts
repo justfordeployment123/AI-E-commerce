@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
-import { S3Client, PutObjectCommand, DeleteObjectsCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectsCommand, ListObjectsV2Command, HeadObjectCommand } from '@aws-sdk/client-s3';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -164,6 +164,17 @@ export class SeedService {
             Body:   buffer,
             ContentType: mime,
         }));
+
+        // PutObjectCommand has been observed to resolve without throwing while the
+        // object was never actually persisted (a local Garage/MinIO flakiness) —
+        // confirming the object is really there before the caller creates a DB row
+        // pointing at it avoids a repeat of that exact orphaned-row state.
+        try {
+            await this.s3Client.send(new HeadObjectCommand({ Bucket: this.bucketName, Key: s3Key }));
+        } catch (err) {
+            this.logger.warn(`Upload of ${s3Key} reported success but object is not retrievable: ${err instanceof Error ? err.message : err}`);
+            return null;
+        }
         return s3Key;
     }
 
