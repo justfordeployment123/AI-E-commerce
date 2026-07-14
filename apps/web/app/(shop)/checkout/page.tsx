@@ -472,6 +472,7 @@ function CheckoutInner({ stripeConfigured, stripeConfigLoaded }: { stripeConfigu
                                 invalid: { color: "#ef4444" },
                               },
                               hidePostalCode: true,
+                              disableLink: true,
                             }}
                             onChange={e => setCardComplete(e.complete && !e.error)}
                           />
