@@ -22,6 +22,7 @@ enum OrderStatus {
   CANCELLED
   REFUNDED
   PARTIALLY_REFUNDED
+  FAILED
 }
 
 enum TradeInStatus {

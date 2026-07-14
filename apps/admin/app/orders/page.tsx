@@ -14,6 +14,7 @@ const STATUS_CFG: Record<string, { label: string; cls: string; icon: React.Eleme
   SHIPPED:   { label: "Dispatched", cls: "bg-violet-100 text-violet-700", icon: Truck },
   DELIVERED: { label: "Delivered",  cls: "bg-emerald-100 text-emerald-700", icon: Check },
   CANCELLED:           { label: "Cancelled",      cls: "bg-red-100 text-red-500",       icon: X },
+  FAILED:             { label: "Payment Failed",    cls: "bg-red-100 text-red-500",       icon: X },
   REFUNDED:           { label: "Refunded",           cls: "bg-orange-100 text-orange-600", icon: CreditCard },
   PARTIALLY_REFUNDED: { label: "Part. Refunded",      cls: "bg-orange-100 text-orange-600", icon: CreditCard },
 };
@@ -273,7 +274,7 @@ export default function OrdersPage() {
           />
         </div>
         <div className="flex gap-2 flex-wrap">
-          {(["all", "PENDING", "SHIPPED", "DELIVERED", "CANCELLED"] as const).map(s => (
+          {(["all", "PENDING", "SHIPPED", "DELIVERED", "CANCELLED", "FAILED"] as const).map(s => (
             <button
               key={s}
               onClick={() => setFilterStatus(s)}

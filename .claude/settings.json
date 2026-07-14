@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash",
+      "Bash(*)",
       "PowerShell",
+      "PowerShell(*)",
       "Read",
       "Write",
       "Edit",
@@ -39,7 +41,13 @@
       "Bash(git status *)",
       "PowerShell(Get-NetTCPConnection -State Listen | Where-Object { $_.LocalPort -in 3002,4002 } | Select-Object LocalPort,OwningProcess | ForEach-Object { $_; Get-Process -Id $_.OwningProcess | Select-Object Id,ProcessName,StartTime })",
       "PowerShell(Get-Process -Id 31732)",
-      "PowerShell(Get-CimInstance Win32_Process -Filter \"ProcessId=31732\")"
+      "PowerShell(Get-CimInstance Win32_Process -Filter \"ProcessId=31732\")",
+      "Bash(gh repo *)",
+      "Bash(npx prisma *)",
+      "Skill(update-config)",
+      "Skill(update-config:*)",
+      "Bash(node -e \"const fs=require\\('fs'\\); const s=fs.readFileSync\\('d:/CODE/Projects/Markhor System/AI-E-commerce/.claude/settings.json','utf8'\\); try { const j=JSON.parse\\(s\\); console.log\\('VALID JSON'\\); console.log\\(JSON.stringify\\(j.permissions.allow, null, 2\\)\\); } catch\\(e\\) { console.log\\('INVALID JSON:', e.message\\); }\")",
+      "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('d:/CODE/Projects/Markhor System/AI-E-commerce/.claude/settings.json'\\)\\); console.log\\('valid JSON'\\)\")"
     ],
     "additionalDirectories": [
       "d:\\CODE\\Projects\\Markhor Systems Projects\\Ai-Ecommerce\\apps\\web\\app\\shop",

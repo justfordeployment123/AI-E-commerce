@@ -182,6 +182,42 @@ export class PaymentsService {
             }
         }
 
+        if (event.type === 'payment_intent.payment_failed') {
+            const pi = event.data.object;
+            const order = await this.prisma.order.findFirst({
+                where: { paymentIntentId: pi.id },
+            });
+
+            if (order && order.status === 'PENDING') {
+                await this.prisma.order.update({
+                    where: { id: order.id },
+                    data: { status: 'FAILED' },
+                });
+            }
+        }
+
+        if (event.type === 'charge.refunded') {
+            const charge = event.data.object;
+            const paymentIntentId =
+                typeof charge.payment_intent === 'string' ? charge.payment_intent : charge.payment_intent?.id;
+            const order = paymentIntentId
+                ? await this.prisma.order.findFirst({ where: { paymentIntentId } })
+                : null;
+
+            if (order && !order.refundId) {
+                const isPartial = charge.amount_refunded < charge.amount;
+                const refund = charge.refunds?.data?.[0];
+                await this.prisma.order.update({
+                    where: { id: order.id },
+                    data: {
+                        refundId: refund?.id ?? charge.id,
+                        refundAmount: charge.amount_refunded / 100,
+                        status: isPartial ? 'PARTIALLY_REFUNDED' : 'REFUNDED',
+                    },
+                });
+            }
+        }
+
         return { received: true };
     }
 
