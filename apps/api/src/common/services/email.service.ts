@@ -57,22 +57,26 @@ export class EmailService {
         const html = `
 <!DOCTYPE html>
 <html>
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
+</head>
 <body style="margin:0;padding:0;background:#f5f5f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f7;padding:40px 0">
     <tr><td align="center">
       <table width="560" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:24px;overflow:hidden;max-width:560px;width:100%">
 
         <!-- Header -->
-        <tr><td style="background:#000;padding:32px 40px;text-align:center">
+        <tr><td bgcolor="#000000" style="background:#000;padding:32px 40px;text-align:center">
           <p style="margin:0;color:#fff;font-size:20px;font-weight:700;letter-spacing:-0.5px">TECHSTOP<span style="color:#c3eb4e">LEICESTER</span></p>
         </td></tr>
 
         <!-- Check icon + title -->
         <tr><td style="padding:40px 40px 24px;text-align:center">
-          <div style="display:inline-flex;align-items:center;justify-content:center;width:72px;height:72px;background:#c3eb4e;border-radius:20px;margin-bottom:20px">
-            <span style="font-size:36px">✓</span>
-          </div>
+          <table cellpadding="0" cellspacing="0" width="72" height="72" align="center" bgcolor="#c3eb4e" style="width:72px;height:72px;background:#c3eb4e;border-radius:20px;margin-bottom:20px">
+            <tr><td align="center" valign="middle" bgcolor="#c3eb4e" style="background:#c3eb4e;border-radius:20px"><span style="font-size:36px;color:#111">✓</span></td></tr>
+          </table>
           <h1 style="margin:0 0 8px;font-size:28px;font-weight:700;color:#111">Order confirmed!</h1>
           <p style="margin:0;color:#666;font-size:15px">Hi ${opts.customerName}, your order is on its way.</p>
         </td></tr>
@@ -130,8 +134,8 @@ export class EmailService {
             ].map(([n, t]) => `
               <tr>
                 <td width="28" valign="top" style="padding-bottom:10px">
-                  <table cellpadding="0" cellspacing="0" width="28" height="28" style="width:28px;height:28px;background:#111;border-radius:50%">
-                    <tr><td align="center" valign="middle" style="color:#fff;font-weight:700;font-size:12px">${n}</td></tr>
+                  <table cellpadding="0" cellspacing="0" width="28" height="28" bgcolor="#111111" style="width:28px;height:28px;background:#111;border-radius:50%">
+                    <tr><td align="center" valign="middle" bgcolor="#111111" style="background:#111;color:#fff;font-weight:700;font-size:12px">${n}</td></tr>
                   </table>
                 </td>
                 <td valign="middle" style="padding:0 0 10px 12px;font-size:13px;color:#444;font-weight:500">${t}</td>
