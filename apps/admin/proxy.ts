@@ -30,9 +30,12 @@ function buildCsp(nonce: string): string {
     `default-src 'self'`,
     scriptSrc,
     `style-src 'self' 'unsafe-inline'`,
-    `img-src 'self' data: ${storageOrigin}`,
+    // blob: is needed for local object-URL previews of user-uploaded photos.
+    `img-src 'self' data: blob: ${storageOrigin}`,
     `font-src 'self'`,
-    `connect-src 'self' ${apiHttpOrigin} ${apiWsOrigin}`,
+    // storageOrigin is needed here (not just in img-src) because uploads go
+    // directly from the browser to storage via a presigned PUT URL.
+    `connect-src 'self' ${apiHttpOrigin} ${apiWsOrigin} ${storageOrigin}`,
     `frame-src 'none'`,
     `frame-ancestors 'none'`,
     `base-uri 'self'`,
