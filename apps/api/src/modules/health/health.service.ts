@@ -25,6 +25,7 @@ export interface StripeIntegrationStatus extends IntegrationStatus {
 @Injectable()
 export class HealthService {
     private readonly logger = new Logger(HealthService.name);
+    private openAiCache: { result: { ok: boolean; quotaOk: boolean; error?: string }; expiresAt: number } | null = null;
 
     constructor(
         private readonly prisma: PrismaService,
@@ -166,6 +167,13 @@ export class HealthService {
         if (!apiKey) {
             return { ok: false, quotaOk: false, error: 'OPENAI_API_KEY not configured' };
         }
+        // The admin scraper page polls /health as often as every 15s just to show a
+        // status dot — a live completion call on every hit burns real quota for no
+        // reason, so only actually re-check OpenAI once every 5 minutes per instance.
+        if (this.openAiCache && this.openAiCache.expiresAt > Date.now()) {
+            return this.openAiCache.result;
+        }
+        let result: { ok: boolean; quotaOk: boolean; error?: string };
         try {
             const openai = new OpenAI({ apiKey });
             // 1-token completion is the only call that exercises the quota path
@@ -174,7 +182,7 @@ export class HealthService {
                 messages: [{ role: 'user', content: '.' }],
                 max_tokens: 1,
             });
-            return { ok: true, quotaOk: true };
+            result = { ok: true, quotaOk: true };
         } catch (error: any) {
             const code: string = error?.code ?? error?.error?.code ?? '';
             const isQuotaExhausted =
@@ -183,12 +191,15 @@ export class HealthService {
                 (error?.status === 429 && code !== 'rate_limit_exceeded');
 
             if (isQuotaExhausted) {
-                return { ok: false, quotaOk: false, error: 'API quota / billing limit exceeded' };
+                result = { ok: false, quotaOk: false, error: 'API quota / billing limit exceeded' };
+            } else {
+                // Key valid but other error (e.g. transient rate-limit) — key itself is ok
+                const keyValid = error?.status !== 401 && error?.status !== 403;
+                result = { ok: false, quotaOk: keyValid, error: this.sanitizeError(error) };
             }
-            // Key valid but other error (e.g. transient rate-limit) — key itself is ok
-            const keyValid = error?.status !== 401 && error?.status !== 403;
-            return { ok: false, quotaOk: keyValid, error: this.sanitizeError(error) };
         }
+        this.openAiCache = { result, expiresAt: Date.now() + 5 * 60_000 };
+        return result;
     }
 
     private async checkScraper(): Promise<{ ok: boolean; error?: string }> {

@@ -62,7 +62,13 @@ export class ProductPricingService {
             ? computeCandidatePrice(marketPrice, conditionMult, sellMargin, sellDiscount)
             : null;
 
-        const aiRange        = await this.getAiRange(brand, model, storage, condition, marketPrice, candidatePrice);
+        // Once a scraped market price gives us a formulaic candidatePrice, the AI range
+        // is purely informational display — not worth a live OpenAI call on every
+        // storage/condition click in the admin product editor. AI is only the real
+        // pricing signal when there's no market price to compute from.
+        const aiRange        = candidatePrice !== null
+            ? this.fallbackRange(marketPrice, candidatePrice)
+            : await this.getAiRange(brand, model, storage, condition, marketPrice, candidatePrice);
         const suggested      = candidatePrice ?? round5((aiRange.low + aiRange.high) / 2);
 
         return { ...aiRange, suggested, marketPrice, scrapedPrices };
@@ -303,7 +309,13 @@ export class ProductPricingService {
         } catch (err: any) {
             this.logger.warn(`AI range check failed for ${brand} ${model}: ${err.message}`);
         }
-        // Fallback: ±25% around candidate/market price
+        return this.fallbackRange(marketPrice, candidatePrice);
+    }
+
+    /** Same ±25% heuristic getAiRange falls back to on error — used directly (skipping
+     *  the OpenAI call) wherever a market price already gives us a formulaic price and
+     *  the AI range is purely informational rather than the actual pricing signal. */
+    private fallbackRange(marketPrice: number | null, candidatePrice: number | null): { low: number; high: number } {
         const base = candidatePrice ?? (marketPrice ? round5(marketPrice * 0.7) : 50);
         return { low: round5(base * 0.75), high: round5(base * 1.25) };
     }
