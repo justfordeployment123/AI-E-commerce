@@ -44,7 +44,9 @@ function buildCsp(nonce: string): string {
     // used on the help page via a Tailwind arbitrary background-image value —
     // found via a live browser check, not the static code inventory (arbitrary
     // CSS background URLs don't show up in a source grep the way <img> tags do).
-    `img-src 'self' data: ${storageOrigin} https://picsum.photos https://grainy-gradients.vercel.app`,
+    // blob: is needed for local object-URL previews of user-uploaded photos
+    // (trade-in/repair device photo pickers) before the file finishes uploading.
+    `img-src 'self' data: blob: ${storageOrigin} https://picsum.photos https://grainy-gradients.vercel.app`,
     `font-src 'self'`,
     `connect-src 'self' ${apiHttpOrigin} ${apiWsOrigin} https://api.stripe.com`,
     // maps.google.com's embed URL redirects to www.google.com/maps/embed —
