@@ -159,6 +159,17 @@ export class OrdersService {
         return order;
     }
 
+    /** Same lookup as findById, but scoped to the requesting user — admins can view
+     *  any order, everyone else only their own. Throws NotFoundException (not
+     *  Forbidden) for a non-owner so the response doesn't confirm the order exists. */
+    async findByIdForUser(id: string, user: { id: string; role: string }) {
+        const order = await this.findById(id);
+        if (order.userId !== user.id && user.role !== 'ADMIN') {
+            throw new NotFoundException('Order not found');
+        }
+        return order;
+    }
+
     async findByUser(userId: string) {
         return this.prisma.order.findMany({
             where: { userId },

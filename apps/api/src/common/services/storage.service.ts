@@ -171,9 +171,18 @@ export class StorageService implements OnModuleInit {
 
   // ─── Key helpers ─────────────────────────────────────────────────────────────
 
+  /** Strips path separators/traversal/control chars from a caller-supplied key
+   *  segment (groupId, filename) — both are interpolated directly into the S3
+   *  key, so an unsanitized value could escape the intended folder prefix. */
+  private sanitizeKeyPart(value: string): string {
+    return value.replace(/[/\\]/g, '').replace(/\.\./g, '').replace(/[\x00-\x1f]/g, '');
+  }
+
   buildKey(folder: string, filename: string, groupId?: string): string {
-    const prefix = groupId ? `${folder}/${groupId}` : folder;
-    return `${prefix}/${uuidv4()}-${filename}`;
+    const safeFilename = this.sanitizeKeyPart(filename);
+    const safeGroupId = groupId ? this.sanitizeKeyPart(groupId) : undefined;
+    const prefix = safeGroupId ? `${folder}/${safeGroupId}` : folder;
+    return `${prefix}/${uuidv4()}-${safeFilename}`;
   }
 
   private isPrivate(key: string): boolean {
@@ -254,8 +263,10 @@ export class StorageService implements OnModuleInit {
     folder: string,
     groupId?: string,
   ): Promise<{ filePath: string; url: string }> {
-    const prefix = groupId ? `${folder}/${groupId}` : folder;
-    const key = `${prefix}/${uuidv4()}-${file.originalname}`;
+    const safeFilename = this.sanitizeKeyPart(file.originalname);
+    const safeGroupId = groupId ? this.sanitizeKeyPart(groupId) : undefined;
+    const prefix = safeGroupId ? `${folder}/${safeGroupId}` : folder;
+    const key = `${prefix}/${uuidv4()}-${safeFilename}`;
 
     await this.s3Client.send(
       new PutObjectCommand({

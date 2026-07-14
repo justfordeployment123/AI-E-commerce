@@ -13,6 +13,14 @@ import path from 'path';
 const _bgDistDir = path.dirname(require.resolve('@imgly/background-removal-node'));
 const _bgPublicPath = `file://${_bgDistDir.replace(/\\/g, '/')}/`;
 
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
+
+function assertAllowedImageType(contentType: string) {
+    if (!ALLOWED_IMAGE_TYPES.includes(contentType)) {
+        throw new BadRequestException('Unsupported image type');
+    }
+}
+
 @Controller('uploads')
 export class UploadsController {
     constructor(private readonly storage: StorageService) {}
@@ -24,6 +32,7 @@ export class UploadsController {
     @Roles('ADMIN')
     async presignImage(@Query('filename') filename: string, @Query('contentType') contentType: string) {
         if (!filename || !contentType) throw new BadRequestException('filename and contentType required');
+        assertAllowedImageType(contentType);
         const key = this.storage.buildKey('device-images', filename);
         const [uploadUrl, viewUrl] = await Promise.all([
             this.storage.presignPut(key, contentType),
@@ -40,6 +49,7 @@ export class UploadsController {
         @Query('groupId') groupId?: string,
     ) {
         if (!filename || !contentType) throw new BadRequestException('filename and contentType required');
+        assertAllowedImageType(contentType);
         const key = this.storage.buildKey('trade-in-images', filename, groupId);
         const [uploadUrl, viewUrl] = await Promise.all([
             this.storage.presignPut(key, contentType),
@@ -56,6 +66,7 @@ export class UploadsController {
         @Query('groupId') groupId?: string,
     ) {
         if (!filename || !contentType) throw new BadRequestException('filename and contentType required');
+        assertAllowedImageType(contentType);
         const key = this.storage.buildKey('repair-images', filename, groupId);
         const [uploadUrl, viewUrl] = await Promise.all([
             this.storage.presignPut(key, contentType),
@@ -65,8 +76,10 @@ export class UploadsController {
     }
 
     @Get('presign-review-image')
+    @UseGuards(JwtAuthGuard)
     async presignReviewImage(@Query('filename') filename: string, @Query('contentType') contentType: string) {
         if (!filename || !contentType) throw new BadRequestException('filename and contentType required');
+        assertAllowedImageType(contentType);
         const key = this.storage.buildKey('review-images', filename);
         const [uploadUrl, viewUrl] = await Promise.all([
             this.storage.presignPut(key, contentType),
@@ -83,6 +96,7 @@ export class UploadsController {
     @UseInterceptors(FileInterceptor('file'))
     async uploadImage(@UploadedFile() file: any) {
         if (!file) throw new BadRequestException('No file provided');
+        assertAllowedImageType(file.mimetype);
         return this.storage.uploadFile(file, 'device-images');
     }
 
@@ -91,6 +105,7 @@ export class UploadsController {
     @UseInterceptors(FileInterceptor('file'))
     async uploadTradeInImage(@UploadedFile() file: any, @Query('groupId') groupId?: string) {
         if (!file) throw new BadRequestException('No file provided');
+        assertAllowedImageType(file.mimetype);
         return this.storage.uploadFile(file, 'trade-in-images', groupId);
     }
 
@@ -99,13 +114,16 @@ export class UploadsController {
     @UseInterceptors(FileInterceptor('file'))
     async uploadRepairImage(@UploadedFile() file: any, @Query('groupId') groupId?: string) {
         if (!file) throw new BadRequestException('No file provided');
+        assertAllowedImageType(file.mimetype);
         return this.storage.uploadFile(file, 'repair-images', groupId);
     }
 
     @Post('review-image')
+    @UseGuards(JwtAuthGuard)
     @UseInterceptors(FileInterceptor('file'))
     async uploadReviewImage(@UploadedFile() file: any) {
         if (!file) throw new BadRequestException('No file provided');
+        assertAllowedImageType(file.mimetype);
         return this.storage.uploadFile(file, 'review-images');
     }
 

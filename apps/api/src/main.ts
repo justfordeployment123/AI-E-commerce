@@ -26,10 +26,19 @@ function resolveStartPort(defaultPort: number): number {
 }
 
 async function bootstrap() {
+  // Fail fast rather than silently signing tokens with the well-known dev
+  // secret in a real deployment — every module that reads JWT_SECRET falls
+  // back to 'dev-secret-change-me' for local-dev convenience, so this is the
+  // one place that actually closes the hole if the env var is ever unset.
+  if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'dev-secret-change-me') {
+    throw new Error('JWT_SECRET must be set to a real secret in production');
+  }
+
   // Lazy-load AppModule after dotenv has been applied.
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { AppModule } = require('./app.module') as typeof import('./app.module');
   const app = await NestFactory.create<NestExpressApplication>(AppModule, { rawBody: true });
+  app.getHttpAdapter().getInstance().disable('x-powered-by');
 
   app.useWebSocketAdapter(new IoAdapter(app));
   app.use(compression());

@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { APP_INTERCEPTOR } from '@nestjs/core';
-import { ThrottlerModule } from '@nestjs/throttler';
+import { APP_INTERCEPTOR, APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ScraperCronModule } from './modules/scraper-cron/scraper-cron.module';
 import { ScraperDataModule } from './modules/scraper-data/scraper-data.module';
@@ -77,6 +77,10 @@ import { SettingsModule } from './modules/settings/settings.module';
     {
       provide: APP_INTERCEPTOR,
       useClass: HttpLoggingInterceptor,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
     },
   ],
 })

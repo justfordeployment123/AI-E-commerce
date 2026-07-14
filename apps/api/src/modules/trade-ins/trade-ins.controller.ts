@@ -10,6 +10,7 @@ import {
     Request,
     UseGuards,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from '../../common/guards/optional-jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -60,14 +61,17 @@ export class TradeInsController {
         return this.tradeInsService.declineCounterOffer(id, user.id);
     }
 
-    // Public — AI-powered price estimate (uses OpenAI Vision if images provided)
+    // Public — AI-powered price estimate (uses OpenAI Vision if images provided).
+    // Tightly throttled: unauthenticated and hits a real, billed OpenAI call.
     @Post('ai-price')
+    @Throttle({ default: { limit: 5, ttl: 60000 } })
     aiPrice(@Body() dto: AiPriceDto) {
         return this.tradeInsService.aiPrice(dto);
     }
 
     // Public — AI-generated spec fields for unlisted/custom devices
     @Post('suggest-specs')
+    @Throttle({ default: { limit: 10, ttl: 60000 } })
     suggestSpecs(@Body() dto: SuggestSpecsDto) {
         return this.tradeInsService.suggestSpecs(dto.brand, dto.model, dto.category);
     }
