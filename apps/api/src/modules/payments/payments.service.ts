@@ -172,13 +172,15 @@ export class PaymentsService {
                     });
                 }
             } else {
-                const amountPounds = (pi.amount / 100).toFixed(2);
-                const customerEmail = pi.receipt_email ?? pi.metadata?.email ?? 'unknown';
-                await this.emailService.sendAdminPaymentAlert({
-                    paymentIntentId: pi.id,
-                    amountPounds,
-                    customerEmail,
-                });
+                // This webhook fires the instant Stripe confirms the charge, which can beat
+                // our own order-creation request (client confirms payment, then calls our API,
+                // then we re-verify with Stripe before writing the row) — so a missing order
+                // here is often just that race, not a real orphaned payment. Recheck once the
+                // order-creation request has had time to land instead of alerting immediately.
+                // Not awaited: Stripe expects a fast ack, not a 15s-delayed one.
+                setTimeout(() => {
+                    this.checkOrphanedPayment(pi).catch(() => {});
+                }, 15_000);
             }
         }
 
@@ -219,6 +221,21 @@ export class PaymentsService {
         }
 
         return { received: true };
+    }
+
+    private async checkOrphanedPayment(pi: any) {
+        const order = await this.prisma.order.findFirst({
+            where: { paymentIntentId: pi.id },
+        });
+        if (order) return;
+
+        const amountPounds = (pi.amount / 100).toFixed(2);
+        const customerEmail = pi.receipt_email ?? pi.metadata?.email ?? 'unknown';
+        await this.emailService.sendAdminPaymentAlert({
+            paymentIntentId: pi.id,
+            amountPounds,
+            customerEmail,
+        });
     }
 
     async refundOrder(orderId: string, amountPounds?: number) {
