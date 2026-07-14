@@ -48,7 +48,9 @@ function buildCsp(nonce: string): string {
     // (trade-in/repair device photo pickers) before the file finishes uploading.
     `img-src 'self' data: blob: ${storageOrigin} https://picsum.photos https://grainy-gradients.vercel.app`,
     `font-src 'self'`,
-    `connect-src 'self' ${apiHttpOrigin} ${apiWsOrigin} https://api.stripe.com`,
+    // storageOrigin is needed here (not just in img-src) because uploads go
+    // directly from the browser to storage via a presigned PUT URL.
+    `connect-src 'self' ${apiHttpOrigin} ${apiWsOrigin} ${storageOrigin} https://api.stripe.com`,
     // maps.google.com's embed URL redirects to www.google.com/maps/embed —
     // CSP frame-src is checked against the final URL after redirects, so
     // both hosts are needed even though stores are only ever configured
