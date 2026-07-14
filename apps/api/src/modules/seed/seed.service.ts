@@ -111,6 +111,7 @@ const DEVICE_CATALOG = [
 export interface SeedResult {
     pricingConfigs: number;
     banners: number;
+    gradeBanners: number;
     promoSlides: number;
     deviceCatalog: number;
     others: { created: number; updated: number; errors: string[] };
@@ -177,6 +178,7 @@ export class SeedService {
 
         const pricingCount   = await this.seedPricingConfigs();
         const bannerCount    = await this.seedBanners();
+        const gradeBannerCount = await this.seedGradeBanners();
         const slideCount     = await this.seedPromoSlides();
         const deviceCount    = await this.seedCatalogFromFolder();
         const productsResult = await this.seedProducts(productsData);
@@ -189,6 +191,7 @@ export class SeedService {
         return {
             pricingConfigs: pricingCount,
             banners: bannerCount,
+            gradeBanners: gradeBannerCount,
             promoSlides: slideCount,
             deviceCatalog: deviceCount,
             others: othersResult,
@@ -486,6 +489,39 @@ export class SeedService {
             }
         }
         this.logger.log(`Seeded ${count} background banners`);
+        return count;
+    }
+
+    // ─── Grade guide banners ────────────────────────────────────────────────────
+
+    private async seedGradeBanners(): Promise<number> {
+        const gradeDir = path.join(this.seedDir, 'banners', 'Grade');
+        if (!fs.existsSync(gradeDir)) return 0;
+
+        const files = fs.readdirSync(gradeDir)
+            .filter(f => isImageFile(f) && fs.statSync(path.join(gradeDir, f)).isFile());
+        let count = 0;
+
+        for (const filename of files) {
+            // Filenames are "<grade>_<n>.png" — e.g. a_1.png, new_2.png.
+            const gradePrefix = filename.split('_')[0]?.toLowerCase() ?? '';
+            const grade = gradePrefix === 'new' ? 'NEW' : gradePrefix.toUpperCase();
+            if (!['NEW', 'A', 'B', 'C', 'F'].includes(grade)) continue;
+
+            const s3Key = `banners/grade/${gradePrefix}/${filename}`;
+            const existing = await this.prisma.gradeBanner.findUnique({ where: { key: s3Key } });
+            if (!existing) {
+                const uploaded = await this.uploadLocalFile(path.join(gradeDir, filename), s3Key);
+                if (uploaded) {
+                    await this.prisma.gradeBanner.create({
+                        data: { grade, key: uploaded, label: filename.replace(/\.[^.]+$/, ''), isActive: true, order: 0 },
+                    });
+                    count++;
+                    this.logger.log(`  Grade banner: ${filename}`);
+                }
+            }
+        }
+        this.logger.log(`Seeded ${count} grade guide banners`);
         return count;
     }
 
