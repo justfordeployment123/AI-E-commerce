@@ -78,6 +78,11 @@ export class OrdersService {
                 return tx.order.create({
                     data: {
                         userId,
+                        // Stripe orders reach here only after verifyPayment() has confirmed the
+                        // PaymentIntent already succeeded, so they're created pre-confirmed —
+                        // Stripe's payment_intent.succeeded webhook fires independently and can
+                        // arrive before this row exists, so it can't be the thing that confirms it.
+                        status: dto.paymentMethod === 'stripe' ? 'CONFIRMED' : undefined,
                         subtotal,
                         shipping,
                         discount,
