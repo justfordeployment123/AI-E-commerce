@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ProductImage from "@/components/ProductImage";
 import {
-  Shield, Lock, ChevronRight, Check, CreditCard, Truck,
+  Shield, Lock, ChevronRight, Check, Truck,
   Tag, ArrowLeft, Zap, ShoppingCart, ArrowRight, AlertCircle,
 } from "lucide-react";
 import { loadStripe } from "@stripe/stripe-js";
@@ -454,15 +454,8 @@ function CheckoutInner({ stripeConfigured, stripeConfigLoaded }: { stripeConfigu
                     )}
 
                     <div className="mb-8">
-                      <div className="flex items-center justify-between mb-3">
+                      <div className="mb-3">
                         <label className="text-xs font-bold uppercase tracking-widest text-zinc-400">Card details</label>
-                        <div className="flex items-center gap-1.5">
-                          {["visa", "mc", "amex"].map(brand => (
-                            <div key={brand} className="h-6 w-9 rounded bg-zinc-100 flex items-center justify-center">
-                              <CreditCard className="h-3.5 w-3.5 text-zinc-400" />
-                            </div>
-                          ))}
-                        </div>
                       </div>
                       <div className="rounded-[1rem] border-2 border-zinc-200 px-5 py-4 focus-within:border-black transition-colors">
                         {stripeConfigured ? (

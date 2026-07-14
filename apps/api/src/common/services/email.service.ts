@@ -44,6 +44,7 @@ export class EmailService {
         shippingAddress: { name: string; address: string; city: string; postcode: string; country: string };
     }) {
         const ref = opts.orderId.slice(0, 8).toUpperCase();
+        const siteUrl = process.env.FRONTEND_URL ?? 'http://localhost:3000';
         const itemRows = opts.items
             .map(i => `
               <tr>
@@ -121,23 +122,27 @@ export class EmailService {
         <tr><td style="padding:0 40px 32px">
           <div style="background:#f5f5f7;border-radius:14px;padding:20px">
             <p style="margin:0 0 14px;font-size:11px;font-weight:700;letter-spacing:0.1em;color:#999;text-transform:uppercase">What happens next</p>
+            <table width="100%" cellpadding="0" cellspacing="0">
             ${[
               ['1', 'Dispatched within 24 hours via Royal Mail Tracked 24'],
               ['2', 'Tracking number emailed once dispatched'],
               ['3', 'Delivered in 1–2 working days'],
             ].map(([n, t]) => `
-            <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
-              <div style="width:28px;height:28px;background:#111;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;text-align:center;line-height:28px">
-                <span style="color:#fff;font-weight:700;font-size:12px">${n}</span>
-              </div>
-              <p style="margin:0;font-size:13px;color:#444;font-weight:500">${t}</p>
-            </div>`).join('')}
+              <tr>
+                <td width="28" valign="top" style="padding-bottom:10px">
+                  <table cellpadding="0" cellspacing="0" width="28" height="28" style="width:28px;height:28px;background:#111;border-radius:50%">
+                    <tr><td align="center" valign="middle" style="color:#fff;font-weight:700;font-size:12px">${n}</td></tr>
+                  </table>
+                </td>
+                <td valign="middle" style="padding:0 0 10px 12px;font-size:13px;color:#444;font-weight:500">${t}</td>
+              </tr>`).join('')}
+            </table>
           </div>
         </td></tr>
 
         <!-- Footer -->
         <tr><td style="background:#f5f5f7;padding:20px 40px;text-align:center;border-top:1px solid #eee">
-          <p style="margin:0;font-size:12px;color:#999">Questions? Reply to this email or visit <a href="https://techstopleicester.com" style="color:#111;font-weight:700">techstopleicester.com</a></p>
+          <p style="margin:0;font-size:12px;color:#999">Questions? Reply to this email or visit <a href="${siteUrl}" style="color:#111;font-weight:700">${siteUrl.replace(/^https?:\/\//, '')}</a></p>
           <p style="margin:8px 0 0;font-size:11px;color:#bbb">© TechStop Leicester</p>
         </td></tr>
 
