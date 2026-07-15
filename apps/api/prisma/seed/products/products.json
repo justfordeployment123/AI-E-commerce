@@ -1477,7 +1477,7 @@
   {
     "name": "Sony PlayStation 3 Slim 500GB (B Grade)",
     "slug": "sony-playstation-3-slim-500gb-b-grade-59",
-    "category": "Consoles",
+    "category": "Gaming",
     "brand": "Sony",
     "model": "PlayStation 3 Slim",
     "condition": "B",
@@ -1502,7 +1502,7 @@
   {
     "name": "Sony PlayStation 4 500GB (A Grade)",
     "slug": "sony-playstation-4-500gb-a-grade-60",
-    "category": "Consoles",
+    "category": "Gaming",
     "brand": "Sony",
     "model": "PlayStation 4",
     "condition": "A",
@@ -1527,7 +1527,7 @@
   {
     "name": "Sony PlayStation 4 500GB (C Grade)",
     "slug": "sony-playstation-4-500gb-c-grade-61",
-    "category": "Consoles",
+    "category": "Gaming",
     "brand": "Sony",
     "model": "PlayStation 4",
     "condition": "C",
@@ -1552,7 +1552,7 @@
   {
     "name": "Sony PlayStation 4 Slim 1TB (B Grade)",
     "slug": "sony-playstation-4-slim-1tb-b-grade-62",
-    "category": "Consoles",
+    "category": "Gaming",
     "brand": "Sony",
     "model": "PlayStation 4 Slim",
     "condition": "B",
@@ -1577,7 +1577,7 @@
   {
     "name": "Sony PlayStation 4 Pro 1TB (A Grade)",
     "slug": "sony-playstation-4-pro-1tb-a-grade-63",
-    "category": "Consoles",
+    "category": "Gaming",
     "brand": "Sony",
     "model": "PlayStation 4 Pro",
     "condition": "A",
@@ -1602,7 +1602,7 @@
   {
     "name": "Sony PlayStation 4 Pro 1TB (C Grade)",
     "slug": "sony-playstation-4-pro-1tb-c-grade-64",
-    "category": "Consoles",
+    "category": "Gaming",
     "brand": "Sony",
     "model": "PlayStation 4 Pro",
     "condition": "C",
@@ -1627,7 +1627,7 @@
   {
     "name": "Sony PlayStation 5 Disc Edition 1TB (B Grade)",
     "slug": "sony-playstation-5-disc-edition-1tb-b-grade-65",
-    "category": "Consoles",
+    "category": "Gaming",
     "brand": "Sony",
     "model": "PlayStation 5 Disc Edition",
     "condition": "B",
@@ -1652,7 +1652,7 @@
   {
     "name": "Sony PlayStation 5 Digital Edition 825GB (A Grade)",
     "slug": "sony-playstation-5-digital-edition-825gb-a-grade-66",
-    "category": "Consoles",
+    "category": "Gaming",
     "brand": "Sony",
     "model": "PlayStation 5 Digital Edition",
     "condition": "A",
@@ -1677,7 +1677,7 @@
   {
     "name": "Sony PlayStation 5 Digital Edition 825GB (C Grade)",
     "slug": "sony-playstation-5-digital-edition-825gb-c-grade-67",
-    "category": "Consoles",
+    "category": "Gaming",
     "brand": "Sony",
     "model": "PlayStation 5 Digital Edition",
     "condition": "C",
@@ -1702,7 +1702,7 @@
   {
     "name": "Microsoft Xbox 360 Slim 4GB (B Grade)",
     "slug": "microsoft-xbox-360-slim-4gb-b-grade-68",
-    "category": "Consoles",
+    "category": "Gaming",
     "brand": "Microsoft",
     "model": "Xbox 360 Slim",
     "condition": "B",
@@ -1727,7 +1727,7 @@
   {
     "name": "Microsoft Xbox One 500GB (A Grade)",
     "slug": "microsoft-xbox-one-500gb-a-grade-69",
-    "category": "Consoles",
+    "category": "Gaming",
     "brand": "Microsoft",
     "model": "Xbox One",
     "condition": "A",
@@ -1752,7 +1752,7 @@
   {
     "name": "Microsoft Xbox One 500GB (C Grade)",
     "slug": "microsoft-xbox-one-500gb-c-grade-70",
-    "category": "Consoles",
+    "category": "Gaming",
     "brand": "Microsoft",
     "model": "Xbox One",
     "condition": "C",
@@ -1777,7 +1777,7 @@
   {
     "name": "Microsoft Xbox One S 2TB (B Grade)",
     "slug": "microsoft-xbox-one-s-2tb-b-grade-71",
-    "category": "Consoles",
+    "category": "Gaming",
     "brand": "Microsoft",
     "model": "Xbox One S",
     "condition": "B",
@@ -1802,7 +1802,7 @@
   {
     "name": "Microsoft Xbox One X 1TB (A Grade)",
     "slug": "microsoft-xbox-one-x-1tb-a-grade-72",
-    "category": "Consoles",
+    "category": "Gaming",
     "brand": "Microsoft",
     "model": "Xbox One X",
     "condition": "A",
@@ -1827,7 +1827,7 @@
   {
     "name": "Microsoft Xbox One X 1TB (C Grade)",
     "slug": "microsoft-xbox-one-x-1tb-c-grade-73",
-    "category": "Consoles",
+    "category": "Gaming",
     "brand": "Microsoft",
     "model": "Xbox One X",
     "condition": "C",
@@ -1852,7 +1852,7 @@
   {
     "name": "Microsoft Xbox Series S 1TB (B Grade)",
     "slug": "microsoft-xbox-series-s-1tb-b-grade-74",
-    "category": "Consoles",
+    "category": "Gaming",
     "brand": "Microsoft",
     "model": "Xbox Series S",
     "condition": "B",
@@ -1877,7 +1877,7 @@
   {
     "name": "Microsoft Xbox Series X 1TB (A Grade)",
     "slug": "microsoft-xbox-series-x-1tb-a-grade-75",
-    "category": "Consoles",
+    "category": "Gaming",
     "brand": "Microsoft",
     "model": "Xbox Series X",
     "condition": "A",
@@ -1902,7 +1902,7 @@
   {
     "name": "Microsoft Xbox Series X 1TB (C Grade)",
     "slug": "microsoft-xbox-series-x-1tb-c-grade-76",
-    "category": "Consoles",
+    "category": "Gaming",
     "brand": "Microsoft",
     "model": "Xbox Series X",
     "condition": "C",
@@ -2102,7 +2102,7 @@
   {
     "name": "Sony DualSense Wireless Controller (PS5)",
     "slug": "accessory-dualsense-wireless-controller-86",
-    "category": "Consoles",
+    "category": "Gaming",
     "brand": "Sony",
     "model": "DualSense Wireless Controller",
     "condition": "A",
@@ -2125,7 +2125,7 @@
   {
     "name": "Microsoft Xbox Wireless Controller",
     "slug": "accessory-xbox-wireless-controller-87",
-    "category": "Consoles",
+    "category": "Gaming",
     "brand": "Microsoft",
     "model": "Xbox Wireless Controller",
     "condition": "A",

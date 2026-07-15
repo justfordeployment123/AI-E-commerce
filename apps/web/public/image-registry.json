@@ -3,11 +3,11 @@
   "phones":   { "iphone": [], "samsung": [], "google": [], "oneplus": [], "generic": [] },
   "audio":    { "headphones": [] },
   "laptops":  { "generic": [] },
-  "consoles": { "xbox": [], "generic": [] },
+  "gaming":   { "xbox": [], "generic": [] },
   "tablets":  { "generic": [] },
   "watches":  [],
   "accessories": [],
-  "bento":    { "phones": [], "laptops": [], "audio": [], "consoles": [], "tablets": [] },
+  "bento":    { "phones": [], "laptops": [], "audio": [], "gaming": [], "tablets": [] },
   "showcase": { "iphone": [], "galaxy": [], "macbook": [], "ipad": [], "ps5": [], "airpods": [], "sony": [] },
   "promotions": []
 }

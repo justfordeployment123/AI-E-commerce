@@ -285,7 +285,7 @@ export default function Navbar() {
                   onBlur={() => {
                     setTimeout(() => setIsSearchFocused(false), 200);
                   }}
-                  placeholder="Search for iPhones, MacBooks, iPads, Consoles..."
+                  placeholder="Search for iPhones, MacBooks, iPads, Gaming..."
                   className="h-11 w-full rounded-2xl bg-muted pl-11 pr-4 text-sm font-semibold outline-none transition-all focus:ring-2 focus:ring-accent focus:bg-background border border-border/40 text-foreground animate-none"
                 />
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400" />

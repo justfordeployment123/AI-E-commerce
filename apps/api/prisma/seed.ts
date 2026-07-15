@@ -99,10 +99,9 @@ async function uploadFile(localPath: string, s3Key: string): Promise<string> {
 const CATEGORY_META_SEED: Record<string, { name: string; displayName: string; description: string }> = {
     phones:   { name: 'Phones',    displayName: 'Smartphones',        description: 'Certified refurbished smartphones with warranty. Every handset is unlocked, tested, and backed by our quality guarantee.' },
     tablets:  { name: 'Tablets',   displayName: 'Tablets',            description: 'Refurbished iPads, Samsung Galaxy Tabs and Surface devices. Fully tested, screen checked, and sold with a warranty.' },
-    consoles: { name: 'Consoles',  displayName: 'Gaming Consoles',    description: 'Certified refurbished PlayStation, Xbox and Nintendo consoles. Disc drives tested, HDMI verified, controllers included.' },
     laptops:  { name: 'Laptops',   displayName: 'Laptops & MacBooks', description: 'Refurbished MacBooks, ThinkPads, Dell XPS and more. Every laptop is battery-tested, keyboard-checked, and ships with a warranty.' },
     audio:    { name: 'Audio',     displayName: 'Audio & Headphones', description: 'Genuine refurbished headphones, earbuds and speakers. Ultrasonic cleaned, battery-tested, and quality-graded.' },
-    gaming:   { name: 'Gaming',    displayName: 'Gaming',             description: 'Pre-owned video games and gaming accessories at great prices.' },
+    gaming:   { name: 'Gaming',    displayName: 'Gaming',             description: 'Certified refurbished PlayStation, Xbox and Nintendo consoles. Disc drives tested, HDMI verified, controllers included.' },
 };
 
 // ─── Phase 1: Categories + brand-category images ──────────────────────────────

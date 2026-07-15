@@ -19,7 +19,7 @@ const CONDITIONS = [
   { value: 'C',   label: 'C Grade' },
   { value: 'F',   label: 'F Grade' },
 ];
-const CATEGORIES = ["Phones", "Tablets", "Consoles", "Laptops", "Audio", "Accessories"];
+const CATEGORIES = ["Phones", "Tablets", "Gaming", "Laptops", "Audio", "Accessories"];
 
 const STATUS_STYLES: Record<string, string> = {
   PENDING: "bg-blue-50 text-blue-700 border-blue-100",

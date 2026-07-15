@@ -31,7 +31,7 @@ function capitalize(s: string): string {
 const CATEGORY_FLAGS: Record<string, { isSellable: boolean; isRepairable: boolean }> = {
     phones:      { isSellable: true,  isRepairable: true  },
     tablets:     { isSellable: true,  isRepairable: true  },
-    consoles:    { isSellable: true,  isRepairable: true  },
+    gaming:      { isSellable: true,  isRepairable: true  },
     laptops:     { isSellable: true,  isRepairable: true  },
     audio:       { isSellable: true,  isRepairable: false },
     smartwatches:{ isSellable: true,  isRepairable: false },
@@ -45,7 +45,7 @@ function categoryFlags(slug: string) {
 const CATEGORY_META: Record<string, { displayName: string; description: string }> = {
     phones:      { displayName: 'Smartphones',        description: 'Certified refurbished phones from Apple, Samsung, Google and more.' },
     tablets:     { displayName: 'Tablets & iPads',     description: 'Refurbished tablets for work, study and entertainment.' },
-    consoles:    { displayName: 'Gaming Consoles',     description: 'PlayStation, Xbox and Switch consoles, tested and graded.' },
+    gaming:      { displayName: 'Gaming',              description: 'PlayStation, Xbox and Switch consoles, tested and graded.' },
     laptops:     { displayName: 'Laptops & MacBooks',  description: 'Refurbished laptops and MacBooks for every budget.' },
     audio:       { displayName: 'Audio & Headphones',  description: 'Headphones, earbuds and speakers from top audio brands.' },
     smartwatches:{ displayName: 'Smartwatches',        description: 'Refurbished smartwatches and fitness trackers.' },
@@ -103,18 +103,18 @@ const DEVICE_CATALOG = [
     { brand: 'Apple', model: 'iPad Pro 11-inch M2', category: 'tablets', storageOptions: ['128GB', '256GB', '512GB', '1TB', '2TB'] },
     { brand: 'Apple', model: 'iPad Pro 12.9-inch M1', category: 'tablets', storageOptions: ['128GB', '256GB', '512GB', '1TB', '2TB'] },
     { brand: 'Apple', model: 'iPad Pro 12.9-inch M2', category: 'tablets', storageOptions: ['128GB', '256GB', '512GB', '1TB', '2TB'] },
-    { brand: 'Sony', model: 'PlayStation 3 Slim', category: 'consoles', storageOptions: ['120GB', '250GB', '320GB', '500GB'] },
-    { brand: 'Sony', model: 'PlayStation 4', category: 'consoles', storageOptions: ['500GB', '1TB'] },
-    { brand: 'Sony', model: 'PlayStation 4 Slim', category: 'consoles', storageOptions: ['500GB', '1TB'] },
-    { brand: 'Sony', model: 'PlayStation 4 Pro', category: 'consoles', storageOptions: ['1TB'] },
-    { brand: 'Sony', model: 'PlayStation 5 Disc Edition', category: 'consoles', storageOptions: ['825GB', '1TB'] },
-    { brand: 'Sony', model: 'PlayStation 5 Digital Edition', category: 'consoles', storageOptions: ['825GB', '1TB'] },
-    { brand: 'Microsoft', model: 'Xbox 360 Slim', category: 'consoles', storageOptions: ['4GB', '250GB', '320GB'] },
-    { brand: 'Microsoft', model: 'Xbox One', category: 'consoles', storageOptions: ['500GB', '1TB'] },
-    { brand: 'Microsoft', model: 'Xbox One S', category: 'consoles', storageOptions: ['500GB', '1TB', '2TB'] },
-    { brand: 'Microsoft', model: 'Xbox One X', category: 'consoles', storageOptions: ['1TB'] },
-    { brand: 'Microsoft', model: 'Xbox Series S', category: 'consoles', storageOptions: ['512GB', '1TB'] },
-    { brand: 'Microsoft', model: 'Xbox Series X', category: 'consoles', storageOptions: ['1TB'] },
+    { brand: 'Sony', model: 'PlayStation 3 Slim', category: 'gaming', storageOptions: ['120GB', '250GB', '320GB', '500GB'] },
+    { brand: 'Sony', model: 'PlayStation 4', category: 'gaming', storageOptions: ['500GB', '1TB'] },
+    { brand: 'Sony', model: 'PlayStation 4 Slim', category: 'gaming', storageOptions: ['500GB', '1TB'] },
+    { brand: 'Sony', model: 'PlayStation 4 Pro', category: 'gaming', storageOptions: ['1TB'] },
+    { brand: 'Sony', model: 'PlayStation 5 Disc Edition', category: 'gaming', storageOptions: ['825GB', '1TB'] },
+    { brand: 'Sony', model: 'PlayStation 5 Digital Edition', category: 'gaming', storageOptions: ['825GB', '1TB'] },
+    { brand: 'Microsoft', model: 'Xbox 360 Slim', category: 'gaming', storageOptions: ['4GB', '250GB', '320GB'] },
+    { brand: 'Microsoft', model: 'Xbox One', category: 'gaming', storageOptions: ['500GB', '1TB'] },
+    { brand: 'Microsoft', model: 'Xbox One S', category: 'gaming', storageOptions: ['500GB', '1TB', '2TB'] },
+    { brand: 'Microsoft', model: 'Xbox One X', category: 'gaming', storageOptions: ['1TB'] },
+    { brand: 'Microsoft', model: 'Xbox Series S', category: 'gaming', storageOptions: ['512GB', '1TB'] },
+    { brand: 'Microsoft', model: 'Xbox Series X', category: 'gaming', storageOptions: ['1TB'] },
     { brand: 'Apple', model: 'MacBook Air M1 (2020)', category: 'laptops', storageOptions: ['256GB', '512GB', '1TB'] },
     { brand: 'Apple', model: 'MacBook Air M2 (2022)', category: 'laptops', storageOptions: ['256GB', '512GB', '1TB', '2TB'] },
     { brand: 'Apple', model: 'MacBook Pro 13-inch M1 (2020)', category: 'laptops', storageOptions: ['256GB', '512GB', '1TB', '2TB'] },
@@ -545,15 +545,29 @@ export class SeedService {
 
             const s3Key = `banners/grade/${gradePrefix}/${filename}`;
             const existing = await this.prisma.gradeBanner.findUnique({ where: { key: s3Key } });
-            if (!existing) {
-                const uploaded = await this.uploadLocalFile(path.join(gradeDir, filename), s3Key);
-                if (uploaded) {
+
+            // A DB row alone doesn't guarantee the object is still in storage — local
+            // Garage/MinIO volumes aren't persistent across restarts, so a row can
+            // outlive its object. Verify before trusting it, otherwise re-seeding can
+            // never repair a banner that lost its underlying file.
+            if (existing) {
+                try {
+                    await this.s3Client.send(new HeadObjectCommand({ Bucket: this.bucketName, Key: s3Key }));
+                    continue;
+                } catch {
+                    // object missing despite the DB row — fall through and re-upload
+                }
+            }
+
+            const uploaded = await this.uploadLocalFile(path.join(gradeDir, filename), s3Key);
+            if (uploaded) {
+                if (!existing) {
                     await this.prisma.gradeBanner.create({
                         data: { grade, key: uploaded, label: filename.replace(/\.[^.]+$/, ''), isActive: true, order: 0 },
                     });
-                    count++;
-                    this.logger.log(`  Grade banner: ${filename}`);
                 }
+                count++;
+                this.logger.log(`  Grade banner: ${filename}`);
             }
         }
         this.logger.log(`Seeded ${count} grade guide banners`);
@@ -753,7 +767,7 @@ export class SeedService {
     private normalizeCategory(raw: string): string {
         const map: Record<string, string> = {
             'phones': 'phones', 'tablets': 'tablets',
-            'consoles': 'consoles', 'laptops': 'laptops',
+            'consoles': 'gaming', 'gaming': 'gaming', 'laptops': 'laptops',
             'audio': 'audio', 'accessories': 'accessories',
             'smartwatches': 'smartwatches', 'games': 'games', 'films': 'films',
             'laptops / macbooks': 'laptops',

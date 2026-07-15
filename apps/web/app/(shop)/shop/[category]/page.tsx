@@ -104,7 +104,7 @@ const BRAND_LOGOS: Record<string, React.ReactNode> = {
 const ACCESSORIES: Record<string, string[]> = {
   phones: ["Smartphone Cases", "Fast Chargers", "Screen Protectors", "Car Mounts", "USB-C Cables"],
   tablets: ["iPad Cases", "Apple Pencils", "Styluses", "Tablet Stands", "Screen Protectors"],
-  consoles: ["PS5 Controllers", "Xbox Wireless Controllers", "Console Headsets", "HDMI 2.1 Cables"],
+  gaming: ["PS5 Controllers", "Xbox Wireless Controllers", "Console Headsets", "HDMI 2.1 Cables"],
   laptops: ["Laptop Sleeves", "USB-C Hubs", "Laptop Chargers", "Keyboard Covers"],
   audio: ["Headphone Cases", "Ear Tips", "Charging Docks", "Aux Cables"],
 };
@@ -134,7 +134,7 @@ const SEO_TEXT: Record<string, { title: string; content: string[] }> = {
       "All tablet batteries are guaranteed to meet our high-capacity standard (minimum 85%), screens are checked for backlight consistency, and digitizers are audited for absolute stylus accuracy. Save money, save the environment, and shop with confidence."
     ]
   },
-  consoles: {
+  gaming: {
     title: "Refurbished gaming consoles: Next-gen performance for less",
     content: [
       "TechStop's gaming collection features fully vetted, cleaned, and updated consoles including PlayStation 5, Xbox Series X/S, and Nintendo Switch. Every console undergoes deep thermal testing to prevent fan noise issues, and optical drives are verified for disc loading and playback.",

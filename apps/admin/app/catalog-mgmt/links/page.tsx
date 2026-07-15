@@ -14,7 +14,7 @@ import {
 import { ArrowLeft, Plus, Trash2, Upload, X, Check, AlertTriangle, Image as ImageIcon, ShoppingBag } from "lucide-react";
 
 const MAX_IMAGES = 10;
-const MAIN_CATEGORIES_SLUGS = new Set(["phones", "tablets", "consoles", "laptops", "audio"]);
+const MAIN_CATEGORIES_SLUGS = new Set(["phones", "tablets", "gaming", "laptops", "audio"]);
 
 export default function BrandCategoryLinksPage() {
   const router = useRouter();

@@ -30,7 +30,7 @@ import { removeBackground } from "../../../../lib/removeBackground";
 import { useBgRemoval } from "../../../../context/bg-removal-context";
 
 const MAX_IMAGES = 10;
-const MAIN_CATEGORIES_SLUGS = new Set(["phones", "tablets", "consoles", "laptops", "audio"]);
+const MAIN_CATEGORIES_SLUGS = new Set(["phones", "tablets", "gaming", "laptops", "audio"]);
 
 export default function BrandDetailPage() {
   const { id } = useParams<{ id: string }>();

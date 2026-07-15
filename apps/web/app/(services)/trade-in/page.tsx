@@ -39,7 +39,7 @@ const CAT_METADATA: Record<string, {
 }> = {
   phones:      { oldId: "Phone",      Icon: Smartphone, img: "/phones/samsung/bento_smartphones.png",             mood: "bg-sky-500/10 border-sky-500/20",     moodIcon: "text-sky-500",     glow: "hover:shadow-sky-500/10",     sub: "iPhone, Galaxy, Pixel, OnePlus"         },
   tablets:     { oldId: "Tablet",     Icon: Tablet,     img: "/tablets/ipad/showcase_ipad_pro.png",               mood: "bg-rose-500/10 border-rose-500/20",   moodIcon: "text-rose-500",    glow: "hover:shadow-rose-500/10",    sub: "iPad, Galaxy Tab, Surface Pro"          },
-  consoles:    { oldId: "Console",    Icon: Gamepad2,   img: "/consoles/showcase_ps5.png",                        mood: "bg-violet-500/10 border-violet-500/20",moodIcon: "text-violet-500",  glow: "hover:shadow-violet-500/10",  sub: "PS5, Xbox Series, Switch"               },
+  gaming:      { oldId: "Console",    Icon: Gamepad2,   img: "/consoles/showcase_ps5.png",                        mood: "bg-violet-500/10 border-violet-500/20",moodIcon: "text-violet-500",  glow: "hover:shadow-violet-500/10",  sub: "PS5, Xbox Series, Switch"               },
   laptops:     { oldId: "Laptop",     Icon: Laptop,     img: "/laptops/MacBook/showcase_macbook.png",             mood: "bg-amber-500/10 border-amber-500/20",  moodIcon: "text-amber-600",   glow: "hover:shadow-amber-500/10",   sub: "MacBook, XPS, ThinkPad"                 },
   audio:       { oldId: "Audio",      Icon: Headphones, img: "/audio/bento_audio.png",                            mood: "bg-indigo-500/10 border-indigo-500/20",moodIcon: "text-indigo-500",  glow: "hover:shadow-indigo-500/10",  sub: "AirPods, Sony, Bose"                    },
   smartwatches:{ oldId: "Smartwatch", Icon: Watch,      img: "/Other/watch/galaxy_watch_promo_1778927696615.png", mood: "bg-emerald-500/10 border-emerald-500/20",moodIcon:"text-emerald-500", glow: "hover:shadow-emerald-500/10", sub: "Apple Watch, Galaxy Watch, Fitbit"       },
@@ -47,12 +47,12 @@ const CAT_METADATA: Record<string, {
 
 // Maps product.category (DB name) → wizard category ID used by SPECS / CONDITION_QUESTIONS
 const CAT_NAME_TO_WIZARD_ID: Record<string, string> = {
-  Phones: "Phone", Tablets: "Tablet", Consoles: "Console",
+  Phones: "Phone", Tablets: "Tablet", Gaming: "Console",
   Laptops: "Laptop", Audio: "Audio", Smartwatches: "Smartwatch",
 };
 const CAT_NAME_MOOD: Record<string, string> = {
   Phones: "bg-sky-500/10", Tablets: "bg-rose-500/10",
-  Consoles: "bg-violet-500/10", Laptops: "bg-amber-500/10",
+  Gaming: "bg-violet-500/10", Laptops: "bg-amber-500/10",
   Audio: "bg-indigo-500/10", Smartwatches: "bg-emerald-500/10",
 };
 
@@ -410,7 +410,7 @@ export default function TradeInPage() {
 
   // Dynamic brand + model loading from catalog API
   const CATEGORY_SLUG_MAP: Record<string, string> = {
-    Phone: "phones", Tablet: "tablets", Console: "consoles",
+    Phone: "phones", Tablet: "tablets", Console: "gaming",
     Laptop: "laptops", Audio: "audio", Smartwatch: "smartwatches",
   };
   const [dynamicBrands, setDynamicBrands] = useState<string[]>([]);
@@ -847,7 +847,7 @@ export default function TradeInPage() {
 
       // In background: check device catalog for real tradeInMode
       const catSlugMap: Record<string, string> = {
-        Phone: "phones", Tablet: "tablets", Console: "consoles",
+        Phone: "phones", Tablet: "tablets", Console: "gaming",
         Laptop: "laptops", Audio: "audio", Smartwatch: "smartwatches",
       };
       const catSlug = catSlugMap[suggestion.category];

@@ -491,7 +491,7 @@ function TradeInCTASection() {
   useEffect(() => {
     catalogApi.listCategories()
       .then(cats => {
-        const mainSlugs = ["phones", "laptops", "consoles", "tablets"];
+        const mainSlugs = ["phones", "laptops", "gaming", "tablets"];
         const filtered = cats.filter(c => mainSlugs.includes(c.slug));
         filtered.sort((a, b) => mainSlugs.indexOf(a.slug) - mainSlugs.indexOf(b.slug));
         setCategories(filtered);
@@ -523,7 +523,7 @@ function TradeInCTASection() {
     switch (slug) {
       case "phones":   return "Smartphones";
       case "laptops":  return "Laptops & MacBooks";
-      case "consoles": return "Consoles";
+      case "gaming":   return "Gaming";
       case "tablets":  return "Tablets & iPads";
       default:         return "";
     }
@@ -580,7 +580,7 @@ function TradeInCTASection() {
               const label = getDisplayLabel(c.slug) || c.name;
               // Map catalog slug → trade-in wizard category ID
               const catId: Record<string, string> = {
-                phones: "Phone", laptops: "Laptop", consoles: "Console",
+                phones: "Phone", laptops: "Laptop", gaming: "Console",
                 tablets: "Tablet", audio: "Audio", smartwatches: "Smartwatch",
               };
               const wizardCat = catId[c.slug] ?? "Other";

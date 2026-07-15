@@ -9,7 +9,7 @@ import { catalogApi } from "@/lib/api";
 
 // Category name from DB → wizard category ID used by trade-in/repair pages
 const CAT_NAME_TO_ID: Record<string, string> = {
-  Phones: "Phone", Tablets: "Tablet", Consoles: "Console",
+  Phones: "Phone", Tablets: "Tablet",
   Laptops: "Laptop", Audio: "Audio", Smartwatches: "Smartwatch",
   Gaming: "Console",
 };

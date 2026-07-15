@@ -36,7 +36,7 @@ const DEVICE_TYPE_META: Record<string, {
 }> = {
   phones:   { oldId: "Phone",   Icon: Smartphone, gradient: "from-sky-700 via-blue-900 to-zinc-950",     glow: "hover:shadow-sky-500/30",    accent: "bg-sky-500"    },
   tablets:  { oldId: "Tablet",  Icon: Tablet,     gradient: "from-rose-600 via-pink-900 to-zinc-950",    glow: "hover:shadow-rose-500/30",   accent: "bg-rose-500"   },
-  consoles: { oldId: "Console", Icon: Gamepad2,   gradient: "from-violet-700 via-purple-900 to-zinc-950",glow: "hover:shadow-violet-500/30", accent: "bg-violet-500" },
+  gaming:   { oldId: "Console", Icon: Gamepad2,   gradient: "from-violet-700 via-purple-900 to-zinc-950",glow: "hover:shadow-violet-500/30", accent: "bg-violet-500" },
   laptops:  { oldId: "Laptop",  Icon: Laptop,     gradient: "from-amber-600 via-orange-900 to-zinc-950", glow: "hover:shadow-amber-500/30",  accent: "bg-amber-500"  },
   audio:    { oldId: "Audio",   Icon: Package,    gradient: "from-indigo-600 via-blue-900 to-zinc-950",  glow: "hover:shadow-indigo-500/30", accent: "bg-indigo-500" },
   smartwatches: { oldId: "Smartwatch", Icon: Package, gradient: "from-emerald-600 via-teal-900 to-zinc-950", glow: "hover:shadow-emerald-500/30", accent: "bg-emerald-500" },

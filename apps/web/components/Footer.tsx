@@ -42,7 +42,7 @@ export default function Footer() {
               <ul className="space-y-4 text-sm font-bold uppercase tracking-widest text-[10px]">
                 <li><a href="/shop/phones" className="hover:text-accent transition-colors">Smartphones</a></li>
                 <li><a href="/shop/laptops" className="hover:text-accent transition-colors">Laptops</a></li>
-                <li><a href="/shop/consoles" className="hover:text-accent transition-colors">Gaming</a></li>
+                <li><a href="/shop/gaming" className="hover:text-accent transition-colors">Gaming</a></li>
                 <li><a href="/shop/audio" className="hover:text-accent transition-colors">Audio</a></li>
               </ul>
             </div>
