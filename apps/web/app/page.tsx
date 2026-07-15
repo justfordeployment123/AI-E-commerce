@@ -94,7 +94,6 @@ const Footer = dynamic(() => import("../components/Footer"));
 // ─── Promo Carousel Banner ───────────────────────────────────────────────────
 function PromoCarouselBanner() {
   const [idx, setIdx] = useState(0);
-  const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const [slides, setSlides] = useState<import('../lib/api').PromoSlide[]>([]);
   const [loadingSlides, setLoadingSlides] = useState(true);
   const tabContainerRef = useRef<HTMLDivElement>(null);
@@ -143,15 +142,6 @@ function PromoCarouselBanner() {
     }
   }, [safeIdx]);
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width - 0.5;
-    const y = (e.clientY - rect.top) / rect.height - 0.5;
-    setTilt({ x: x * 20, y: -y * 20 });
-  };
-
-  const handleMouseLeave = () => setTilt({ x: 0, y: 0 });
-
   if (loadingSlides) {
     return (
       <div className="w-full min-h-[60vh] lg:min-h-[65vh] bg-zinc-50 dark:bg-zinc-950 border-b border-zinc-200/60 dark:border-zinc-900 animate-pulse" />
@@ -164,184 +154,87 @@ function PromoCarouselBanner() {
   const displayIndex = String(slide.order + 1).padStart(2, "0");
 
   return (
-    <section 
-      className="w-full min-h-[60vh] lg:min-h-[65vh] bg-zinc-50 dark:bg-zinc-950 border-b border-zinc-200/60 dark:border-zinc-900 relative overflow-hidden flex flex-col justify-between py-8 lg:py-10"
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
+    <section
+      className="w-full min-h-[60vh] lg:min-h-[65vh] bg-zinc-950 relative overflow-hidden flex flex-col justify-between py-8 lg:py-10"
     >
-      {/* Premium Red-Black Background Glow Overrides DB values */}
-      <div 
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full blur-[180px] pointer-events-none transition-all duration-1000 ease-in-out opacity-15 dark:opacity-20 bg-red-500"
-      />
-      
+      {/* Background Images */}
+      <div className="absolute inset-0 z-0">
+        {slides.map((s, i) => {
+          const isActive = safeIdx === i;
+          return s.imgUrl ? (
+            <motion.img
+              key={s.id}
+              src={s.imgUrl}
+              alt={s.tabTitle}
+              aria-hidden={!isActive}
+              className="absolute inset-0 h-full w-full object-cover"
+              initial={false}
+              animate={isActive ? { opacity: 1, scale: 1.08 } : { opacity: 0, scale: 1 }}
+              transition={isActive ? { opacity: { duration: 0.7 }, scale: { duration: 5, ease: "linear" } } : { opacity: { duration: 0.5 }, scale: { duration: 0 } }}
+            />
+          ) : null;
+        })}
+        {/* Overlay for text legibility */}
+        <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-950/90 to-zinc-950/60 lg:to-zinc-950/30" />
+        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-transparent" />
+      </div>
+
       {/* Background Grid Pattern */}
-      <div className="absolute inset-0 pointer-events-none opacity-[0.04] dark:opacity-[0.06]" style={{ backgroundImage: 'linear-gradient(to right, #888 1px, transparent 1px), linear-gradient(to bottom, #888 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+      <div className="absolute inset-0 pointer-events-none opacity-[0.05] z-[1]" style={{ backgroundImage: 'linear-gradient(to right, #fff 1px, transparent 1px), linear-gradient(to bottom, #fff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
 
       {/* Main Showcase Stage */}
       <div className="mx-auto w-full max-w-[1500px] px-4 sm:px-6 lg:px-12 flex-1 flex items-center relative z-10">
-        <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-center w-full">
-          
-          {/* Left Column: Rich Text details */}
-          <div className="lg:col-span-6 flex flex-col gap-4 items-start text-left relative">
-            
-            {/* Giant outlined index number in the background */}
-            <div className="absolute -top-8 sm:-top-16 lg:-top-20 -left-4 sm:-left-10 text-[6rem] sm:text-[12rem] lg:text-[18rem] font-serif font-black select-none pointer-events-none leading-none tracking-tighter text-zinc-300/30 dark:text-zinc-800/15">
-              {displayIndex}
-            </div>
+        <div className="w-full max-w-2xl lg:max-w-4xl flex flex-col gap-4 items-start text-left relative">
 
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={safeIdx}
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -15 }}
-                transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-                className="flex flex-col gap-4 items-start relative z-10"
-              >
-                <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-500/10 dark:bg-red-500/20 border border-red-500/20 shadow-sm text-[9px] font-black uppercase tracking-widest text-red-600 dark:text-red-400">
-                  <span className="h-1.5 w-1.5 rounded-full bg-red-600 dark:bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)]" />
-                  {slide.tag}
-                </span>
-
-                <h1 className="font-sans text-[clamp(1.75rem,5vw,3.8rem)] font-black leading-[0.9] tracking-tighter text-zinc-950 dark:text-white uppercase mt-2">
-                  {slide.titleLine1} <br />
-                  {slide.titleLine2}{" "}
-                  <span className="font-serif italic font-light lowercase tracking-normal bg-clip-text text-transparent bg-gradient-to-r from-red-600 via-zinc-800 to-zinc-950 dark:from-red-500 dark:via-zinc-300 dark:to-white">
-                    {slide.titleItalic}
-                  </span>
-                </h1>
-
-                <div className="flex flex-wrap items-center gap-4 mt-4">
-                  <Link
-                    href={slide.btnLink === "/sell" ? "/trade-in" : slide.btnLink}
-                    className="group relative inline-flex h-12 px-8 items-center justify-center bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 rounded-2xl font-bold text-xs overflow-hidden transition-all hover:scale-105 active:scale-95 shadow-[0_10px_20px_rgba(0,0,0,0.1)] cursor-pointer"
-                  >
-                    <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-red-600 to-red-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    <span className="relative z-10 flex items-center gap-2 group-hover:text-white transition-colors duration-300">
-                      {slide.btnText}
-                      <ArrowRight className="h-3.5 w-3.5" />
-                    </span>
-                  </Link>
-                  
-                  <Link
-                    href="/trade-in"
-                    className="inline-flex h-12 px-6 items-center justify-center rounded-2xl bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md border border-zinc-200/80 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-white dark:hover:bg-zinc-800 transition-all font-bold text-xs shadow-sm hover:shadow-md active:scale-95"
-                  >
-                    How it Works
-                  </Link>
-                </div>
-              </motion.div>
-            </AnimatePresence>
-
+          {/* Giant outlined index number in the background */}
+          <div className="absolute -top-8 sm:-top-16 lg:-top-20 -left-4 sm:-left-10 text-[6rem] sm:text-[12rem] lg:text-[18rem] font-sans font-black select-none pointer-events-none leading-none tracking-tighter text-white/5">
+            {displayIndex}
           </div>
 
-          {/* Right Column: 3D Curved Showcase Card */}
-          <div className="lg:col-span-6 flex justify-center items-center relative min-h-[300px] lg:min-h-[400px]">
-            
-            {/* Dynamic Card Glow mesh behind Card overrides DB values to match premium theme */}
-            {slides.map((s, i) => {
-              const isActive = safeIdx === i;
-              return (
-                <div
-                  key={`glow-${s.id}`}
-                  className="absolute w-72 h-72 rounded-full blur-[80px] bg-gradient-to-tr from-red-500/40 to-zinc-500/40 transition-opacity duration-500"
-                  style={{ opacity: isActive ? 0.3 : 0 }}
-                />
-              );
-            })}
-
-            <div
-              className="relative w-[260px] h-[260px] sm:w-[340px] sm:h-[340px] lg:w-[380px] lg:h-[380px] rounded-[2.5rem] bg-white/60 dark:bg-zinc-900/40 backdrop-blur-2xl border border-white dark:border-zinc-800/80 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] dark:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.4)] flex items-center justify-center p-6 group duration-200 ease-out cursor-grab active:cursor-grabbing"
-              style={{
-                transformStyle: "preserve-3d",
-                transform: `perspective(1000px) rotateY(${tilt.x}deg) rotateX(${tilt.y}deg)`
-              }}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={safeIdx}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+              className="flex flex-col gap-4 items-start relative z-10"
             >
-              {/* Surface Reflection layer */}
-              <div className="absolute inset-0 rounded-[2.5rem] bg-gradient-to-tr from-white/0 via-white/5 to-white/20 dark:from-white/0 dark:via-white/5 dark:to-white/10 pointer-events-none" />
+              <h1 className="font-sans text-[clamp(1.75rem,5vw,3.4rem)] lg:text-[clamp(3.5rem,4.2vw,5.5rem)] font-black leading-[0.9] lg:leading-[0.88] tracking-tighter lg:tracking-tight text-white uppercase drop-shadow-[0_2px_24px_rgba(0,0,0,0.5)]">
+                {slide.titleLine1} <br />
+                {slide.titleLine2}{" "}
+                <span className="font-sans font-black text-red-500">
+                  {slide.titleItalic}
+                </span>
+              </h1>
 
-              {/* Floating Shadow Under Image */}
-              <div className="absolute bottom-6 w-[80%] h-4 bg-black/5 dark:bg-black/30 blur-lg rounded-full scale-y-20 transition-transform duration-700 group-hover:scale-95 [transform:translateZ(10px)]" />
+              {slide.subtitle && (
+                <p className="max-w-md lg:max-w-xl text-sm sm:text-base lg:text-lg font-medium text-white/70 leading-snug">
+                  {slide.subtitle}
+                </p>
+              )}
 
-              {/* Service images with floating frame */}
-              {slides.map((s, i) => {
-                const isActive = safeIdx === i;
-                return s.imgUrl ? (
-                  <motion.img
-                    key={s.id}
-                    src={s.imgUrl}
-                    alt={s.tabTitle}
-                    aria-hidden={!isActive}
-                    initial={false}
-                    animate={isActive ? {
-                      opacity: 1,
-                      scale: 1,
-                      rotateY: 0,
-                      y: [0, -6, 0]
-                    } : {
-                      opacity: 0,
-                      scale: 0.9,
-                      rotateY: -15
-                    }}
-                    transition={isActive ? {
-                      opacity: { duration: 0.4 },
-                      scale: { duration: 0.4 },
-                      rotateY: { duration: 0.4 },
-                      y: { duration: 5, repeat: Infinity, ease: "easeInOut" }
-                    } : {
-                      opacity: { duration: 0.3 },
-                      scale: { duration: 0.3 },
-                      rotateY: { duration: 0.3 }
-                    }}
-                    className="absolute max-h-[85%] max-w-[85%] object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.1)] dark:drop-shadow-[0_20px_40px_rgba(0,0,0,0.4)] transition-transform duration-700 group-hover:scale-105 [transform:translateZ(40px)] pointer-events-none select-none"
-                    style={{
-                      display: isActive ? "block" : "none"
-                    }}
-                  />
-                ) : null;
-              })}
+              <div className="flex flex-wrap items-center gap-4 mt-4">
+                <Link
+                  href={slide.btnLink === "/sell" ? "/trade-in" : slide.btnLink}
+                  className="group relative inline-flex h-12 px-8 items-center justify-center bg-white text-zinc-950 rounded-2xl font-bold text-xs overflow-hidden transition-all hover:scale-105 active:scale-95 shadow-[0_10px_20px_rgba(0,0,0,0.3)] cursor-pointer"
+                >
+                  <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-red-600 to-red-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <span className="relative z-10 flex items-center gap-2 group-hover:text-white transition-colors duration-300">
+                    {slide.btnText}
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </span>
+                </Link>
 
-              {/* Floating Badge A */}
-              {slides.map((s, i) => {
-                const isActive = safeIdx === i;
-                return (
-                  <motion.div
-                    key={`badgeA-${s.id}`}
-                    aria-hidden={!isActive}
-                    initial={false}
-                    animate={isActive ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
-                    transition={{ duration: 0.3 }}
-                    className="absolute -top-3 -right-3 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 rounded-xl px-4 py-2 text-[10px] font-black shadow-xl [transform:translateZ(60px)] select-none pointer-events-none border border-zinc-800 dark:border-white ring-1 ring-white/10 dark:ring-black/5"
-                    style={{
-                      display: isActive ? "block" : "none"
-                    }}
-                  >
-                    {s.badgeA}
-                  </motion.div>
-                );
-              })}
-
-              {/* Floating Badge B - Updated to Red Accent */}
-              {slides.map((s, i) => {
-                const isActive = safeIdx === i;
-                return (
-                  <motion.div
-                    key={`badgeB-${s.id}`}
-                    aria-hidden={!isActive}
-                    initial={false}
-                    animate={isActive ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
-                    transition={{ duration: 0.3 }}
-                    className="absolute -bottom-3 -left-3 bg-red-600 dark:bg-red-500 text-white rounded-xl px-4 py-2 text-[10px] font-black shadow-xl shadow-red-500/20 [transform:translateZ(60px)] select-none pointer-events-none ring-1 ring-red-400/50"
-                    style={{
-                      display: isActive ? "block" : "none"
-                    }}
-                  >
-                    {s.badgeB}
-                  </motion.div>
-                );
-              })}
-            </div>
-          </div>
+                <Link
+                  href="/trade-in"
+                  className="inline-flex h-12 px-6 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-white/20 transition-all font-bold text-xs shadow-sm active:scale-95"
+                >
+                  How it Works
+                </Link>
+              </div>
+            </motion.div>
+          </AnimatePresence>
 
         </div>
       </div>
@@ -349,7 +242,10 @@ function PromoCarouselBanner() {
       {/* Bottom Floating Navigation Dock */}
       <div className="mx-auto w-full max-w-[1500px] px-4 sm:px-6 lg:px-12 mt-8 relative z-20">
         <div className="flex justify-center">
-          <div ref={tabContainerRef} className="flex items-center gap-2 p-2 rounded-[2rem] bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-white dark:border-zinc-800 shadow-xl overflow-x-auto scrollbar-hide max-w-full relative">
+          <div
+            ref={tabContainerRef}
+            className="flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 rounded-[2rem] bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-white dark:border-zinc-800 shadow-xl overflow-x-auto snap-x snap-mandatory scrollbar-hide max-w-full relative [mask-image:linear-gradient(to_right,transparent,black_20px,black_calc(100%-20px),transparent)] sm:[mask-image:none]"
+          >
             {slides.map((s, i) => {
               const isActive = safeIdx === i;
               return (
@@ -357,17 +253,17 @@ function PromoCarouselBanner() {
                   key={s.id}
                   onClick={() => setIdx(i)}
                   data-active={isActive}
-                  className={`relative flex items-center gap-2 px-4 h-11 rounded-2xl transition-all duration-500 cursor-pointer whitespace-nowrap ${
+                  className={`relative flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 h-9 sm:h-11 rounded-2xl transition-all duration-500 cursor-pointer whitespace-nowrap snap-center flex-shrink-0 ${
                     isActive
                       ? "bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 shadow-lg font-black"
                       : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 font-bold"
                   }`}
                 >
-                  <span className={`text-[10px] tracking-widest ${isActive ? "opacity-60" : "text-zinc-400 dark:text-zinc-500"}`}>
+                  <span className={`hidden sm:inline text-[10px] tracking-widest ${isActive ? "opacity-60" : "text-zinc-400 dark:text-zinc-500"}`}>
                     {String(s.order + 1).padStart(2, "0")}
                   </span>
 
-                  <span className="text-xs tracking-tight">
+                  <span className="text-[11px] sm:text-xs tracking-tight">
                     {s.tabTitle}
                   </span>
 

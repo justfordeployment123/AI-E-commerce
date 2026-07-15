@@ -75,7 +75,12 @@
       "Bash(node -e ' *)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:8974/)",
       "Bash(pkill -f \"http.createServer\")",
-      "Bash(pkill -f \"8974\")"
+      "Bash(pkill -f \"8974\")",
+      "Read(//d//**)",
+      "Read(//c/Users/HP/**)",
+      "Read(//c/Users/HP/.claude/**)",
+      "Read(//d/CODE/Projects/Markhor System/AI-E-commerce/**)",
+      "Bash(powershell -c \"\\(Get-Item .claude/settings.local.json\\).LastWriteTime\")"
     ],
     "additionalDirectories": [
       "d:\\CODE\\Projects\\Markhor Systems Projects\\Ai-Ecommerce\\apps\\web\\app\\shop",

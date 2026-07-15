@@ -1,0 +1,593 @@
+- generic [active] [ref=f5e1]:
+  - generic [ref=f5e2]: Free delivery on all tech above £50
+  - banner [ref=f5e8]:
+    - generic [ref=f5e10]:
+      - generic [ref=f5e11]:
+        - button "Toggle menu" [ref=f5e12]
+        - link [ref=f5e14] [cursor=pointer]:
+          - /url: /
+          - img "TechStop Leicester" [ref=f5e15]
+      - generic [ref=f5e16]:
+        - link [ref=f5e17] [cursor=pointer]:
+          - /url: /account
+        - button "Toggle Theme" [ref=f5e21] [cursor=pointer]
+        - link [ref=f5e24] [cursor=pointer]:
+          - /url: /cart
+  - main [ref=f5e29]:
+    - generic [ref=f5e30]:
+      - img "Upgrade iPhone" [ref=f5e32]
+      - generic [ref=f5e41]:
+        - generic: "01"
+        - generic [ref=f5e42]:
+          - generic [ref=f5e43]: Featured Promotion
+          - heading "UPGRADE YOUR IPHONE for less." [level=1] [ref=f5e45]
+          - paragraph [ref=f5e46]: Get pristine, certified refurbished iPhones with a full 12-month warranty. Rigorously tested by in-house technicians, graded honestly.
+          - generic [ref=f5e47]:
+            - link [ref=f5e48] [cursor=pointer]:
+              - /url: /shop/phones
+            - link "How it Works" [ref=f5e53] [cursor=pointer]:
+              - /url: /trade-in
+      - generic [ref=f5e56]:
+        - button "01 Upgrade iPhone" [ref=f5e57] [cursor=pointer]:
+          - generic [ref=f5e58]: "01"
+          - generic [ref=f5e59]: Upgrade iPhone
+        - button "02 Sell & Trade-In" [ref=f5e62] [cursor=pointer]:
+          - generic [ref=f5e63]: "02"
+          - generic [ref=f5e64]: Sell & Trade-In
+        - button "03 Expert Repairs" [ref=f5e65] [cursor=pointer]:
+          - generic [ref=f5e66]: "03"
+          - generic [ref=f5e67]: Expert Repairs
+        - button "04 Sustainability" [ref=f5e68] [cursor=pointer]:
+          - generic [ref=f5e69]: "04"
+          - generic [ref=f5e70]: Sustainability
+        - button "05 Fast Shipping" [ref=f5e71] [cursor=pointer]:
+          - generic [ref=f5e72]: "05"
+          - generic [ref=f5e73]: Fast Shipping
+        - button "06 Expert Support" [ref=f5e74] [cursor=pointer]:
+          - generic [ref=f5e75]: "06"
+          - generic [ref=f5e76]: Expert Support
+    - generic [ref=f5e78]:
+      - generic [ref=f5e79]: 12-Month Warranty
+      - generic [ref=f5e81]: Free 30-Day Returns
+      - generic [ref=f5e83]: Expert Certified
+      - generic [ref=f5e85]: Carbon Neutral Shipping
+      - generic [ref=f5e87]: 25-Point Inspection
+      - generic [ref=f5e89]: Price Match Promise
+      - generic [ref=f5e91]: 47,000+ Devices In Stock
+      - generic [ref=f5e93]: Same-Day Dispatch Before 2pm
+      - generic [ref=f5e95]: 12-Month Warranty
+      - generic [ref=f5e97]: Free 30-Day Returns
+      - generic [ref=f5e99]: Expert Certified
+      - generic [ref=f5e101]: Carbon Neutral Shipping
+      - generic [ref=f5e103]: 25-Point Inspection
+      - generic [ref=f5e105]: Price Match Promise
+      - generic [ref=f5e107]: 47,000+ Devices In Stock
+      - generic [ref=f5e109]: Same-Day Dispatch Before 2pm
+    - generic [ref=f5e114]:
+      - link "Apple 57+ items" [ref=f5e115] [cursor=pointer]:
+        - /url: /shop/phones?brand=Apple
+        - generic [ref=f5e116]: Apple
+        - generic [ref=f5e117]: 57+ items
+      - link "Samsung 20+ items" [ref=f5e118] [cursor=pointer]:
+        - /url: /shop/phones?brand=Samsung
+        - generic [ref=f5e119]: Samsung
+        - generic [ref=f5e120]: 20+ items
+      - link "Sony 16+ items" [ref=f5e121] [cursor=pointer]:
+        - /url: /shop/phones?brand=Sony
+        - generic [ref=f5e122]: Sony
+        - generic [ref=f5e123]: 16+ items
+      - link "Microsoft 11+ items" [ref=f5e124] [cursor=pointer]:
+        - /url: /shop/phones?brand=Microsoft
+        - generic [ref=f5e125]: Microsoft
+        - generic [ref=f5e126]: 11+ items
+      - link "Asus 5+ items" [ref=f5e127] [cursor=pointer]:
+        - /url: /shop/phones?brand=Asus
+        - generic [ref=f5e128]: Asus
+        - generic [ref=f5e129]: 5+ items
+      - link "Google 5+ items" [ref=f5e130] [cursor=pointer]:
+        - /url: /shop/phones?brand=Google
+        - generic [ref=f5e131]: Google
+        - generic [ref=f5e132]: 5+ items
+      - link "Oneplus 4+ items" [ref=f5e133] [cursor=pointer]:
+        - /url: /shop/phones?brand=Oneplus
+        - generic [ref=f5e134]: Oneplus
+        - generic [ref=f5e135]: 4+ items
+    - generic [ref=f5e138]:
+      - generic [ref=f5e139]:
+        - generic [ref=f5e140]: TechStop Trade-In
+        - heading "Sell your old tech. Get cash in 48 hours." [level=2] [ref=f5e142]
+        - paragraph [ref=f5e143]: We pay premium market rates for used smartphones, laptops, tablets, and gaming consoles. Trade in online with free insured Royal Mail shipping or drop off in-store.
+        - generic [ref=f5e145]:
+          - textbox "Search your device (e.g. iPhone 15, PS5...)" [ref=f5e146]
+          - button "Search" [ref=f5e147]
+      - generic [ref=f5e148]:
+        - link "Smartphones Smartphones Trade-In Start Quote" [ref=f5e149] [cursor=pointer]:
+          - /url: /trade-in?cat=Phone
+          - img "Smartphones" [ref=f5e150]
+          - generic [ref=f5e153]: Smartphones
+          - generic [ref=f5e155]:
+            - paragraph [ref=f5e156]: Trade-In
+            - paragraph [ref=f5e157]: Start Quote
+        - link "Laptops & MacBooks Laptops & MacBooks Trade-In Start Quote" [ref=f5e161] [cursor=pointer]:
+          - /url: /trade-in?cat=Laptop
+          - img "Laptops & MacBooks" [ref=f5e162]
+          - generic [ref=f5e165]: Laptops & MacBooks
+          - generic [ref=f5e167]:
+            - paragraph [ref=f5e168]: Trade-In
+            - paragraph [ref=f5e169]: Start Quote
+        - link "Gaming Gaming Trade-In Start Quote" [ref=f5e173] [cursor=pointer]:
+          - /url: /trade-in?cat=Console
+          - img "Gaming" [ref=f5e174]
+          - generic [ref=f5e177]: Gaming
+          - generic [ref=f5e179]:
+            - paragraph [ref=f5e180]: Trade-In
+            - paragraph [ref=f5e181]: Start Quote
+        - link "Tablets & iPads Tablets & iPads Trade-In Start Quote" [ref=f5e185] [cursor=pointer]:
+          - /url: /trade-in?cat=Tablet
+          - img "Tablets & iPads" [ref=f5e186]
+          - generic [ref=f5e189]: Tablets & iPads
+          - generic [ref=f5e191]:
+            - paragraph [ref=f5e192]: Trade-In
+            - paragraph [ref=f5e193]: Start Quote
+    - generic [ref=f5e197]:
+      - generic [ref=f5e199]:
+        - generic [ref=f5e200]:
+          - paragraph [ref=f5e201]: Trending favorites
+          - heading "Shop our most wanted" [level=2] [ref=f5e202]
+        - generic [ref=f5e203]:
+          - button "Audio" [ref=f5e204]
+          - button "Gaming" [ref=f5e205]
+          - button "Laptops" [ref=f5e206]
+          - button "Phones" [ref=f5e207]
+          - button "Tablets" [ref=f5e208]
+      - generic [ref=f5e209]:
+        - link [ref=f5e213] [cursor=pointer]:
+          - /url: /shop/phones
+        - generic [ref=f5e220]:
+          - button "Scroll left" [ref=f5e221]
+          - button "Scroll right" [ref=f5e224]
+    - generic [ref=f5e228]:
+      - generic [ref=f5e229]:
+        - paragraph [ref=f5e230]: Direct to consumer
+        - heading "Top brands, refurbished" [level=2] [ref=f5e231]
+      - generic [ref=f5e232]:
+        - img "Desk with tech" [ref=f5e235]
+        - generic [ref=f5e236]:
+          - generic [ref=f5e237]:
+            - button "All" [ref=f5e238]
+            - button [ref=f5e239]:
+              - img "Apple" [ref=f5e240]
+              - text: Apple
+            - button [ref=f5e241]:
+              - img "Samsung" [ref=f5e242]
+              - text: Samsung
+            - button [ref=f5e243]:
+              - img "Sony" [ref=f5e244]
+              - text: Sony
+            - button [ref=f5e245]:
+              - img "Microsoft" [ref=f5e246]
+              - text: Microsoft
+            - button [ref=f5e247]:
+              - img "Asus" [ref=f5e248]
+              - text: Asus
+            - button [ref=f5e249]:
+              - img "Google" [ref=f5e250]
+              - text: Google
+            - button [ref=f5e251]:
+              - img "Oneplus" [ref=f5e252]
+              - text: Oneplus
+          - generic [ref=f5e253]:
+            - link "Apple iPad Pro 11-inch M2 256GB (New) New Apple iPad Pro 11-inch M2 256GB (New) 5.0/5 (2) Price on request" [ref=f5e254] [cursor=pointer]:
+              - /url: /shop/tablets/apple-ipad-pro-11-inch-m2-256gb-new-0
+              - generic [ref=f5e255]:
+                - img "Apple iPad Pro 11-inch M2 256GB (New)" [ref=f5e257]
+                - generic [ref=f5e258]: New
+              - paragraph [ref=f5e263]: Apple iPad Pro 11-inch M2 256GB (New)
+              - generic [ref=f5e264]: 5.0/5 (2)
+              - paragraph [ref=f5e277]: Price on request
+            - link "Sony PlayStation 4 Slim 1TB (B Grade) B Grade Sony PlayStation 4 Slim 1TB (B Grade) 4.4/5 (52) Price on request" [ref=f5e278] [cursor=pointer]:
+              - /url: /shop/gaming/sony-playstation-4-slim-1tb-b-grade-62
+              - generic [ref=f5e279]:
+                - img "Sony PlayStation 4 Slim 1TB (B Grade)" [ref=f5e281]
+                - generic [ref=f5e282]: B Grade
+              - paragraph [ref=f5e287]: Sony PlayStation 4 Slim 1TB (B Grade)
+              - generic [ref=f5e288]: 4.4/5 (52)
+              - paragraph [ref=f5e301]: Price on request
+            - link "Apple iPad Pro 11-inch M2 256GB (A Grade) A Grade Apple iPad Pro 11-inch M2 256GB (A Grade) 4.4/5 (25) Price on request" [ref=f5e302] [cursor=pointer]:
+              - /url: /shop/tablets/apple-ipad-pro-11-inch-m2-256gb-a-grade-54
+              - generic [ref=f5e303]:
+                - img "Apple iPad Pro 11-inch M2 256GB (A Grade)" [ref=f5e305]
+                - generic [ref=f5e306]: A Grade
+              - paragraph [ref=f5e311]: Apple iPad Pro 11-inch M2 256GB (A Grade)
+              - generic [ref=f5e312]: 4.4/5 (25)
+              - paragraph [ref=f5e325]: Price on request
+            - link "ASUS TUF Gaming A15 (A Grade) A Grade ASUS TUF Gaming A15 (A Grade) 4.6/5 (16) Price on request" [ref=f5e326] [cursor=pointer]:
+              - /url: /shop/laptops/asus-tuf-gaming-a15-a-grade-0
+              - generic [ref=f5e327]:
+                - img "ASUS TUF Gaming A15 (A Grade)" [ref=f5e329]
+                - generic [ref=f5e330]: A Grade
+              - paragraph [ref=f5e335]: ASUS TUF Gaming A15 (A Grade)
+              - generic [ref=f5e336]: 4.6/5 (16)
+              - paragraph [ref=f5e349]: Price on request
+            - link "Google Pixel 8 Pro 256GB (A Grade) A Grade Google Pixel 8 Pro 256GB (A Grade) 4.8/5 (20) Price on request" [ref=f5e350] [cursor=pointer]:
+              - /url: /shop/phones/google-pixel-8-pro-256gb-a-grade-0
+              - generic [ref=f5e351]:
+                - img "Google Pixel 8 Pro 256GB (A Grade)" [ref=f5e353]
+                - generic [ref=f5e354]: A Grade
+              - paragraph [ref=f5e359]: Google Pixel 8 Pro 256GB (A Grade)
+              - generic [ref=f5e360]: 4.8/5 (20)
+              - paragraph [ref=f5e373]: Price on request
+            - link "Apple iPad 10th Gen 64GB (A Grade) A Grade Apple iPad 10th Gen 64GB (A Grade) 4.4/5 (20) Price on request" [ref=f5e374] [cursor=pointer]:
+              - /url: /shop/tablets/apple-ipad-10th-gen-64gb-a-grade-48
+              - generic [ref=f5e375]:
+                - img "Apple iPad 10th Gen 64GB (A Grade)" [ref=f5e377]
+                - generic [ref=f5e378]: A Grade
+              - paragraph [ref=f5e383]: Apple iPad 10th Gen 64GB (A Grade)
+              - generic [ref=f5e384]: 4.4/5 (20)
+              - paragraph [ref=f5e397]: Price on request
+            - link "Apple MacBook Air M1 (2020) 256GB (B Grade) B Grade Apple MacBook Air M1 (2020) 256GB (B Grade) 4.0/5 (21) Price on request" [ref=f5e398] [cursor=pointer]:
+              - /url: /shop/laptops/apple-macbook-air-m1-2020--256gb-b-grade-77
+              - generic [ref=f5e399]:
+                - img "Apple MacBook Air M1 (2020) 256GB (B Grade)" [ref=f5e401]
+                - generic [ref=f5e402]: B Grade
+              - paragraph [ref=f5e407]: Apple MacBook Air M1 (2020) 256GB (B Grade)
+              - generic [ref=f5e408]: 4.0/5 (21)
+              - paragraph [ref=f5e421]: Price on request
+            - link "Samsung Galaxy S24 256GB (New) New Samsung Galaxy S24 256GB (New) 5.0/5 (4) £545 £ new" [ref=f5e422] [cursor=pointer]:
+              - /url: /shop/phones/samsung-galaxy-s24-256gb-new-0
+              - generic [ref=f5e423]:
+                - img "Samsung Galaxy S24 256GB (New)" [ref=f5e425]
+                - generic [ref=f5e426]: New
+              - paragraph [ref=f5e431]: Samsung Galaxy S24 256GB (New)
+              - generic [ref=f5e432]: 5.0/5 (4)
+              - generic [ref=f5e444]:
+                - paragraph [ref=f5e445]: £545
+                - paragraph [ref=f5e446]: £ new
+            - link "Microsoft Xbox Series X 1TB (C Grade) C Grade Microsoft Xbox Series X 1TB (C Grade) 4.1/5 (27) Price on request" [ref=f5e447] [cursor=pointer]:
+              - /url: /shop/gaming/microsoft-xbox-series-x-1tb-c-grade-76
+              - generic [ref=f5e448]:
+                - img "Microsoft Xbox Series X 1TB (C Grade)" [ref=f5e450]
+                - generic [ref=f5e451]: C Grade
+              - paragraph [ref=f5e456]: Microsoft Xbox Series X 1TB (C Grade)
+              - generic [ref=f5e457]: 4.1/5 (27)
+              - paragraph [ref=f5e470]: Price on request
+            - link "Microsoft Xbox Wireless Controller A Grade Microsoft Xbox Wireless Controller 5.0/5 (24) Price on request" [ref=f5e471] [cursor=pointer]:
+              - /url: /shop/gaming/accessory-xbox-wireless-controller-87
+              - generic [ref=f5e472]:
+                - img "Microsoft Xbox Wireless Controller" [ref=f5e474]
+                - generic [ref=f5e475]: A Grade
+              - paragraph [ref=f5e480]: Microsoft Xbox Wireless Controller
+              - generic [ref=f5e481]: 5.0/5 (24)
+              - paragraph [ref=f5e494]: Price on request
+            - link "Apple MacBook Pro 13-inch M1 (2020) 512GB (B Grade) B Grade Apple MacBook Pro 13-inch M1 (2020) 512GB (B Grade) 4.9/5 (45) Price on request" [ref=f5e495] [cursor=pointer]:
+              - /url: /shop/laptops/apple-macbook-pro-13-inch-m1-2020--512gb-b-grade-80
+              - generic [ref=f5e496]:
+                - img "Apple MacBook Pro 13-inch M1 (2020) 512GB (B Grade)" [ref=f5e498]
+                - generic [ref=f5e499]: B Grade
+              - paragraph [ref=f5e504]: Apple MacBook Pro 13-inch M1 (2020) 512GB (B Grade)
+              - generic [ref=f5e505]: 4.9/5 (45)
+              - paragraph [ref=f5e518]: Price on request
+            - link "Sony PlayStation 4 Pro 1TB (C Grade) C Grade Sony PlayStation 4 Pro 1TB (C Grade) 4.8/5 (11) Price on request" [ref=f5e519] [cursor=pointer]:
+              - /url: /shop/gaming/sony-playstation-4-pro-1tb-c-grade-64
+              - generic [ref=f5e520]:
+                - img "Sony PlayStation 4 Pro 1TB (C Grade)" [ref=f5e522]
+                - generic [ref=f5e523]: C Grade
+              - paragraph [ref=f5e528]: Sony PlayStation 4 Pro 1TB (C Grade)
+              - generic [ref=f5e529]: 4.8/5 (11)
+              - paragraph [ref=f5e542]: Price on request
+            - link "Apple MacBook Pro 14-inch M2 Pro (2023) 512GB (A Grade) A Grade Apple MacBook Pro 14-inch M2 Pro (2023) 512GB (A Grade) 4.0/5 (5) Price on request" [ref=f5e543] [cursor=pointer]:
+              - /url: /shop/laptops/apple-macbook-pro-14-inch-m2-pro-2023--512gb-a-grade-81
+              - generic [ref=f5e544]:
+                - img "Apple MacBook Pro 14-inch M2 Pro (2023) 512GB (A Grade)" [ref=f5e546]
+                - generic [ref=f5e547]: A Grade
+              - paragraph [ref=f5e552]: Apple MacBook Pro 14-inch M2 Pro (2023) 512GB (A Grade)
+              - generic [ref=f5e553]: 4.0/5 (5)
+              - paragraph [ref=f5e566]: Price on request
+            - link "Apple iPhone 15 Pro Max 256GB (New) New Apple iPhone 15 Pro Max 256GB (New) 5.0/5 (2) Price on request" [ref=f5e567] [cursor=pointer]:
+              - /url: /shop/phones/apple-iphone-15-pro-max-256gb-new-0
+              - generic [ref=f5e568]:
+                - img "Apple iPhone 15 Pro Max 256GB (New)" [ref=f5e570]
+                - generic [ref=f5e571]: New
+              - paragraph [ref=f5e576]: Apple iPhone 15 Pro Max 256GB (New)
+              - generic [ref=f5e577]: 5.0/5 (2)
+              - paragraph [ref=f5e590]: Price on request
+            - link "Samsung Galaxy S24 Plus 512GB (B Grade) B Grade Samsung Galaxy S24 Plus 512GB (B Grade) 4.3/5 (36) £370 £435 new" [ref=f5e591] [cursor=pointer]:
+              - /url: /shop/phones/samsung-galaxy-s24--512gb-b-grade-44
+              - generic [ref=f5e592]:
+                - img "Samsung Galaxy S24 Plus 512GB (B Grade)" [ref=f5e594]
+                - generic [ref=f5e595]: B Grade
+              - paragraph [ref=f5e600]: Samsung Galaxy S24 Plus 512GB (B Grade)
+              - generic [ref=f5e601]: 4.3/5 (36)
+              - generic [ref=f5e613]:
+                - paragraph [ref=f5e614]: £370
+                - paragraph [ref=f5e615]: £435 new
+            - link "Microsoft Xbox One S 2TB (B Grade) B Grade Microsoft Xbox One S 2TB (B Grade) 4.5/5 (37) Price on request" [ref=f5e616] [cursor=pointer]:
+              - /url: /shop/gaming/microsoft-xbox-one-s-2tb-b-grade-71
+              - generic [ref=f5e617]:
+                - img "Microsoft Xbox One S 2TB (B Grade)" [ref=f5e619]
+                - generic [ref=f5e620]: B Grade
+              - paragraph [ref=f5e625]: Microsoft Xbox One S 2TB (B Grade)
+              - generic [ref=f5e626]: 4.5/5 (37)
+              - paragraph [ref=f5e639]: Price on request
+            - link "Apple AirPods Pro 2 (A Grade) A Grade Apple AirPods Pro 2 (A Grade) 4.8/5 (12) Price on request" [ref=f5e640] [cursor=pointer]:
+              - /url: /shop/audio/apple-airpods-pro-2-a-grade-0
+              - generic [ref=f5e641]:
+                - img "Apple AirPods Pro 2 (A Grade)" [ref=f5e643]
+                - generic [ref=f5e644]: A Grade
+              - paragraph [ref=f5e649]: Apple AirPods Pro 2 (A Grade)
+              - generic [ref=f5e650]: 4.8/5 (12)
+              - paragraph [ref=f5e663]: Price on request
+            - link "Google Pixel 8 128GB (A Grade) A Grade Google Pixel 8 128GB (A Grade) 4.7/5 (15) Price on request" [ref=f5e664] [cursor=pointer]:
+              - /url: /shop/phones/google-pixel-8-128gb-a-grade-0
+              - generic [ref=f5e665]:
+                - img "Google Pixel 8 128GB (A Grade)" [ref=f5e667]
+                - generic [ref=f5e668]: A Grade
+              - paragraph [ref=f5e673]: Google Pixel 8 128GB (A Grade)
+              - generic [ref=f5e674]: 4.7/5 (15)
+              - paragraph [ref=f5e687]: Price on request
+            - link "Samsung Galaxy S24 256GB (A Grade) A Grade Samsung Galaxy S24 256GB (A Grade) 4.8/5 (32) £480 £ new" [ref=f5e688] [cursor=pointer]:
+              - /url: /shop/phones/samsung-galaxy-s24-256gb-a-grade-42
+              - generic [ref=f5e689]:
+                - img "Samsung Galaxy S24 256GB (A Grade)" [ref=f5e691]
+                - generic [ref=f5e692]: A Grade
+              - paragraph [ref=f5e697]: Samsung Galaxy S24 256GB (A Grade)
+              - generic [ref=f5e698]: 4.8/5 (32)
+              - generic [ref=f5e710]:
+                - paragraph [ref=f5e711]: £480
+                - paragraph [ref=f5e712]: £ new
+            - link "ASUS Zenbook 14 OLED (A Grade) A Grade ASUS Zenbook 14 OLED (A Grade) 4.7/5 (12) Price on request" [ref=f5e713] [cursor=pointer]:
+              - /url: /shop/laptops/asus-zenbook-14-oled-a-grade-0
+              - generic [ref=f5e714]:
+                - img "ASUS Zenbook 14 OLED (A Grade)" [ref=f5e716]
+                - generic [ref=f5e717]: A Grade
+              - paragraph [ref=f5e722]: ASUS Zenbook 14 OLED (A Grade)
+              - generic [ref=f5e723]: 4.7/5 (12)
+              - paragraph [ref=f5e736]: Price on request
+          - generic [ref=f5e738]:
+            - button "Scroll left" [ref=f5e739]
+            - button "Scroll right" [ref=f5e742]
+    - generic [ref=f5e745]:
+      - generic [ref=f5e748]:
+        - paragraph [ref=f5e749]: Just added
+        - heading "New arrivals" [level=2] [ref=f5e750]
+      - generic [ref=f5e753]:
+        - button "Scroll left" [ref=f5e754]
+        - button "Scroll right" [ref=f5e757]
+    - generic [ref=f5e761]:
+      - generic [ref=f5e762]:
+        - paragraph [ref=f5e763]: Explore & discover
+        - heading "You might love these" [level=2] [ref=f5e764]
+      - generic [ref=f5e765]:
+        - img "Featured product" [ref=f5e768]
+        - generic [ref=f5e769]:
+          - button "All Deals" [ref=f5e771]
+          - generic [ref=f5e778]:
+            - button "Scroll left" [ref=f5e779]
+            - button "Scroll right" [ref=f5e782]
+    - generic [ref=f5e788]:
+      - generic [ref=f5e789]:
+        - paragraph [ref=f5e790]: Our promise
+        - heading "Built on trust, backed by proof" [level=2] [ref=f5e791]
+      - generic [ref=f5e792]:
+        - generic [ref=f5e793]:
+          - heading "12-month warranty" [level=3] [ref=f5e798]
+          - paragraph [ref=f5e799]: All devices come with a full year of coverage, no questions asked.
+        - generic [ref=f5e800]:
+          - heading "30-day free returns" [level=3] [ref=f5e807]
+          - paragraph [ref=f5e808]: Changed your mind? Ship it back within 30 days, completely free.
+        - generic [ref=f5e809]:
+          - heading "25-point inspection" [level=3] [ref=f5e814]
+          - paragraph [ref=f5e815]: Certified experts test every single device before it ships to you.
+        - generic [ref=f5e816]:
+          - heading "CO2 tracker built in" [level=3] [ref=f5e821]
+          - paragraph [ref=f5e822]: See exactly how much carbon you saved by choosing refurbished.
+    - generic [ref=f5e824]:
+      - generic [ref=f5e826]:
+        - paragraph [ref=f5e827]: Why refurbished?
+        - heading "Refurbished vs retail" [level=2] [ref=f5e828]
+      - link "Browse all deals" [ref=f5e835] [cursor=pointer]:
+        - /url: /shop/phones
+    - generic [ref=f5e840]:
+      - generic [ref=f5e841]:
+        - paragraph [ref=f5e842]: The process
+        - heading "Simple as it should be" [level=2] [ref=f5e843]
+        - paragraph [ref=f5e844]: We handle all the hard work so you don't have to. From quality checks to doorstep delivery — it's effortless.
+      - generic [ref=f5e845]:
+        - generic [ref=f5e846]:
+          - generic [ref=f5e847]: "01"
+          - generic [ref=f5e852]:
+            - heading "Find your device" [level=3] [ref=f5e853]
+            - paragraph [ref=f5e854]: Browse 47,000+ certified refurbished phones, laptops, tablets and more.
+        - generic [ref=f5e855]:
+          - generic [ref=f5e856]: "02"
+          - generic [ref=f5e862]:
+            - heading "We ship fast" [level=3] [ref=f5e863]
+            - paragraph [ref=f5e864]: Orders placed before 2pm dispatch same day. Free tracked delivery on all orders.
+        - generic [ref=f5e865]:
+          - generic [ref=f5e866]: "03"
+          - generic [ref=f5e871]:
+            - heading "Enjoy with confidence" [level=3] [ref=f5e872]
+            - paragraph [ref=f5e873]: Every device includes a 12-month warranty and 30-day hassle-free returns.
+    - generic [ref=f5e875]:
+      - generic [ref=f5e876]:
+        - generic [ref=f5e877]:
+          - paragraph [ref=f5e878]: How grading works
+          - heading "What does each grade mean?" [level=2] [ref=f5e879]
+        - paragraph [ref=f5e880]: Every device is independently tested before listing. Pick the grade that fits your budget — all are 100% functional.
+      - generic [ref=f5e881]:
+        - generic [ref=f5e882]:
+          - generic [ref=f5e883]:
+            - generic [ref=f5e885]: "01"
+            - generic [ref=f5e886]:
+              - generic [ref=f5e887]: New
+              - paragraph [ref=f5e893]: New
+              - paragraph [ref=f5e894]: Brand new, sealed or equivalent.
+          - link "Browse devices" [ref=f5e896] [cursor=pointer]:
+            - /url: /shop/phones
+        - generic [ref=f5e899]:
+          - generic [ref=f5e900]:
+            - generic [ref=f5e902]: Most Popular
+            - generic [ref=f5e903]: "02"
+            - generic [ref=f5e904]:
+              - generic [ref=f5e905]: A Grade
+              - paragraph [ref=f5e911]: A Grade
+              - paragraph [ref=f5e912]: Used but like new — zero visible marks.
+          - link "Browse devices" [ref=f5e914] [cursor=pointer]:
+            - /url: /shop/phones
+        - generic [ref=f5e917]:
+          - generic [ref=f5e918]:
+            - generic [ref=f5e920]: "03"
+            - generic [ref=f5e921]:
+              - generic [ref=f5e922]: B Grade
+              - paragraph [ref=f5e928]: B Grade
+              - paragraph [ref=f5e929]: Minor signs of usage, small scratches.
+          - link "Browse devices" [ref=f5e931] [cursor=pointer]:
+            - /url: /shop/phones
+        - generic [ref=f5e934]:
+          - generic [ref=f5e935]:
+            - generic [ref=f5e937]: "04"
+            - generic [ref=f5e938]:
+              - generic [ref=f5e939]: C Grade
+              - paragraph [ref=f5e945]: C Grade
+              - paragraph [ref=f5e946]: Heavy scratches or marks, fully working.
+          - link "Browse devices" [ref=f5e948] [cursor=pointer]:
+            - /url: /shop/phones
+        - generic [ref=f5e951]:
+          - generic [ref=f5e952]:
+            - generic [ref=f5e954]: "05"
+            - generic [ref=f5e955]:
+              - generic [ref=f5e957]:
+                - generic [ref=f5e960]: F Grade
+                - generic [ref=f5e961]: Parts
+              - paragraph [ref=f5e962]: F Grade
+              - paragraph [ref=f5e963]: Non-working — for parts or repair only.
+          - link "Browse devices" [ref=f5e965] [cursor=pointer]:
+            - /url: /shop/phones
+    - generic [ref=f5e970]:
+      - generic [ref=f5e975]:
+        - generic [ref=f5e976]: TECHSTOP
+        - generic [ref=f5e984]: Search 47,000+ devices…
+        - generic [ref=f5e990]:
+          - paragraph [ref=f5e991]: Flash Deal · 2h left
+          - paragraph [ref=f5e992]: iPhone 15 Pro
+          - generic [ref=f5e993]:
+            - generic [ref=f5e994]: £679
+            - generic [ref=f5e995]: £1,199
+        - generic [ref=f5e996]:
+          - generic [ref=f5e997]:
+            - img "MacBook Air M2" [ref=f5e998]
+            - generic [ref=f5e999]:
+              - paragraph [ref=f5e1000]: MacBook Air M2
+              - paragraph [ref=f5e1001]: A
+            - paragraph [ref=f5e1002]: £849
+          - generic [ref=f5e1003]:
+            - img "AirPods Pro 2" [ref=f5e1004]
+            - generic [ref=f5e1005]:
+              - paragraph [ref=f5e1006]: AirPods Pro 2
+              - paragraph [ref=f5e1007]: C
+            - paragraph [ref=f5e1008]: £149
+          - generic [ref=f5e1009]:
+            - img "iPad Air 5" [ref=f5e1010]
+            - generic [ref=f5e1011]:
+              - paragraph [ref=f5e1012]: iPad Air 5
+              - paragraph [ref=f5e1013]: B
+            - paragraph [ref=f5e1014]: £399
+      - generic [ref=f5e1035]:
+        - paragraph [ref=f5e1036]: The TechStop experience
+        - heading "Better in every single way" [level=2] [ref=f5e1037]
+        - paragraph [ref=f5e1038]: We rethought what buying refurbished should feel like — transparent, fast, and genuinely enjoyable from first click to delivery.
+        - generic [ref=f5e1039]:
+          - generic [ref=f5e1045]:
+            - heading "Grade-verified listings" [level=3] [ref=f5e1046]
+            - paragraph [ref=f5e1047]: Every listing shows battery health, cosmetic grade, and a full inspection certificate.
+          - generic [ref=f5e1055]:
+            - heading "One-tap returns" [level=3] [ref=f5e1056]
+            - paragraph [ref=f5e1057]: Initiate a return in seconds from your order page — no calls, no forms, no friction.
+          - generic [ref=f5e1063]:
+            - heading "Instant price alerts" [level=3] [ref=f5e1064]
+            - paragraph [ref=f5e1065]: Set a target price on any device and get notified the moment it drops.
+          - generic [ref=f5e1071]:
+            - heading "Eco-conscious shopping" [level=3] [ref=f5e1072]
+            - paragraph [ref=f5e1073]: Every refurbished device means one less device in a landfill — better for the planet.
+        - generic [ref=f5e1074]:
+          - link "Start shopping" [ref=f5e1075] [cursor=pointer]:
+            - /url: /shop/phones
+          - link "Help center" [ref=f5e1078] [cursor=pointer]:
+            - /url: /help
+    - generic [ref=f5e1083]:
+      - generic [ref=f5e1084]:
+        - paragraph [ref=f5e1085]: Sell with TechStop
+        - heading "Your old tech is worth more than you think" [level=2] [ref=f5e1086]
+        - paragraph [ref=f5e1087]: Get an instant quote, free collection, and same-week payment. No hassle, no lowball offers.
+      - link "Get instant quote" [ref=f5e1089] [cursor=pointer]:
+        - /url: /trade-in
+    - generic [ref=f5e1094]:
+      - generic [ref=f5e1095]:
+        - generic [ref=f5e1096]: Our Retail Outlets
+        - heading "Visit us in store. Express trade-in & repairs." [level=2] [ref=f5e1100]: Visit us in store.Express trade-in & repairs.
+        - paragraph [ref=f5e1101]: Drop by our retail outlet for instant diagnostics, same-day screen/battery repairs in under 45 minutes, or get cash on the spot for your old hardware. No appointment necessary.
+        - generic [ref=f5e1102]:
+          - generic [ref=f5e1109]:
+            - generic [ref=f5e1110]: Store Address
+            - text: 148B Melton Rd, Leicester LE4 5EE
+          - generic [ref=f5e1116]:
+            - generic [ref=f5e1117]: Opening Hours
+            - text: Mon–Sat, 9:00 AM – 6:00 PM
+          - generic [ref=f5e1122]:
+            - generic [ref=f5e1123]: Store Contact
+            - link "+447343055398" [ref=f5e1124] [cursor=pointer]:
+              - /url: tel:+447343055398
+        - generic [ref=f5e1125]:
+          - link [ref=f5e1126] [cursor=pointer]:
+            - /url: https://maps.google.com/?q=TechStop%20Leicester%2C%20148B%20Melton%20Rd%2C%20Leicester%20LE4%205EE
+          - link "Book a Repair" [ref=f5e1132] [cursor=pointer]:
+            - /url: /repair
+          - link "Trade In" [ref=f5e1133] [cursor=pointer]:
+            - /url: /trade-in
+      - iframe [ref=f5e1135]:
+        - link "Open in Maps (opens in new tab)" [ref=f6e4] [cursor=pointer]:
+          - /url: about:invalid#zClosurez
+          - text: Open in Maps
+    - generic [ref=f5e1137]:
+      - generic [ref=f5e1138]:
+        - generic [ref=f5e1139]:
+          - link [ref=f5e1140] [cursor=pointer]:
+            - /url: /
+            - img "TechStop Leicester" [ref=f5e1141]
+          - paragraph [ref=f5e1142]: We're on a mission to make world-class technology accessible and sustainable. Join the circular tech revolution.
+        - generic [ref=f5e1143]:
+          - generic [ref=f5e1144]:
+            - heading "Shop" [level=4] [ref=f5e1145]
+            - list [ref=f5e1146]:
+              - listitem [ref=f5e1147]:
+                - link "Smartphones" [ref=f5e1148] [cursor=pointer]:
+                  - /url: /shop/phones
+              - listitem [ref=f5e1149]:
+                - link "Laptops" [ref=f5e1150] [cursor=pointer]:
+                  - /url: /shop/laptops
+              - listitem [ref=f5e1151]:
+                - link "Gaming" [ref=f5e1152] [cursor=pointer]:
+                  - /url: /shop/gaming
+              - listitem [ref=f5e1153]:
+                - link "Audio" [ref=f5e1154] [cursor=pointer]:
+                  - /url: /shop/audio
+          - generic [ref=f5e1155]:
+            - heading "Company" [level=4] [ref=f5e1156]
+            - list [ref=f5e1157]:
+              - listitem [ref=f5e1158]:
+                - link "Sell Your Tech" [ref=f5e1159] [cursor=pointer]:
+                  - /url: /trade-in
+              - listitem [ref=f5e1160]:
+                - link "Help Center" [ref=f5e1161] [cursor=pointer]:
+                  - /url: /help
+              - listitem [ref=f5e1162]:
+                - link "Repair" [ref=f5e1163] [cursor=pointer]:
+                  - /url: /repair
+        - generic [ref=f5e1165]:
+          - paragraph [ref=f5e1177]: Excellent
+          - paragraph [ref=f5e1178]: Based on 12,400 reviews
+      - generic [ref=f5e1179]:
+        - paragraph [ref=f5e1182]: "System Status: All systems optimal"
+        - generic [ref=f5e1183]: © 2024 TechStop Leicester
+  - button "Open Next.js Dev Tools" [ref=f5e1190] [cursor=pointer]
+  - alert [ref=f5e1194]
