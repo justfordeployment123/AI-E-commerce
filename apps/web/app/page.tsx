@@ -942,7 +942,7 @@ function HowItWorks() {
   ];
 
   return (
-    <section className="bg-zinc-50 py-24 border-y border-zinc-100">
+    <section className="bg-zinc-50 py-24 border-y border-zinc-100 overflow-hidden">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           <div>
@@ -1789,7 +1789,7 @@ function SavingsComparison() {
     }));
 
   return (
-    <section ref={sectionRef} className="py-24 bg-white border-t border-zinc-100 min-h-[200px]">
+    <section ref={sectionRef} className="py-24 bg-white border-t border-zinc-100 min-h-[200px] overflow-hidden">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex items-end justify-between mb-8">
           <div>
