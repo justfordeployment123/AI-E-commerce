@@ -40,6 +40,20 @@ function categoryFlags(slug: string) {
     return CATEGORY_FLAGS[slug] ?? { isSellable: false, isRepairable: false };
 }
 
+// Per-slug display copy — never had a source anywhere, so categories only ever
+// got a bare capitalized `name` from the seed script (no displayName/description).
+const CATEGORY_META: Record<string, { displayName: string; description: string }> = {
+    phones:      { displayName: 'Smartphones',        description: 'Certified refurbished phones from Apple, Samsung, Google and more.' },
+    tablets:     { displayName: 'Tablets & iPads',     description: 'Refurbished tablets for work, study and entertainment.' },
+    consoles:    { displayName: 'Gaming Consoles',     description: 'PlayStation, Xbox and Switch consoles, tested and graded.' },
+    laptops:     { displayName: 'Laptops & MacBooks',  description: 'Refurbished laptops and MacBooks for every budget.' },
+    audio:       { displayName: 'Audio & Headphones',  description: 'Headphones, earbuds and speakers from top audio brands.' },
+    smartwatches:{ displayName: 'Smartwatches',        description: 'Refurbished smartwatches and fitness trackers.' },
+};
+function categoryMeta(slug: string) {
+    return CATEGORY_META[slug] ?? {};
+}
+
 const PRICING_DEFAULTS = [
     { key: 'multiplier_new', value: 1.20, label: 'New condition multiplier (% of market price)' },
     { key: 'multiplier_a',   value: 1.05, label: 'A Grade multiplier — used but like new (% of market price)' },
@@ -349,8 +363,8 @@ export class SeedService {
             const catName = capitalize(categorySlug);
             const cat = await this.prisma.category.upsert({
                 where: { name: catName },
-                update: { ...categoryFlags(categorySlug) },
-                create: { name: catName, ...categoryFlags(categorySlug) },
+                update: { ...categoryFlags(categorySlug), ...categoryMeta(categorySlug) },
+                create: { name: catName, ...categoryFlags(categorySlug), ...categoryMeta(categorySlug) },
             });
 
             const bcKey = `${brand.id}::${cat.id}`;
@@ -384,20 +398,30 @@ export class SeedService {
             const catNameFromSlug = capitalize(categorySlug);
             let cat = await this.prisma.category.upsert({
                 where: { name: catNameFromSlug },
-                update: { ...categoryFlags(categorySlug) },
-                create: { name: catNameFromSlug, ...categoryFlags(categorySlug) },
+                update: { ...categoryFlags(categorySlug), ...categoryMeta(categorySlug) },
+                create: { name: catNameFromSlug, ...categoryFlags(categorySlug), ...categoryMeta(categorySlug) },
             });
 
-            // Root-level images → category hero (first one wins)
+            // Root-level images → category hero (first one) + gallery (all of them).
+            // The admin catalog-mgmt Categories page renders its "Images" column from
+            // `images` (the gallery array), not `image` (the hero) — only ever setting
+            // the hero left that column permanently empty even though seeding succeeded.
             if (!cat.image) {
-                const heroImg = fs.readdirSync(catDir)
-                    .filter(f => isImageFile(f) && fs.statSync(path.join(catDir, f)).isFile())[0];
-                if (heroImg) {
-                    const s3Key = `catalog/categories/${categorySlug}/${heroImg}`;
-                    const uploaded = await this.uploadLocalFile(path.join(catDir, heroImg), s3Key);
-                    if (uploaded) {
-                        cat = await this.prisma.category.update({ where: { id: cat.id }, data: { image: uploaded } });
-                        this.logger.log(`  Category image: ${categorySlug}/${heroImg}`);
+                const rootImages = fs.readdirSync(catDir)
+                    .filter(f => isImageFile(f) && fs.statSync(path.join(catDir, f)).isFile());
+                if (rootImages.length > 0) {
+                    const uploadedKeys: string[] = [];
+                    for (const img of rootImages) {
+                        const s3Key = `catalog/categories/${categorySlug}/${img}`;
+                        const uploaded = await this.uploadLocalFile(path.join(catDir, img), s3Key);
+                        if (uploaded) uploadedKeys.push(uploaded);
+                    }
+                    if (uploadedKeys.length > 0) {
+                        cat = await this.prisma.category.update({
+                            where: { id: cat.id },
+                            data: { image: uploadedKeys[0], images: uploadedKeys },
+                        });
+                        this.logger.log(`  Category images: ${categorySlug} (${uploadedKeys.length})`);
                     }
                 }
             }
@@ -770,8 +794,8 @@ export class SeedService {
                     const catName = categorySlug.charAt(0).toUpperCase() + categorySlug.slice(1);
                     const catRecord = await this.prisma.category.upsert({
                         where: { name: catName },
-                        update: { ...categoryFlags(categorySlug) },
-                        create: { name: catName, ...categoryFlags(categorySlug) },
+                        update: { ...categoryFlags(categorySlug), ...categoryMeta(categorySlug) },
+                        create: { name: catName, ...categoryFlags(categorySlug), ...categoryMeta(categorySlug) },
                     });
                     const bc = await this.prisma.brandCategory.upsert({
                         where: { brandId_categoryId: { brandId: brandRecord.id, categoryId: catRecord.id } },
