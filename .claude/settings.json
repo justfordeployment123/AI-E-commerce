@@ -80,7 +80,8 @@
       "Read(//c/Users/HP/**)",
       "Read(//c/Users/HP/.claude/**)",
       "Read(//d/CODE/Projects/Markhor System/AI-E-commerce/**)",
-      "Bash(powershell -c \"\\(Get-Item .claude/settings.local.json\\).LastWriteTime\")"
+      "Bash(powershell -c \"\\(Get-Item .claude/settings.local.json\\).LastWriteTime\")",
+      "Bash(node -e \"console.log\\(require\\('./package.json'\\).dependencies.tailwindcss || require\\('./package.json'\\).devDependencies.tailwindcss\\)\")"
     ],
     "additionalDirectories": [
       "d:\\CODE\\Projects\\Markhor Systems Projects\\Ai-Ecommerce\\apps\\web\\app\\shop",

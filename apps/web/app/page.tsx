@@ -381,149 +381,47 @@ function BrandsBar() {
 
 function TradeInCTASection() {
   const router = useRouter();
-  const [categories, setCategories] = useState<import('../lib/api').CatalogCategory[]>([]);
-  const [fallbacks, setFallbacks] = useState<Record<string, { img: string; isProduct: boolean }>>({});
-
-  useEffect(() => {
-    catalogApi.listCategories()
-      .then(cats => {
-        const mainSlugs = ["phones", "laptops", "gaming", "tablets"];
-        const filtered = cats.filter(c => mainSlugs.includes(c.slug));
-        filtered.sort((a, b) => mainSlugs.indexOf(a.slug) - mainSlugs.indexOf(b.slug));
-        setCategories(filtered);
-
-        filtered.forEach(c => {
-          // Pick a random image from the category's images[] array first
-          const catImages = (c.images ?? []).filter(Boolean);
-          if (catImages.length > 0) {
-            const img = catImages[Math.floor(Math.random() * catImages.length)];
-            setFallbacks(prev => ({ ...prev, [c.slug]: { img, isProduct: false } }));
-          } else {
-            // Fall back to a random product image if no category images exist
-            productsApi.list({ category: c.name, limit: 12 })
-              .then(r => {
-                const pool = r.items.flatMap(p => p.images ?? []);
-                const img = pool[Math.floor(Math.random() * pool.length)];
-                if (img) setFallbacks(prev => ({ ...prev, [c.slug]: { img, isProduct: true } }));
-              })
-              .catch(() => {});
-          }
-        });
-      })
-      .catch(() => {});
-  }, []);
-
-
-
-  const getDisplayLabel = (slug: string) => {
-    switch (slug) {
-      case "phones":   return "Smartphones";
-      case "laptops":  return "Laptops & MacBooks";
-      case "gaming":   return "Gaming";
-      case "tablets":  return "Tablets & iPads";
-      default:         return "";
-    }
-  };
 
   return (
-    <section className="bg-white dark:bg-zinc-950 py-20 border-b border-zinc-100 dark:border-zinc-900 relative font-sans">
-      {/* Decorative orbs — clipped in their own container so the dropdown can overflow the section */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/2 left-0 -translate-y-1/2 w-[500px] h-[500px] bg-zinc-150/40 dark:bg-zinc-900/30 rounded-full blur-[120px] -z-10" />
-        <div className="absolute top-0 right-[-10%] w-[450px] h-[450px] bg-sky-500/5 dark:bg-sky-500/10 blur-[130px] rounded-full -z-10" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808006_1px,transparent_1px),linear-gradient(to_bottom,#80808006_1px,transparent_1px)] bg-[size:32px_32px]" />
+    <section className="relative py-10 lg:py-14 font-sans">
+      {/* Background photo — shown in full, no wash */}
+      <div className="absolute inset-0 z-0">
+        <img
+          src="/hero/image.png"
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
+        />
       </div>
-      
+
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="grid lg:grid-cols-12 gap-12 lg:gap-16 items-center">
-          
-          {/* Left Column: Headline and Search */}
-          <div className="lg:col-span-5 flex flex-col items-start text-left">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800 text-[10px] font-black uppercase tracking-widest mb-6">
-              <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-              TechStop Trade-In
-            </span>
-            
-            <h2 className="text-4xl md:text-5xl font-black tracking-tight text-zinc-950 dark:text-white leading-tight mb-4">
-              Sell your old tech. <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent via-accent to-zinc-950 dark:to-white">Get cash in 48 hours.</span>
-            </h2>
-            
-            <p className="text-zinc-500 dark:text-zinc-400 text-sm md:text-base font-semibold leading-relaxed mb-8">
-              We pay premium market rates for used smartphones, laptops, tablets, and gaming consoles. Trade in online with free insured Royal Mail shipping or drop off in-store.
-            </p>
-            
-            {/* Shared DeviceSearchBox — navigates to trade-in page with device pre-selected */}
-            <DeviceSearchBox
-              className="w-full max-w-md mb-8"
-              placeholder="Search your device (e.g. iPhone 15, PS5...)"
-              showSearchButton
-              onSelect={(sug) => router.push(
-                `/trade-in?brand=${encodeURIComponent(sug.brand)}&model=${encodeURIComponent(sug.name)}&category=${encodeURIComponent(sug.category)}`
-              )}
-              onManualEntry={(q) => router.push(`/trade-in?cat=Other&q=${encodeURIComponent(q)}`)}
-              onSubmit={(q) => router.push(q.trim() ? `/trade-in?cat=Other&q=${encodeURIComponent(q)}` : `/trade-in`)}
-            />
-            
-          </div>
-          
-          {/* Right Column: Visual peeking category cards */}
-          <div className="lg:col-span-7 grid sm:grid-cols-2 gap-6 w-full">
-            {categories.map((c) => {
-              const fb = fallbacks[c.slug];
-              const img = fb?.img ?? c.image ?? "";
-              const isProductFallback = fb?.isProduct ?? false;
-              const label = getDisplayLabel(c.slug) || c.name;
-              // Map catalog slug → trade-in wizard category ID
-              const catId: Record<string, string> = {
-                phones: "Phone", laptops: "Laptop", gaming: "Console",
-                tablets: "Tablet", audio: "Audio", smartwatches: "Smartwatch",
-              };
-              const wizardCat = catId[c.slug] ?? "Other";
-              return (
-                <Link
-                  key={c.slug}
-                  href={`/trade-in?cat=${encodeURIComponent(wizardCat)}`}
-                  className="relative group rounded-[2.2rem] border border-zinc-200/80 dark:border-zinc-800/80 bg-zinc-950 overflow-hidden h-52 flex flex-col justify-end p-5 text-left hover:-translate-y-1.5 transition-all duration-300"
-                >
-                  {/* Full Card Background Image */}
-                  {img && (
-                    <>
-                      <img
-                        src={img}
-                        alt={label}
-                        className={`transition-all duration-500 group-hover:scale-105 ${
-                          isProductFallback
-                            ? "absolute inset-0 m-auto h-[70%] w-[70%] object-contain drop-shadow-xl"
-                            : "absolute inset-0 h-full w-full object-cover"
-                        }`}
-                      />
-                      {/* Bottom-left gradient for text readability, right side stays clear to show image */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/90 via-zinc-950/30 to-transparent z-10" />
-                      <div className="absolute inset-0 bg-gradient-to-r from-zinc-950/60 via-transparent to-transparent z-10" />
-                    </>
-                  )}
-                  
-                  {/* Category badge — top left */}
-                  <span className="absolute top-4 left-4 z-20 inline-flex items-center px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-wider bg-black/40 backdrop-blur-md border border-white/10 text-white shadow-sm">
-                    {label}
-                  </span>
+        <div className="max-w-md sm:max-w-lg flex flex-col items-start text-left relative">
+          {/* Soft feathered glow behind the text — no hard card edges, no wide image wash */}
+          <div className="absolute -inset-6 sm:-inset-10 -z-10 rounded-[3rem] bg-white/80 dark:bg-zinc-950/75 blur-2xl" />
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800 text-[10px] font-black uppercase tracking-widest mb-4">
+            <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+            TechStop Trade-In
+          </span>
 
-                  {/* CTA row — bottom */}
-                  <div className="relative z-20 flex items-center justify-between w-full">
-                    <div>
-                      <p className="text-[9px] font-black text-zinc-300 uppercase tracking-widest leading-none">Trade-In</p>
-                      <p className="text-sm font-extrabold text-white mt-1 group-hover:text-red-400 transition-colors">Start Quote</p>
-                    </div>
-                    <div className="h-8 w-8 rounded-full bg-white/15 group-hover:bg-white text-white group-hover:text-black flex items-center justify-center transition-all duration-300 shrink-0">
-                      <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
-                    </div>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
+          <h2 className="text-3xl md:text-4xl font-black tracking-tight text-zinc-950 dark:text-white leading-tight mb-3">
+            Sell your old tech. <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent via-accent to-zinc-950 dark:to-white">Get cash in 48 hours.</span>
+          </h2>
 
+          <p className="text-zinc-500 dark:text-zinc-400 text-sm md:text-base font-semibold leading-relaxed mb-6">
+            We pay premium market rates for used smartphones, laptops, tablets, and gaming consoles. Trade in online with free insured Royal Mail shipping or drop off in-store.
+          </p>
+
+          {/* Shared DeviceSearchBox — navigates to trade-in page with device pre-selected */}
+          <DeviceSearchBox
+            className="w-full"
+            placeholder="Search your device (e.g. iPhone 15, PS5...)"
+            showSearchButton
+            onSelect={(sug) => router.push(
+              `/trade-in?brand=${encodeURIComponent(sug.brand)}&model=${encodeURIComponent(sug.name)}&category=${encodeURIComponent(sug.category)}`
+            )}
+            onManualEntry={(q) => router.push(`/trade-in?cat=Other&q=${encodeURIComponent(q)}`)}
+            onSubmit={(q) => router.push(q.trim() ? `/trade-in?cat=Other&q=${encodeURIComponent(q)}` : `/trade-in`)}
+          />
         </div>
       </div>
     </section>
