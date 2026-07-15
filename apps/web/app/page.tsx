@@ -314,15 +314,23 @@ function MarqueeStrip() {
 }
 
 // ─── Brands Bar ───────────────────────────────────────────────────────────────
-function BrandsBar() {
-  const [brands, setBrands] = useState<CatalogBrand[]>([]);
+// Category icon lookup — falls back to Package for anything unmapped (e.g. "Others").
+const CATEGORY_ICONS: Record<string, typeof Smartphone> = {
+  phones: Smartphone,
+  laptops: Laptop,
+  gaming: Gamepad2,
+  tablets: Tablet,
+  audio: Headphones,
+};
+
+function CategoryQuickNav() {
+  const [categories, setCategories] = useState<import('../lib/api').CatalogCategory[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    catalogApi.listBrands()
+    catalogApi.listCategories()
       .then(res => {
-        // Show all active brands that have a logo, sorted by product count desc
-        setBrands(res.filter(b => b.isActive && b.logo).sort((a, b) => (b.productCount ?? 0) - (a.productCount ?? 0)));
+        setCategories(res.filter(c => c.isActive && c.isSellable).sort((a, b) => (b.productCount ?? 0) - (a.productCount ?? 0)));
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -331,7 +339,7 @@ function BrandsBar() {
   if (loading) {
     return <div className="border-y border-zinc-100 py-6 bg-white h-[76px] animate-pulse" />;
   }
-  if (brands.length === 0) return null;
+  if (categories.length === 0) return null;
 
   const formatCount = (n: number) => {
     if (n === 0) return null;
@@ -344,27 +352,31 @@ function BrandsBar() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-4 md:gap-6">
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 flex-shrink-0 hidden sm:block whitespace-nowrap">
-            Shop by brand
+            Shop by category
           </p>
           <div className="h-5 w-px bg-zinc-200 flex-shrink-0 hidden sm:block" />
           <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide w-full pb-0.5">
-            {brands.map((b) => {
-              const count = formatCount(b.productCount);
+            {categories.map((c) => {
+              const count = formatCount(c.productCount);
+              const Icon = CATEGORY_ICONS[c.slug] ?? Package;
               return (
-                <a
-                  key={b.id}
-                  href={`/shop/phones?brand=${encodeURIComponent(b.name)}`}
-                  className="group flex-shrink-0 flex flex-col items-center justify-center h-14 px-6 rounded-2xl border border-zinc-100 hover:border-zinc-950 hover:bg-zinc-950 transition-all duration-200 cursor-pointer"
+                <Link
+                  key={c.id}
+                  href={`/shop/${c.slug}`}
+                  className="group flex-shrink-0 flex items-center gap-2.5 h-14 px-5 rounded-2xl border border-zinc-100 hover:border-zinc-950 hover:bg-zinc-950 transition-all duration-200 cursor-pointer"
                 >
-                  <span className="text-sm font-bold text-zinc-700 group-hover:text-white transition-colors leading-none mb-0.5">
-                    {b.name}
-                  </span>
-                  {count && (
-                    <span className="text-[9px] font-medium text-zinc-400 group-hover:text-zinc-400 transition-colors">
-                      {count}
+                  <Icon className="h-5 w-5 flex-shrink-0 text-zinc-400 group-hover:text-white transition-colors" strokeWidth={1.8} />
+                  <span className="flex flex-col items-start leading-none">
+                    <span className="text-sm font-bold text-zinc-700 group-hover:text-white transition-colors">
+                      {c.displayName || c.name}
                     </span>
-                  )}
-                </a>
+                    {count && (
+                      <span className="text-[9px] font-medium text-zinc-400 group-hover:text-zinc-300 transition-colors mt-0.5">
+                        {count}
+                      </span>
+                    )}
+                  </span>
+                </Link>
               );
             })}
           </div>
@@ -2557,7 +2569,7 @@ export default function HomePage() {
       <PromoCarouselBanner />
       <MarqueeStrip />
       {/* <Hero /> */}
-      <BrandsBar />
+      <CategoryQuickNav />
       <TradeInCTASection />
 
       {/* <CategoryBento /> */}
