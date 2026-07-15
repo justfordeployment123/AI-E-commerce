@@ -91,6 +91,9 @@ export default function Navbar() {
 
   const [theme, setTheme] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
+  const drawerRef = useRef<HTMLDivElement>(null);
+  const [headerHeight, setHeaderHeight] = useState(0);
   const [hoveredCat, setHoveredCat] = useState<string | null>(null);
   const closeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [shopCategories, setShopCategories] = useState<{ label: string; href: string; slug: string }[]>([]);
@@ -220,6 +223,63 @@ export default function Navbar() {
       .slice(0, 10);
   }, [productIndex]);
 
+  // Measure where the sticky header's bottom edge actually sits on screen
+  // (its own height alone misses the promo bar stacked above it) so the
+  // mobile drawer can be positioned as a fixed overlay flush underneath it,
+  // instead of expanding the header's box (which used to push page content
+  // down when opened) or leaving a gap that peeks through to the header.
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const update = () => setHeaderHeight(el.getBoundingClientRect().bottom);
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    window.addEventListener("scroll", update);
+    window.addEventListener("resize", update);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, []);
+
+  // Toggling the mobile menu: measure the header's current bottom edge and
+  // reset the drawer's own scroll position synchronously, in the same
+  // event, so there's no stale-measurement or leftover-scroll flash on open.
+  function toggleMobileMenu() {
+    const opening = !isOpen;
+    if (opening && headerRef.current) {
+      setHeaderHeight(headerRef.current.getBoundingClientRect().bottom);
+    }
+    if (drawerRef.current) drawerRef.current.scrollTop = 0;
+    setIsOpen(opening);
+  }
+
+  // Lock background scroll while the mobile drawer overlay is open. Plain
+  // `overflow: hidden` on body doesn't reliably block touch-scrolling on
+  // mobile browsers, so pin the body in place with position: fixed and
+  // restore the exact scroll position on close.
+  useEffect(() => {
+    if (!isOpen) return;
+    const scrollY = window.scrollY;
+    const body = document.body.style;
+    const prev = { position: body.position, top: body.top, left: body.left, right: body.right, width: body.width };
+    body.position = "fixed";
+    body.top = `-${scrollY}px`;
+    body.left = "0";
+    body.right = "0";
+    body.width = "100%";
+    return () => {
+      body.position = prev.position;
+      body.top = prev.top;
+      body.left = prev.left;
+      body.right = prev.right;
+      body.width = prev.width;
+      window.scrollTo(0, scrollY);
+    };
+  }, [isOpen]);
+
   const toggleTheme = () => {
     const nextTheme = theme === "dark" ? "light" : "dark";
     setTheme(nextTheme);
@@ -249,14 +309,14 @@ export default function Navbar() {
         </div>
       </div>
 
-      <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur-md text-foreground font-sans">
+      <header ref={headerRef} className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur-md text-foreground font-sans">
         {/* Tier 1: Main row (Logo, Search, Actions) */}
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 border-b border-border/40">
           <div className="flex h-14 md:h-16 items-center justify-between gap-4">
             
             {/* Left: Mobile hamburger menu toggle + Logo */}
             <div className="flex items-center gap-4 shrink-0">
-              <button className="lg:hidden text-foreground" onClick={() => setIsOpen(!isOpen)} aria-label="Toggle menu">
+              <button className="lg:hidden text-foreground" onClick={toggleMobileMenu} aria-label="Toggle menu">
                 {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
               </button>
               
@@ -602,175 +662,197 @@ export default function Navbar() {
             })()}
           </AnimatePresence>
         </div>
+      </header>
 
-        {/* Mobile drawer */}
-        <AnimatePresence>
-          {isOpen && (
+      {/* Mobile drawer — a fixed off-canvas panel sliding in from the left.
+          Rendered as a SIBLING of <header>, not a descendant: <header> has
+          backdrop-blur (backdrop-filter), and per spec backdrop-filter on an
+          ancestor creates a new containing block for position:fixed
+          descendants — same family as transform/filter/perspective. With
+          the drawer nested inside header, its "top" was being resolved
+          against header's own box (which starts below the promo bar)
+          instead of the viewport, producing a persistent gap under the
+          header. Being a sibling keeps it positioned against the viewport,
+          and it still opens/closes based on the same isOpen state. */}
+      <AnimatePresence>
+        {isOpen && (
+          <>
             <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              className="lg:hidden border-t border-border bg-background overflow-hidden text-foreground"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="lg:hidden fixed inset-x-0 z-40 bg-black/40"
+              style={{ top: headerHeight, height: `calc(100vh - ${headerHeight}px)` }}
+              onClick={() => setIsOpen(false)}
+            />
+            <motion.div
+              ref={drawerRef}
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "tween", duration: 0.25, ease: "easeOut" }}
+              className="lg:hidden fixed left-0 z-50 w-[82%] max-w-xs border-r border-border bg-background overflow-y-auto text-foreground shadow-2xl"
+              style={{ top: headerHeight, height: `calc(100vh - ${headerHeight}px)` }}
             >
-              <div className="px-4 py-6 space-y-1">
-                {/* Search bar inside mobile drawer */}
-                <div className="mb-4 relative">
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      onFocus={() => setIsSearchFocused(true)}
-                      onBlur={() => {
-                        setTimeout(() => setIsSearchFocused(false), 200);
-                      }}
-                      placeholder="Search products..."
-                      className="h-11 w-full rounded-xl bg-muted pl-10 pr-4 text-sm font-bold outline-none text-foreground border border-border/40"
-                    />
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
-                  </div>
-
-                  {/* Mobile Search Results Dropdown */}
-                  <AnimatePresence>
-                    {isSearchFocused && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 8 }}
-                        className="absolute left-0 right-0 top-full mt-2 max-h-[70vh] overflow-y-auto bg-background border border-border rounded-[24px] shadow-2xl z-50 p-5 text-foreground"
-                      >
-                        {searchQuery === "" ? (
-                          <SearchEmptyState
-                            recentSearches={recentSearches}
-                            trending={trendingProducts}
-                            onPickRecent={q => setSearchQuery(q)}
-                            onNavigate={() => { setIsOpen(false); setIsSearchFocused(false); }}
-                          />
-                        ) : (
-                          <div>
-                            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-3">
-                              {searchLoading ? "Searching…" : "Matching Products"}
-                            </p>
-                            <div className="space-y-2">
-                              {searchResults.map(item => (
-                                <Link key={item.slug} href={`/shop/${item.category.toLowerCase()}/${item.slug}`}
-                                  onClick={() => { recordSearch(searchQuery); setIsOpen(false); setIsSearchFocused(false); }}
-                                  className="flex items-center gap-4 p-2 rounded-xl hover:bg-muted transition-colors group text-foreground">
-                                  <div className="h-10 w-10 bg-image-light rounded-lg p-1.5 flex items-center justify-center shrink-0">
-                                    <ProductImage src={item.image} alt={item.name} width={28} height={28} iconClassName="h-4 w-4" bg="" />
-                                  </div>
-                                  <div className="min-w-0 flex-1">
-                                    <p className="text-xs font-bold text-foreground group-hover:text-accent truncate">{item.name}</p>
-                                    <p className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider mt-0.5">{item.brand} · {item.category}</p>
-                                  </div>
-                                  {item.price != null && <span className="text-xs font-extrabold text-foreground shrink-0">£{item.price}</span>}
-                                </Link>
-                              ))}
-                              {!searchLoading && searchResults.length === 0 && (
-                                <p className="text-xs font-bold text-zinc-400 py-4 text-center">No results for &quot;{searchQuery}&quot;</p>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+            <div className="px-4 py-6 space-y-1">
+              {/* Search bar inside mobile drawer */}
+              <div className="mb-4 relative">
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onFocus={() => setIsSearchFocused(true)}
+                    onBlur={() => {
+                      setTimeout(() => setIsSearchFocused(false), 200);
+                    }}
+                    placeholder="Search products..."
+                    className="h-11 w-full rounded-xl bg-muted pl-10 pr-4 text-sm font-bold outline-none text-foreground border border-border/40"
+                  />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
                 </div>
 
-                 {/* Category links */}
-                <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-400 px-3 pb-2 pt-1">Categories</p>
-                <Link
-                  href="/"
-                  onClick={() => setIsOpen(false)}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                    pathname === "/" ? "bg-accent text-white" : "hover:bg-muted text-foreground"
-                  }`}
-                >
-                  All Products
-                  <ChevronRight className={`h-4 w-4 ml-auto ${pathname === "/" ? "text-white" : "text-zinc-400"}`} />
-                </Link>
-                {shopCategories.map(({ label, href }) => {
+                {/* Mobile Search Results Dropdown */}
+                <AnimatePresence>
+                  {isSearchFocused && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 8 }}
+                      className="absolute left-0 right-0 top-full mt-2 max-h-[70vh] overflow-y-auto bg-background border border-border rounded-[24px] shadow-2xl z-50 p-5 text-foreground"
+                    >
+                      {searchQuery === "" ? (
+                        <SearchEmptyState
+                          recentSearches={recentSearches}
+                          trending={trendingProducts}
+                          onPickRecent={q => setSearchQuery(q)}
+                          onNavigate={() => { setIsOpen(false); setIsSearchFocused(false); }}
+                        />
+                      ) : (
+                        <div>
+                          <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-3">
+                            {searchLoading ? "Searching…" : "Matching Products"}
+                          </p>
+                          <div className="space-y-2">
+                            {searchResults.map(item => (
+                              <Link key={item.slug} href={`/shop/${item.category.toLowerCase()}/${item.slug}`}
+                                onClick={() => { recordSearch(searchQuery); setIsOpen(false); setIsSearchFocused(false); }}
+                                className="flex items-center gap-4 p-2 rounded-xl hover:bg-muted transition-colors group text-foreground">
+                                <div className="h-10 w-10 bg-image-light rounded-lg p-1.5 flex items-center justify-center shrink-0">
+                                  <ProductImage src={item.image} alt={item.name} width={28} height={28} iconClassName="h-4 w-4" bg="" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-xs font-bold text-foreground group-hover:text-accent truncate">{item.name}</p>
+                                  <p className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider mt-0.5">{item.brand} · {item.category}</p>
+                                </div>
+                                {item.price != null && <span className="text-xs font-extrabold text-foreground shrink-0">£{item.price}</span>}
+                              </Link>
+                            ))}
+                            {!searchLoading && searchResults.length === 0 && (
+                              <p className="text-xs font-bold text-zinc-400 py-4 text-center">No results for &quot;{searchQuery}&quot;</p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+               {/* Category links */}
+              <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-400 px-3 pb-2 pt-1">Categories</p>
+              <Link
+                href="/"
+                onClick={() => setIsOpen(false)}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                  pathname === "/" ? "bg-accent text-white" : "hover:bg-muted text-foreground"
+                }`}
+              >
+                All Products
+                <ChevronRight className={`h-4 w-4 ml-auto ${pathname === "/" ? "text-white" : "text-zinc-400"}`} />
+              </Link>
+              {shopCategories.map(({ label, href }) => {
+                const isActive = pathname?.startsWith(href);
+                return (
+                  <Link key={label} href={href} onClick={() => setIsOpen(false)}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${isActive ? "bg-accent text-white" : "hover:bg-muted text-foreground"}`}>
+                    <span className="text-sm font-bold">{label}</span>
+                    <ChevronRight className={`h-4 w-4 ml-auto ${isActive ? "text-white" : "text-zinc-400"}`} />
+                  </Link>
+                );
+              })}
+
+              <div className="pt-3 mt-3 border-t border-border space-y-1">
+                {[
+                  { label: "Sell Your Device", href: "/trade-in", icon: RefreshCw },
+                  { label: "Book a Repair", href: "/repair", icon: Wrench },
+                  { label: "Help Centre", href: "/help", icon: null },
+                ].map(({ label, href, icon: Icon }) => {
                   const isActive = pathname?.startsWith(href);
                   return (
-                    <Link key={label} href={href} onClick={() => setIsOpen(false)}
-                      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${isActive ? "bg-accent text-white" : "hover:bg-muted text-foreground"}`}>
-                      <span className="text-sm font-bold">{label}</span>
+                    <Link
+                      key={label}
+                      href={href}
+                      onClick={() => setIsOpen(false)}
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                        isActive ? "bg-accent text-white" : "hover:bg-muted text-foreground"
+                      }`}
+                    >
+                      {Icon && <Icon className={`h-4 w-4 ${isActive ? "text-white" : "text-zinc-400"}`} strokeWidth={1.8} />}
+                      <span>{label}</span>
                       <ChevronRight className={`h-4 w-4 ml-auto ${isActive ? "text-white" : "text-zinc-400"}`} />
                     </Link>
                   );
                 })}
-
-                <div className="pt-3 mt-3 border-t border-border space-y-1">
-                  {[
-                    { label: "Sell Your Device", href: "/trade-in", icon: RefreshCw },
-                    { label: "Book a Repair", href: "/repair", icon: Wrench },
-                    { label: "Help Centre", href: "/help", icon: null },
-                  ].map(({ label, href, icon: Icon }) => {
-                    const isActive = pathname?.startsWith(href);
-                    return (
-                      <Link
-                        key={label}
-                        href={href}
-                        onClick={() => setIsOpen(false)}
-                        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                          isActive ? "bg-accent text-white" : "hover:bg-muted text-foreground"
-                        }`}
-                      >
-                        {Icon && <Icon className={`h-4 w-4 ${isActive ? "text-white" : "text-zinc-400"}`} strokeWidth={1.8} />}
-                        <span>{label}</span>
-                        <ChevronRight className={`h-4 w-4 ml-auto ${isActive ? "text-white" : "text-zinc-400"}`} />
-                      </Link>
-                    );
-                  })}
-                </div>
-
-                {/* Mobile account section */}
-                <div className="pt-3 mt-3 border-t border-border">
-                  {user ? (
-                    <>
-                      <div className="flex items-center gap-3 px-3 py-2.5 mb-1">
-                        <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-accent text-white font-black text-sm shrink-0">
-                          {user.name.charAt(0)}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-black text-foreground truncate">{user.name}</p>
-                          <p className="text-[10px] text-zinc-400 font-semibold truncate">{user.email}</p>
-                        </div>
-                      </div>
-                      <Link href="/account/settings" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold hover:bg-muted text-foreground transition-all">
-                        <Settings className="h-4 w-4 text-zinc-400" strokeWidth={1.8} />
-                        <span>My Account</span>
-                        <ChevronRight className="h-4 w-4 ml-auto text-zinc-400" />
-                      </Link>
-                      <Link href="/account/orders" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold hover:bg-muted text-foreground transition-all">
-                        <Package className="h-4 w-4 text-zinc-400" strokeWidth={1.8} />
-                        <span>My Orders</span>
-                        <ChevronRight className="h-4 w-4 ml-auto text-zinc-400" />
-                      </Link>
-                      <button
-                        onClick={() => { logout(); setIsOpen(false); }}
-                        className="flex w-full items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-red-500 hover:bg-red-500/10 transition-all"
-                      >
-                        <LogOut className="h-4 w-4" strokeWidth={1.8} />
-                        <span>Sign Out</span>
-                      </button>
-                    </>
-                  ) : (
-                    <Link
-                      href="/account"
-                      onClick={() => setIsOpen(false)}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold bg-accent text-white transition-all shadow-md shadow-accent/20"
-                    >
-                      <LogIn className="h-4 w-4" strokeWidth={1.8} />
-                      <span>Sign In / Create Account</span>
-                    </Link>
-                  )}
-                </div>
               </div>
+
+              {/* Mobile account section */}
+              <div className="pt-3 mt-3 border-t border-border">
+                {user ? (
+                  <>
+                    <div className="flex items-center gap-3 px-3 py-2.5 mb-1">
+                      <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-accent text-white font-black text-sm shrink-0">
+                        {user.name.charAt(0)}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-black text-foreground truncate">{user.name}</p>
+                        <p className="text-[10px] text-zinc-400 font-semibold truncate">{user.email}</p>
+                      </div>
+                    </div>
+                    <Link href="/account/settings" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold hover:bg-muted text-foreground transition-all">
+                      <Settings className="h-4 w-4 text-zinc-400" strokeWidth={1.8} />
+                      <span>My Account</span>
+                      <ChevronRight className="h-4 w-4 ml-auto text-zinc-400" />
+                    </Link>
+                    <Link href="/account/orders" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold hover:bg-muted text-foreground transition-all">
+                      <Package className="h-4 w-4 text-zinc-400" strokeWidth={1.8} />
+                      <span>My Orders</span>
+                      <ChevronRight className="h-4 w-4 ml-auto text-zinc-400" />
+                    </Link>
+                    <button
+                      onClick={() => { logout(); setIsOpen(false); }}
+                      className="flex w-full items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-red-500 hover:bg-red-500/10 transition-all"
+                    >
+                      <LogOut className="h-4 w-4" strokeWidth={1.8} />
+                      <span>Sign Out</span>
+                    </button>
+                  </>
+                ) : (
+                  <Link
+                    href="/account"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold bg-accent text-white transition-all shadow-md shadow-accent/20"
+                  >
+                    <LogIn className="h-4 w-4" strokeWidth={1.8} />
+                    <span>Sign In / Create Account</span>
+                  </Link>
+                )}
+              </div>
+            </div>
             </motion.div>
-          )}
-        </AnimatePresence>
-      </header>
+          </>
+        )}
+      </AnimatePresence>
     </>
   );
 }
