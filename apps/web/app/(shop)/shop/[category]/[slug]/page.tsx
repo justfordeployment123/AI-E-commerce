@@ -184,12 +184,13 @@ export default function ProductDetailPage() {
 
       {/* Breadcrumb */}
       <div className="bg-white border-b border-zinc-200 sticky top-0 z-30">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 flex items-center gap-2 text-xs font-bold text-zinc-500 uppercase tracking-wide">
-          <a href={backHref} className="hover:text-black flex items-center gap-1">
-            <ArrowLeft className="h-3.5 w-3.5" /> {decodeURIComponent(categorySlug)}
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 flex items-center gap-2 text-xs font-bold text-zinc-500 uppercase tracking-wide min-w-0">
+          <a href={backHref} className="hover:text-black flex items-center gap-1 shrink-0 min-w-0">
+            <ArrowLeft className="h-3.5 w-3.5 shrink-0" />
+            <span className="truncate">{decodeURIComponent(categorySlug)}</span>
           </a>
-          <span>/</span>
-          <span className="text-black line-clamp-1">{product.name}</span>
+          <span className="shrink-0">/</span>
+          <span className="text-black truncate min-w-0">{product.name}</span>
         </div>
       </div>
 
@@ -197,8 +198,8 @@ export default function ProductDetailPage() {
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-16">
 
           {/* Left — Image Gallery */}
-          <div className="lg:sticky lg:top-24 h-max space-y-4">
-            <div className="bg-white rounded-[32px] border border-zinc-200 p-8 flex flex-col items-center justify-center relative overflow-hidden">
+          <div className="lg:sticky lg:top-24 h-max space-y-4 min-w-0">
+            <div className="bg-white rounded-[32px] border border-zinc-200 p-4 sm:p-8 flex flex-col items-center justify-center relative overflow-hidden">
               <button
                 onClick={() => setWishlisted(w => !w)}
                 className="absolute top-6 right-6 h-12 w-12 rounded-full bg-zinc-100 flex items-center justify-center hover:bg-zinc-200 transition-colors z-10"
@@ -258,10 +259,10 @@ export default function ProductDetailPage() {
           </div>
 
           {/* Right — Product Info */}
-          <div className="space-y-8">
-            <div className="bg-white rounded-[32px] border border-zinc-200 p-8 lg:p-10">
+          <div className="space-y-8 min-w-0">
+            <div className="bg-white rounded-[32px] border border-zinc-200 p-5 sm:p-8 lg:p-10">
               <p className="text-sm font-bold uppercase tracking-wide text-zinc-500 mb-2">{product.brand}</p>
-              <h1 className="text-4xl lg:text-5xl font-bold tracking-tight mb-4">{product.name}</h1>
+              <h1 className="text-4xl lg:text-5xl font-bold tracking-tight mb-4 break-words">{product.name}</h1>
 
               {/* Rating */}
               <div className="flex items-center gap-2 mb-8">

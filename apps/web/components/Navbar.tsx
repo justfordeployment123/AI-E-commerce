@@ -315,21 +315,21 @@ export default function Navbar() {
           <div className="flex h-14 md:h-16 items-center justify-between gap-4">
             
             {/* Left: Mobile hamburger menu toggle + Logo */}
-            <div className="flex items-center gap-4 shrink-0">
-              <button className="lg:hidden text-foreground" onClick={toggleMobileMenu} aria-label="Toggle menu">
+            <div className="flex items-center gap-3 sm:gap-4 min-w-0 shrink">
+              <button className="lg:hidden text-foreground shrink-0" onClick={toggleMobileMenu} aria-label="Toggle menu">
                 {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
               </button>
               
-              <Link href="/" className="flex items-center select-none">
+              <Link href="/" className="flex items-center select-none min-w-0">
                 <img
                   src="/Icon/logo_black.png"
                   alt="TechStop Leicester"
-                  className="h-8 md:h-9 w-auto object-contain block dark:hidden"
+                  className="h-7 sm:h-8 md:h-9 w-auto object-contain block dark:hidden shrink"
                 />
                 <img
                   src="/Icon/logo_white.png"
                   alt="TechStop Leicester"
-                  className="h-8 md:h-9 w-auto object-contain hidden dark:block"
+                  className="h-7 sm:h-8 md:h-9 w-auto object-contain hidden dark:block shrink"
                 />
               </Link>
             </div>
@@ -473,9 +473,9 @@ export default function Navbar() {
                 /* Not logged in */
                 <Link
                   href="/account"
-                  className="flex items-center gap-2 h-10 px-4 rounded-xl bg-accent text-white hover:bg-accent-dark transition-all font-bold text-xs uppercase tracking-wide shadow-md shadow-accent/20"
+                  className="flex items-center justify-center gap-2 h-10 w-10 sm:w-auto sm:px-4 rounded-xl bg-accent text-white hover:bg-accent-dark transition-all font-bold text-xs uppercase tracking-wide shadow-md shadow-accent/20 shrink-0"
                 >
-                  <LogIn className="h-4 w-4" />
+                  <LogIn className="h-4 w-4 shrink-0" />
                   <span className="hidden sm:inline">Sign In</span>
                 </Link>
               )}
