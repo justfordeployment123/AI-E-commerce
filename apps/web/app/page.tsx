@@ -348,38 +348,32 @@ function CategoryQuickNav() {
   };
 
   return (
-    <section className="border-y border-zinc-100 py-6 bg-white overflow-hidden">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-4 md:gap-6">
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 flex-shrink-0 hidden sm:block whitespace-nowrap">
-            Shop by category
-          </p>
-          <div className="h-5 w-px bg-zinc-200 flex-shrink-0 hidden sm:block" />
-          <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide w-full pb-0.5">
-            {categories.map((c) => {
-              const count = formatCount(c.productCount);
-              const Icon = CATEGORY_ICONS[c.slug] ?? Package;
-              return (
-                <Link
-                  key={c.id}
-                  href={`/shop/${c.slug}`}
-                  className="group flex-shrink-0 flex items-center gap-2.5 h-14 px-5 rounded-2xl border border-zinc-100 hover:border-zinc-950 hover:bg-zinc-950 transition-all duration-200 cursor-pointer"
-                >
-                  <Icon className="h-5 w-5 flex-shrink-0 text-zinc-400 group-hover:text-white transition-colors" strokeWidth={1.8} />
-                  <span className="flex flex-col items-start leading-none">
-                    <span className="text-sm font-bold text-zinc-700 group-hover:text-white transition-colors">
-                      {c.displayName || c.name}
-                    </span>
-                    {count && (
-                      <span className="text-[9px] font-medium text-zinc-400 group-hover:text-zinc-300 transition-colors mt-0.5">
-                        {count}
-                      </span>
-                    )}
+    <section className="border-y border-black/[0.04] dark:border-white/[0.04] py-8 bg-gradient-to-b from-zinc-50/50 to-white dark:from-zinc-900/20 dark:to-zinc-950/20 overflow-hidden">
+      <div className="flex items-center gap-3 overflow-hidden w-full pb-1 relative">
+        <div className="flex gap-4 animate-marquee whitespace-nowrap w-max hover:[animation-play-state:paused]" style={{ animationDirection: 'reverse' }}>
+          {[...categories, ...categories, ...categories].map((c, index) => {
+            const count = formatCount(c.productCount);
+            const Icon = CATEGORY_ICONS[c.slug] ?? Package;
+            return (
+              <Link
+                key={`${c.id}-${index}`}
+                href={`/shop/${c.slug}`}
+                className="group flex-shrink-0 flex items-center justify-center gap-3 md:gap-4 h-14 lg:h-16 px-6 lg:px-8 lg:w-[300px] rounded-2xl bg-white dark:bg-zinc-900 shadow-sm hover:shadow-md border border-zinc-200/60 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
+              >
+                <Icon className="h-5 w-5 lg:h-6 lg:w-6 flex-shrink-0 text-zinc-400 group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors" strokeWidth={1.8} />
+                <span className="flex flex-col items-start leading-none">
+                  <span className="text-sm md:text-base font-bold text-zinc-800 dark:text-zinc-200 group-hover:text-black dark:group-hover:text-white transition-colors">
+                    {c.displayName || c.name}
                   </span>
-                </Link>
-              );
-            })}
-          </div>
+                  {count && (
+                    <span className="text-[9px] md:text-[10px] lg:text-[11px] font-medium text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-500 dark:group-hover:text-zinc-400 transition-colors mt-0.5 md:mt-1">
+                      {count}
+                    </span>
+                  )}
+                </span>
+              </Link>
+            );
+          })}
         </div>
       </div>
     </section>
