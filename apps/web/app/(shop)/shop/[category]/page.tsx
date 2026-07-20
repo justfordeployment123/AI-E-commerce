@@ -351,7 +351,7 @@ export default function CategoryPage() {
             </div>
             <div ref={topPicksScrollRef} className="flex gap-4 md:gap-6 overflow-x-auto scrollbar-hide pb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
               {allProducts.slice(0, 8).map(product => (
-                <Link href={`/shop/${categorySlug}/${product.id}`} key={`top-${product.id}`} className="shrink-0 w-[240px] md:w-[280px] group block">
+                <Link href={`/shop/${categorySlug}/${product.slug}`} key={`top-${product.id}`} className="shrink-0 w-[240px] md:w-[280px] group block">
                   <div className="bg-white rounded-[32px] p-3 border border-zinc-200 hover:border-black hover:shadow-xl transition-all duration-300 h-full flex flex-col">
                     <div className="relative aspect-square rounded-[24px] bg-image-light mb-5 overflow-hidden">
                       <span className="absolute top-4 left-4 inline-flex px-2.5 py-1 rounded-full bg-accent text-[10px] font-bold text-white border border-accent shadow-sm uppercase tracking-wider z-20">
@@ -440,7 +440,7 @@ export default function CategoryPage() {
                     {allProducts
                       .filter(p => activeTabBrand === "all" || p.brand === activeTabBrand)
                       .map(product => (
-                        <Link href={`/shop/${categorySlug}/${product.id}`} key={`tab-${product.id}`} className="shrink-0 w-[210px] md:w-[230px] group block">
+                        <Link href={`/shop/${categorySlug}/${product.slug}`} key={`tab-${product.id}`} className="shrink-0 w-[210px] md:w-[230px] group block">
                           <div className="bg-white rounded-[24px] p-3 border border-zinc-200 hover:border-black hover:shadow-lg transition-all duration-300 h-full flex flex-col justify-between">
                             
                             {/* Centered Image */}
@@ -676,7 +676,7 @@ export default function CategoryPage() {
                            </Link>
                         </div>
                       )}
-                      <Link href={`/shop/${categorySlug}/${product.id}`} className="group block">
+                      <Link href={`/shop/${categorySlug}/${product.slug}`} className="group block">
                       <div className={`bg-white rounded-[32px] p-3 border transition-all duration-300 h-full flex flex-col ${product.stock === 0 ? "border-zinc-200 hover:border-zinc-300" : "border-zinc-200 hover:border-black hover:shadow-xl"}`}>
 
                         <div className="relative aspect-square rounded-[24px] bg-[#f5f5f7] mb-5 overflow-hidden">

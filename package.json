@@ -27,10 +27,14 @@
     "infra:up": "npm run ensure:docker && docker compose -f docker-compose.infra.yml up -d",
     "infra:down": "docker compose -f docker-compose.infra.yml down --remove-orphans",
     "infra:logs": "docker compose -f docker-compose.infra.yml logs -f",
-    "infra:reset": "npm run ensure:docker && docker compose -f docker-compose.infra.yml down -v --remove-orphans"
+    "infra:reset": "npm run ensure:docker && docker compose -f docker-compose.infra.yml down -v --remove-orphans",
+    "test:e2e": "playwright test --config=e2e/playwright.config.ts",
+    "test:e2e:headed": "playwright test --config=e2e/playwright.config.ts --headed",
+    "test:e2e:report": "playwright show-report e2e/playwright-report"
   },
   "packageManager": "npm@11.11.0",
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "playwright": "^1.60.0",
     "turbo": "latest"
   }
