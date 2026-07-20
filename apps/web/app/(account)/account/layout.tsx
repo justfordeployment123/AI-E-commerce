@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
@@ -66,12 +66,12 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
 
       <main className="py-8 lg:py-10">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col lg:flex-row items-start gap-8 lg:gap-10">
+          <div className="flex flex-col lg:flex-row lg:items-start gap-6 sm:gap-8 lg:gap-10">
 
             {/* Sidebar — sticky below the full navbar (tier1 64px + tier2 ~44px = ~108px) */}
             <aside className="w-full lg:w-[240px] shrink-0 lg:sticky lg:top-36">
-              <nav className="bg-white rounded-[1.5rem] border border-zinc-100 p-2 sm:p-3 shadow-sm">
-                <ul className="flex lg:flex-col gap-1 overflow-x-auto scrollbar-hide">
+              <nav className="bg-white rounded-[1.5rem] border border-zinc-100 shadow-sm overflow-hidden">
+                <ul className="flex lg:flex-col gap-1 overflow-x-auto scrollbar-hide p-2 sm:p-3">
                   {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
                     const active = pathname === href;
                     return (

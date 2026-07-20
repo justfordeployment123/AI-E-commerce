@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -65,8 +65,8 @@ export default function SettingsPage() {
   if (!user) return null;
 
   return (
-    <div className="flex-1 bg-white rounded-[1.5rem] border border-zinc-100 p-6 sm:p-8 shadow-sm">
-      <h2 className="text-2xl font-bold mb-8">Account settings</h2>
+    <div className="flex-1 w-full bg-white rounded-[1.5rem] border border-zinc-100 p-4 sm:p-6 lg:p-8 shadow-sm">
+      <h2 className="text-2xl font-bold mb-6 sm:mb-8">Account settings</h2>
 
       {pendingReturn && (
         <div className="mb-6 flex items-start gap-3 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-xs font-semibold text-sky-800">
@@ -85,7 +85,7 @@ export default function SettingsPage() {
                 type="text"
                 value={name}
                 onChange={e => setName(e.target.value)}
-                className="h-14 rounded-[1rem] border-2 border-zinc-200 px-5 text-sm font-medium outline-none focus:border-accent transition-colors"
+                className="w-full h-14 rounded-[1rem] border-2 border-zinc-200 px-4 sm:px-5 text-sm font-medium outline-none focus:border-accent transition-colors"
               />
             </div>
 
@@ -95,7 +95,7 @@ export default function SettingsPage() {
                 type="email"
                 value={user.email}
                 disabled
-                className="h-14 rounded-[1rem] border-2 border-zinc-100 px-5 text-sm font-medium outline-none bg-zinc-50 text-zinc-400 cursor-not-allowed"
+                className="w-full h-14 rounded-[1rem] border-2 border-zinc-100 px-4 sm:px-5 text-sm font-medium outline-none bg-zinc-50 text-zinc-400 cursor-not-allowed"
               />
               <p className="text-[11px] text-zinc-400 ml-1">Email cannot be changed</p>
             </div>
@@ -107,7 +107,7 @@ export default function SettingsPage() {
                 value={phone}
                 onChange={e => setPhone(e.target.value)}
                 placeholder="+44 7700 000000"
-                className="h-14 rounded-[1rem] border-2 border-zinc-200 px-5 text-sm font-medium outline-none focus:border-accent transition-colors"
+                className="w-full h-14 rounded-[1rem] border-2 border-zinc-200 px-4 sm:px-5 text-sm font-medium outline-none focus:border-accent transition-colors"
               />
             </div>
           </div>
@@ -123,7 +123,7 @@ export default function SettingsPage() {
                 value={address}
                 onChange={e => setAddress(e.target.value)}
                 placeholder="123 High Street"
-                className="h-14 rounded-[1rem] border-2 border-zinc-200 px-5 text-sm font-medium outline-none focus:border-accent transition-colors"
+                className="w-full h-14 rounded-[1rem] border-2 border-zinc-200 px-4 sm:px-5 text-sm font-medium outline-none focus:border-accent transition-colors"
               />
             </div>
 
@@ -134,7 +134,7 @@ export default function SettingsPage() {
                 value={city}
                 onChange={e => setCity(e.target.value)}
                 placeholder="Leicester"
-                className="h-14 rounded-2xl border-2 border-zinc-200 px-5 text-sm font-medium outline-none focus:border-accent transition-colors"
+                className="w-full h-14 rounded-[1rem] border-2 border-zinc-200 px-4 sm:px-5 text-sm font-medium outline-none focus:border-accent transition-colors"
               />
             </div>
 
@@ -145,7 +145,7 @@ export default function SettingsPage() {
                 value={postcode}
                 onChange={e => { setPostcode(e.target.value); setPostcodeError(""); }}
                 placeholder="LE1 1AA"
-                className={`h-14 rounded-2xl border-2 px-5 text-sm font-medium outline-none transition-colors ${postcodeError ? "border-red-400 focus:border-red-500" : "border-zinc-200 focus:border-accent"}`}
+                className={`w-full h-14 rounded-[1rem] border-2 px-4 sm:px-5 text-sm font-medium outline-none transition-colors ${postcodeError ? "border-red-400 focus:border-red-500" : "border-zinc-200 focus:border-accent"}`}
               />
               {postcodeError && (
                 <p className="text-[11px] text-red-500 font-medium ml-1">{postcodeError}</p>
