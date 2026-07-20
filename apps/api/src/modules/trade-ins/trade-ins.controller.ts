@@ -155,6 +155,13 @@ export class TradeInsController {
         return this.tradeInsService.complete(id);
     }
 
+    @Post(':id/resend-label')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('ADMIN')
+    resendLabel(@Param('id') id: string) {
+        return this.tradeInsService.resendShippingLabel(id);
+    }
+
     @Delete('purge')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles('ADMIN')

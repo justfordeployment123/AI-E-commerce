@@ -201,6 +201,7 @@ export class EmailService {
             this.logger.log(`Shipping label email sent to ${opts.to} for ${opts.reference}`);
         } catch (err) {
             this.logger.error(`Failed to send shipping label email to ${opts.to}`, err);
+            throw err;
         }
     }
 

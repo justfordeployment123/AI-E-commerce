@@ -118,6 +118,7 @@ export function NotificationBell() {
   const [shake, setShake] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [notifPermission, setNotifPermission] = useState<NotificationPermission>("default");
+  const [showBlockedHelp, setShowBlockedHelp] = useState(false);
   const prevCountRef = useRef(0);
 
   useEffect(() => {
@@ -130,6 +131,14 @@ export function NotificationBell() {
     if (!("Notification" in window)) return;
     const result = await Notification.requestPermission();
     setNotifPermission(result);
+  }
+
+  // Once blocked, the browser will never show its native prompt again from a JS call —
+  // the user has to flip it in site settings themselves, so we just re-read the live
+  // permission value after they say they've done it, instead of re-requesting.
+  function recheckBrowserPermission() {
+    if (!("Notification" in window)) return;
+    setNotifPermission(Notification.permission);
   }
 
   useEffect(() => setMounted(true), []);
@@ -214,25 +223,47 @@ export function NotificationBell() {
 
               {/* Browser permission prompt */}
               {notifPermission !== "granted" && (
-                <div className="px-4 py-3 bg-zinc-950 flex items-center gap-3">
-                  <Bell className="h-4 w-4 text-[#d7ff5f] shrink-0" strokeWidth={1.8} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[11.5px] font-semibold text-white leading-snug">
-                      {notifPermission === "denied"
-                        ? "Notifications blocked in browser settings"
-                        : "Get notified outside this tab"}
-                    </p>
-                    {notifPermission !== "denied" && (
-                      <p className="text-[10.5px] text-zinc-400 mt-0.5">Trade-in & repair updates pop up even when you're away</p>
-                    )}
-                  </div>
-                  {notifPermission !== "denied" && (
+                <div className="bg-zinc-950">
+                  <div className="px-4 py-3 flex items-center gap-3">
+                    <Bell className="h-4 w-4 text-[#d7ff5f] shrink-0" strokeWidth={1.8} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[11.5px] font-semibold text-white leading-snug">
+                        {notifPermission === "denied"
+                          ? "Notifications blocked in browser settings"
+                          : "Get notified outside this tab"}
+                      </p>
+                      {notifPermission !== "denied" && (
+                        <p className="text-[10.5px] text-zinc-400 mt-0.5">Trade-in & repair updates pop up even when you're away</p>
+                      )}
+                    </div>
                     <button
-                      onClick={e => { e.stopPropagation(); requestBrowserPermission(); }}
+                      onClick={e => {
+                        e.stopPropagation();
+                        if (notifPermission === "denied") setShowBlockedHelp(h => !h);
+                        else requestBrowserPermission();
+                      }}
                       className="shrink-0 h-7 px-3 rounded-lg bg-[#d7ff5f] text-black text-[11px] font-bold hover:bg-lime-300 transition-colors"
                     >
-                      Allow
+                      {notifPermission === "denied" ? "How to enable" : "Allow"}
                     </button>
+                  </div>
+
+                  {notifPermission === "denied" && showBlockedHelp && (
+                    <div className="px-4 pb-3 -mt-0.5">
+                      <div className="rounded-lg bg-white/5 border border-white/10 px-3 py-2.5">
+                        <p className="text-[10.5px] text-zinc-300 leading-relaxed">
+                          Browsers block sites from re-requesting once you've blocked them — you'll need to flip it back on manually:
+                          click the <strong className="text-white">lock icon</strong> next to the address bar, open{" "}
+                          <strong className="text-white">Notifications</strong>, and set it to <strong className="text-white">Allow</strong>.
+                        </p>
+                        <button
+                          onClick={e => { e.stopPropagation(); recheckBrowserPermission(); }}
+                          className="mt-2 h-7 px-3 rounded-lg border border-white/15 text-white text-[10.5px] font-semibold hover:bg-white/10 transition-colors"
+                        >
+                          I've enabled it — check again
+                        </button>
+                      </div>
+                    </div>
                   )}
                 </div>
               )}

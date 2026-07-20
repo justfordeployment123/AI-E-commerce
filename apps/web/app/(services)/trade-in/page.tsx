@@ -512,6 +512,9 @@ export default function TradeInPage() {
   const [aiPrice, setAiPrice] = useState<number | null>(null);
   const [aiError, setAiError] = useState(false);
   const [aiLoadingText, setAiLoadingText] = useState("Analyzing your device...");
+  const [aiRetryCount, setAiRetryCount] = useState(0);
+  const [aiRecalcCount, setAiRecalcCount] = useState(0);
+  const [aiManualFallback, setAiManualFallback] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [cameraOpen, setCameraOpen] = useState(false);
   const modalScrollRef = useRef<HTMLDivElement>(null);
@@ -702,6 +705,9 @@ export default function TradeInPage() {
       if (phase === 4) {
         setAiPrice(null);
         setAiError(false);
+        setAiRetryCount(0);
+        setAiRecalcCount(0);
+        setAiManualFallback(false);
       }
       const prev = phase - 1;
       if (prev === 3) setDiagIndex(currentQuestions.length - 1);
@@ -769,7 +775,15 @@ export default function TradeInPage() {
       setAiPrice(result.price);
       setAiError(false);
     } catch {
-      setAiError(true);
+      if (aiRetryCount >= 1) {
+        // Already used the one extra retry — stop asking and fall back to manual review.
+        setAiError(false);
+        setAiManualFallback(true);
+        setState(s => ({ ...s, tradeInMode: "unpriced" }));
+      } else {
+        setAiRetryCount(c => c + 1);
+        setAiError(true);
+      }
     } finally {
       clearInterval(interval);
       setAiLoading(false);
@@ -1333,17 +1347,17 @@ export default function TradeInPage() {
               />
 
               {/* Wizard Content Inner wrapper with scroll */}
-              <div ref={modalScrollRef} className="p-6 md:p-10 flex-1 flex flex-col justify-between overflow-y-auto custom-scrollbar pt-14">
-                <div className="w-full max-w-4xl mx-auto space-y-6">
+              <div ref={modalScrollRef} className="p-3 sm:p-6 md:p-10 flex-1 flex flex-col justify-between overflow-y-auto custom-scrollbar pt-14 md:pt-14">
+                <div className="w-full max-w-4xl mx-auto space-y-4 sm:space-y-6">
 
                   {/* Wizard Navigation / Progress Header */}
-                  <div className="bg-white dark:bg-zinc-950 rounded-3xl border border-zinc-200/80 dark:border-zinc-800 shadow-sm p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="bg-white dark:bg-zinc-950 rounded-3xl border border-zinc-200/80 dark:border-zinc-800 shadow-sm p-4 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4">
                     <div className="flex items-center gap-3">
                       <button
                         onClick={handleBack}
                         className="h-10 px-4 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:border-zinc-950 dark:hover:border-white flex items-center gap-2 text-xs font-bold text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white transition-colors bg-white dark:bg-zinc-800"
                       >
-                  <ArrowLeft className="h-4 w-4" /> Back
+                  <ArrowLeft className="h-4 w-4" /> <span className="hidden sm:inline">Back</span>
                 </button>
                 <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-800 hidden md:block" />
                 <div>
@@ -1352,13 +1366,29 @@ export default function TradeInPage() {
                 </div>
               </div>
 
-              <div className="flex-1 max-w-xs md:ml-auto">
-                <div className="h-2 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-                  <motion.div
-                    className="h-full bg-zinc-950 dark:bg-white rounded-full"
-                    animate={{ width: `${(phase / 6) * 100}%` }}
-                    transition={{ duration: 0.4, ease: "easeOut" }}
-                  />
+              <div className="w-full md:flex-1 md:ml-auto flex items-center justify-center md:justify-end mt-2 md:mt-0">
+                <div className="flex items-center w-full max-w-sm justify-between px-1">
+                  {[1, 2, 3, 4, 5, 6].map((s, idx) => {
+                    const isCompleted = phase > s;
+                    const isCurrent = phase === s;
+                    const active = isCompleted || isCurrent;
+                    return (
+                      <div key={s} className="flex items-center flex-1 last:flex-none">
+                        <div className={`flex items-center justify-center shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-colors duration-300 ${active ? 'bg-indigo-50 dark:bg-indigo-500/10' : 'bg-transparent'}`}>
+                          <div className={`flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full transition-all duration-300 ${active ? 'bg-indigo-600 text-white shadow-sm' : 'border-2 border-zinc-200 dark:border-zinc-700 text-zinc-400 bg-white dark:bg-zinc-900'}`}>
+                            {isCompleted ? (
+                              <Check className="h-3 w-3 sm:h-4 sm:w-4" strokeWidth={3} />
+                            ) : (
+                              <span className="text-[10px] sm:text-sm font-bold">{s}</span>
+                            )}
+                          </div>
+                        </div>
+                        {idx < 5 && (
+                          <div className={`flex-1 h-1 mx-0.5 sm:mx-2 rounded-full transition-colors duration-300 ${phase > s ? 'bg-indigo-600' : 'bg-zinc-200 dark:bg-zinc-800'}`} />
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -1403,8 +1433,8 @@ export default function TradeInPage() {
             )}
 
             {/* Main Stepper Card */}
-            <div className="bg-white dark:bg-zinc-950 rounded-[2rem] border border-zinc-200 dark:border-zinc-800 shadow-xl overflow-hidden min-h-[400px] flex flex-col">
-              <div className="p-8 md:p-10 flex-1 flex flex-col justify-between">
+            <div className="bg-white dark:bg-zinc-950 rounded-2xl sm:rounded-[2rem] border border-zinc-200 dark:border-zinc-800 shadow-xl overflow-hidden min-h-[400px] flex flex-col">
+              <div className="p-4 sm:p-8 md:p-10 flex-1 flex flex-col justify-between">
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={phase}
@@ -1950,7 +1980,9 @@ export default function TradeInPage() {
                                   We'll personally assess your {state.model}
                                 </h3>
                                 <p className="text-sm font-semibold text-zinc-500 dark:text-zinc-400 max-w-sm leading-relaxed">
-                                  We don't have live market pricing for this model yet. Add a few photos so our team can assess the condition, then submit and we'll send you a custom cash offer within 24 hours.
+                                  {aiManualFallback
+                                    ? "Our instant pricing service is unavailable right now. Add a few photos so our team can assess the condition, then submit and we'll send you a custom cash offer within 24 hours."
+                                    : "We don't have live market pricing for this model yet. Add a few photos so our team can assess the condition, then submit and we'll send you a custom cash offer within 24 hours."}
                                 </p>
                               </div>
 
@@ -2091,7 +2123,7 @@ export default function TradeInPage() {
                             </div>
                             <div className="text-center space-y-2">
                               <p className="text-sm font-black text-zinc-950 dark:text-white">Could not reach pricing service</p>
-                              <p className="text-xs font-semibold text-zinc-400 max-w-xs">Check your connection and try again. No fallback price will be shown.</p>
+                              <p className="text-xs font-semibold text-zinc-400 max-w-xs">Check your connection and try again. If it fails once more, we'll send your device for manual review instead.</p>
                             </div>
                             <button
                               onClick={() => { setAiError(false); fetchAiPrice(); }}
@@ -2254,10 +2286,20 @@ export default function TradeInPage() {
 
                             <div className="pt-6 border-t border-zinc-100 dark:border-zinc-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
                               <button
-                                onClick={() => { setAiPrice(null); setAiError(false); setImages([]); setBatchId(crypto.randomUUID()); }}
+                                onClick={() => {
+                                  if (aiRecalcCount >= 1) {
+                                    // Already used the one extra recalculation — send to manual review instead.
+                                    setAiManualFallback(true);
+                                    setState(s => ({ ...s, tradeInMode: "unpriced" }));
+                                    return;
+                                  }
+                                  setAiRecalcCount(c => c + 1);
+                                  setAiRetryCount(0);
+                                  setAiPrice(null); setAiError(false);
+                                }}
                                 className="w-full sm:w-auto h-12 px-6 border border-zinc-200 dark:border-zinc-800 rounded-xl font-bold text-xs text-zinc-600 dark:text-zinc-400 hover:border-zinc-950 dark:hover:border-white hover:text-zinc-950 dark:hover:text-white transition-colors flex items-center justify-center shrink-0"
                               >
-                                <span className="whitespace-nowrap">Recalculate</span>
+                                <span className="whitespace-nowrap">{aiRecalcCount >= 1 ? "Request Manual Review" : "Recalculate"}</span>
                               </button>
                               <button
                                 onClick={() => goToPhase(5)}
@@ -2702,7 +2744,7 @@ export default function TradeInPage() {
                         {/* Back to Home Button */}
                         <div className="pt-6 border-t border-zinc-100 flex items-center justify-center">
                           <button
-                            onClick={() => { closeWizard(); setPhase(1); setImages([]); setAiPrice(null); setBatchId(crypto.randomUUID()); }}
+                            onClick={() => { closeWizard(); setPhase(1); setImages([]); setAiPrice(null); setAiRetryCount(0); setAiRecalcCount(0); setAiManualFallback(false); setBatchId(crypto.randomUUID()); }}
                             className="h-12 w-full max-w-xs bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-200 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 shadow-lg"
                           >
                             Return to Homepage <ArrowRight className="h-4 w-4" />

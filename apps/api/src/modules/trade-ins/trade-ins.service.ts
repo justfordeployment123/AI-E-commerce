@@ -131,10 +131,20 @@ export class TradeInsService {
         if (tradeIn.status !== 'COUNTER_OFFERED') {
             throw new BadRequestException('No counter offer to accept');
         }
-        return this.prisma.tradeIn.update({
+        const updated = await this.prisma.tradeIn.update({
             where: { id },
             data: { status: 'APPROVED', offerPrice: tradeIn.counterOffer ?? tradeIn.offerPrice },
         });
+
+        if (tradeIn.fulfillment === 'ship') {
+            try {
+                await this.issueShippingLabel(tradeIn);
+            } catch (err) {
+                this.logger.error(`Failed to generate shipping label for trade-in ${id}`, err);
+            }
+        }
+
+        return updated;
     }
 
     async declineCounterOffer(id: string, userId: string) {
@@ -184,29 +194,77 @@ export class TradeInsService {
 
         // Generate prepaid label for mail-in trade-ins
         if (tradeIn.fulfillment === 'ship') {
-            const contact = tradeIn.contact as Record<string, string>;
             try {
-                const result = await this.shipping.generatePrepaidLabel({
-                    reference:     tradeIn.reference,
-                    customerName:  contact.name  || 'Customer',
-                    customerEmail: contact.email || '',
-                    customerPhone: contact.phone,
-                    type:          'trade-in',
-                });
-                await this.prisma.tradeIn.update({
-                    where: { id },
-                    data:  { trackingNumber: result.trackingNumber },
-                });
-                await this.shipping.sendLabelEmail(
-                    { reference: tradeIn.reference, customerName: contact.name || 'Customer', customerEmail: contact.email || '', type: 'trade-in' },
-                    result,
-                );
+                await this.issueShippingLabel(tradeIn);
             } catch (err) {
                 this.logger.error(`Failed to generate shipping label for trade-in ${id}`, err);
             }
         }
 
         return updated;
+    }
+
+    /**
+     * Purchases (or reuses) a prepaid label and emails it to the customer, recording
+     * `labelEmailSentAt` so admins can see confirmation the customer was actually notified —
+     * shared by approve(), acceptCounterOffer(), and the admin-triggered resend.
+     */
+    private async issueShippingLabel(tradeIn: { id: string; reference: string; contact: unknown; trackingNumber: string | null; labelUrl: string | null }) {
+        const contact = tradeIn.contact as Record<string, string>;
+        if (!contact?.email) {
+            throw new Error('No customer email on file — cannot send shipping label');
+        }
+
+        let trackingNumber = tradeIn.trackingNumber;
+        let labelPdf: Buffer;
+
+        if (tradeIn.trackingNumber && tradeIn.labelUrl) {
+            // Reuse the label we already purchased — never buy a second one just to resend the email.
+            labelPdf = await this.shipping.fetchLabelPdf(tradeIn.labelUrl);
+        } else {
+            const result = await this.shipping.generatePrepaidLabel({
+                reference:     tradeIn.reference,
+                customerName:  contact.name || 'Customer',
+                customerEmail: contact.email,
+                customerPhone: contact.phone,
+                type:          'trade-in',
+            });
+            trackingNumber = result.trackingNumber;
+            labelPdf = result.labelPdf;
+            await this.prisma.tradeIn.update({
+                where: { id: tradeIn.id },
+                data:  { trackingNumber: result.trackingNumber, labelUrl: result.labelUrl },
+            });
+        }
+
+        await this.shipping.sendLabelEmail(
+            { reference: tradeIn.reference, customerName: contact.name || 'Customer', customerEmail: contact.email, type: 'trade-in' },
+            { trackingNumber: trackingNumber!, labelPdf },
+        );
+
+        await this.prisma.tradeIn.update({
+            where: { id: tradeIn.id },
+            data:  { labelEmailSentAt: new Date() },
+        });
+    }
+
+    /** Admin-triggered retry when a customer never received their shipping label email. */
+    async resendShippingLabel(id: string) {
+        const tradeIn = await this.findById(id);
+        if (tradeIn.fulfillment !== 'ship') {
+            throw new BadRequestException('This trade-in is not set up for shipping');
+        }
+        if (tradeIn.status !== 'APPROVED') {
+            throw new BadRequestException('Trade-in must be approved before (re)sending a shipping label');
+        }
+        const contact = tradeIn.contact as Record<string, string>;
+        if (!contact.email) {
+            throw new BadRequestException('No customer email on file for this trade-in');
+        }
+
+        await this.issueShippingLabel(tradeIn);
+        const refreshed = await this.prisma.tradeIn.findUnique({ where: { id } });
+        return { success: true, trackingNumber: refreshed?.trackingNumber, labelEmailSentAt: refreshed?.labelEmailSentAt };
     }
 
     async reject(id: string, dto: RejectTradeInDto) {

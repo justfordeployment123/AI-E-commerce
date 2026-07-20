@@ -17,6 +17,7 @@ export interface ShipmentRequest {
 export interface ShipmentResult {
     trackingNumber: string;
     labelPdf:       Buffer;
+    labelUrl?:      string;
 }
 
 @Injectable()
@@ -118,50 +119,67 @@ export class ShippingService {
             rates: Array<{ object_id: string; servicelevel: { token: string } }>;
         };
 
-        // Step 2: Pick the configured service level, fall back to first available rate
-        const serviceLevel = await this.getServiceLevel();
-        const rate = shipment.rates.find(r => r.servicelevel.token === serviceLevel)
-                  ?? shipment.rates[0];
-
-        if (!rate) {
+        if (!shipment.rates || shipment.rates.length === 0) {
             this.logger.error('No shipping rates returned by Shippo');
             throw new Error('No shipping rates available');
         }
 
-        // Step 3: Purchase the label
-        const txRes = await fetch(`${SHIPPO_BASE}/transactions/`, {
-            method:  'POST',
-            headers,
-            body: JSON.stringify({
-                rate:            rate.object_id,
-                label_file_type: 'PDF',
-                async:           false,
-            }),
-        });
+        // Step 2: Prefer the configured service level, but keep the rest as fallbacks —
+        // a single carrier (test or live) can reject a shipment while others succeed fine,
+        // so picking only the first rate and giving up on it risks failing labels that would
+        // otherwise go through on the next available carrier.
+        const serviceLevel = await this.getServiceLevel();
+        const preferredRate = shipment.rates.find(r => r.servicelevel.token === serviceLevel);
+        const candidateRates = preferredRate
+            ? [preferredRate, ...shipment.rates.filter(r => r !== preferredRate)]
+            : shipment.rates;
 
-        if (!txRes.ok) {
-            const err = await txRes.text();
-            this.logger.error(`Shippo transaction failed: ${err}`);
-            throw new Error(`Shippo transaction error: ${txRes.status}`);
+        let lastFailure = 'Shippo label generation failed';
+        for (const rate of candidateRates) {
+            // Step 3: Purchase the label
+            const txRes = await fetch(`${SHIPPO_BASE}/transactions/`, {
+                method:  'POST',
+                headers,
+                body: JSON.stringify({
+                    rate:            rate.object_id,
+                    label_file_type: 'PDF',
+                    async:           false,
+                }),
+            });
+
+            if (!txRes.ok) {
+                const err = await txRes.text();
+                this.logger.warn(`Shippo transaction failed for rate ${rate.servicelevel.token} (HTTP ${txRes.status}): ${err}`);
+                lastFailure = `Shippo transaction error: ${txRes.status}`;
+                continue;
+            }
+
+            const tx = await txRes.json() as {
+                status:          string;
+                tracking_number: string;
+                label_url:       string;
+            };
+
+            if (tx.status !== 'SUCCESS') {
+                this.logger.warn(`Shippo transaction not successful for rate ${rate.servicelevel.token}: ${JSON.stringify(tx)}`);
+                lastFailure = 'Shippo label generation failed';
+                continue;
+            }
+
+            // Step 4: Download the PDF
+            const labelPdf = await this.fetchLabelPdf(tx.label_url);
+            return { trackingNumber: tx.tracking_number, labelPdf, labelUrl: tx.label_url };
         }
 
-        const tx = await txRes.json() as {
-            status:          string;
-            tracking_number: string;
-            label_url:       string;
-        };
+        this.logger.error(`All Shippo rate attempts failed for shipment ${shipment.object_id}: ${lastFailure}`);
+        throw new Error(lastFailure);
+    }
 
-        if (tx.status !== 'SUCCESS') {
-            this.logger.error(`Shippo transaction not successful: ${JSON.stringify(tx)}`);
-            throw new Error('Shippo label generation failed');
-        }
-
-        // Step 4: Download the PDF
-        const pdfRes = await fetch(tx.label_url);
+    /** Re-downloads a previously purchased label's PDF — used to resend a label email without buying a new one. */
+    async fetchLabelPdf(labelUrl: string): Promise<Buffer> {
+        const pdfRes = await fetch(labelUrl);
         if (!pdfRes.ok) throw new Error('Failed to download label PDF from Shippo');
-        const labelPdf = Buffer.from(await pdfRes.arrayBuffer());
-
-        return { trackingNumber: tx.tracking_number, labelPdf };
+        return Buffer.from(await pdfRes.arrayBuffer());
     }
 
     async sendLabelEmail(req: ShipmentRequest, result: ShipmentResult) {

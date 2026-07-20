@@ -566,6 +566,9 @@ export const tradeInsApi = {
   complete: (id: string) =>
     apiFetch<TradeIn>(`/trade-ins/${id}/complete`, { method: 'POST' }),
 
+  resendLabel: (id: string) =>
+    apiFetch<{ success: boolean; trackingNumber: string }>(`/trade-ins/${id}/resend-label`, { method: 'POST' }),
+
   purgeAll: () =>
     apiFetch<{ deleted: number }>('/trade-ins/purge', { method: 'DELETE' }),
 };
@@ -694,6 +697,7 @@ export interface TradeIn {
   adminNotes?: string;
   trackingNumber?: string;
   labelUrl?: string;
+  labelEmailSentAt?: string;
   createdAt: string;
   updatedAt: string;
   user?: { id: string; name: string; email: string };

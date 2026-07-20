@@ -215,8 +215,11 @@ export default function TradeInDetailPage() {
               ) : (
                 <p className="text-2xl font-black text-amber-400 mt-1">Pending Manual Review</p>
               )}
-              {item.offerPrice > 0 && item.counterOffer && (
+              {item.offerPrice > 0 && item.counterOffer && item.status === "COUNTER_OFFERED" && (
                 <p className="text-sm text-white/50 mt-2">Counter offer: £{item.counterOffer} (awaiting customer)</p>
+              )}
+              {item.offerPrice > 0 && item.counterOffer && item.status !== "COUNTER_OFFERED" && item.offerPrice === item.counterOffer && (
+                <p className="text-sm text-white/50 mt-2">Customer accepted the £{item.counterOffer} counter offer</p>
               )}
               {item.offerPrice > 0 && (
                 <div className="flex items-center justify-center gap-1.5 mt-3 text-[10px] text-white/40">
@@ -297,6 +300,44 @@ export default function TradeInDetailPage() {
                         <X className="h-4 w-4" /> Reject
                       </button>
                     </>
+                  ) : item.status === "COUNTER_OFFERED" ? (
+                    <>
+                      <div className="rounded-2xl bg-violet-50 border border-violet-100 p-3.5 text-xs text-violet-700 font-medium">
+                        Counter offer sent — waiting for the customer to accept or decline it. Approval happens on their side.
+                      </div>
+                      {!showCounter ? (
+                        <button
+                          onClick={() => setShowCounter(true)}
+                          className="w-full h-12 rounded-2xl border-2 border-zinc-200 font-bold text-sm hover:border-zinc-900 hover:bg-zinc-900 hover:text-white active:scale-95 transition-all flex items-center justify-center gap-2"
+                        >
+                          <Minus className="h-4 w-4" /> Update offer
+                        </button>
+                      ) : (
+                        <div className="flex gap-2">
+                          <input
+                            type="number"
+                            placeholder="Counter amount (£)"
+                            value={counterInput}
+                            onChange={e => setCounterInput(e.target.value)}
+                            className="flex-1 h-12 rounded-2xl border-2 border-zinc-200 px-4 text-sm font-mono outline-none focus:border-black transition-colors"
+                          />
+                          <button
+                            onClick={() => act(() => tradeInsApi.counterOffer(item.id, Number(counterInput)))}
+                            disabled={saving || !counterInput || Number(counterInput) <= 0}
+                            className="h-12 px-5 rounded-2xl bg-black text-white font-bold text-sm hover:bg-zinc-800 active:scale-95 transition-all disabled:opacity-50"
+                          >
+                            Send
+                          </button>
+                        </div>
+                      )}
+                      <button
+                        onClick={() => act(() => tradeInsApi.reject(item.id))}
+                        disabled={saving}
+                        className="w-full h-12 rounded-2xl bg-reject text-reject-fg font-bold text-sm flex items-center justify-center gap-2 hover:bg-reject-hover active:scale-95 transition-all disabled:opacity-50"
+                      >
+                        <X className="h-4 w-4" /> Reject
+                      </button>
+                    </>
                   ) : (
                     <>
                       <div className="grid grid-cols-2 gap-3">
@@ -305,7 +346,7 @@ export default function TradeInDetailPage() {
                           disabled={saving}
                           className="h-12 rounded-2xl bg-approve text-approve-fg font-bold text-sm flex items-center justify-center gap-2 hover:bg-approve-hover active:scale-95 transition-all disabled:opacity-50"
                         >
-                          <Check className="h-4 w-4" /> Approve{item.offerPrice === 0 && item.counterOffer ? ` £${item.counterOffer}` : ""}
+                          <Check className="h-4 w-4" /> Approve
                         </button>
                         <button
                           onClick={() => act(() => tradeInsApi.reject(item.id))}
@@ -320,7 +361,7 @@ export default function TradeInDetailPage() {
                           onClick={() => setShowCounter(true)}
                           className="w-full h-12 rounded-2xl border-2 border-zinc-200 font-bold text-sm hover:border-zinc-900 hover:bg-zinc-900 hover:text-white active:scale-95 transition-all flex items-center justify-center gap-2"
                         >
-                          <Minus className="h-4 w-4" /> {item.counterOffer ? "Update offer" : "Counter offer"}
+                          <Minus className="h-4 w-4" /> Counter offer
                         </button>
                       ) : (
                         <div className="flex gap-2">
@@ -351,6 +392,28 @@ export default function TradeInDetailPage() {
                     <Check className="h-4 w-4 inline mr-2" />
                     Offer approved — waiting for device.
                   </div>
+                  {item.fulfillment === "ship" && (
+                    <>
+                      {item.labelEmailSentAt ? (
+                        <p className="text-xs text-zinc-500 font-medium flex items-center gap-1.5">
+                          <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                          Label emailed to customer on {fmtDate(item.labelEmailSentAt)}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-amber-600 font-medium flex items-center gap-1.5">
+                          <Clock className="h-3.5 w-3.5 shrink-0" />
+                          Label email not yet confirmed sent
+                        </p>
+                      )}
+                      <button
+                        onClick={() => act(() => tradeInsApi.resendLabel(item.id))}
+                        disabled={saving}
+                        className="w-full h-11 rounded-2xl border-2 border-zinc-200 text-zinc-700 font-bold text-sm hover:border-black hover:text-black transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
+                      >
+                        <Truck className="h-4 w-4" /> {item.labelEmailSentAt ? "Resend" : "Send"} shipping label email
+                      </button>
+                    </>
+                  )}
                   <button
                     onClick={() => act(() => tradeInsApi.complete(item.id))}
                     disabled={saving}

@@ -178,6 +178,46 @@ describe('ShippingService', () => {
             await expect(service.generatePrepaidLabel(makeRequest())).rejects.toThrow('Shippo label generation failed');
         });
 
+        it('falls through to the next rate when the first carrier rejects the transaction', async () => {
+            fetchMock
+                .mockResolvedValueOnce(jsonResponse({
+                    object_id: 'ship_1',
+                    rates: [
+                        { object_id: 'rate_dpd',   servicelevel: { token: 'dpd_uk_next_day' } },
+                        { object_id: 'rate_hermes', servicelevel: { token: 'hermes_uk_parcelshop_dropoff' } },
+                    ],
+                }))
+                .mockResolvedValueOnce(jsonResponse({ status: 'ERROR', tracking_number: '', label_url: '' }))
+                .mockResolvedValueOnce(jsonResponse({
+                    status: 'SUCCESS',
+                    tracking_number: 'TRACK-FALLBACK',
+                    label_url: 'https://labels.example.com/z.pdf',
+                }))
+                .mockResolvedValueOnce({ ok: true, arrayBuffer: async () => new ArrayBuffer(0) });
+
+            const result = await service.generatePrepaidLabel(makeRequest());
+
+            expect(result.trackingNumber).toBe('TRACK-FALLBACK');
+            const secondTxBody = JSON.parse((fetchMock.mock.calls[2]![1] as any).body);
+            expect(secondTxBody.rate).toBe('rate_hermes');
+        });
+
+        it('throws when every candidate rate fails to purchase', async () => {
+            fetchMock
+                .mockResolvedValueOnce(jsonResponse({
+                    object_id: 'ship_1',
+                    rates: [
+                        { object_id: 'rate_dpd',    servicelevel: { token: 'dpd_uk_next_day' } },
+                        { object_id: 'rate_hermes', servicelevel: { token: 'hermes_uk_parcelshop_dropoff' } },
+                    ],
+                }))
+                .mockResolvedValueOnce(jsonResponse({ status: 'ERROR', tracking_number: '', label_url: '' }))
+                .mockResolvedValueOnce(jsonResponse({ status: 'ERROR', tracking_number: '', label_url: '' }));
+
+            await expect(service.generatePrepaidLabel(makeRequest())).rejects.toThrow('Shippo label generation failed');
+            expect(fetchMock).toHaveBeenCalledTimes(3);
+        });
+
         it('throws when the label PDF download fails', async () => {
             fetchMock
                 .mockResolvedValueOnce(jsonResponse({

@@ -825,17 +825,17 @@ export default function RepairPage() {
               />
 
               {/* Scrollable content */}
-              <div ref={modalScrollRef} className="p-6 md:p-10 flex-1 flex flex-col overflow-y-auto custom-scrollbar pt-14">
-                <div className="w-full max-w-3xl mx-auto space-y-6">
+              <div ref={modalScrollRef} className="p-3 sm:p-6 md:p-10 flex-1 flex flex-col overflow-y-auto custom-scrollbar pt-14 md:pt-14">
+                <div className="w-full max-w-3xl mx-auto space-y-4 sm:space-y-6">
 
                   {/* Progress header */}
-                  <div className="bg-white rounded-3xl border border-zinc-200/80 shadow-sm p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="bg-white rounded-3xl border border-zinc-200/80 shadow-sm p-4 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4">
                     <div className="flex items-center gap-3">
                       <button
                         onClick={back}
                         className="h-10 px-4 rounded-xl border border-zinc-200 hover:border-zinc-950 flex items-center gap-2 text-xs font-bold text-zinc-600 hover:text-zinc-950 transition-colors"
                       >
-                        <ArrowLeft className="h-4 w-4" /> Back
+                        <ArrowLeft className="h-4 w-4" /> <span className="hidden sm:inline">Back</span>
                       </button>
                       <div className="h-4 w-px bg-zinc-200 hidden md:block" />
                       <div>
@@ -843,20 +843,36 @@ export default function RepairPage() {
                         <span className="text-sm font-extrabold text-zinc-800">{STEP_LABELS[step - 1]}</span>
                       </div>
                     </div>
-                    <div className="flex-1 max-w-xs md:ml-auto">
-                      <div className="h-2 bg-zinc-100 rounded-full overflow-hidden">
-                        <motion.div
-                          className="h-full bg-zinc-950 rounded-full"
-                          animate={{ width: `${progress}%` }}
-                          transition={{ duration: 0.4, ease: "easeOut" }}
-                        />
+                    <div className="w-full md:flex-1 md:ml-auto flex items-center justify-center md:justify-end mt-2 md:mt-0">
+                      <div className="flex items-center w-full max-w-sm justify-between px-1">
+                        {Array.from({ length: TOTAL_STEPS }, (_, i) => i + 1).map((s, idx) => {
+                          const isCompleted = step > s;
+                          const isCurrent = step === s;
+                          const active = isCompleted || isCurrent;
+                          return (
+                            <div key={s} className="flex items-center flex-1 last:flex-none">
+                              <div className={`flex items-center justify-center shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-colors duration-300 ${active ? 'bg-indigo-50 dark:bg-indigo-500/10' : 'bg-transparent'}`}>
+                                <div className={`flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full transition-all duration-300 ${active ? 'bg-indigo-600 text-white shadow-sm' : 'border-2 border-zinc-200 dark:border-zinc-700 text-zinc-400 bg-white dark:bg-zinc-900'}`}>
+                                  {isCompleted ? (
+                                    <Check className="h-3 w-3 sm:h-4 sm:w-4" strokeWidth={3} />
+                                  ) : (
+                                    <span className="text-[10px] sm:text-sm font-bold">{s}</span>
+                                  )}
+                                </div>
+                              </div>
+                              {idx < TOTAL_STEPS - 1 && (
+                                <div className={`flex-1 h-1 mx-0.5 sm:mx-2 rounded-full transition-colors duration-300 ${step > s ? 'bg-indigo-600' : 'bg-zinc-200 dark:bg-zinc-800'}`} />
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   </div>
 
                   {/* Step card */}
-                  <div className="bg-white rounded-[2rem] border border-zinc-200 shadow-xl overflow-hidden min-h-[400px] flex flex-col">
-                    <div className="p-8 md:p-10 flex-1 flex flex-col">
+                  <div className="bg-white rounded-2xl sm:rounded-[2rem] border border-zinc-200 shadow-xl overflow-hidden min-h-[400px] flex flex-col">
+                    <div className="p-4 sm:p-8 md:p-10 flex-1 flex flex-col">
                       <AnimatePresence mode="wait" custom={dir}>
                         <motion.div
                           key={step}
@@ -1052,10 +1068,10 @@ export default function RepairPage() {
                             <div className="flex-1">
                               <h2 className="font-sans text-3xl md:text-4xl font-extrabold tracking-tight mb-2">How will you get it to us?</h2>
                               <p className="text-zinc-400 font-medium text-sm mb-8">Choose the most convenient option.</p>
-                              <div className="space-y-4">
+                              <div className="space-y-3 sm:space-y-4">
                                 {[
-                                  { id: "dropoff", label: "Drop off in store", desc: "Bring your device to TechStop Leicester. Our technician will diagnose it and give you a quote on the spot.", icon: MapPin, badge: "No postage needed", badgeColor: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
-                                  { id: "mail", label: "Send by post", desc: "We'll send you a prepaid shipping label. Pack your device and drop it at any post office.", icon: Truck, badge: "Free prepaid label", badgeColor: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" },
+                                  { id: "dropoff", label: "Drop off in store", desc: "Bring it to TechStop Leicester for an instant quote.", icon: MapPin, badge: "No postage needed", badgeColor: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
+                                  { id: "mail", label: "Send by post", desc: "Free prepaid label. Pack and drop at any post office.", icon: Truck, badge: "Free prepaid label", badgeColor: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" },
                                 ].map(opt => {
                                   const Icon = opt.icon;
                                   return (
@@ -1063,16 +1079,16 @@ export default function RepairPage() {
                                       key={opt.id}
                                       whileTap={{ scale: 0.98 }}
                                       onClick={() => { setState(s => ({ ...s, fulfillment: opt.id })); go(1); }}
-                                      className={`w-full rounded-[2rem] border-2 p-7 text-left transition-all ${state.fulfillment === opt.id ? "border-zinc-950 bg-zinc-950 text-white dark:border-white dark:bg-white dark:text-zinc-950 shadow-md" : "border-zinc-200 bg-zinc-50 dark:bg-zinc-900 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-700 hover:bg-white hover:dark:bg-zinc-900/60 text-zinc-800 dark:text-zinc-200"}`}
+                                      className={`w-full rounded-2xl sm:rounded-[2rem] border-2 p-5 sm:p-7 text-left transition-all ${state.fulfillment === opt.id ? "border-zinc-950 bg-zinc-950 text-white dark:border-white dark:bg-white dark:text-zinc-950 shadow-md" : "border-zinc-200 bg-zinc-50 dark:bg-zinc-900 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-700 hover:bg-white hover:dark:bg-zinc-900/60 text-zinc-800 dark:text-zinc-200"}`}
                                     >
-                                      <div className="flex items-start gap-5">
-                                        <div className={`h-14 w-14 rounded-2xl flex items-center justify-center flex-shrink-0 ${state.fulfillment === opt.id ? "bg-white/10 text-white dark:bg-zinc-950/10 dark:text-zinc-950" : "bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 shadow-sm"}`}>
-                                          <Icon className="h-7 w-7" strokeWidth={1.5} />
+                                      <div className="flex items-start gap-4 sm:gap-5">
+                                        <div className={`h-12 w-12 sm:h-14 sm:w-14 rounded-xl sm:rounded-2xl flex items-center justify-center flex-shrink-0 ${state.fulfillment === opt.id ? "bg-white/10 text-white dark:bg-zinc-950/10 dark:text-zinc-950" : "bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 shadow-sm"}`}>
+                                          <Icon className="h-6 w-6 sm:h-7 sm:w-7" strokeWidth={1.5} />
                                         </div>
                                         <div>
-                                          <p className="font-bold text-lg mb-1">{opt.label}</p>
-                                          <p className={`text-sm leading-relaxed ${state.fulfillment === opt.id ? "text-white/70 dark:text-zinc-950/70" : "text-zinc-500 dark:text-zinc-450"}`}>{opt.desc}</p>
-                                          <span className={`mt-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-widest ${state.fulfillment === opt.id ? "bg-accent/20 text-accent dark:bg-accent/15" : opt.badgeColor}`}>
+                                          <p className="font-bold text-base sm:text-lg mb-1">{opt.label}</p>
+                                          <p className={`text-xs sm:text-sm leading-relaxed ${state.fulfillment === opt.id ? "text-white/70 dark:text-zinc-950/70" : "text-zinc-500 dark:text-zinc-450"}`}>{opt.desc}</p>
+                                          <span className={`mt-2 sm:mt-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-widest ${state.fulfillment === opt.id ? "bg-accent/20 text-accent dark:bg-accent/15" : opt.badgeColor}`}>
                                             {opt.badge}
                                           </span>
                                         </div>
@@ -1229,9 +1245,9 @@ export default function RepairPage() {
                                     ["Method", state.fulfillment === "dropoff" ? "Drop-off in store" : "Post to us"],
                                     ["Contact", state.contact.email],
                                   ].map(([k, v]) => (
-                                    <div key={k} className="flex justify-between py-2.5 border-b border-zinc-100 last:border-0">
-                                      <span className="text-zinc-400 font-bold uppercase tracking-widest text-[10px] self-center">{k}</span>
-                                      <span className="font-bold text-right max-w-[200px]">{v}</span>
+                                    <div key={k} className="flex flex-col sm:flex-row justify-between py-3 border-b border-zinc-100 last:border-0 gap-1 sm:gap-4">
+                                      <span className="text-zinc-400 font-bold uppercase tracking-widest text-[10px] sm:self-center">{k}</span>
+                                      <span className="font-bold sm:text-right break-words sm:break-normal">{v}</span>
                                     </div>
                                   ))}
                                 </div>

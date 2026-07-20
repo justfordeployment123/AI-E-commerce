@@ -237,6 +237,23 @@ describe('TradeInsService', () => {
                 data: { status: 'APPROVED', offerPrice: 150 },
             });
         });
+
+        it('purchases and emails a shipping label when the accepted counter offer is a ship fulfillment', async () => {
+            prismaMock.tradeIn.findFirst.mockResolvedValueOnce(
+                makeTradeIn({ status: 'COUNTER_OFFERED', counterOffer: 150, offerPrice: 100, fulfillment: 'ship' }),
+            );
+            await service.acceptCounterOffer('ti-1', 'user-1');
+            expect(shippingMock.generatePrepaidLabel).toHaveBeenCalled();
+            expect(shippingMock.sendLabelEmail).toHaveBeenCalled();
+        });
+
+        it('does not attempt a shipping label for drop-off fulfillment', async () => {
+            prismaMock.tradeIn.findFirst.mockResolvedValueOnce(
+                makeTradeIn({ status: 'COUNTER_OFFERED', counterOffer: 150, offerPrice: 100, fulfillment: 'dropoff' }),
+            );
+            await service.acceptCounterOffer('ti-1', 'user-1');
+            expect(shippingMock.generatePrepaidLabel).not.toHaveBeenCalled();
+        });
     });
 
     describe('declineCounterOffer', () => {
