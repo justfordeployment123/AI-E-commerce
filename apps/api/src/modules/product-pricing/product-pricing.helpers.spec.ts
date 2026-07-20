@@ -15,14 +15,20 @@ describe('round5', () => {
 });
 
 describe('computeCandidatePrice', () => {
-    it('applies condition multiplier and margin: 600 * 0.82 * 0.70 = 344.4 → 345', () => {
-        expect(computeCandidatePrice(600, 0.82, 30)).toBe(345);
+    it('applies condition multiplier and margin: 600 * 0.82 * 1.30 = 639.6 → 640', () => {
+        expect(computeCandidatePrice(600, 0.82, 30)).toBe(640);
     });
-    it('mint at 30% margin: 600 * 1.0 * 0.70 = 420', () => {
-        expect(computeCandidatePrice(600, 1.0, 30)).toBe(420);
+    it('mint at 30% margin: 600 * 1.0 * 1.30 = 780', () => {
+        expect(computeCandidatePrice(600, 1.0, 30)).toBe(780);
     });
-    it('damaged at 30% margin: 600 * 0.3 * 0.70 = 126 → 125', () => {
-        expect(computeCandidatePrice(600, 0.3, 30)).toBe(125);
+    it('damaged at 30% margin: 600 * 0.3 * 1.30 = 234 → 235', () => {
+        expect(computeCandidatePrice(600, 0.3, 30)).toBe(235);
+    });
+    it('negative margin (markdown): 600 * 0.82 * 0.70 = 344.4 → 345', () => {
+        expect(computeCandidatePrice(600, 0.82, -30)).toBe(345);
+    });
+    it('applies discount on top of margin: 600 * 0.82 * 1.30 * 0.90 = 575.64 → 575', () => {
+        expect(computeCandidatePrice(600, 0.82, 30, 10)).toBe(575);
     });
 });
 
