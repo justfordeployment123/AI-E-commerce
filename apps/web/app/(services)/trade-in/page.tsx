@@ -827,7 +827,10 @@ export default function TradeInPage() {
         answers: {},
         customerNotes: "",
         fulfillment: "", storeId: "",
-        contact: { name: "", email: "", phone: "", address: "", postcode: "" },
+        contact: {
+          name: user?.name || "", email: user?.email || "",
+          phone: user?.phone || "", address: user?.address || "", postcode: "",
+        },
       });
       setWizardModelSearch(prefilledModelQuery ?? "");
       setBrandFilter("");
@@ -853,7 +856,10 @@ export default function TradeInPage() {
         answers: {},
         customerNotes: "",
         fulfillment: "", storeId: "",
-        contact: { name: "", email: "", phone: "", address: "", postcode: "" },
+        contact: {
+          name: user?.name || "", email: user?.email || "",
+          phone: user?.phone || "", address: user?.address || "", postcode: "",
+        },
       });
       setPhase(2);
       setIsWizardActive(true);
