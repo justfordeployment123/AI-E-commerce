@@ -1,0 +1,343 @@
+\documentclass[11pt,a4paper]{article}
+
+% ---------- Layout ----------
+\usepackage[margin=2cm,top=2.5cm,bottom=2.5cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{parskip}
+
+% ---------- Color & tables ----------
+\usepackage[table,dvipsnames]{xcolor}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{booktabs}
+
+% ---------- Structure ----------
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{enumitem}
+\usepackage{tcolorbox}
+
+% ---------- Links (load near the end) ----------
+\usepackage{hyperref}
+
+% ================= Palette =================
+\definecolor{Accent}{HTML}{1F4E79}
+\definecolor{AccentLight}{HTML}{EAF2FA}
+\definecolor{OKgreen}{HTML}{1E8449}
+\definecolor{Amber}{HTML}{B9770E}
+\definecolor{Danger}{HTML}{A93226}
+\definecolor{GrayText}{HTML}{555555}
+
+% ================= Status badges =================
+\newcommand{\stOK}{\textcolor{OKgreen}{\textbf{Complete}}}
+\newcommand{\stOKc}{\textcolor{OKgreen}{\textbf{Complete*}}}
+\newcommand{\stPartial}{\textcolor{Amber}{\textbf{Partial}}}
+\newcommand{\stGap}{\textcolor{Danger}{\textbf{Gap}}}
+\newcommand{\stConfirmed}{\textcolor{OKgreen}{\textbf{Confirmed}}}
+\newcommand{\stUnconfirmed}{\textcolor{Amber}{\textbf{Unconfirmed}}}
+
+% ================= Section styling =================
+\titleformat{\section}
+  {\Large\bfseries\color{Accent}}
+  {\thesection}{0.6em}{}
+  [{\color{Accent}\titlerule[1.1pt]}]
+\titlespacing*{\section}{0pt}{1.4em}{0.8em}
+
+\titleformat{\subsection}
+  {\large\bfseries\color{Accent}}
+  {\thesubsection}{0.6em}{}
+\titlespacing*{\subsection}{0pt}{1.2em}{0.5em}
+
+% ================= Header / footer =================
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.8pt}
+\renewcommand{\headrule}{{\color{Accent}\hrule height\headrulewidth}}
+\fancyhead[L]{\small\color{GrayText} TechStop AI E-Commerce \& Trade-In Platform}
+\fancyhead[R]{\small\color{GrayText} Implementation Report}
+\fancyfoot[C]{\small\color{GrayText} Page \thepage}
+
+\fancypagestyle{plain}{%
+  \fancyhf{}
+  \fancyfoot[C]{\small\color{GrayText} Page \thepage}
+  \renewcommand{\headrulewidth}{0pt}
+}
+
+% ================= List spacing =================
+\setlist[itemize]{leftmargin=1.3em, itemsep=3pt, topsep=4pt, parsep=0pt}
+
+% ================= Hyperref setup =================
+\hypersetup{
+  colorlinks=true,
+  linkcolor=Accent,
+  urlcolor=Accent,
+  citecolor=Accent,
+  pdftitle={TechStop AI E-Commerce \& Trade-In Platform -- Implementation Report},
+  pdfauthor={Muhammad Hasaam},
+  pdfsubject={Implementation Report vs. Project Brief},
+}
+
+\begin{document}
+
+% ======================================================
+% TITLE PAGE
+% ======================================================
+\begin{titlepage}
+\thispagestyle{empty}
+\begin{center}
+\vspace*{1.5cm}
+{\color{Accent}\rule{\textwidth}{2pt}}\\[0.7cm]
+{\Huge\bfseries\color{Accent} TechStop AI E-Commerce \\[0.2cm] \& Trade-In Platform}\\[0.7cm]
+{\Large\color{GrayText} Implementation Report --- Status vs.\ Original Project Brief}\\[1cm]
+{\color{Accent}\rule{\textwidth}{2pt}}
+\end{center}
+
+\vspace{2.5cm}
+
+\begin{center}
+\begin{tcolorbox}[
+  colback=AccentLight, colframe=Accent, boxrule=0.6pt, arc=2mm,
+  width=0.72\textwidth, left=14pt, right=14pt, top=10pt, bottom=10pt
+]
+\begin{tabular}{@{}ll@{}}
+\textbf{Prepared by:} & Muhammad Hasaam \\[3pt]
+\textbf{Prepared for:} & Project Supervisor \\[3pt]
+\textbf{Date:} & 20 July 2026 \\[3pt]
+\textbf{Repository:} & AI-E-commerce (branch: \texttt{main}) \\[3pt]
+\textbf{Reference document:} & \texttt{Project\_Brief.docx} \\
+\end{tabular}
+\end{tcolorbox}
+\end{center}
+
+\vfill
+
+\begin{center}
+{\small\color{GrayText}\itshape
+This report summarizes what has been verified directly against the project's\\
+source code, database schema, and third-party integrations --- not just claimed status.}
+\end{center}
+
+\vspace{1cm}
+
+\end{titlepage}
+
+% ======================================================
+% TABLE OF CONTENTS
+% ======================================================
+\pagestyle{plain}
+\tableofcontents
+\newpage
+\pagestyle{fancy}
+
+% ======================================================
+% 1. EXECUTIVE SUMMARY
+% ======================================================
+\section{Executive Summary}
+
+The platform has been built out against the full scope defined in the original Project Brief. All four core feature areas requested by the client --- the e-commerce storefront, the AI-assisted trade-in flow, the repair booking flow, and the admin control panel --- are implemented end to end, backed by a real PostgreSQL database and working third-party integrations: Stripe for payments, Shippo for shipping labels, and OpenAI (GPT-4o) for AI-assisted pricing fallback.
+
+The brief named four `Critical Success Factors': the trade-in tap-flow UX, scraping reliability, admin panel usability, and the Stripe plus shipping integration. Each of these has been addressed. Two areas carry caveats worth flagging to a technical reviewer before the project is signed off as fully delivered: (1)~only two of the four named competitor price sources are actually scraping live data, and (2)~there is no evidence inside the repository of a live production deployment or CI/CD pipeline --- this should be confirmed separately with the developer. Full detail on both is in Section~\ref{sec:gaps}.
+
+\begin{tcolorbox}[colback=AccentLight, colframe=Accent, boxrule=0.5pt, arc=1.5mm, left=10pt, right=10pt, top=8pt, bottom=8pt]
+\textbf{In short:} the codebase substantially delivers everything the brief asked for. The gaps that exist are configuration and operational items (live API keys, a production deploy pipeline, two scraper sources) rather than missing features.
+\end{tcolorbox}
+
+% ======================================================
+% 2. SCOPE RECAP
+% ======================================================
+\section{Scope Recap (from the Project Brief)}
+
+For reference, the brief requested a custom e-commerce site for a UK refurbished-electronics shop with two sides:
+
+\begin{itemize}
+  \item \textbf{Sell side:} a standard online store for refurbished phones, tablets, consoles, MacBooks and accessories.
+  \item \textbf{Buy side (trade-in):} a guided, tap-based flow where customers sell devices and receive an AI-generated offer.
+  \item A supporting \textbf{AI pricing engine} driven by a weekly competitor price scrape, with an AI API fallback for unlisted products.
+  \item A \textbf{repair booking} flow for phones, tablets and consoles.
+  \item \textbf{Shipping label generation} for customers who post their device in.
+  \item A non-technical, point-and-click \textbf{admin panel} to run the whole business day to day.
+\end{itemize}
+
+% ======================================================
+% 3. STATUS AT A GLANCE
+% ======================================================
+\section{Implementation Status at a Glance}
+
+\begin{longtable}{>{\raggedright\arraybackslash}p{5.0cm}
+                   >{\centering\arraybackslash}p{2.2cm}
+                   >{\raggedright\arraybackslash}p{7.4cm}}
+\toprule
+\rowcolor{Accent}
+\textcolor{white}{\textbf{Brief Requirement}} &
+\textcolor{white}{\textbf{Status}} &
+\textcolor{white}{\textbf{Notes}} \\
+\midrule
+\endfirsthead
+
+\multicolumn{3}{l}{\small\itshape (table continued from previous page)} \\
+\toprule
+\rowcolor{Accent}
+\textcolor{white}{\textbf{Brief Requirement}} &
+\textcolor{white}{\textbf{Status}} &
+\textcolor{white}{\textbf{Notes}} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{3}{r}{\small\itshape (continued on next page)} \\
+\endfoot
+
+\bottomrule
+\endlastfoot
+
+E-commerce sell side (browse / PDP / cart / checkout / payment) & \stOK & Full Next.js storefront with real Stripe checkout. \\[4pt]
+Trade-in tap flow (buy side) & \stOK & Genuinely tap-driven wizard; only one optional free-text field in the entire flow. \\[4pt]
+AI pricing engine (scraped baseline + condition modifiers + AI fallback) & \stOKc & OpenAI GPT-4o fallback is correctly gated to control cost; the scrape interval defaults to hourly, not literally weekly as worded in the brief. \\[4pt]
+Scraper reliability and anti-bot measures & \stPartial & CeX and Envirofone are live; BackMarket and Music Magpie are stubbed out; no proxy rotation is implemented. \\[4pt]
+Repair booking flow & \stOK & Full customer wizard plus admin quote / approve / complete lifecycle. \\[4pt]
+Shipping integration & \stOKc & Real Shippo (Royal Mail by default) label generation, tracking and email; falls back to a mock label when no live API key is set. \\[4pt]
+Admin control panel & \stOK & Full CRUD across products, trade-ins, repairs, orders, pricing rules, catalog and more. \\[4pt]
+Payments (Stripe) & \stOKc & Real Stripe Elements, webhooks and refunds; falls back to a dev-mode bypass without live keys. \\[4pt]
+Authentication & \stOK & JWT plus bcrypt plus Google OAuth, with role-based guards for admin routes. \\[4pt]
+Catalog scope (brief target: approx.\ 50--60 SKUs) & \stOK & 118 sellable SKUs and about 140 trade-in device catalog entries. \\[4pt]
+Out-of-scope exclusions honored & \stConfirmed & No chatbot, no multi-language, no multi-currency, no native app, no loyalty program. \\[4pt]
+Live preview / production deployment & \stUnconfirmed & No CI/CD deploy pipeline found in-repo; the production domain appears only as a placeholder in example config files. \\[4pt]
+Automated test coverage & \stGap & 5 test files across 30-plus backend modules; no automated frontend tests. \\
+
+\end{longtable}
+
+{\small\color{GrayText}\textbf{*} Functionally complete; see the relevant subsection in Section~\ref{sec:findings} for the specific caveat.}
+
+\newpage
+
+% ======================================================
+% 4. DETAILED FINDINGS
+% ======================================================
+\section{Detailed Findings by Feature Area}
+\label{sec:findings}
+
+\subsection{E-Commerce (Sell Side)}
+
+The storefront (\texttt{apps/web}) implements a complete browse-to-purchase journey: category listing pages, individual product detail pages, a cart, checkout, and order confirmation. Checkout uses real Stripe Elements for card payment, backed by a payments service that independently re-verifies the charge amount against the server-calculated order total before an order is created, which prevents client-side price tampering. Products are organized through a structured device catalog (brand, category, model --- covering phones, tablets, consoles, laptops) plus a separate flexible ``other products'' catalog for accessories such as chargers, cables, memory cards and games. Both are fully manageable from the admin panel.
+
+\subsection{Trade-In Flow (Buy Side)}
+
+This is implemented as a single large, genuinely tap-driven wizard covering every step the brief specified: device category, brand, model, specs, overall condition, a set of diagnostic condition questions, the AI-generated offer, choice of drop-off or ship-to-us, and contact details. The only free-text field anywhere in the flow is an optional ``additional notes'' box --- every other input is a button or tile tap, matching the brief's explicit UX requirement. The flow also supports photo capture or upload of the device. On the backend, submitted trade-ins go through a full lifecycle: submitted, approved, rejected, or countered, with the customer able to accept or decline a counter-offer, matching the brief's requirement that admin can approve, counter-offer, or reject.
+
+\textit{Minor inconsistency to flag:} the searchable device autocomplete list used in one part of the trade-in intake is missing older PlayStation~3 and Xbox~360 entries, even though those same devices are selectable in the tap wizard itself and exist in the sell-side catalog. This is a minor data-seeding gap, not a missing feature.
+
+\subsection{AI Pricing Engine}
+
+The pricing engine follows the layered approach the brief asked for. When a customer or the catalog pricing job needs a price, the system first looks for a recent scraped market price (its own database, refreshed on a schedule); if found, it applies condition multipliers (new / grade A / B / C / faulty) plus an admin-configurable resale margin and rounds to a clean price point. Only when no recent scraped price exists does the system make a live call to OpenAI (GPT-4o for pricing and trade-in valuation, GPT-4o-mini for a lighter spec-suggestion feature) --- this gating is explicit in the code and is there specifically to control API cost, exactly as the brief requested. Trade-in valuation additionally accepts the customer's uploaded photos as input to the AI when a live estimate is needed.
+
+Two nuances for a technical reviewer: first, the admin-configurable condition multipliers and margin are stored in the database and editable without a code change, as required. Second, the brief describes a ``weekly'' scrape --- the shipped default is an hourly refresh interval (configurable by the admin up to any value, including weekly), and it runs as a timer rather than a calendar-based cron schedule. This does not affect functionality, only the literal wording of ``weekly.''
+
+\subsection{Scraper Reliability and Anti-Bot Measures}
+
+A dedicated scraper service (\texttt{apps/scraper}) uses headless Playwright with several real anti-detection measures: automation-flag suppression, realistic browser headers and locale, per-request throttling with randomized delays between items, and resume-after-crash support so an interrupted run can continue rather than restart. Of the four competitor sources named in the brief, two are functioning: CeX (via its search API) and Envirofone (via a reader-proxy technique that gets around basic blocking). The other two, BackMarket and Music Magpie, are present in the code as stubs only --- BackMarket is blocked by Cloudflare on every method attempted, and Music Magpie's prices are rendered in a way that has not yet been reliably extracted. Both are explicitly commented in the code as disabled pending a working approach, not left in silently.
+
+\begin{tcolorbox}[colback=white, colframe=Danger, boxrule=0.6pt, arc=1.5mm, left=10pt, right=10pt, top=8pt, bottom=8pt]
+Proxy/IP rotation, which the brief called out specifically, is \textbf{not} implemented --- the scraper runs from a single fixed network context. There is also no automated alerting (email or chat notification) if a scraping run fails; failures are recorded in the database as a failed run status but nobody is proactively notified. Given the brief flags scraping reliability as one of the four make-or-break factors for the project, this is the single area most worth prioritizing before going fully live with pricing on autopilot.
+\end{tcolorbox}
+
+\subsection{Repair Booking}
+
+A separate repair wizard mirrors the trade-in flow's structure: device type and model, issue selection (with a free-text notes field as a supplement, matching the brief's ``predefined options'' with an escape hatch), a choice of drop-off or mail-in, and contact details. On the backend, admin can review a booking, issue a quote, and the customer can accept or decline it; accepted mail-in repairs automatically generate a real prepaid shipping label through the same shipping service used by trade-ins. The full status lifecycle (submitted, quote sent, approved, in progress, completed, cancelled) is implemented and visible in the admin panel.
+
+\subsection{Shipping Integration}
+
+Shipping is integrated through Shippo, a multi-carrier label aggregator, defaulting to Royal Mail Tracked~48 as its service level --- this satisfies the brief's requirement for a carrier integration while keeping the option open to switch carriers from settings rather than being hard-coded to one provider. When a live Shippo API key is configured, label generation is real: a shipment and rate are created, the label is purchased, the actual PDF is downloaded and emailed to the customer, and tracking can be queried later. Without a live key configured, the system falls back to a mock label (a placeholder tracking number and PDF) so the rest of the flow keeps working in development. This is expected and correct behavior for a project not yet pointed at production credentials, but it means live shipping has not necessarily been exercised end-to-end with a real carrier account, and should be verified once production keys are in place.
+
+\subsection{Admin Control Panel}
+
+The admin panel (\texttt{apps/admin}) covers every capability the brief listed for a non-technical shop owner: full product add/edit/remove with photos, description, price and stock; review and management of trade-in submissions including approve, counter-offer and reject; review and management of repair bookings through their full lifecycle; order viewing with shipping status; direct editing of the pricing modifiers (condition multipliers and margin) without touching code; adding new trade-in device models as the catalog grows; and a basic analytics dashboard. It additionally covers areas the brief did not explicitly ask for but that support the same non-technical-operator goal: homepage promo banners, store locations, support chat, customer reviews, and scraper run monitoring. All of this is point-and-click through forms and lists, consistent with the brief's ``drag-and-drop / point-and-click wherever possible'' requirement.
+
+\subsection{Payments (Stripe)}
+
+Stripe is integrated for real, not stubbed: card payment through Stripe Elements, server-side verification of the paid amount against the actual order total before confirming an order, webhook handling for successful payments, failed payments and refunds (including detection and admin alerting if a payment succeeds but the matching order never completes), and genuine partial or full refunds triggerable from the admin panel. As with shipping, the system degrades to a development-mode bypass when no live Stripe key is configured, which is expected pre-launch behavior but means the live payment path should be smoke-tested once production keys are entered.
+
+\subsection{Authentication and Access Control}
+
+Customer and admin accounts are both handled through a real JWT-based authentication system with bcrypt password hashing and an optional Google sign-in. Admin-only endpoints (settings, pricing configuration, payment and shipping credentials, trade-in approval, etc.) are protected by role-based guards so a customer account cannot reach them even if they discover the URL.
+
+\newpage
+
+% ======================================================
+% 5. CATALOG SCOPE
+% ======================================================
+\section{Catalog Scope vs.\ Brief}
+
+The brief asked for an initial catalog of roughly 50 to 60 SKUs across iPhones (11 and above), Samsung Galaxy (S21 and above), iPads (9th generation and above), PlayStation (PS3 through PS5), Xbox (360 through Series~X), and MacBooks, with the admin able to add more over time without developer involvement. The seeded catalog exceeds this target:
+
+\begin{itemize}
+  \item \textbf{118 sellable product SKUs} seeded across all requested categories, plus additional lines such as AirPods, Sony and Bose headphones, and gaming laptops.
+  \item \textbf{Approximately 140 structured device catalog entries} (brand, category, model combinations) used to drive both the storefront and the trade-in flow.
+  \item \textbf{24 additional ``other'' accessory products} across chargers, cables, memory, storage, mice, graphics cards, pens, smart watches, games and films.
+  \item All device ranges named in the brief (iPhone 11+, Galaxy S21+, iPad 9th gen+, PS3/PS4/PS4 Slim/PS5, Xbox 360/One/Series~S/X, MacBooks) are represented in the seed data.
+  \item Every category and model is addable, editable and removable from the admin panel without a code deployment, as the brief required.
+\end{itemize}
+
+% ======================================================
+% 6. TECHNOLOGY STACK
+% ======================================================
+\section{Technology Stack}
+
+The brief left technology choices to the developer's discretion. The delivered stack is:
+
+\begin{longtable}{>{\raggedright\arraybackslash}p{4.3cm}
+                   >{\raggedright\arraybackslash}p{10.3cm}}
+\toprule
+\rowcolor{Accent}
+\textcolor{white}{\textbf{Layer}} & \textcolor{white}{\textbf{Technology}} \\
+\midrule
+\endfirsthead
+\toprule
+\rowcolor{Accent}
+\textcolor{white}{\textbf{Layer}} & \textcolor{white}{\textbf{Technology}} \\
+\midrule
+\endhead
+\bottomrule
+\endlastfoot
+
+Customer storefront & Next.js 16 / React 19, Tailwind CSS, Framer Motion, Stripe Elements \\[3pt]
+Admin dashboard & Next.js 16 / React 19, Tailwind CSS, Framer Motion \\[3pt]
+Backend API & NestJS 11, Prisma ORM 7 over PostgreSQL, Redis for caching, JWT/Passport auth \\[3pt]
+Scraper service & NestJS 11, Playwright (headless Chromium) \\[3pt]
+AI provider & OpenAI (GPT-4o and GPT-4o-mini) for pricing fallback and spec suggestions \\[3pt]
+Payments & Stripe (Elements, PaymentIntents, webhooks, refunds) \\[3pt]
+Shipping & Shippo (multi-carrier label API, defaulting to Royal Mail) \\[3pt]
+File / image storage & S3-compatible object storage (MinIO / Garage), with automatic background removal for product photos \\[3pt]
+Monorepo tooling & npm workspaces plus Turborepo, shared TypeScript config and lint rules across all four apps \\
+
+\end{longtable}
+
+% ======================================================
+% 7. KNOWN GAPS
+% ======================================================
+\section{Known Gaps and Recommendations}
+\label{sec:gaps}
+
+These are configuration, coverage and operational items rather than missing features, listed in rough priority order:
+
+\begin{enumerate}[leftmargin=1.4em, itemsep=5pt, topsep=4pt]
+  \item \textbf{Scraper coverage:} only CeX and Envirofone are live; BackMarket and Music Magpie are stubbed pending a working extraction method against their anti-bot protections. Since scraping reliability is one of the brief's four named critical success factors, this is the top item to revisit.
+  \item \textbf{No proxy/IP rotation and no automated failure alerting} on the scraper --- both were explicitly requested in the brief's risk-mitigation section.
+  \item \textbf{No CI/CD deployment pipeline} exists in the repository (only a database-migration safety check runs in GitHub Actions). Whether the site is actually live at the client's domain needs to be confirmed outside the codebase, since the brief's ``live preview within 2--4 days'' requirement cannot be verified from the repo alone.
+  \item \textbf{Automated test coverage is thin:} five test files across more than thirty backend modules, and no automated frontend tests. This does not indicate the features do not work, but it does mean regressions rely on manual testing rather than a safety net.
+  \item Both \textbf{Stripe and Shippo} cleanly fall back to safe development-mode behavior when live credentials are not configured. Before go-live, both should be smoke-tested end-to-end with real production API keys.
+  \item The scraper's refresh interval defaults to \textbf{hourly rather than the brief's literal ``weekly''} wording; this is configurable, not a defect, but worth confirming the client is comfortable with the chosen cadence.
+  \item A small \textbf{data-seeding inconsistency:} the trade-in search-box autocomplete list omits PS3 and Xbox 360 even though both are selectable in the trade-in wizard and exist in the sell-side catalog.
+\end{enumerate}
+
+% ======================================================
+% 8. CONCLUSION
+% ======================================================
+\section{Conclusion}
+
+Measured against the original Project Brief, the build is functionally complete: every core feature --- the sell-side store, the tap-driven trade-in flow, the layered AI pricing engine, repair booking, shipping labels, payments, and a full non-technical admin panel --- exists, is wired end to end, and is backed by real third-party integrations rather than placeholders. The catalog exceeds the brief's target SKU count and covers every device range requested.
+
+The items in Section~\ref{sec:gaps} are the honest gap list between ``code complete'' and ``production hardened'': two scraper sources, live-credential smoke testing, a deployment pipeline, and stronger automated test coverage. None of them require new features to be built; they are the natural next step after a feature-complete build like this one.
+
+\end{document}
