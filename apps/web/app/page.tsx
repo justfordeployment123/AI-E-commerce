@@ -348,30 +348,36 @@ function CategoryQuickNav() {
   };
 
   return (
-    <section className="border-y border-black/[0.04] dark:border-white/[0.04] py-8 bg-gradient-to-b from-zinc-50/50 to-white dark:from-zinc-900/20 dark:to-zinc-950/20 overflow-hidden">
-      <div className="flex items-center gap-3 overflow-hidden w-full pb-1 relative">
-        <div className="flex gap-4 animate-marquee whitespace-nowrap w-max hover:[animation-play-state:paused]" style={{ animationDirection: 'reverse' }}>
-          {[...categories, ...categories, ...categories].map((c, index) => {
+    <section className="relative z-20 border-y border-zinc-200 dark:border-zinc-800 py-3 lg:py-4 bg-white dark:bg-zinc-950 overflow-hidden">
+      <div className="flex items-center overflow-hidden w-full relative">
+        <div className="flex items-center gap-6 lg:gap-10 animate-marquee whitespace-nowrap w-max hover:[animation-play-state:paused]" style={{ animationDirection: 'reverse' }}>
+          {[...categories, ...categories, ...categories, ...categories].map((c, index) => {
             const count = formatCount(c.productCount);
             const Icon = CATEGORY_ICONS[c.slug] ?? Package;
+
             return (
-              <Link
-                key={`${c.id}-${index}`}
-                href={`/shop/${c.slug}`}
-                className="group flex-shrink-0 flex items-center justify-center gap-3 md:gap-4 h-14 lg:h-16 px-6 lg:px-8 lg:w-[300px] rounded-2xl bg-white dark:bg-zinc-900 shadow-sm hover:shadow-md border border-zinc-200/60 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
-              >
-                <Icon className="h-5 w-5 lg:h-6 lg:w-6 flex-shrink-0 text-zinc-400 group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors" strokeWidth={1.8} />
-                <span className="flex flex-col items-start leading-none">
-                  <span className="text-sm md:text-base font-bold text-zinc-800 dark:text-zinc-200 group-hover:text-black dark:group-hover:text-white transition-colors">
-                    {c.displayName || c.name}
-                  </span>
-                  {count && (
-                    <span className="text-[9px] md:text-[10px] lg:text-[11px] font-medium text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-500 dark:group-hover:text-zinc-400 transition-colors mt-0.5 md:mt-1">
-                      {count}
+              <div key={`${c.id}-${index}`} className="flex items-center gap-6 lg:gap-10">
+                <Link
+                  href={`/shop/${c.slug}`}
+                  className="group flex items-center gap-3 lg:gap-4 cursor-pointer"
+                >
+                  <Icon className="h-6 w-6 lg:h-8 lg:w-8 text-accent drop-shadow-sm group-hover:scale-110 transition-transform duration-300" strokeWidth={2} />
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-2xl lg:text-3xl font-black text-zinc-400 dark:text-zinc-600 group-hover:text-zinc-900 dark:group-hover:text-white uppercase tracking-tighter transition-colors duration-300">
+                      {c.displayName || c.name}
                     </span>
-                  )}
+                    {count && (
+                      <span className="text-xs lg:text-sm font-bold text-accent/60 group-hover:text-accent transition-colors uppercase tracking-widest">
+                        {count}
+                      </span>
+                    )}
+                  </div>
+                </Link>
+                {/* Colorful minimal separator */}
+                <span className="text-2xl lg:text-3xl font-black text-accent/20">
+                  /
                 </span>
-              </Link>
+              </div>
             );
           })}
         </div>
