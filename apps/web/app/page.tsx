@@ -251,9 +251,8 @@ function PromoCarouselBanner() {
                 <button
                   key={s.id}
                   onClick={() => setIdx(i)}
-                  className={`h-2 rounded-full transition-all duration-300 ${
-                    isActive ? "w-6 bg-white" : "w-2 bg-white/50"
-                  }`}
+                  className={`h-2 rounded-full transition-all duration-300 ${isActive ? "w-6 bg-white" : "w-2 bg-white/50"
+                    }`}
                   aria-label={`Go to slide ${i + 1}`}
                 />
               );
@@ -273,8 +272,8 @@ function PromoCarouselBanner() {
                   onClick={() => setIdx(i)}
                   data-active={isActive}
                   className={`relative flex items-center gap-2 px-4 h-11 rounded-2xl transition-all duration-500 cursor-pointer whitespace-nowrap flex-shrink-0 ${isActive
-                      ? "bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 shadow-lg font-black"
-                      : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 font-bold"
+                    ? "bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 shadow-lg font-black"
+                    : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 font-bold"
                     }`}
                 >
                   <span className={`text-[10px] tracking-widest ${isActive ? "opacity-60" : "text-zinc-400 dark:text-zinc-500"}`}>
@@ -413,7 +412,7 @@ function TradeInCTASection() {
   const router = useRouter();
 
   return (
-    <section className="relative py-10 lg:py-14 font-sans">
+    <section className="relative min-h-[60vh] lg:min-h-[auto] flex items-center py-16 lg:py-14 font-sans w-full">
       {/* Background photo — shown in full, no wash */}
       <div className="absolute inset-0 z-0 overflow-hidden">
         <style>{`
@@ -426,13 +425,13 @@ function TradeInCTASection() {
         <img
           src="/hero/trade_in_user_gen.png"
           alt=""
-          className="absolute inset-0 h-full w-full object-cover brightness-75"
+          className="absolute inset-0 h-full w-full object-cover object-right lg:object-center brightness-75"
           style={{ animation: 'cinematicPan 20s ease-in-out infinite' }}
         />
-        <div className="absolute inset-0 bg-zinc-950/30" />
+        <div className="absolute inset-0 bg-zinc-950/60 lg:bg-zinc-950/30" />
       </div>
 
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="max-w-md sm:max-w-lg flex flex-col items-start text-left relative">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/40 backdrop-blur-md text-white border border-white/20 text-[10px] font-black uppercase tracking-widest mb-4 shadow-sm">
             <span className="h-1.5 w-1.5 rounded-full bg-accent" />
@@ -1150,8 +1149,8 @@ function ShopByBudget() {
                 key={i}
                 onClick={() => setActiveRange(i)}
                 className={`flex-shrink-0 h-10 px-5 rounded-full font-bold text-sm transition-all duration-200 border ${activeRange === i
-                    ? "bg-zinc-950 text-white border-zinc-950"
-                    : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-950 hover:text-zinc-950"
+                  ? "bg-zinc-950 text-white border-zinc-950"
+                  : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-950 hover:text-zinc-950"
                   }`}
               >
                 {range.label}
@@ -1297,8 +1296,8 @@ function BestDealsSplit() {
                 className="flex flex-col items-center gap-1.5 flex-shrink-0 w-[64px] group"
               >
                 <div className={`h-12 w-[64px] rounded-xl border flex items-center justify-center transition-colors ${selectedCategory === "all"
-                    ? "bg-zinc-950 border-zinc-950 dark:bg-white dark:border-white"
-                    : "bg-image-light border-transparent hover:border-zinc-200 dark:hover:border-zinc-700"
+                  ? "bg-zinc-950 border-zinc-950 dark:bg-white dark:border-white"
+                  : "bg-image-light border-transparent hover:border-zinc-200 dark:hover:border-zinc-700"
                   }`}>
                   <Zap className={`h-4 w-4 ${selectedCategory === "all" ? "text-accent dark:text-zinc-950" : "text-emerald-600"}`} />
                 </div>
@@ -1312,8 +1311,8 @@ function BestDealsSplit() {
                   className="flex flex-col items-center gap-1.5 flex-shrink-0 w-[64px] group"
                 >
                   <div className={`h-12 w-[64px] rounded-xl border overflow-hidden flex items-center justify-center transition-colors ${selectedCategory === pill.category
-                      ? "border-zinc-950 dark:border-white bg-image-light shadow-sm"
-                      : "bg-image-light border-transparent hover:border-zinc-200 dark:hover:border-zinc-700"
+                    ? "border-zinc-950 dark:border-white bg-image-light shadow-sm"
+                    : "bg-image-light border-transparent hover:border-zinc-200 dark:hover:border-zinc-700"
                     }`}>
                     {pill.img
                       ? <NextImage src={pill.img} alt={pill.name} width={36} height={36} className="object-contain mix-blend-multiply" />
@@ -1801,8 +1800,8 @@ function FeaturedShop() {
                 key={cat.slug}
                 onClick={() => setActive(cat.slug)}
                 className={`flex-shrink-0 h-10 px-5 rounded-full font-bold text-sm transition-all duration-200 border ${active === cat.slug
-                    ? "bg-zinc-950 text-white border-zinc-950 dark:bg-white dark:text-zinc-950 dark:border-white"
-                    : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-950 hover:text-zinc-950 dark:bg-zinc-900/40 dark:text-zinc-400 dark:border-zinc-800 dark:hover:text-white dark:hover:border-zinc-400"
+                  ? "bg-zinc-950 text-white border-zinc-950 dark:bg-white dark:text-zinc-950 dark:border-white"
+                  : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-950 hover:text-zinc-950 dark:bg-zinc-900/40 dark:text-zinc-400 dark:border-zinc-800 dark:hover:text-white dark:hover:border-zinc-400"
                   }`}
               >
                 {cat.name}
@@ -1964,8 +1963,8 @@ function TopBrandsSplit() {
               <button
                 onClick={() => setActiveBrand("all")}
                 className={`flex-shrink-0 h-10 px-5 rounded-full font-bold text-sm transition-all duration-200 border ${activeBrand === "all"
-                    ? "bg-zinc-950 text-white border-zinc-950 dark:bg-white dark:text-zinc-950 dark:border-white"
-                    : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-950 hover:text-zinc-950 dark:bg-zinc-900/40 dark:text-zinc-400 dark:border-zinc-800 dark:hover:text-white dark:hover:border-zinc-400"
+                  ? "bg-zinc-950 text-white border-zinc-950 dark:bg-white dark:text-zinc-950 dark:border-white"
+                  : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-950 hover:text-zinc-950 dark:bg-zinc-900/40 dark:text-zinc-400 dark:border-zinc-800 dark:hover:text-white dark:hover:border-zinc-400"
                   }`}
               >
                 All
@@ -1976,8 +1975,8 @@ function TopBrandsSplit() {
                   key={brand.id}
                   onClick={() => setActiveBrand(brand.name)}
                   className={`flex-shrink-0 h-10 px-4 rounded-full font-bold text-sm transition-all duration-200 border flex items-center gap-2 ${activeBrand === brand.name
-                      ? "bg-zinc-950 text-white border-zinc-950 dark:bg-white dark:text-zinc-950 dark:border-white"
-                      : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-950 hover:text-zinc-950 dark:bg-zinc-900/40 dark:text-zinc-400 dark:border-zinc-800 dark:hover:text-white dark:hover:border-zinc-400"
+                    ? "bg-zinc-950 text-white border-zinc-950 dark:bg-white dark:text-zinc-950 dark:border-white"
+                    : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-950 hover:text-zinc-950 dark:bg-zinc-900/40 dark:text-zinc-400 dark:border-zinc-800 dark:hover:text-white dark:hover:border-zinc-400"
                     }`}
                 >
                   {brand.logo && (
@@ -1987,8 +1986,8 @@ function TopBrandsSplit() {
                       width={20}
                       height={20}
                       className={`object-contain flex-shrink-0 ${activeBrand === brand.name
-                          ? "brightness-0 invert dark:brightness-100 dark:invert-0"
-                          : "dark:brightness-0 dark:invert"
+                        ? "brightness-0 invert dark:brightness-100 dark:invert-0"
+                        : "dark:brightness-0 dark:invert"
                         }`}
                     />
                   )}
@@ -2385,8 +2384,8 @@ function Newsletter() {
                         disabled={status === "loading"}
                         placeholder="you@example.com"
                         className={`h-14 flex-1 px-6 rounded-2xl bg-white dark:bg-zinc-900 border ${status === "error"
-                            ? "border-red-500 focus:ring-red-500"
-                            : "border-zinc-200 dark:border-zinc-800 focus:ring-accent"
+                          ? "border-red-500 focus:ring-red-500"
+                          : "border-zinc-200 dark:border-zinc-800 focus:ring-accent"
                           } text-sm font-medium outline-none focus:ring-2 transition-all text-foreground`}
                       />
                       <button
