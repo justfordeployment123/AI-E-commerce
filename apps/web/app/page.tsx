@@ -110,7 +110,7 @@ function PromoCarouselBanner() {
           }
         });
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoadingSlides(false));
   }, []);
 
@@ -134,7 +134,7 @@ function PromoCarouselBanner() {
       const tabWidth = activeTab.offsetWidth;
       const tabLeft = activeTab.offsetLeft;
       const targetScrollLeft = tabLeft - (containerWidth / 2) + (tabWidth / 2);
-      
+
       container.scrollTo({
         left: targetScrollLeft,
         behavior: "smooth"
@@ -155,7 +155,7 @@ function PromoCarouselBanner() {
 
   return (
     <section
-      className="w-full min-h-[60vh] lg:min-h-[65vh] bg-zinc-950 relative overflow-hidden flex flex-col justify-between py-8 lg:py-10"
+      className="w-full min-h-[calc(100dvh-190px)] lg:min-h-[65vh] bg-zinc-950 relative overflow-hidden flex flex-col justify-between py-8 lg:py-10"
     >
       {/* Background Images */}
       <div className="absolute inset-0 z-0">
@@ -242,9 +242,28 @@ function PromoCarouselBanner() {
       {/* Bottom Floating Navigation Dock */}
       <div className="mx-auto w-full max-w-[1500px] px-4 sm:px-6 lg:px-12 mt-8 relative z-20">
         <div className="flex justify-center">
+
+          {/* Mobile Dots Pagination */}
+          <div className="sm:hidden flex items-center gap-2.5 p-2 rounded-full bg-black/20 backdrop-blur-md">
+            {slides.map((s, i) => {
+              const isActive = safeIdx === i;
+              return (
+                <button
+                  key={s.id}
+                  onClick={() => setIdx(i)}
+                  className={`h-2 rounded-full transition-all duration-300 ${
+                    isActive ? "w-6 bg-white" : "w-2 bg-white/50"
+                  }`}
+                  aria-label={`Go to slide ${i + 1}`}
+                />
+              );
+            })}
+          </div>
+
+          {/* Desktop Pill Navigation */}
           <div
             ref={tabContainerRef}
-            className="flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 rounded-[2rem] bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-white dark:border-zinc-800 shadow-xl overflow-x-auto snap-x snap-mandatory scrollbar-hide max-w-full relative [mask-image:linear-gradient(to_right,transparent,black_20px,black_calc(100%-20px),transparent)] sm:[mask-image:none]"
+            className="hidden sm:flex items-center gap-2 p-2 rounded-[2rem] bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-white dark:border-zinc-800 shadow-xl"
           >
             {slides.map((s, i) => {
               const isActive = safeIdx === i;
@@ -253,17 +272,16 @@ function PromoCarouselBanner() {
                   key={s.id}
                   onClick={() => setIdx(i)}
                   data-active={isActive}
-                  className={`relative flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 h-9 sm:h-11 rounded-2xl transition-all duration-500 cursor-pointer whitespace-nowrap snap-center flex-shrink-0 ${
-                    isActive
+                  className={`relative flex items-center gap-2 px-4 h-11 rounded-2xl transition-all duration-500 cursor-pointer whitespace-nowrap flex-shrink-0 ${isActive
                       ? "bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 shadow-lg font-black"
                       : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 font-bold"
-                  }`}
+                    }`}
                 >
-                  <span className={`hidden sm:inline text-[10px] tracking-widest ${isActive ? "opacity-60" : "text-zinc-400 dark:text-zinc-500"}`}>
+                  <span className={`text-[10px] tracking-widest ${isActive ? "opacity-60" : "text-zinc-400 dark:text-zinc-500"}`}>
                     {String(s.order + 1).padStart(2, "0")}
                   </span>
 
-                  <span className="text-[11px] sm:text-xs tracking-tight">
+                  <span className="text-xs tracking-tight">
                     {s.tabTitle}
                   </span>
 
@@ -332,7 +350,7 @@ function CategoryQuickNav() {
       .then(res => {
         setCategories(res.filter(c => c.isActive && c.isSellable).sort((a, b) => (b.productCount ?? 0) - (a.productCount ?? 0)));
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoading(false));
   }, []);
 
@@ -348,7 +366,7 @@ function CategoryQuickNav() {
   };
 
   return (
-    <section className="relative z-20 border-y border-zinc-200 dark:border-zinc-800 py-3 lg:py-4 bg-white dark:bg-zinc-950 overflow-hidden">
+    <section className="border-y border-zinc-200 dark:border-zinc-800 py-3 lg:py-4 bg-white dark:bg-zinc-950 overflow-hidden">
       <div className="flex items-center overflow-hidden w-full relative">
         <div className="flex items-center gap-6 lg:gap-10 animate-marquee whitespace-nowrap w-max hover:[animation-play-state:paused]" style={{ animationDirection: 'reverse' }}>
           {[...categories, ...categories, ...categories, ...categories].map((c, index) => {
@@ -451,7 +469,7 @@ function CategoryBento() {
         const mainCats = cats.filter(c => c.isSellable).slice(0, 6);
         setCategories(mainCats);
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoading(false));
   }, []);
 
@@ -514,7 +532,7 @@ function CategoryBento() {
                 {/* Double-sided gradient mask for readability */}
                 <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/10 to-transparent opacity-90 group-hover:opacity-95 transition-opacity duration-300" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent opacity-85" />
-                
+
                 {/* Inner border glow */}
                 <div className="absolute inset-0 ring-1 ring-inset ring-white/10 rounded-[2rem] z-10" />
 
@@ -593,7 +611,7 @@ function TrendingDeals() {
 
   useEffect(() => {
     if (trigger === 0) return;
-    productsApi.list({ limit: 8 }).then(r => setApiProducts(r.items)).catch(() => {});
+    productsApi.list({ limit: 8 }).then(r => setApiProducts(r.items)).catch(() => { });
   }, [trigger]);
 
   const featured = apiProducts[0] ?? null;
@@ -805,7 +823,7 @@ function Reviews() {
           setAvgRating(Math.round(avg * 10) / 10);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, [trigger]);
 
   const displayRating = avgRating || 4.8;
@@ -895,10 +913,10 @@ function Reviews() {
 // ─── App Preview ──────────────────────────────────────────────────────────────
 function AppPreview() {
   const features = [
-    { Icon: ShieldCheck, title: "Grade-verified listings",  desc: "Every listing shows battery health, cosmetic grade, and a full inspection certificate." },
-    { Icon: RefreshCw,   title: "One-tap returns",          desc: "Initiate a return in seconds from your order page — no calls, no forms, no friction." },
-    { Icon: BadgeCheck,  title: "Instant price alerts",     desc: "Set a target price on any device and get notified the moment it drops." },
-    { Icon: Leaf,        title: "Eco-conscious shopping",   desc: "Every refurbished device means one less device in a landfill — better for the planet." },
+    { Icon: ShieldCheck, title: "Grade-verified listings", desc: "Every listing shows battery health, cosmetic grade, and a full inspection certificate." },
+    { Icon: RefreshCw, title: "One-tap returns", desc: "Initiate a return in seconds from your order page — no calls, no forms, no friction." },
+    { Icon: BadgeCheck, title: "Instant price alerts", desc: "Set a target price on any device and get notified the moment it drops." },
+    { Icon: Leaf, title: "Eco-conscious shopping", desc: "Every refurbished device means one less device in a landfill — better for the planet." },
   ];
 
   return (
@@ -953,8 +971,8 @@ function AppPreview() {
                     <div className="flex-1 px-4 space-y-2 overflow-hidden">
                       {[
                         { name: "MacBook Air M2", price: "£849", grade: "A", img: "/products/macbook-air-m2.png" },
-                        { name: "AirPods Pro 2",  price: "£149", grade: "C", img: "/products/airpods-pro-2.png" },
-                        { name: "iPad Air 5",     price: "£399", grade: "B", img: "/products/ipad-air-5.png" },
+                        { name: "AirPods Pro 2", price: "£149", grade: "C", img: "/products/airpods-pro-2.png" },
+                        { name: "iPad Air 5", price: "£399", grade: "B", img: "/products/ipad-air-5.png" },
                       ].map((p, j) => (
                         <div key={j} className="flex items-center gap-3 bg-zinc-50 rounded-xl p-2">
                           <img
@@ -1067,11 +1085,11 @@ function AppPreview() {
 
 // ─── Shop By Budget ───────────────────────────────────────────────────────────
 const BUDGET_RANGES = [
-  { label: "Under £100",    params: { maxPrice: 100 } as const },
-  { label: "£100 – £300",   params: { minPrice: 100, maxPrice: 300 } as const },
-  { label: "£300 – £600",   params: { minPrice: 300, maxPrice: 600 } as const },
-  { label: "£600 – £1000",  params: { minPrice: 600, maxPrice: 1000 } as const },
-  { label: "£1000+",        params: { minPrice: 1000 } as const },
+  { label: "Under £100", params: { maxPrice: 100 } as const },
+  { label: "£100 – £300", params: { minPrice: 100, maxPrice: 300 } as const },
+  { label: "£300 – £600", params: { minPrice: 300, maxPrice: 600 } as const },
+  { label: "£600 – £1000", params: { minPrice: 600, maxPrice: 1000 } as const },
+  { label: "£1000+", params: { minPrice: 1000 } as const },
 ];
 
 function ShopByBudget() {
@@ -1103,7 +1121,7 @@ function ShopByBudget() {
         }));
         setCache(prev => ({ ...prev, [activeRange]: mapped }));
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoading(false));
   }, [activeRange, trigger, cache]);
 
@@ -1124,11 +1142,10 @@ function ShopByBudget() {
               <button
                 key={i}
                 onClick={() => setActiveRange(i)}
-                className={`flex-shrink-0 h-10 px-5 rounded-full font-bold text-sm transition-all duration-200 border ${
-                  activeRange === i
+                className={`flex-shrink-0 h-10 px-5 rounded-full font-bold text-sm transition-all duration-200 border ${activeRange === i
                     ? "bg-zinc-950 text-white border-zinc-950"
                     : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-950 hover:text-zinc-950"
-                }`}
+                  }`}
               >
                 {range.label}
               </button>
@@ -1197,7 +1214,7 @@ function BestDealsSplit() {
     productsApi.list({ limit: 80 }).then(r => {
       const filtered = r.items.filter(p => isOtherProduct(p.category, p.images?.[0]));
       setAllProducts(filtered.sort((a, b) => (b.price ?? 0) - (a.price ?? 0)));
-    }).catch(() => {});
+    }).catch(() => { });
   }, [trigger]);
 
   // Category pills sorted by product count descending
@@ -1223,7 +1240,7 @@ function BestDealsSplit() {
 
   const [WARZONE_IMG, setWARZONE_IMG] = useState<string | null>(null);
   useEffect(() => {
-    bannersApi.random(1).then(b => setWARZONE_IMG(b[0]?.url ?? null)).catch(() => {});
+    bannersApi.random(1).then(b => setWARZONE_IMG(b[0]?.url ?? null)).catch(() => { });
   }, []);
   const isAllSelected = selectedCategory === "all";
   const leftImage = isAllSelected
@@ -1233,7 +1250,7 @@ function BestDealsSplit() {
   async function handleAdd(p: any) {
     try {
       await addItem({ productId: p.id, quantity: 1, price: p.price, name: p.name, slug: p.slug, image: p.images?.[0] });
-    } catch {}
+    } catch { }
     setAddedIds(prev => new Set(prev).add(p.id));
     setTimeout(() => setAddedIds(prev => { const s = new Set(prev); s.delete(p.id); return s; }), 2000);
   }
@@ -1272,11 +1289,10 @@ function BestDealsSplit() {
                 onClick={() => setSelectedCategory("all")}
                 className="flex flex-col items-center gap-1.5 flex-shrink-0 w-[64px] group"
               >
-                <div className={`h-12 w-[64px] rounded-xl border flex items-center justify-center transition-colors ${
-                  selectedCategory === "all"
+                <div className={`h-12 w-[64px] rounded-xl border flex items-center justify-center transition-colors ${selectedCategory === "all"
                     ? "bg-zinc-950 border-zinc-950 dark:bg-white dark:border-white"
                     : "bg-image-light border-transparent hover:border-zinc-200 dark:hover:border-zinc-700"
-                }`}>
+                  }`}>
                   <Zap className={`h-4 w-4 ${selectedCategory === "all" ? "text-accent dark:text-zinc-950" : "text-emerald-600"}`} />
                 </div>
                 <span className="text-[10px] font-medium text-zinc-600 dark:text-zinc-400 text-center leading-tight">All Deals</span>
@@ -1288,11 +1304,10 @@ function BestDealsSplit() {
                   onClick={() => setSelectedCategory(pill.category)}
                   className="flex flex-col items-center gap-1.5 flex-shrink-0 w-[64px] group"
                 >
-                  <div className={`h-12 w-[64px] rounded-xl border overflow-hidden flex items-center justify-center transition-colors ${
-                    selectedCategory === pill.category
+                  <div className={`h-12 w-[64px] rounded-xl border overflow-hidden flex items-center justify-center transition-colors ${selectedCategory === pill.category
                       ? "border-zinc-950 dark:border-white bg-image-light shadow-sm"
                       : "bg-image-light border-transparent hover:border-zinc-200 dark:hover:border-zinc-700"
-                  }`}>
+                    }`}>
                     {pill.img
                       ? <NextImage src={pill.img} alt={pill.name} width={36} height={36} className="object-contain mix-blend-multiply" />
                       : <span className="text-[9px] font-bold text-zinc-500 uppercase">{pill.name.slice(0, 3)}</span>
@@ -1373,7 +1388,7 @@ function NewArrivals() {
 
   useEffect(() => {
     if (trigger === 0) return;
-    productsApi.list({ limit: 20 }).then(r => setItems(r.items)).catch(() => {});
+    productsApi.list({ limit: 20 }).then(r => setItems(r.items)).catch(() => { });
   }, [trigger]);
 
   return (
@@ -1438,7 +1453,7 @@ function GradeGuide() {
     if (trigger === 0) return;
     bannersApi.gradePreview().then(rows => {
       setGradeImgs(Object.fromEntries(rows.map(r => [r.grade, r.url])));
-    }).catch(() => {});
+    }).catch(() => { });
   }, [trigger]);
 
   const grades: {
@@ -1451,38 +1466,38 @@ function GradeGuide() {
     textClass: string;
     featuredRing: string;
   }[] = [
-    {
-      condition: "NEW",
-      num: "01", name: "New", tagline: "Brand new, sealed or equivalent.",
-     featured: false, img: gradeImgs["NEW"] ?? null,
-      textClass: "text-zinc-300", featuredRing: "",
-    },
-    {
-      condition: "A",
-      num: "02", name: "A Grade", tagline: "Used but like new — zero visible marks.",
-       featured: true, img: gradeImgs["A"] ?? null,
-      textClass: "text-emerald-400",
-      featuredRing: "border-emerald-500/60 shadow-[0_0_30px_rgba(16,185,129,0.15)] ring-1 ring-emerald-500/20",
-    },
-    {
-      condition: "B",
-      num: "03", name: "B Grade", tagline: "Minor signs of usage, small scratches.",
-      featured: false, img: gradeImgs["B"] ?? null,
-      textClass: "text-blue-400", featuredRing: "",
-    },
-    {
-      condition: "C",
-      num: "04", name: "C Grade", tagline: "Heavy scratches or marks, fully working.",
-       featured: false, img: gradeImgs["C"] ?? null,
-      textClass: "text-amber-400", featuredRing: "",
-    },
-    {
-      condition: "F",
-      num: "05", name: "F Grade", tagline: "Non-working — for parts or repair only.",
-       featured: false, img: gradeImgs["F"] ?? null,
-      textClass: "text-red-400", featuredRing: "",
-    },
-  ];
+      {
+        condition: "NEW",
+        num: "01", name: "New", tagline: "Brand new, sealed or equivalent.",
+        featured: false, img: gradeImgs["NEW"] ?? null,
+        textClass: "text-zinc-300", featuredRing: "",
+      },
+      {
+        condition: "A",
+        num: "02", name: "A Grade", tagline: "Used but like new — zero visible marks.",
+        featured: true, img: gradeImgs["A"] ?? null,
+        textClass: "text-emerald-400",
+        featuredRing: "border-emerald-500/60 shadow-[0_0_30px_rgba(16,185,129,0.15)] ring-1 ring-emerald-500/20",
+      },
+      {
+        condition: "B",
+        num: "03", name: "B Grade", tagline: "Minor signs of usage, small scratches.",
+        featured: false, img: gradeImgs["B"] ?? null,
+        textClass: "text-blue-400", featuredRing: "",
+      },
+      {
+        condition: "C",
+        num: "04", name: "C Grade", tagline: "Heavy scratches or marks, fully working.",
+        featured: false, img: gradeImgs["C"] ?? null,
+        textClass: "text-amber-400", featuredRing: "",
+      },
+      {
+        condition: "F",
+        num: "05", name: "F Grade", tagline: "Non-working — for parts or repair only.",
+        featured: false, img: gradeImgs["F"] ?? null,
+        textClass: "text-red-400", featuredRing: "",
+      },
+    ];
 
   return (
     <section ref={sectionRef} className="py-24 bg-zinc-950 overflow-hidden">
@@ -1508,9 +1523,8 @@ function GradeGuide() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.12 }}
-              className={`relative rounded-[2rem] overflow-hidden flex flex-col group hover:-translate-y-1.5 transition-all duration-300 border bg-zinc-950/40 ${
-                g.featured ? g.featuredRing : "border-zinc-800/80 hover:border-zinc-700/80"
-              }`}
+              className={`relative rounded-[2rem] overflow-hidden flex flex-col group hover:-translate-y-1.5 transition-all duration-300 border bg-zinc-950/40 ${g.featured ? g.featuredRing : "border-zinc-800/80 hover:border-zinc-700/80"
+                }`}
             >
               {/* Photo */}
               <div className="h-[340px] overflow-hidden flex-shrink-0">
@@ -1579,7 +1593,7 @@ function SavingsComparison() {
         .sort(() => Math.random() - 0.5)
         .slice(0, 6);
       setRawProducts(main);
-    }).catch(() => {});
+    }).catch(() => { });
   }, [trigger]);
 
   const items = rawProducts
@@ -1590,7 +1604,7 @@ function SavingsComparison() {
       ourPrice: p.price as number,
       grade: p.condition,
       img: p.images?.[0] ?? "",
-     
+
       category: p.category,
     }));
 
@@ -1613,46 +1627,46 @@ function SavingsComparison() {
         <div className="space-y-3">
           {items.length === 0
             ? [...Array(4)].map((_, i) => (
-                <div key={i} className="h-[76px] rounded-2xl bg-zinc-100 animate-pulse" />
-              ))
+              <div key={i} className="h-[76px] rounded-2xl bg-zinc-100 animate-pulse" />
+            ))
             : items.map((item, i) => {
-                const saving = item.newPrice - item.ourPrice;
-                const pct = Math.round((saving / item.newPrice) * 100);
-                return (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, x: -16 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: i * 0.07 }}
+              const saving = item.newPrice - item.ourPrice;
+              const pct = Math.round((saving / item.newPrice) * 100);
+              return (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, x: -16 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.07 }}
+                >
+                  <Link
+                    href={`/shop/${item.category?.toLowerCase() ?? "phones"}`}
+                    className="group flex items-center gap-3 md:gap-6 p-3 md:p-5 rounded-2xl border border-zinc-100 hover:shadow-md hover:border-zinc-200 transition-all cursor-pointer"
                   >
-                    <Link
-                      href={`/shop/${item.category?.toLowerCase() ?? "phones"}`}
-                      className="group flex items-center gap-3 md:gap-6 p-3 md:p-5 rounded-2xl border border-zinc-100 hover:shadow-md hover:border-zinc-200 transition-all cursor-pointer"
-                    >
-                      <div className="relative h-12 w-12 md:h-16 md:w-16 rounded-2xl bg-image-light flex-shrink-0 overflow-hidden">
-                        <ProductImage src={item.img} alt={item.device} hover={false} sizes="64px" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-bold text-zinc-950 text-xs sm:text-sm truncate">{item.device}</p>
-                        <p className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mt-0.5 ${getGradeConfig(item.grade ?? '').textClass}`}>{getGradeConfig(item.grade ?? '').label} · Certified</p>
-                      </div>
-                      <div className="hidden sm:block text-right flex-shrink-0 min-w-[80px]">
-                        <p className="text-zinc-300 line-through text-sm font-bold">£{item.newPrice.toLocaleString()}</p>
-                        <p className="text-[10px] font-bold uppercase text-zinc-400 mt-0.5">Retail</p>
-                      </div>
-                      <div className="text-right flex-shrink-0 min-w-[64px] sm:min-w-[80px]">
-                        <p className="text-sm sm:text-xl md:text-2xl font-bold text-zinc-950">£{item.ourPrice.toLocaleString()}</p>
-                        <p className="text-[9px] sm:text-[10px] font-bold uppercase text-zinc-400 mt-0.5">TechStop</p>
-                      </div>
-                      <div className="flex-shrink-0 h-12 w-[72px] sm:h-14 sm:w-[90px] bg-accent rounded-2xl flex flex-col items-center justify-center text-white">
-                        <p className="text-xs sm:text-base font-bold leading-none">-{pct}%</p>
-                        <p className="text-[7px] sm:text-[9px] font-bold text-white/90 mt-0.5">Save £{saving}</p>
-                      </div>
-                    </Link>
-                  </motion.div>
-                );
-              })}
+                    <div className="relative h-12 w-12 md:h-16 md:w-16 rounded-2xl bg-image-light flex-shrink-0 overflow-hidden">
+                      <ProductImage src={item.img} alt={item.device} hover={false} sizes="64px" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-zinc-950 text-xs sm:text-sm truncate">{item.device}</p>
+                      <p className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mt-0.5 ${getGradeConfig(item.grade ?? '').textClass}`}>{getGradeConfig(item.grade ?? '').label} · Certified</p>
+                    </div>
+                    <div className="hidden sm:block text-right flex-shrink-0 min-w-[80px]">
+                      <p className="text-zinc-300 line-through text-sm font-bold">£{item.newPrice.toLocaleString()}</p>
+                      <p className="text-[10px] font-bold uppercase text-zinc-400 mt-0.5">Retail</p>
+                    </div>
+                    <div className="text-right flex-shrink-0 min-w-[64px] sm:min-w-[80px]">
+                      <p className="text-sm sm:text-xl md:text-2xl font-bold text-zinc-950">£{item.ourPrice.toLocaleString()}</p>
+                      <p className="text-[9px] sm:text-[10px] font-bold uppercase text-zinc-400 mt-0.5">TechStop</p>
+                    </div>
+                    <div className="flex-shrink-0 h-12 w-[72px] sm:h-14 sm:w-[90px] bg-accent rounded-2xl flex flex-col items-center justify-center text-white">
+                      <p className="text-xs sm:text-base font-bold leading-none">-{pct}%</p>
+                      <p className="text-[7px] sm:text-[9px] font-bold text-white/90 mt-0.5">Save £{saving}</p>
+                    </div>
+                  </Link>
+                </motion.div>
+              );
+            })}
         </div>
 
         <div className="mt-10 text-center">
@@ -1726,7 +1740,7 @@ function FeaturedShop() {
         setCategories(mainCats);
         if (mainCats.length > 0) setActive(mainCats[0].slug);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   useEffect(() => {
@@ -1756,7 +1770,7 @@ function FeaturedShop() {
         const shuffled = mapped.sort(() => Math.random() - 0.5);
         setCache(prev => ({ ...prev, [active]: shuffled }));
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoading(false));
   }, [active, trigger, cache, categories]);
 
@@ -1772,18 +1786,17 @@ function FeaturedShop() {
               Shop our most wanted
             </h2>
           </div>
-          
+
           {/* Tabs */}
           <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide py-1">
             {categories.map((cat) => (
               <button
                 key={cat.slug}
                 onClick={() => setActive(cat.slug)}
-                className={`flex-shrink-0 h-10 px-5 rounded-full font-bold text-sm transition-all duration-200 border ${
-                  active === cat.slug
+                className={`flex-shrink-0 h-10 px-5 rounded-full font-bold text-sm transition-all duration-200 border ${active === cat.slug
                     ? "bg-zinc-950 text-white border-zinc-950 dark:bg-white dark:text-zinc-950 dark:border-white"
                     : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-950 hover:text-zinc-950 dark:bg-zinc-900/40 dark:text-zinc-400 dark:border-zinc-800 dark:hover:text-white dark:hover:border-zinc-400"
-                }`}
+                  }`}
               >
                 {cat.name}
               </button>
@@ -1866,10 +1879,10 @@ function TopBrandsSplit() {
 
   // Load "All" and brands on mount — no lazy trigger needed for this section
   useEffect(() => {
-    bannersApi.random(1).then(b => setDeskImg(b[0]?.url ?? null)).catch(() => {});
+    bannersApi.random(1).then(b => setDeskImg(b[0]?.url ?? null)).catch(() => { });
     catalogApi.listBrands()
       .then(res => setBrands(res.filter(b => b.isActive && b.logo).sort((a, b) => (b.productCount ?? 0) - (a.productCount ?? 0))))
-      .catch(() => {});
+      .catch(() => { });
     // Fetch "all" — larger limit so filtering out "others" still leaves ~20 main products
     setLoading(true);
     productsApi.list({ limit: 100 })
@@ -1880,7 +1893,7 @@ function TopBrandsSplit() {
           .slice(0, 20);
         setCache({ all: filtered });
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoading(false));
   }, []);
 
@@ -1897,7 +1910,7 @@ function TopBrandsSplit() {
             .slice(0, 20);
           setCache(prev => ({ ...prev, all: filtered }));
         })
-        .catch(() => {})
+        .catch(() => { })
         .finally(() => setLoading(false));
     } else {
       productsApi.list({ brand: activeBrand, limit: 20 })
@@ -1905,7 +1918,7 @@ function TopBrandsSplit() {
           const shuffled = r.items.sort(() => Math.random() - 0.5);
           setCache(prev => ({ ...prev, [activeBrand]: shuffled }));
         })
-        .catch(() => {})
+        .catch(() => { })
         .finally(() => setLoading(false));
     }
   }, [activeBrand]);
@@ -1943,11 +1956,10 @@ function TopBrandsSplit() {
               {/* All tab */}
               <button
                 onClick={() => setActiveBrand("all")}
-                className={`flex-shrink-0 h-10 px-5 rounded-full font-bold text-sm transition-all duration-200 border ${
-                  activeBrand === "all"
+                className={`flex-shrink-0 h-10 px-5 rounded-full font-bold text-sm transition-all duration-200 border ${activeBrand === "all"
                     ? "bg-zinc-950 text-white border-zinc-950 dark:bg-white dark:text-zinc-950 dark:border-white"
                     : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-950 hover:text-zinc-950 dark:bg-zinc-900/40 dark:text-zinc-400 dark:border-zinc-800 dark:hover:text-white dark:hover:border-zinc-400"
-                }`}
+                  }`}
               >
                 All
               </button>
@@ -1956,11 +1968,10 @@ function TopBrandsSplit() {
                 <button
                   key={brand.id}
                   onClick={() => setActiveBrand(brand.name)}
-                  className={`flex-shrink-0 h-10 px-4 rounded-full font-bold text-sm transition-all duration-200 border flex items-center gap-2 ${
-                    activeBrand === brand.name
+                  className={`flex-shrink-0 h-10 px-4 rounded-full font-bold text-sm transition-all duration-200 border flex items-center gap-2 ${activeBrand === brand.name
                       ? "bg-zinc-950 text-white border-zinc-950 dark:bg-white dark:text-zinc-950 dark:border-white"
                       : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-950 hover:text-zinc-950 dark:bg-zinc-900/40 dark:text-zinc-400 dark:border-zinc-800 dark:hover:text-white dark:hover:border-zinc-400"
-                  }`}
+                    }`}
                 >
                   {brand.logo && (
                     <NextImage
@@ -1968,11 +1979,10 @@ function TopBrandsSplit() {
                       alt={brand.name}
                       width={20}
                       height={20}
-                      className={`object-contain flex-shrink-0 ${
-                        activeBrand === brand.name
+                      className={`object-contain flex-shrink-0 ${activeBrand === brand.name
                           ? "brightness-0 invert dark:brightness-100 dark:invert-0"
                           : "dark:brightness-0 dark:invert"
-                      }`}
+                        }`}
                     />
                   )}
                   {brand.name}
@@ -2149,11 +2159,11 @@ function DiscoverMore() {
 
 // ─── Budget Picks ──────────────────────────────────────────────────────────────
 const BUDGET_ROWS = [
-  { title: "Under £100",   badge: "Great Value",      params: { maxPrice: 100 } },
-  { title: "£100 – £300",  badge: "Best Sellers",     params: { minPrice: 100, maxPrice: 300 } },
-  { title: "£300 – £600",  badge: "Most Popular",     params: { minPrice: 300, maxPrice: 600 } },
-  { title: "£600 – £1000", badge: "Premium Picks",    params: { minPrice: 600, maxPrice: 1000 } },
-  { title: "£1000+",       badge: "Top of the Range", params: { minPrice: 1000 } },
+  { title: "Under £100", badge: "Great Value", params: { maxPrice: 100 } },
+  { title: "£100 – £300", badge: "Best Sellers", params: { minPrice: 100, maxPrice: 300 } },
+  { title: "£300 – £600", badge: "Most Popular", params: { minPrice: 300, maxPrice: 600 } },
+  { title: "£600 – £1000", badge: "Premium Picks", params: { minPrice: 600, maxPrice: 1000 } },
+  { title: "£1000+", badge: "Top of the Range", params: { minPrice: 1000 } },
 ];
 
 function BudgetPicks() {
@@ -2316,7 +2326,7 @@ function Newsletter() {
     }
 
     setStatus("loading");
-    
+
     // Simulate API call
     setTimeout(() => {
       setStatus("success");
@@ -2336,7 +2346,7 @@ function Newsletter() {
             Deals before they sell out
           </h2>
           <p className="text-zinc-500 dark:text-zinc-400 mb-10">Weekly drops, exclusive discounts, and e-waste reports. No spam.</p>
-          
+
           {mounted ? (
             <div className="max-w-md mx-auto">
               <AnimatePresence mode="wait">
@@ -2367,11 +2377,10 @@ function Newsletter() {
                         }}
                         disabled={status === "loading"}
                         placeholder="you@example.com"
-                        className={`h-14 flex-1 px-6 rounded-2xl bg-white dark:bg-zinc-900 border ${
-                          status === "error" 
-                            ? "border-red-500 focus:ring-red-500" 
+                        className={`h-14 flex-1 px-6 rounded-2xl bg-white dark:bg-zinc-900 border ${status === "error"
+                            ? "border-red-500 focus:ring-red-500"
                             : "border-zinc-200 dark:border-zinc-800 focus:ring-accent"
-                        } text-sm font-medium outline-none focus:ring-2 transition-all text-foreground` }
+                          } text-sm font-medium outline-none focus:ring-2 transition-all text-foreground`}
                       />
                       <button
                         type="submit"
@@ -2419,7 +2428,7 @@ function StoreLocationSection() {
           setSelectedStoreId(data[0].id);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const activeStore = stores.find(s => s.id === selectedStoreId) || stores[0];
@@ -2431,7 +2440,7 @@ function StoreLocationSection() {
 
   return (
     <section className="relative py-24 bg-zinc-50 dark:bg-zinc-950 overflow-hidden font-sans border-t border-b border-zinc-200/60 dark:border-zinc-900/80">
-      
+
       {/* Premium Background Decor */}
       <div className="absolute inset-0 pointer-events-none opacity-[0.03] dark:opacity-[0.05]" style={{ backgroundImage: 'linear-gradient(to right, #888 1px, transparent 1px), linear-gradient(to bottom, #888 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
       <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-red-500/10 dark:bg-red-500/5 rounded-full blur-[120px] pointer-events-none" />
@@ -2439,19 +2448,19 @@ function StoreLocationSection() {
 
       <div className="relative mx-auto w-full max-w-[1500px] px-4 sm:px-6 lg:px-12">
         <div className="grid lg:grid-cols-12 gap-16 items-center">
-          
+
           {/* Left info column */}
           <div className="lg:col-span-5 flex flex-col items-start text-left relative z-10">
             <div className="inline-flex items-center gap-1.5 rounded-full bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/20 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest mb-6 shadow-sm shadow-red-500/5">
               <MapPin className="h-3.5 w-3.5" />
               Our Retail Outlets
             </div>
-            
+
             <h2 className="text-4xl md:text-5xl lg:text-[3.5rem] font-extrabold tracking-tight text-zinc-950 dark:text-white leading-[1.05] mb-6">
               Visit us in store.<br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 via-red-500 to-zinc-900 dark:from-red-500 dark:via-red-400 dark:to-white">Express trade-in &amp; repairs.</span>
             </h2>
-            
+
             <p className="text-zinc-600 dark:text-zinc-400 font-semibold text-base md:text-lg mb-8 leading-relaxed max-w-lg">
               Drop by our retail outlet for instant diagnostics, same-day screen/battery repairs in under 45 minutes, or get cash on the spot for your old hardware. No appointment necessary.
             </p>
@@ -2470,7 +2479,7 @@ function StoreLocationSection() {
                     ))}
                   </select>
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
                   </div>
                 </div>
               </div>
@@ -2478,7 +2487,7 @@ function StoreLocationSection() {
 
             <div className="relative w-full max-w-md bg-white/60 dark:bg-zinc-900/50 backdrop-blur-xl rounded-[2rem] border border-white/50 dark:border-zinc-800/80 p-6 sm:p-8 space-y-6 mb-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-red-500/50 to-transparent" />
-              
+
               <div className="flex gap-4 items-start group">
                 <div className="h-11 w-11 bg-red-50 dark:bg-red-500/10 rounded-2xl border border-red-100 dark:border-red-500/20 flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:bg-red-500 group-hover:text-white transition-all duration-300 text-red-600 dark:text-red-400">
                   <MapPin className="h-5 w-5" />
