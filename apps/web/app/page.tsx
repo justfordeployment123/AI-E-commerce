@@ -415,29 +415,36 @@ function TradeInCTASection() {
   return (
     <section className="relative py-10 lg:py-14 font-sans">
       {/* Background photo — shown in full, no wash */}
-      <div className="absolute inset-0 z-0">
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        <style>{`
+          @keyframes cinematicPan {
+            0% { transform: scale(1) translate(0, 0); }
+            50% { transform: scale(1.05) translate(-1%, -1%); }
+            100% { transform: scale(1) translate(0, 0); }
+          }
+        `}</style>
         <img
-          src="/hero/image.png"
+          src="/hero/trade_in_user_gen.png"
           alt=""
-          className="absolute inset-0 h-full w-full object-cover"
+          className="absolute inset-0 h-full w-full object-cover brightness-75"
+          style={{ animation: 'cinematicPan 20s ease-in-out infinite' }}
         />
+        <div className="absolute inset-0 bg-zinc-950/30" />
       </div>
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="max-w-md sm:max-w-lg flex flex-col items-start text-left relative">
-          {/* Soft feathered glow behind the text — no hard card edges, no wide image wash */}
-          <div className="absolute -inset-6 sm:-inset-10 -z-10 rounded-[3rem] bg-white/80 dark:bg-zinc-950/75 blur-2xl" />
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800 text-[10px] font-black uppercase tracking-widest mb-4">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/40 backdrop-blur-md text-white border border-white/20 text-[10px] font-black uppercase tracking-widest mb-4 shadow-sm">
             <span className="h-1.5 w-1.5 rounded-full bg-accent" />
             TechStop Trade-In
           </span>
 
-          <h2 className="text-3xl md:text-4xl font-black tracking-tight text-zinc-950 dark:text-white leading-tight mb-3">
+          <h2 className="text-3xl md:text-4xl font-black tracking-tight text-white leading-tight mb-3 drop-shadow-lg">
             Sell your old tech. <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent via-accent to-zinc-950 dark:to-white">Get cash in 48 hours.</span>
+            <span className="text-accent drop-shadow-lg">Get cash in 48 hours.</span>
           </h2>
 
-          <p className="text-zinc-500 dark:text-zinc-400 text-sm md:text-base font-semibold leading-relaxed mb-6">
+          <p className="text-white/90 text-sm md:text-base font-semibold leading-relaxed mb-6 drop-shadow-md">
             We pay premium market rates for used smartphones, laptops, tablets, and gaming consoles. Trade in online with free insured Royal Mail shipping or drop off in-store.
           </p>
 
