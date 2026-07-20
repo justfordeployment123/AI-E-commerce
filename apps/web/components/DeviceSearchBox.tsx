@@ -29,6 +29,8 @@ interface DeviceSearchBoxProps {
   onManualEntry: (query: string) => void;
   /** Called when the Search button is clicked (only relevant when showSearchButton=true) */
   onSubmit?: (query: string) => void;
+  /** Custom text for the search button */
+  buttonText?: string;
 }
 
 const FUSE_OPTIONS = {
@@ -53,6 +55,7 @@ export default function DeviceSearchBox({
   onSelect,
   onManualEntry,
   onSubmit,
+  buttonText = "Search",
 }: DeviceSearchBoxProps) {
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
@@ -127,7 +130,7 @@ export default function DeviceSearchBox({
             onClick={() => onSubmit?.(query)}
             className="absolute right-2 top-2 bottom-2 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 rounded-xl px-4 font-bold text-xs hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors"
           >
-            Search
+            {buttonText}
           </button>
         )}
       </div>

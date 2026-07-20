@@ -447,11 +447,11 @@ function TradeInCTASection() {
             We pay premium market rates for used smartphones, laptops, tablets, and gaming consoles. Trade in online with free insured Royal Mail shipping or drop off in-store.
           </p>
 
-          {/* Shared DeviceSearchBox — navigates to trade-in page with device pre-selected */}
           <DeviceSearchBox
             className="w-full"
-            placeholder="Search your device (e.g. iPhone 15, PS5...)"
+            placeholder="Trade in your device (e.g. iPhone 15, PS5...)"
             showSearchButton
+            buttonText="Trade In"
             onSelect={(sug) => router.push(
               `/trade-in?brand=${encodeURIComponent(sug.brand)}&model=${encodeURIComponent(sug.name)}&category=${encodeURIComponent(sug.category)}`
             )}
