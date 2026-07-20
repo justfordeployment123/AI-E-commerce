@@ -198,10 +198,10 @@ function PromoCarouselBanner() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -15 }}
               transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-              className="flex flex-col gap-4 items-start relative z-10"
+              className="flex flex-col gap-8 sm:gap-8 items-start relative z-10 w-full"
             >
-              <h1 className="font-sans text-[clamp(1.75rem,5vw,3.4rem)] lg:text-[clamp(3.5rem,4.2vw,5.5rem)] font-black leading-[0.9] lg:leading-[0.88] tracking-tighter lg:tracking-tight text-white uppercase drop-shadow-[0_2px_24px_rgba(0,0,0,0.5)]">
-                {slide.titleLine1} <br />
+              <h1 className="font-sans text-[2.5rem] leading-[1.05] sm:text-5xl lg:text-[clamp(3.5rem,4.2vw,5.5rem)] font-black sm:leading-[0.95] lg:leading-[0.88] tracking-tight text-white uppercase drop-shadow-[0_2px_24px_rgba(0,0,0,0.5)]">
+                {slide.titleLine1} <br className="hidden sm:block" />
                 {slide.titleLine2}{" "}
                 <span className="font-sans font-black text-red-500">
                   {slide.titleItalic}
@@ -209,26 +209,26 @@ function PromoCarouselBanner() {
               </h1>
 
               {slide.subtitle && (
-                <p className="max-w-md lg:max-w-xl text-sm sm:text-base lg:text-lg font-medium text-white/70 leading-snug">
+                <p className="max-w-[310px] sm:max-w-md lg:max-w-xl text-[15px] sm:text-lg lg:text-xl font-medium text-white/80 leading-relaxed sm:leading-snug">
                   {slide.subtitle}
                 </p>
               )}
 
-              <div className="flex flex-wrap items-center gap-4 mt-4">
+              <div className="flex flex-wrap items-center gap-3 sm:gap-4 mt-6 sm:mt-4 w-full">
                 <Link
                   href={slide.btnLink === "/sell" ? "/trade-in" : slide.btnLink}
-                  className="group relative inline-flex h-12 px-8 items-center justify-center bg-white text-zinc-950 rounded-2xl font-bold text-xs overflow-hidden transition-all hover:scale-105 active:scale-95 shadow-[0_10px_20px_rgba(0,0,0,0.3)] cursor-pointer"
+                  className="group relative inline-flex h-10 sm:h-12 px-6 sm:px-8 items-center justify-center bg-white text-zinc-950 rounded-xl sm:rounded-2xl font-bold text-[11px] sm:text-xs overflow-hidden transition-all hover:scale-105 active:scale-95 shadow-[0_10px_20px_rgba(0,0,0,0.3)] cursor-pointer"
                 >
                   <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-red-600 to-red-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   <span className="relative z-10 flex items-center gap-2 group-hover:text-white transition-colors duration-300">
                     {slide.btnText}
-                    <ArrowRight className="h-3.5 w-3.5" />
+                    <ArrowRight className="h-3 sm:h-3.5 w-3 sm:w-3.5" />
                   </span>
                 </Link>
 
                 <Link
                   href="/trade-in"
-                  className="inline-flex h-12 px-6 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-white/20 transition-all font-bold text-xs shadow-sm active:scale-95"
+                  className="inline-flex h-10 sm:h-12 px-5 sm:px-6 items-center justify-center rounded-xl sm:rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-white/20 transition-all font-bold text-[11px] sm:text-xs shadow-sm active:scale-95"
                 >
                   How it Works
                 </Link>
