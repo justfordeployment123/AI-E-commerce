@@ -13,21 +13,16 @@ export default function Footer() {
   }, []);
 
   return (
-    <footer className="bg-background pt-24 pb-12 border-t border-border text-foreground font-sans selection:bg-accent selection:text-white">
+    <footer className="bg-zinc-950 pt-24 pb-12 border-t border-zinc-900 text-white font-sans selection:bg-red-500 selection:text-white">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         
-        <div className="grid gap-16 md:grid-cols-2 lg:grid-cols-4 pb-20 border-b border-border">
+        <div className="grid gap-16 md:grid-cols-2 lg:grid-cols-3 pb-20 border-b border-zinc-900">
           <div className="lg:col-span-1">
             <a href="/">
               <img
-                src="/Icon/logo_black.png"
-                alt="TechStop Leicester"
-                className="h-9 w-auto object-contain block dark:hidden"
-              />
-              <img
                 src="/Icon/logo_white.png"
                 alt="TechStop Leicester"
-                className="h-9 w-auto object-contain hidden dark:block"
+                className="h-9 w-auto object-contain block"
               />
             </a>
             <p className="mt-8 text-zinc-500 leading-relaxed font-medium">
@@ -56,17 +51,7 @@ export default function Footer() {
             </div>
           </div>
 
-          <div className="lg:col-span-1 lg:ml-auto">
-             <div className="rounded-[2rem] bg-muted p-8 border border-border text-center lg:text-left">
-                <div className="flex justify-center lg:justify-start gap-1 mb-4">
-                   {[...Array(5)].map((_, i) => (
-                     <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
-                   ))}
-                </div>
-                <p className="text-xl font-sans font-extrabold mb-2 text-foreground">Excellent</p>
-                <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">Based on 12,400 reviews</p>
-             </div>
-          </div>
+
         </div>
 
         <div className="pt-12 flex flex-col md:flex-row justify-between items-center gap-8">
@@ -76,7 +61,7 @@ export default function Footer() {
           </div>
           
           <div className="flex flex-wrap justify-center gap-8 text-[10px] font-bold uppercase tracking-widest text-zinc-400">
-            <span className="text-foreground">© 2024 TechStop Leicester</span>
+            <span className="text-white">© 2024 TechStop Leicester</span>
           </div>
         </div>
       </div>

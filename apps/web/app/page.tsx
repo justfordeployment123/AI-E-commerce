@@ -574,7 +574,6 @@ function TrustPillars() {
     { icon: ShieldCheck, title: "12-month warranty", body: "All devices come with a full year of coverage, no questions asked.", color: "bg-emerald-50 text-emerald-600" },
     { icon: RefreshCw, title: "30-day free returns", body: "Changed your mind? Ship it back within 30 days, completely free.", color: "bg-sky-50 text-sky-600" },
     { icon: BadgeCheck, title: "25-point inspection", body: "Certified experts test every single device before it ships to you.", color: "bg-violet-50 text-violet-600" },
-    { icon: Leaf, title: "CO2 tracker built in", body: "See exactly how much carbon you saved by choosing refurbished.", color: "bg-lime-50 text-lime-700" },
   ];
 
   return (
@@ -587,23 +586,21 @@ function TrustPillars() {
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-px bg-zinc-800">
-          {pillars.map((p, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-              className="bg-zinc-950 p-5 md:p-6 lg:p-7 group hover:bg-zinc-900 transition-colors"
-            >
-              <div className={`h-9 w-9 rounded-xl ${p.color} flex items-center justify-center mb-4`}>
-                <p.icon className="h-5 w-5" />
+        <div className="group flex md:grid md:grid-cols-3 gap-4 md:gap-px bg-transparent md:bg-zinc-800 overflow-hidden pb-6 -mx-4 px-4 sm:-mx-6 sm:px-6 md:mx-0 md:px-0 md:pb-0 scrollbar-hide">
+          <div className="flex md:contents gap-4 sm:gap-6 w-max animate-marquee md:animate-none group-hover:[animation-play-state:paused]">
+            {[...pillars, ...pillars].map((p, i) => (
+              <div
+                key={i}
+                className={`bg-zinc-950 p-6 sm:p-7 hover:bg-zinc-900 transition-colors flex-none w-[75vw] sm:w-[320px] md:w-auto rounded-[2rem] md:rounded-none border border-zinc-800/80 md:border-none ${i >= pillars.length ? 'md:hidden' : ''}`}
+              >
+                <div className={`h-10 w-10 md:h-9 md:w-9 rounded-xl ${p.color} flex items-center justify-center mb-5 md:mb-4`}>
+                  <p.icon className="h-5 w-5 md:h-5 md:w-5" />
+                </div>
+                <h3 className="font-bold text-white text-lg md:text-base mb-2 md:mb-1.5 leading-tight">{p.title}</h3>
+                <p className="text-sm md:text-xs text-zinc-400 leading-relaxed md:leading-normal">{p.body}</p>
               </div>
-              <h3 className="font-bold text-white text-base mb-1.5 leading-tight">{p.title}</h3>
-              <p className="text-xs text-zinc-400 leading-normal">{p.body}</p>
-            </motion.div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </section>
@@ -1521,19 +1518,15 @@ function GradeGuide() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 items-stretch">
-          {grades.map((g, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 32 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.12 }}
-              className={`relative rounded-[2rem] overflow-hidden flex flex-col group hover:-translate-y-1.5 transition-all duration-300 border bg-zinc-950/40 ${g.featured ? g.featuredRing : "border-zinc-800/80 hover:border-zinc-700/80"
-                }`}
-            >
-              {/* Photo */}
-              <div className="h-[340px] overflow-hidden flex-shrink-0">
+        <div className="group flex xl:grid xl:grid-cols-5 gap-4 sm:gap-6 items-stretch overflow-hidden pb-6 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 xl:mx-0 xl:px-0 xl:overflow-x-visible xl:pb-0 scrollbar-hide" style={{ WebkitMaskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)', maskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)' }}>
+          <div className="flex xl:contents gap-4 sm:gap-6 w-max animate-marquee xl:animate-none group-hover:[animation-play-state:paused]">
+            {[...grades, ...grades].map((g, i) => (
+              <div
+                key={i}
+                className={`relative rounded-[2rem] overflow-hidden flex flex-col hover:-translate-y-1.5 transition-all duration-300 border bg-zinc-950/40 flex-none w-[75vw] max-w-[300px] xl:w-auto xl:max-w-none ${g.featured ? g.featuredRing : "border-zinc-800/80 hover:border-zinc-700/80"} ${i >= grades.length ? 'xl:hidden' : ''}`}
+              >
+                {/* Photo */}
+                <div className="h-[300px] overflow-hidden flex-shrink-0 relative">
                 {g.img && (
                   <ProductImage
                     src={g.img}
@@ -1544,18 +1537,18 @@ function GradeGuide() {
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 20vw"
                   />
                 )}
-                <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/40 via-transparent to-zinc-950" />
+                <div className="absolute inset-0 z-10 bg-gradient-to-b from-zinc-950/40 via-transparent to-zinc-950" />
 
                 {g.featured && (
-                  <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-accent text-white text-[9px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-full whitespace-nowrap shadow-lg">
+                  <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 bg-accent text-white text-[9px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-full whitespace-nowrap shadow-lg">
                     Most Popular
                   </div>
                 )}
 
-                <span className="absolute top-4 left-5 text-[10px] font-bold text-white/30 uppercase tracking-widest">{g.num}</span>
+                <span className="absolute top-4 left-5 z-20 text-[10px] font-bold text-white/30 uppercase tracking-widest">{g.num}</span>
 
                 {/* Grade + name + price */}
-                <div className="absolute bottom-0 left-0 right-0 p-5">
+                <div className="absolute bottom-0 left-0 right-0 p-5 z-20">
                   <div className="mb-2">
                     <GradeBadge condition={g.condition} />
                   </div>
@@ -1573,8 +1566,9 @@ function GradeGuide() {
                   Browse devices <ArrowRight className="h-4 w-4" />
                 </a>
               </div>
-            </motion.div>
-          ))}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>
@@ -2445,7 +2439,7 @@ function StoreLocationSection() {
   const mapsLink = activeStore ? `https://maps.google.com/?q=${encodeURIComponent(`${activeStore.name}, ${activeStore.address}, ${activeStore.city} ${activeStore.postcode}`)}` : "https://maps.app.goo.gl/fyc8Zuy4hjh3tG3x8";
 
   return (
-    <section className="relative py-24 bg-zinc-50 dark:bg-zinc-950 overflow-hidden font-sans border-t border-b border-zinc-200/60 dark:border-zinc-900/80">
+    <section className="relative py-12 lg:py-16 bg-zinc-950 overflow-hidden font-sans border-t border-b border-zinc-900/80">
 
       {/* Premium Background Decor */}
       <div className="absolute inset-0 pointer-events-none opacity-[0.03] dark:opacity-[0.05]" style={{ backgroundImage: 'linear-gradient(to right, #888 1px, transparent 1px), linear-gradient(to bottom, #888 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
@@ -2453,22 +2447,15 @@ function StoreLocationSection() {
       <div className="absolute bottom-0 left-1/4 w-[400px] h-[400px] bg-zinc-400/10 dark:bg-white/5 rounded-full blur-[100px] pointer-events-none" />
 
       <div className="relative mx-auto w-full max-w-[1500px] px-4 sm:px-6 lg:px-12">
-        <div className="grid lg:grid-cols-12 gap-16 items-center">
+        <div className="flex flex-col-reverse lg:grid lg:grid-cols-12 gap-8 lg:gap-16 items-center">
 
           {/* Left info column */}
-          <div className="lg:col-span-5 flex flex-col items-start text-left relative z-10">
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/20 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest mb-6 shadow-sm shadow-red-500/5">
-              <MapPin className="h-3.5 w-3.5" />
-              Our Retail Outlets
-            </div>
-
-            <h2 className="text-4xl md:text-5xl lg:text-[3.5rem] font-extrabold tracking-tight text-zinc-950 dark:text-white leading-[1.05] mb-6">
-              Visit us in store.<br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 via-red-500 to-zinc-900 dark:from-red-500 dark:via-red-400 dark:to-white">Express trade-in &amp; repairs.</span>
+          <div className="w-full lg:col-span-5 flex flex-col items-start text-left relative z-10 justify-center">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-white mb-4 tracking-tight">
+              Visit our store.
             </h2>
-
-            <p className="text-zinc-600 dark:text-zinc-400 font-semibold text-base md:text-lg mb-8 leading-relaxed max-w-lg">
-              Drop by our retail outlet for instant diagnostics, same-day screen/battery repairs in under 45 minutes, or get cash on the spot for your old hardware. No appointment necessary.
+            <p className="text-zinc-400 mb-8 max-w-md font-medium leading-relaxed">
+              Drop by for instant diagnostics, 45-minute repairs, or trade in your old device for cash on the spot.
             </p>
 
             {stores.length > 1 && (
@@ -2491,67 +2478,55 @@ function StoreLocationSection() {
               </div>
             )}
 
-            <div className="relative w-full max-w-md bg-white/60 dark:bg-zinc-900/50 backdrop-blur-xl rounded-[2rem] border border-white/50 dark:border-zinc-800/80 p-6 sm:p-8 space-y-6 mb-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] overflow-hidden">
+            <div className="relative w-full max-w-md bg-zinc-800/40 backdrop-blur-xl rounded-[1.5rem] border border-zinc-700/50 p-5 space-y-4 mb-6 shadow-xl overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-red-500/50 to-transparent" />
 
-              <div className="flex gap-4 items-start group">
-                <div className="h-11 w-11 bg-red-50 dark:bg-red-500/10 rounded-2xl border border-red-100 dark:border-red-500/20 flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:bg-red-500 group-hover:text-white transition-all duration-300 text-red-600 dark:text-red-400">
-                  <MapPin className="h-5 w-5" />
+              <div className="flex gap-3 items-center group">
+                <div className="h-9 w-9 bg-red-500/10 rounded-xl border border-red-500/20 flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:bg-red-500 group-hover:text-white transition-all duration-300 text-red-400">
+                  <MapPin className="h-4 w-4" />
                 </div>
                 <div>
-                  <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500 block leading-none mb-1.5">Store Address</span>
-                  <span className="text-sm font-extrabold text-zinc-900 dark:text-zinc-100">{storeAddress}</span>
+                  <span className="text-[9px] font-black uppercase tracking-wider text-zinc-500 block leading-none mb-1">Store Address</span>
+                  <span className="text-sm font-bold text-zinc-100">{storeAddress}</span>
                 </div>
               </div>
 
-              <div className="flex gap-4 items-start group">
-                <div className="h-11 w-11 bg-red-50 dark:bg-red-500/10 rounded-2xl border border-red-100 dark:border-red-500/20 flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:bg-red-500 group-hover:text-white transition-all duration-300 text-red-600 dark:text-red-400">
-                  <Clock className="h-5 w-5" />
+              <div className="flex gap-3 items-center group">
+                <div className="h-9 w-9 bg-red-500/10 rounded-xl border border-red-500/20 flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:bg-red-500 group-hover:text-white transition-all duration-300 text-red-400">
+                  <Clock className="h-4 w-4" />
                 </div>
                 <div>
-                  <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500 block leading-none mb-1.5">Opening Hours</span>
-                  <span className="text-sm font-extrabold text-zinc-900 dark:text-zinc-100">{storeHours}</span>
+                  <span className="text-[9px] font-black uppercase tracking-wider text-zinc-500 block leading-none mb-1">Opening Hours</span>
+                  <span className="text-sm font-bold text-zinc-100">{storeHours}</span>
                 </div>
               </div>
 
-              <div className="flex gap-4 items-start group">
-                <div className="h-11 w-11 bg-red-50 dark:bg-red-500/10 rounded-2xl border border-red-100 dark:border-red-500/20 flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:bg-red-500 group-hover:text-white transition-all duration-300 text-red-600 dark:text-red-400">
-                  <Phone className="h-5 w-5" />
+              <div className="flex gap-3 items-center group">
+                <div className="h-9 w-9 bg-red-500/10 rounded-xl border border-red-500/20 flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:bg-red-500 group-hover:text-white transition-all duration-300 text-red-400">
+                  <Phone className="h-4 w-4" />
                 </div>
                 <div>
-                  <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500 block leading-none mb-1.5">Store Contact</span>
-                  <a href={`tel:${storePhone}`} className="text-sm font-extrabold text-zinc-900 dark:text-zinc-100 hover:text-red-500 dark:hover:text-red-400 transition-colors">{storePhone}</a>
+                  <span className="text-[9px] font-black uppercase tracking-wider text-zinc-500 block leading-none mb-1">Store Contact</span>
+                  <a href={`tel:${storePhone}`} className="text-sm font-bold text-zinc-100 hover:text-red-400 transition-colors">{storePhone}</a>
                 </div>
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full max-w-md lg:w-auto">
               <a
                 href={mapsLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group relative px-8 py-4.5 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 rounded-xl text-sm font-black transition-all flex items-center justify-center gap-2 text-center overflow-hidden hover:scale-105 active:scale-95 shadow-[0_10px_20px_rgba(0,0,0,0.1)] dark:shadow-[0_10px_20px_rgba(255,255,255,0.1)]"
+                className="group relative px-8 py-4 bg-white text-zinc-950 rounded-xl text-sm font-black transition-all flex items-center justify-center gap-2 text-center overflow-hidden hover:scale-105 active:scale-95 shadow-[0_10px_20px_rgba(255,255,255,0.1)]"
               >
                 <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-red-600 to-red-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 <span className="relative flex items-center gap-2 group-hover:text-white">Get Directions <MapPin className="h-4 w-4" /></span>
               </a>
-              <Link
-                href="/repair"
-                className="px-8 py-4.5 bg-white/50 hover:bg-white dark:bg-zinc-900/50 dark:hover:bg-zinc-800 text-zinc-900 dark:text-white backdrop-blur-md rounded-xl text-sm font-black transition-all flex items-center justify-center gap-2 text-center border border-zinc-200/80 dark:border-zinc-800/80 shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-95"
-              >
-                Book a Repair
-              </Link>
-              <Link
-                href="/trade-in"
-                className="px-8 py-4.5 bg-white/50 hover:bg-white dark:bg-zinc-900/50 dark:hover:bg-zinc-800 text-zinc-900 dark:text-white backdrop-blur-md rounded-xl text-sm font-black transition-all flex items-center justify-center gap-2 text-center border border-zinc-200/80 dark:border-zinc-800/80 shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-95"
-              >
-                Trade In
-              </Link>
             </div>
           </div>
 
           {/* Right map column */}
-          <div className="lg:col-span-7 w-full h-[450px] lg:h-[600px] rounded-[2.5rem] overflow-hidden border-[6px] border-white/50 dark:border-zinc-800/30 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] dark:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] relative group bg-zinc-100 dark:bg-zinc-950 backdrop-blur-sm z-10">
+          <div className="w-full lg:col-span-7 h-[300px] lg:h-[450px] rounded-[2rem] lg:rounded-[2.5rem] overflow-hidden border-4 lg:border-[6px] border-white/50 dark:border-zinc-800/30 shadow-[0_15px_30px_-10px_rgba(0,0,0,0.1)] dark:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] relative group bg-zinc-100 dark:bg-zinc-950 backdrop-blur-sm z-10">
             <iframe
               title="TechStop Store Locations Map"
               width="100%"
@@ -2603,7 +2578,6 @@ export default function HomePage() {
       <AppPreview />
       <Reviews />
 
-      <SellCTA />
       <StoreLocationSection />
       <Footer />
     </main>
