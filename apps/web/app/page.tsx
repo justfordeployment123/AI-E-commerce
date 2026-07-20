@@ -169,7 +169,7 @@ function PromoCarouselBanner() {
               aria-hidden={!isActive}
               className="absolute inset-0 h-full w-full object-cover"
               initial={false}
-              animate={isActive ? { opacity: 1, scale: 1.08 } : { opacity: 0, scale: 1 }}
+              animate={isActive ? { opacity: 1, scale: 1.08 } : { opacity: 0, scale: 1.02 }}
               transition={isActive ? { opacity: { duration: 0.7 }, scale: { duration: 5, ease: "linear" } } : { opacity: { duration: 0.5 }, scale: { duration: 0 } }}
             />
           ) : null;
@@ -180,7 +180,7 @@ function PromoCarouselBanner() {
       </div>
 
       {/* Background Grid Pattern */}
-      <div className="absolute inset-0 pointer-events-none opacity-[0.05] z-[1]" style={{ backgroundImage: 'linear-gradient(to right, #fff 1px, transparent 1px), linear-gradient(to bottom, #fff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+      <div className="absolute inset-0 pointer-events-none opacity-[0.05] z-[1]" style={{ backgroundImage: 'linear-gradient(to right, #fff 1px, transparent 1px), linear-gradient(to bottom, #fff 1px, transparent 1px)', backgroundSize: '40px 40px', WebkitMaskImage: 'linear-gradient(to bottom, black calc(100% - 2px), transparent 100%)', maskImage: 'linear-gradient(to bottom, black calc(100% - 2px), transparent 100%)' }} />
 
       {/* Main Showcase Stage */}
       <div className="mx-auto w-full max-w-[1500px] px-4 sm:px-6 lg:px-12 flex-1 flex items-center relative z-10">
@@ -317,7 +317,7 @@ function MarqueeStrip() {
     "47,000+ Devices In Stock", "Same-Day Dispatch Before 2pm",
   ];
   return (
-    <div className="bg-zinc-950 overflow-hidden py-3.5">
+    <div className="relative z-20 bg-zinc-950 overflow-hidden py-3.5 -mt-[1px]">
       <div className="flex gap-0 animate-marquee whitespace-nowrap w-max">
         {items.map((item, i) => (
           <span key={i} className="inline-flex items-center gap-8 px-6 text-[11px] font-bold uppercase tracking-[0.18em] text-white/50">
@@ -2581,8 +2581,10 @@ export default function HomePage() {
 
   return (
     <main className="flex min-h-screen flex-col bg-background text-foreground font-sans">
-      <PromoCarouselBanner />
-      <MarqueeStrip />
+      <div className="bg-zinc-950 flex flex-col -mt-[1px] pt-[1px]">
+        <PromoCarouselBanner />
+        <MarqueeStrip />
+      </div>
       {/* <Hero /> */}
       <CategoryQuickNav />
       <TradeInCTASection />
