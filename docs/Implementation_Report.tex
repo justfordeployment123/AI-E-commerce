@@ -102,8 +102,6 @@
   width=0.72\textwidth, left=14pt, right=14pt, top=10pt, bottom=10pt
 ]
 \begin{tabular}{@{}ll@{}}
-\textbf{Prepared by:} & Muhammad Hasaam \\[3pt]
-\textbf{Prepared for:} & Project Supervisor \\[3pt]
 \textbf{Date:} & 20 July 2026 \\[3pt]
 \textbf{Repository:} & AI-E-commerce (branch: \texttt{main}) \\[3pt]
 \textbf{Reference document:} & \texttt{Project\_Brief.docx} \\
@@ -195,7 +193,7 @@ For reference, the brief requested a custom e-commerce site for a UK refurbished
 E-commerce sell side (browse / PDP / cart / checkout / payment) & \stOK & Full Next.js storefront with real Stripe checkout. \\[4pt]
 Trade-in tap flow (buy side) & \stOK & Genuinely tap-driven wizard; only one optional free-text field in the entire flow. \\[4pt]
 AI pricing engine (scraped baseline + condition modifiers + AI fallback) & \stOKc & OpenAI GPT-4o fallback is correctly gated to control cost; the scrape interval defaults to hourly, not literally weekly as worded in the brief. \\[4pt]
-Scraper reliability and anti-bot measures & \stPartial & CeX and Envirofone are live; BackMarket and Music Magpie are stubbed out; no proxy rotation is implemented. \\[4pt]
+Scraper reliability and anti-bot measures & \stPartial & CeX and Envirofone are live; BackMarket and Music Magpie are stubbed out; proxy rotation is scaffolded but not yet live (no provider configured). \\[4pt]
 Repair booking flow & \stOK & Full customer wizard plus admin quote / approve / complete lifecycle. \\[4pt]
 Shipping integration & \stOKc & Real Shippo (Royal Mail by default) label generation, tracking and email; falls back to a mock label when no live API key is set. \\[4pt]
 Admin control panel & \stOK & Full CRUD across products, trade-ins, repairs, orders, pricing rules, catalog and more. \\[4pt]
@@ -204,7 +202,7 @@ Authentication & \stOK & JWT plus bcrypt plus Google OAuth, with role-based guar
 Catalog scope (brief target: approx.\ 50--60 SKUs) & \stOK & 118 sellable SKUs and about 140 trade-in device catalog entries. \\[4pt]
 Out-of-scope exclusions honored & \stConfirmed & No chatbot, no multi-language, no multi-currency, no native app, no loyalty program. \\[4pt]
 Live preview / production deployment & \stUnconfirmed & No CI/CD deploy pipeline found in-repo; the production domain appears only as a placeholder in example config files. \\[4pt]
-Automated test coverage & \stGap & 5 test files across 30-plus backend modules; no automated frontend tests. \\
+Automated test coverage & \stPartial & Backend: 456 Jest unit tests across 27 of 30 NestJS modules, all passing. Frontend (storefront and admin) has no automated tests. \\
 
 \end{longtable}
 
@@ -238,8 +236,8 @@ Two nuances for a technical reviewer: first, the admin-configurable condition mu
 
 A dedicated scraper service (\texttt{apps/scraper}) uses headless Playwright with several real anti-detection measures: automation-flag suppression, realistic browser headers and locale, per-request throttling with randomized delays between items, and resume-after-crash support so an interrupted run can continue rather than restart. Of the four competitor sources named in the brief, two are functioning: CeX (via its search API) and Envirofone (via a reader-proxy technique that gets around basic blocking). The other two, BackMarket and Music Magpie, are present in the code as stubs only --- BackMarket is blocked by Cloudflare on every method attempted, and Music Magpie's prices are rendered in a way that has not yet been reliably extracted. Both are explicitly commented in the code as disabled pending a working approach, not left in silently.
 
-\begin{tcolorbox}[colback=white, colframe=Danger, boxrule=0.6pt, arc=1.5mm, left=10pt, right=10pt, top=8pt, bottom=8pt]
-Proxy/IP rotation, which the brief called out specifically, is \textbf{not} implemented --- the scraper runs from a single fixed network context. There is also no automated alerting (email or chat notification) if a scraping run fails; failures are recorded in the database as a failed run status but nobody is proactively notified. Given the brief flags scraping reliability as one of the four make-or-break factors for the project, this is the single area most worth prioritizing before going fully live with pricing on autopilot.
+\begin{tcolorbox}[colback=white, colframe=Amber, boxrule=0.6pt, arc=1.5mm, left=10pt, right=10pt, top=8pt, bottom=8pt]
+Proxy/IP rotation, which the brief called out specifically, is now \textbf{scaffolded but not live}: a round-robin proxy pool is wired into the scraper's browser contexts, rotates on a configurable schedule and on rate-limit signals, and cools down proxies that get marked bad --- but with no live proxy provider's credentials configured yet, it runs as a verified no-op and the scraper still executes from a single fixed IP in practice. There is also still no automated alerting (email or chat notification) if a scraping run fails; failures are recorded in the database as a failed run status but nobody is proactively notified. Given the brief flags scraping reliability as one of the four make-or-break factors for the project, sourcing a proxy provider and wiring failure alerting are the two items most worth prioritizing before going fully live with pricing on autopilot.
 \end{tcolorbox}
 
 \subsection{Repair Booking}
@@ -323,9 +321,9 @@ These are configuration, coverage and operational items rather than missing feat
 
 \begin{enumerate}[leftmargin=1.4em, itemsep=5pt, topsep=4pt]
   \item \textbf{Scraper coverage:} only CeX and Envirofone are live; BackMarket and Music Magpie are stubbed pending a working extraction method against their anti-bot protections. Since scraping reliability is one of the brief's four named critical success factors, this is the top item to revisit.
-  \item \textbf{No proxy/IP rotation and no automated failure alerting} on the scraper --- both were explicitly requested in the brief's risk-mitigation section.
+  \item \textbf{Proxy/IP rotation is now scaffolded but not yet live; failure alerting is still absent.} A round-robin proxy pool (\texttt{ProxyPoolService}, apps/scraper) is wired into every Playwright browser context used for CeX scraping: it rotates context/proxy every N devices (configurable), rotates immediately on an Envirofone rate-limit signal, and cools a proxy down temporarily after it gets marked bad. With no \texttt{SCRAPER\_PROXIES} configured it is a verified no-op --- the scraper runs exactly as before, from a single fixed IP. It only starts rotating once a live proxy provider's credentials are set in that env var, which has not been done yet. Automated failure alerting (email/chat notification on a failed scraper run) is still not implemented.
   \item \textbf{No CI/CD deployment pipeline} exists in the repository (only a database-migration safety check runs in GitHub Actions). Whether the site is actually live at the client's domain needs to be confirmed outside the codebase, since the brief's ``live preview within 2--4 days'' requirement cannot be verified from the repo alone.
-  \item \textbf{Automated test coverage is thin:} five test files across more than thirty backend modules, and no automated frontend tests. This does not indicate the features do not work, but it does mean regressions rely on manual testing rather than a safety net.
+  \item \textbf{Backend test coverage is now solid; frontend coverage is still the gap:} the NestJS API has 456 Jest unit tests across 27 of its 30 modules (the remaining three --- \texttt{config}, \texttt{database}, \texttt{uploads} --- are thin infrastructure wiring with no business logic to test), covering error paths, state transitions and pricing/refund/trade-in logic with all external dependencies (Prisma, Stripe, Shippo, OpenAI, Redis) mocked. Neither the Next.js storefront nor the admin panel has any automated tests; regressions there still rely on manual testing.
   \item Both \textbf{Stripe and Shippo} cleanly fall back to safe development-mode behavior when live credentials are not configured. Before go-live, both should be smoke-tested end-to-end with real production API keys.
   \item The scraper's refresh interval defaults to \textbf{hourly rather than the brief's literal ``weekly''} wording; this is configurable, not a defect, but worth confirming the client is comfortable with the chosen cadence.
   \item A small \textbf{data-seeding inconsistency:} the trade-in search-box autocomplete list omits PS3 and Xbox 360 even though both are selectable in the trade-in wizard and exist in the sell-side catalog.
@@ -338,6 +336,6 @@ These are configuration, coverage and operational items rather than missing feat
 
 Measured against the original Project Brief, the build is functionally complete: every core feature --- the sell-side store, the tap-driven trade-in flow, the layered AI pricing engine, repair booking, shipping labels, payments, and a full non-technical admin panel --- exists, is wired end to end, and is backed by real third-party integrations rather than placeholders. The catalog exceeds the brief's target SKU count and covers every device range requested.
 
-The items in Section~\ref{sec:gaps} are the honest gap list between ``code complete'' and ``production hardened'': two scraper sources, live-credential smoke testing, a deployment pipeline, and stronger automated test coverage. None of them require new features to be built; they are the natural next step after a feature-complete build like this one.
+The items in Section~\ref{sec:gaps} are the honest gap list between ``code complete'' and ``production hardened'': two scraper sources, live-credential smoke testing, a deployment pipeline, and automated frontend test coverage (the backend now has solid Jest coverage). None of them require new features to be built; they are the natural next step after a feature-complete build like this one.
 
 \end{document}

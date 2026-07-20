@@ -10,7 +10,7 @@ describe('ScraperService', () => {
     let service: TestableScraperService;
 
     beforeEach(() => {
-        service = new TestableScraperService(null as any);
+        service = new TestableScraperService(null as any, null as any);
     });
 
     describe('extractPriceFromMarkdown', () => {

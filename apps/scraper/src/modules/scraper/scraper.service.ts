@@ -1,7 +1,8 @@
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { ProxyPoolService, type ProxyConfig } from './proxy-pool.service';
 import { chromium } from 'playwright';
-import type { BrowserContext } from 'playwright';
+import type { Browser, BrowserContext } from 'playwright';
 
 // These are used inside page.evaluate() which runs in browser context — not Node.js globals
 declare const navigator: any;
@@ -51,12 +52,48 @@ async function blockHeavyResources(context: BrowserContext): Promise<void> {
     });
 }
 
+// How many items to scrape through one proxy/context before rotating to the next —
+// only takes effect once SCRAPER_PROXIES is actually configured (see ProxyPoolService).
+const PROXY_ROTATE_EVERY = Number(process.env.SCRAPER_PROXY_ROTATE_EVERY) || 25;
+
 @Injectable()
 export class ScraperService implements OnApplicationBootstrap {
     private readonly logger = new Logger(ScraperService.name);
     private stopRequested = false;
 
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly proxyPool: ProxyPoolService,
+    ) {}
+
+    /** Opens a fresh, fully-configured browser context — with a proxy from the pool if one is set. */
+    private async openContext(browser: Browser): Promise<{ context: BrowserContext; proxy: ProxyConfig | null }> {
+        const proxy = this.proxyPool.next();
+        const context = await browser.newContext({
+            userAgent:  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            viewport:   { width: 1366, height: 768 },
+            locale:     'en-GB',
+            timezoneId: 'Europe/London',
+            extraHTTPHeaders: { 'Accept-Language': 'en-GB,en;q=0.9' },
+            ...(proxy ? { proxy: { server: proxy.server, username: proxy.username, password: proxy.password } } : {}),
+        });
+        await context.addInitScript(() => {
+            Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+            globalThis.chrome = { runtime: {} };
+        });
+        await blockHeavyResources(context);
+        if (proxy) this.logger.log(`Context using proxy ${this.proxyPool.redact(proxy.server)}`);
+        return { context, proxy };
+    }
+
+    /** Closes the current context and opens a new one on the next proxy in the pool. */
+    private async rotateContext(
+        browser: Browser, context: BrowserContext, reason: string,
+    ): Promise<{ context: BrowserContext; proxy: ProxyConfig | null }> {
+        this.logger.log(`Rotating context/proxy (${reason})…`);
+        await context.close();
+        return this.openContext(browser);
+    }
 
     /** Signal the running scraper to stop after the current device finishes. */
     async stop(): Promise<{ stopped: boolean }> {
@@ -210,20 +247,7 @@ export class ScraperService implements OnApplicationBootstrap {
             args: CHROMIUM_ARGS,
         });
 
-        const context = await browser.newContext({
-            userAgent:    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-            viewport:     { width: 1366, height: 768 },
-            locale:       'en-GB',
-            timezoneId:   'Europe/London',
-            extraHTTPHeaders: { 'Accept-Language': 'en-GB,en;q=0.9' },
-        });
-
-        // Remove webdriver flag visible to JS-based bot detectors
-        await context.addInitScript(() => {
-            Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
-            globalThis.chrome = { runtime: {} };
-        });
-        await blockHeavyResources(context);
+        let { context, proxy: activeProxy } = await this.openContext(browser);
 
         const results: Record<string, DevicePrices> = {};
         const total   = itemsToScrape.length;
@@ -314,6 +338,16 @@ export class ScraperService implements OnApplicationBootstrap {
                 console.log(`[${ts()}]  ${num}  ${bar(i + 1)}  ${item.fullName}`);
                 console.log(`  ==> CeX: ${p(cex?.sellPrice ?? null).padEnd(8)}  BM: ${fmt(backMarket)}  MM: ${fmt(musicMagpie)}  EF: ${fmt(envirofone)}  ${best}`);
                 console.log('');
+
+                // Proxy rotation is a no-op unless SCRAPER_PROXIES is configured.
+                if (this.proxyPool.enabled) {
+                    if (envirofone.reason === 'rate-limit' && activeProxy) {
+                        this.proxyPool.markBad(activeProxy);
+                        ({ context, proxy: activeProxy } = await this.rotateContext(browser, context, 'rate-limited by Envirofone'));
+                    } else if ((i + 1) % PROXY_ROTATE_EVERY === 0 && i < total - 1) {
+                        ({ context, proxy: activeProxy } = await this.rotateContext(browser, context, `periodic after ${i + 1} items`));
+                    }
+                }
 
                 if (i < total - 1) {
                     // Spread devices out further so the browser isn't kept busy
@@ -528,18 +562,7 @@ export class ScraperService implements OnApplicationBootstrap {
             headless: true,
             args: CHROMIUM_ARGS,
         });
-        const context = await browser.newContext({
-            userAgent:  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-            viewport:   { width: 1366, height: 768 },
-            locale:     'en-GB',
-            timezoneId: 'Europe/London',
-            extraHTTPHeaders: { 'Accept-Language': 'en-GB,en;q=0.9' },
-        });
-        await context.addInitScript(() => {
-            Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
-            globalThis.chrome = { runtime: {} };
-        });
-        await blockHeavyResources(context);
+        const { context } = await this.openContext(browser);
 
         try {
             for (const storage of storageOptions) {
