@@ -269,11 +269,10 @@ export default function CategoryPage() {
   if (sort === "rating") filtered = [...filtered].sort((a, b) => b.rating - a.rating);
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans selection:bg-accent selection:text-white">
-
+    <div className="min-h-screen pt-16 lg:pt-20 bg-background text-foreground font-sans selection:bg-accent selection:text-white">
 
       {/* ── Most Wanted Sub-brands & Accessories ────────────────────────── */}
-      <section className="bg-white border-b border-zinc-100 py-8">
+      <section className="bg-white border-b border-zinc-100 pb-8 pt-4">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           
           {/* Sub-brand Grid */}

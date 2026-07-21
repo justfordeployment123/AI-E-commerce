@@ -155,7 +155,7 @@ function PromoCarouselBanner() {
 
   return (
     <section
-      className="w-full min-h-[calc(100dvh-150px)] lg:min-h-[100dvh] bg-zinc-950 relative overflow-hidden flex flex-col justify-between pt-[120px] pb-8 lg:pt-[180px] lg:pb-12"
+      className="w-full min-h-[calc(100dvh-150px)] lg:min-h-[75vh] bg-zinc-950 relative overflow-hidden flex flex-col justify-between pt-[120px] pb-8 lg:pt-[140px] lg:pb-12"
     >
       {/* Background Images */}
       <div className="absolute inset-0 z-0">

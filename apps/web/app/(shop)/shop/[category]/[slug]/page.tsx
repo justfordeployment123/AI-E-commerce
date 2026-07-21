@@ -23,8 +23,9 @@ export default function ProductDetailPage() {
   // "films", "games", "storage" etc. don't have their own /shop/<category>
   // page — they're subsections of /shop/others, so the back-link must point
   // there instead (with a hash to jump straight to that section).
-  const backHref = isOtherCategory(categorySlug)
-    ? `/shop/others#${categorySlug?.toLowerCase()}`
+  const decodedCategory = decodeURIComponent(categorySlug || "");
+  const backHref = isOtherCategory(decodedCategory)
+    ? `/shop/others#${decodedCategory.toLowerCase()}`
     : `/shop/${categorySlug}`;
 
   const [product, setProduct] = useState<Product | null>(null);

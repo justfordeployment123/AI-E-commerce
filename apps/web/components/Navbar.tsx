@@ -3,7 +3,8 @@
 import React, { useRef, useState, useEffect, useMemo } from "react";
 import {
   ShoppingCart, Search, Menu, ChevronRight, X, Zap, ArrowRight,
-  RefreshCw, Wrench, Package, Settings, LogOut, LogIn, Sun, Moon, MoreHorizontal
+  RefreshCw, Wrench, Package, Settings, LogOut, LogIn, Sun, Moon, MoreHorizontal,
+  HelpCircle, ArrowLeft, AlignLeft, ChevronUp
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
@@ -82,6 +83,7 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [showCategoryBar, setShowCategoryBar] = useState(true);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [productIndex, setProductIndex] = useState<SearchableItem[]>([]);
   const [indexLoading, setIndexLoading] = useState(true);
@@ -326,8 +328,8 @@ export default function Navbar() {
             
             {/* Left: Hamburger + Logo */}
             <div className="flex items-center shrink-0 min-w-fit gap-2 sm:gap-4">
-              <button className="lg:hidden text-white shrink-0 hover:text-accent transition-colors" onClick={toggleMobileMenu} aria-label="Toggle menu">
-                {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              <button className="lg:hidden flex items-center justify-center h-10 w-10 rounded-[14px] bg-white/5 hover:bg-white/10 text-white transition-all shrink-0 border border-white/10" onClick={toggleMobileMenu} aria-label="Toggle menu">
+                {isOpen ? <X className="h-5 w-5" strokeWidth={2.5} /> : <AlignLeft className="h-5 w-5" strokeWidth={2.5} />}
               </button>
               <Link href="/" className="flex items-center select-none shrink-0">
                 <img
@@ -414,12 +416,20 @@ export default function Navbar() {
                 <span className="hidden lg:inline">Trade In</span>
               </Link>
 
+              {/* Mobile Search Toggle */}
+              <button
+                onClick={() => setMobileSearchOpen(prev => !prev)}
+                className="sm:hidden flex items-center justify-center h-10 w-10 rounded-[14px] bg-white/5 hover:bg-white/10 text-white transition-all shrink-0 border border-white/10"
+              >
+                <Search className="h-4 w-4 shrink-0" />
+              </button>
+
               {/* Auth button */}
               {loading ? (
-                <div className="h-10 w-10 rounded-[14px] bg-muted animate-pulse" />
+                <div className="hidden sm:block h-10 w-10 rounded-[14px] bg-muted animate-pulse" />
               ) : user ? (
                 /* Logged-in avatar + dropdown */
-                <div ref={profileRef} className="relative">
+                <div ref={profileRef} className="relative hidden sm:block">
                   <button
                     onClick={() => setProfileOpen((o) => !o)}
                     className="flex items-center justify-center h-10 w-10 md:h-11 md:w-11 rounded-[14px] bg-accent text-white font-black text-sm uppercase tracking-tight transition-transform hover:scale-105 active:scale-95 shadow-md shadow-accent/20 select-none"
@@ -502,7 +512,7 @@ export default function Navbar() {
                 /* Not logged in */
                 <Link
                   href="/account"
-                  className="flex items-center justify-center gap-2 h-10 w-10 sm:w-auto sm:px-4 rounded-xl bg-accent text-white hover:bg-accent-dark transition-all font-bold text-xs uppercase tracking-wide shadow-md shadow-accent/20 shrink-0"
+                  className="hidden sm:flex items-center justify-center gap-2 h-10 w-10 sm:w-auto sm:px-4 rounded-xl bg-accent text-white hover:bg-accent-dark transition-all font-bold text-xs uppercase tracking-wide shadow-md shadow-accent/20 shrink-0"
                 >
                   <LogIn className="h-4 w-4 shrink-0" />
                   <span className="hidden sm:inline">Sign In</span>
@@ -528,9 +538,85 @@ export default function Navbar() {
           </div>
         </div> {/* End Navbar Container */}
 
+        {/* Mobile Search Bar Dropdown */}
+        <AnimatePresence>
+          {mobileSearchOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="sm:hidden absolute top-[76px] inset-x-0 w-full bg-[#0a0a0a] border-t border-white/10 pointer-events-auto shadow-2xl z-40"
+            >
+              <div className="p-4">
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onFocus={() => setIsSearchFocused(true)}
+                    onBlur={() => {
+                      setTimeout(() => setIsSearchFocused(false), 200);
+                    }}
+                    autoFocus
+                    placeholder="Search products..."
+                    className="h-12 w-full rounded-2xl bg-white/5 pl-11 pr-4 text-sm font-semibold outline-none transition-all focus:ring-2 focus:ring-accent border border-white/10 text-white placeholder:text-zinc-500"
+                  />
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-500" />
+                </div>
+
+                {/* Mobile Search Results */}
+                <AnimatePresence>
+                  {isSearchFocused && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      className="mt-4 max-h-[60vh] overflow-y-auto"
+                    >
+                      {searchQuery === "" ? (
+                        <SearchEmptyState
+                          recentSearches={recentSearches}
+                          trending={trendingProducts}
+                          onPickRecent={q => setSearchQuery(q)}
+                          onNavigate={() => { setIsSearchFocused(false); setMobileSearchOpen(false); }}
+                        />
+                      ) : (
+                        <div>
+                          <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-3">
+                            {searchLoading ? "Searching…" : "Matching Products"}
+                          </p>
+                          <div className="space-y-2 pr-1">
+                            {searchResults.map(item => (
+                              <Link key={item.slug} href={`/shop/${item.category.toLowerCase()}/${item.slug}`}
+                                onClick={() => { recordSearch(searchQuery); setMobileSearchOpen(false); }}
+                                className="flex items-center gap-4 p-2 rounded-xl hover:bg-white/5 transition-colors group text-white">
+                                <div className="h-10 w-10 bg-white/5 rounded-lg p-1.5 flex items-center justify-center shrink-0">
+                                  <ProductImage src={item.image} alt={item.name} width={28} height={28} iconClassName="h-4 w-4" bg="" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-xs font-bold text-white group-hover:text-accent truncate">{item.name}</p>
+                                  <p className="text-[10px] text-zinc-500 font-semibold uppercase tracking-wider mt-0.5">{item.brand} · {item.category}</p>
+                                </div>
+                                {item.price != null && <span className="text-xs font-extrabold text-white shrink-0">£{item.price}</span>}
+                              </Link>
+                            ))}
+                            {!searchLoading && searchResults.length === 0 && (
+                              <p className="text-xs font-bold text-zinc-500 py-4 text-center">No results for &quot;{searchQuery}&quot;</p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Tier 2: Category Bar (Floating below notch) */}
         <AnimatePresence>
-          {showCategoryBar && !pathname?.startsWith("/account") && (
+          {showCategoryBar && !pathname?.startsWith("/account") && !(pathname?.startsWith("/shop/") && pathname.split("/").filter(Boolean).length >= 3) && (
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -658,7 +744,7 @@ export default function Navbar() {
                   {[
                     { label: "Sell Your Device", href: "/trade-in", icon: RefreshCw, slug: "trade-in" },
                     { label: "Book a Repair", href: "/repair", icon: Wrench, slug: "repair" },
-                    { label: "Help Centre", href: "/help", icon: null, slug: "help" },
+                    { label: "Help Centre", href: "/help", icon: HelpCircle, slug: "help" },
                   ].map(({ label, href, icon: Icon, slug }) => {
                     const isActive = pathname?.startsWith(href);
                     let desc = "";
@@ -721,6 +807,17 @@ export default function Navbar() {
                     );
                   })}
                 </div>
+
+                <div className="w-px h-5 bg-white/10" />
+
+                {/* Close Button */}
+                <button 
+                  onClick={() => setShowCategoryBar(false)}
+                  className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white transition-all shrink-0"
+                  aria-label="Hide category bar"
+                >
+                  <ChevronUp className="h-4 w-4" strokeWidth={2.5} />
+                </button>
               </div>
             </motion.div>
           )}
@@ -754,103 +851,51 @@ export default function Navbar() {
               initial={{ x: "-100%" }}
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
-              transition={{ type: "tween", duration: 0.25, ease: "easeOut" }}
-              className="lg:hidden fixed left-0 z-50 w-[82%] max-w-xs border-r border-border bg-background overflow-y-auto text-foreground shadow-2xl"
+              transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+              className="lg:hidden fixed left-0 z-50 w-[82%] max-w-xs border-r border-b border-white/10 bg-[#0a0a0a] overflow-y-auto text-white shadow-2xl rounded-br-[2.5rem]"
               style={{ top: headerHeight, height: `calc(100vh - ${headerHeight}px)` }}
             >
-            <div className="px-4 py-6 space-y-1">
-              {/* Search bar inside mobile drawer */}
-              <div className="mb-4 relative">
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onFocus={() => setIsSearchFocused(true)}
-                    onBlur={() => {
-                      setTimeout(() => setIsSearchFocused(false), 200);
-                    }}
-                    placeholder="Search products..."
-                    className="h-11 w-full rounded-xl bg-muted pl-10 pr-4 text-sm font-bold outline-none text-foreground border border-border/40"
-                  />
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
-                </div>
-
-                {/* Mobile Search Results Dropdown */}
-                <AnimatePresence>
-                  {isSearchFocused && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 8 }}
-                      className="absolute left-0 right-0 top-full mt-2 max-h-[70vh] overflow-y-auto bg-background border border-border rounded-[24px] shadow-2xl z-50 p-5 text-foreground"
-                    >
-                      {searchQuery === "" ? (
-                        <SearchEmptyState
-                          recentSearches={recentSearches}
-                          trending={trendingProducts}
-                          onPickRecent={q => setSearchQuery(q)}
-                          onNavigate={() => { setIsOpen(false); setIsSearchFocused(false); }}
-                        />
-                      ) : (
-                        <div>
-                          <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-3">
-                            {searchLoading ? "Searching…" : "Matching Products"}
-                          </p>
-                          <div className="space-y-2">
-                            {searchResults.map(item => (
-                              <Link key={item.slug} href={`/shop/${item.category.toLowerCase()}/${item.slug}`}
-                                onClick={() => { recordSearch(searchQuery); setIsOpen(false); setIsSearchFocused(false); }}
-                                className="flex items-center gap-4 p-2 rounded-xl hover:bg-muted transition-colors group text-foreground">
-                                <div className="h-10 w-10 bg-image-light rounded-lg p-1.5 flex items-center justify-center shrink-0">
-                                  <ProductImage src={item.image} alt={item.name} width={28} height={28} iconClassName="h-4 w-4" bg="" />
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                  <p className="text-xs font-bold text-foreground group-hover:text-accent truncate">{item.name}</p>
-                                  <p className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider mt-0.5">{item.brand} · {item.category}</p>
-                                </div>
-                                {item.price != null && <span className="text-xs font-extrabold text-foreground shrink-0">£{item.price}</span>}
-                              </Link>
-                            ))}
-                            {!searchLoading && searchResults.length === 0 && (
-                              <p className="text-xs font-bold text-zinc-400 py-4 text-center">No results for &quot;{searchQuery}&quot;</p>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+            <div className="px-4 py-6 space-y-1 flex flex-col min-h-full">
+              {/* Close Button Header */}
+              <div className="flex items-center justify-between pb-4 mb-2 border-b border-white/10">
+                <img src="/Icon/logo_white.png" alt="TechStop" className="h-8 w-auto ml-1" />
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center justify-center h-8 w-8 rounded-full bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-all border border-white/10"
+                  aria-label="Close menu"
+                >
+                  <X className="h-4 w-4" strokeWidth={2.5} />
+                </button>
               </div>
 
                {/* Category links */}
-              <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-400 px-3 pb-2 pt-1">Categories</p>
+              <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500 px-3 pb-2 pt-1">Categories</p>
               <Link
                 href="/"
                 onClick={() => setIsOpen(false)}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                  pathname === "/" ? "bg-accent text-white" : "hover:bg-muted text-foreground"
+                  pathname === "/" ? "bg-accent text-white" : "hover:bg-white/5 text-zinc-300"
                 }`}
               >
                 All Products
-                <ChevronRight className={`h-4 w-4 ml-auto ${pathname === "/" ? "text-white" : "text-zinc-400"}`} />
+                <ChevronRight className={`h-4 w-4 ml-auto ${pathname === "/" ? "text-white" : "text-zinc-600"}`} />
               </Link>
               {shopCategories.map(({ label, href }) => {
                 const isActive = pathname?.startsWith(href);
                 return (
                   <Link key={label} href={href} onClick={() => setIsOpen(false)}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${isActive ? "bg-accent text-white" : "hover:bg-muted text-foreground"}`}>
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${isActive ? "bg-accent text-white" : "hover:bg-white/5 text-zinc-300"}`}>
                     <span className="text-sm font-bold">{label}</span>
-                    <ChevronRight className={`h-4 w-4 ml-auto ${isActive ? "text-white" : "text-zinc-400"}`} />
+                    <ChevronRight className={`h-4 w-4 ml-auto ${isActive ? "text-white" : "text-zinc-600"}`} />
                   </Link>
                 );
               })}
 
-              <div className="pt-3 mt-3 border-t border-border space-y-1">
+              <div className="pt-3 mt-3 border-t border-white/10 space-y-1">
                 {[
                   { label: "Sell Your Device", href: "/trade-in", icon: RefreshCw },
                   { label: "Book a Repair", href: "/repair", icon: Wrench },
-                  { label: "Help Centre", href: "/help", icon: null },
+                  { label: "Help Centre", href: "/help", icon: HelpCircle },
                 ].map(({ label, href, icon: Icon }) => {
                   const isActive = pathname?.startsWith(href);
                   return (
@@ -859,39 +904,30 @@ export default function Navbar() {
                       href={href}
                       onClick={() => setIsOpen(false)}
                       className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                        isActive ? "bg-accent text-white" : "hover:bg-muted text-foreground"
+                        isActive ? "bg-accent text-white" : "hover:bg-white/5 text-zinc-300"
                       }`}
                     >
-                      {Icon && <Icon className={`h-4 w-4 ${isActive ? "text-white" : "text-zinc-400"}`} strokeWidth={1.8} />}
+                      {Icon && <Icon className={`h-4 w-4 ${isActive ? "text-white" : "text-zinc-500"}`} strokeWidth={1.8} />}
                       <span>{label}</span>
-                      <ChevronRight className={`h-4 w-4 ml-auto ${isActive ? "text-white" : "text-zinc-400"}`} />
+                      <ChevronRight className={`h-4 w-4 ml-auto ${isActive ? "text-white" : "text-zinc-600"}`} />
                     </Link>
                   );
                 })}
               </div>
 
               {/* Mobile account section */}
-              <div className="pt-3 mt-3 border-t border-border">
+              <div className="pt-3 mt-auto border-t border-white/10 pb-4">
                 {user ? (
                   <>
-                    <div className="flex items-center gap-3 px-3 py-2.5 mb-1">
-                      <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-accent text-white font-black text-sm shrink-0">
+                    <Link href="/account/settings" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-3 py-2.5 mb-1 rounded-xl hover:bg-white/5 transition-all group">
+                      <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-accent text-white font-black text-sm shrink-0 group-hover:scale-105 transition-transform shadow-md shadow-accent/20">
                         {user.name.charAt(0)}
                       </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-black text-foreground truncate">{user.name}</p>
-                        <p className="text-[10px] text-zinc-400 font-semibold truncate">{user.email}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-black text-white truncate">{user.name}</p>
+                        <p className="text-[10px] text-zinc-500 font-semibold truncate">{user.email}</p>
                       </div>
-                    </div>
-                    <Link href="/account/settings" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold hover:bg-muted text-foreground transition-all">
-                      <Settings className="h-4 w-4 text-zinc-400" strokeWidth={1.8} />
-                      <span>My Account</span>
-                      <ChevronRight className="h-4 w-4 ml-auto text-zinc-400" />
-                    </Link>
-                    <Link href="/account/orders" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold hover:bg-muted text-foreground transition-all">
-                      <Package className="h-4 w-4 text-zinc-400" strokeWidth={1.8} />
-                      <span>My Orders</span>
-                      <ChevronRight className="h-4 w-4 ml-auto text-zinc-400" />
+                      <ChevronRight className="h-4 w-4 ml-auto text-zinc-600 group-hover:text-white transition-colors" />
                     </Link>
                     <button
                       onClick={() => { logout(); setIsOpen(false); }}

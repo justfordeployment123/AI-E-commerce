@@ -406,29 +406,34 @@ export default function HelpPage() {
       <main className="flex-1 relative pb-20">
 
         {/* Hero */}
-        <section className="relative pt-32 pb-16 border-b border-zinc-200/50 dark:border-zinc-800/50 bg-zinc-950 dark:bg-black">
-          <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            <div className="absolute w-[800px] h-[800px] top-[-20%] right-[-10%] bg-red-600/30 blur-[150px] rounded-full" />
+        <section className="relative pt-32 pb-20 border-b border-zinc-200/50 dark:border-zinc-800/50 bg-zinc-950 dark:bg-black overflow-hidden">
+          {/* Ambient Mesh Gradient Background */}
+          <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+            <div className="absolute w-[600px] h-[600px] bg-red-600/20 blur-[120px] rounded-full top-[-10%] opacity-60" />
             <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 mix-blend-overlay" />
           </div>
 
           <div className="relative z-10 mx-auto max-w-5xl px-4 text-center flex flex-col items-center">
 
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 mb-6">
-              <Circle className="h-2 w-2 fill-emerald-400 text-emerald-400" />
-              <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-widest">Live support · within 24 hours</span>
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 mb-6 backdrop-blur-sm">
+              <Circle className="h-2 w-2 fill-emerald-400 text-emerald-400 animate-pulse" />
+              <span className="text-[11px] font-bold text-zinc-300 uppercase tracking-widest">Live support · within 24 hours</span>
             </div>
 
-            <h1 className="font-sans text-[clamp(2.5rem,6vw,4rem)] font-black tracking-tighter text-white mb-6 drop-shadow-sm uppercase">
+            <h1 className="font-sans text-[clamp(2.5rem,6vw,4rem)] font-black tracking-tighter text-white mb-8 drop-shadow-sm uppercase">
               How can we <span className="font-serif italic font-light lowercase text-red-500 tracking-normal">help?</span>
             </h1>
+            
+            <p className="text-zinc-400 font-medium mb-12 max-w-xl mx-auto text-base md:text-lg leading-relaxed">
+              Experience lightning-fast support. Whether you need to track an order, process a return, or get technical advice, our team is ready.
+            </p>
 
             <div className="flex flex-wrap items-center justify-center gap-4 mb-8 w-full max-w-2xl">
               <button
                 onClick={handleOpenChat}
-                className="group relative h-16 flex-1 min-w-[250px] bg-white text-zinc-950 hover:bg-zinc-100 font-black rounded-2xl flex items-center justify-center gap-3 transition-all text-sm uppercase tracking-widest shadow-[0_20px_40px_rgba(255,255,255,0.1)] hover:shadow-[0_20px_40px_rgba(255,255,255,0.2)] hover:scale-105 active:scale-95 overflow-hidden"
+                className="group relative h-16 flex-1 min-w-[250px] bg-white text-zinc-950 hover:bg-zinc-200 font-black rounded-2xl flex items-center justify-center gap-3 transition-all text-sm uppercase tracking-widest shadow-xl hover:-translate-y-1 overflow-hidden"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-red-600 to-red-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="absolute inset-0 bg-gradient-to-r from-red-600 to-rose-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <MessageCircle className="h-5 w-5 relative z-10 group-hover:text-white transition-colors duration-300" />
                 <span className="relative z-10 group-hover:text-white transition-colors duration-300">Start Live Chat</span>
               </button>
@@ -437,19 +442,18 @@ export default function HelpPage() {
                 <a
                   key={hl.id}
                   href={`tel:${hl.number.replace(/\s/g, "")}`}
-                  className="group h-16 flex-1 min-w-[250px] flex items-center justify-center gap-3 rounded-2xl border border-white/20 bg-white/10 backdrop-blur-md hover:bg-white/20 hover:border-white/40 transition-all shadow-xl"
+                  className="group relative h-16 flex-1 min-w-[250px] rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl hover:bg-white/10 hover:border-white/20 transition-all shadow-xl hover:-translate-y-1 overflow-hidden flex items-center justify-center gap-4 px-6"
                 >
-                  <Phone className="h-5 w-5 text-white" />
-                  <div className="text-left">
-                    {helplines.length > 1 && (
-                      <p className="text-[10px] text-white/60 font-bold uppercase tracking-widest leading-none mb-0.5">{hl.label}</p>
-                    )}
-                    <span className="font-bold text-sm text-white uppercase tracking-widest">Call {hl.number}</span>
+                  <div className="h-10 w-10 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-red-500 group-hover:text-white transition-colors duration-300">
+                    <Phone className="h-4 w-4 text-zinc-300 group-hover:text-white transition-colors" />
+                  </div>
+                  <div className="text-left flex flex-col justify-center min-w-0">
+                    <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-[0.2em] leading-none mb-1 group-hover:text-red-200 transition-colors truncate">{hl.label}</span>
+                    <span className="font-bold text-sm text-white uppercase tracking-wider leading-none truncate">{hl.number}</span>
                   </div>
                 </a>
               ))}
             </div>
-
 
           </div>
         </section>
@@ -659,7 +663,7 @@ export default function HelpPage() {
         </section>
 
         {/* Premium Support CTA (Contacts) */}
-        <section className="py-24 relative overflow-hidden bg-zinc-950 dark:bg-black rounded-t-[3rem] mt-10">
+        <section className="py-24 relative overflow-hidden bg-zinc-950 dark:bg-black rounded-[3rem] my-12 mx-4 lg:mx-auto max-w-6xl shadow-2xl">
           <div className="absolute inset-0 pointer-events-none overflow-hidden">
             <div className="absolute w-[600px] h-[600px] bottom-[-20%] left-[-10%] bg-red-600/20 blur-[120px] rounded-full" />
             <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 mix-blend-overlay" />
