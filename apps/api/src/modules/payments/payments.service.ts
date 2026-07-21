@@ -28,6 +28,17 @@ export class PaymentsService {
         return new (StripeLib.default ?? StripeLib)(key, { apiVersion: '2024-06-20' });
     }
 
+    /** Tags which running instance created a PaymentIntent. Stripe fans webhook
+     *  events out to every registered endpoint for the account, so a payment
+     *  intent created by a local dev instance (e.g. via `stripe listen`) also
+     *  reaches production's permanent endpoint — production has no order for
+     *  it and would otherwise raise a false "orphaned payment" alert. Defaults
+     *  to 'production' so prod needs no env change; set APP_ENV=local in a
+     *  local .env to opt that instance's intents out of prod's alerting. */
+    private getAppEnv(): string {
+        return process.env.APP_ENV ?? 'production';
+    }
+
     private async getWebhookSecret(): Promise<string | null> {
         const mode = await this.getMode();
         return (
@@ -134,7 +145,7 @@ export class PaymentsService {
             amount: amountPence,
             currency: 'gbp',
             payment_method_types: ['card'],
-            metadata: { promoCode: promoCode ?? '', discount: String(discount) },
+            metadata: { promoCode: promoCode ?? '', discount: String(discount), env: this.getAppEnv() },
         });
 
         return {
@@ -171,13 +182,19 @@ export class PaymentsService {
                         data: { status: 'CONFIRMED' },
                     });
                 }
-            } else {
+            } else if ((pi.metadata?.env ?? 'production') === this.getAppEnv()) {
                 // This webhook fires the instant Stripe confirms the charge, which can beat
                 // our own order-creation request (client confirms payment, then calls our API,
                 // then we re-verify with Stripe before writing the row) — so a missing order
                 // here is often just that race, not a real orphaned payment. Recheck once the
                 // order-creation request has had time to land instead of alerting immediately.
                 // Not awaited: Stripe expects a fast ack, not a 15s-delayed one.
+                //
+                // The env check above skips this entirely when the intent was created by a
+                // different running instance (e.g. a local dev box using `stripe listen`) —
+                // Stripe delivers the same event to every registered webhook endpoint, so
+                // production would otherwise "discover" a local test payment has no matching
+                // order and alert on it, even though it was never production's to track.
                 setTimeout(() => {
                     this.checkOrphanedPayment(pi).catch(() => {});
                 }, 15_000);
