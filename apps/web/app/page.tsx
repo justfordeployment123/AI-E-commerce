@@ -137,7 +137,7 @@ function PromoCarouselBanner() {
     // Must match the loaded <section> below exactly (height + background) —
     // any mismatch here is a guaranteed layout jump the instant slides arrive.
     return (
-      <div className="w-full min-h-[calc(100dvh-150px)] lg:min-h-[75vh] bg-zinc-950 border-b border-zinc-200/60 dark:border-zinc-900 animate-pulse" />
+      <div className="w-full h-[80svh] lg:min-h-[75vh] bg-zinc-950 border-b border-zinc-200/60 dark:border-zinc-900 animate-pulse" />
     );
   }
 
@@ -148,7 +148,7 @@ function PromoCarouselBanner() {
 
   return (
     <section
-      className="w-full min-h-[calc(100dvh-150px)] lg:min-h-[75vh] bg-zinc-950 relative overflow-hidden flex flex-col justify-between pt-[120px] pb-8 lg:pt-[140px] lg:pb-12"
+      className="w-full h-[80svh] lg:min-h-[75vh] bg-zinc-950 relative overflow-hidden flex flex-col justify-between pt-[120px] pb-8 lg:pt-[140px] lg:pb-12"
     >
       {/* Background Images */}
       <div className="absolute inset-0 z-0">
