@@ -100,16 +100,7 @@ function PromoCarouselBanner() {
 
   useEffect(() => {
     bannersApi.promoSlides()
-      .then((data) => {
-        setSlides(data);
-        // Preload images to browser cache immediately
-        data.forEach((s) => {
-          if (s.imgUrl) {
-            const img = new Image();
-            img.src = s.imgUrl;
-          }
-        });
-      })
+      .then(setSlides)
       .catch(() => { })
       .finally(() => setLoadingSlides(false));
   }, []);
@@ -143,8 +134,10 @@ function PromoCarouselBanner() {
   }, [safeIdx]);
 
   if (loadingSlides) {
+    // Must match the loaded <section> below exactly (height + background) —
+    // any mismatch here is a guaranteed layout jump the instant slides arrive.
     return (
-      <div className="w-full min-h-[60vh] lg:min-h-[65vh] bg-zinc-50 dark:bg-zinc-950 border-b border-zinc-200/60 dark:border-zinc-900 animate-pulse" />
+      <div className="w-full min-h-[calc(100dvh-150px)] lg:min-h-[75vh] bg-zinc-950 border-b border-zinc-200/60 dark:border-zinc-900 animate-pulse" />
     );
   }
 
@@ -162,16 +155,25 @@ function PromoCarouselBanner() {
         {slides.map((s, i) => {
           const isActive = safeIdx === i;
           return s.imgUrl ? (
-            <motion.img
+            <motion.div
               key={s.id}
-              src={s.imgUrl}
-              alt={s.tabTitle}
               aria-hidden={!isActive}
-              className="absolute inset-0 h-full w-full object-cover"
+              className="absolute inset-0 h-full w-full"
               initial={false}
               animate={isActive ? { opacity: 1, scale: 1.08 } : { opacity: 0, scale: 1.02 }}
               transition={isActive ? { opacity: { duration: 0.7 }, scale: { duration: 5, ease: "linear" } } : { opacity: { duration: 0.5 }, scale: { duration: 0 } }}
-            />
+            >
+              {/* priority on slide 0 only — that's the one visible on first paint,
+                  everything else can lazy-load since it's hidden behind it */}
+              <NextImage
+                src={s.imgUrl}
+                alt={s.tabTitle}
+                fill
+                priority={i === 0}
+                sizes="100vw"
+                className="object-cover"
+              />
+            </motion.div>
           ) : null;
         })}
         {/* Overlay for text legibility */}
@@ -422,10 +424,13 @@ function TradeInCTASection() {
             100% { transform: scale(1) translate(0, 0); }
           }
         `}</style>
-        <img
+        <NextImage
           src="/hero/trade_in_user_gen.png"
           alt=""
-          className="absolute inset-0 h-full w-full object-cover object-right lg:object-center brightness-75"
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-right lg:object-center brightness-75"
           style={{ animation: 'cinematicPan 20s ease-in-out infinite' }}
         />
         <div className="absolute inset-0 bg-zinc-950/60 lg:bg-zinc-950/30" />
