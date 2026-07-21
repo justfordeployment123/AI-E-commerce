@@ -8,6 +8,7 @@ function makePrismaMock() {
         appSetting: {
             findUnique: jest.fn<() => Promise<any>>().mockResolvedValue(null),
             upsert: jest.fn<() => Promise<any>>().mockResolvedValue({}),
+            deleteMany: jest.fn<(args: any) => Promise<any>>().mockResolvedValue({ count: 1 }),
         },
     };
 }
@@ -96,6 +97,24 @@ describe('SettingsService', () => {
             service['cache'].set('STRIPE_SECRET_KEY_TEST', 'old_value');
             await service.set('STRIPE_SECRET_KEY_TEST', 'new_value');
             expect(service['cache'].has('STRIPE_SECRET_KEY_TEST')).toBe(false);
+        });
+    });
+
+    describe('remove()', () => {
+        it('deletes the row by key and busts the cache entry', async () => {
+            service['cache'].set('SUPPORT_EMAIL', 'old@example.com');
+            await service.remove('SUPPORT_EMAIL');
+            expect(prismaMock.appSetting.deleteMany).toHaveBeenCalledWith({ where: { key: 'SUPPORT_EMAIL' } });
+            expect(service['cache'].has('SUPPORT_EMAIL')).toBe(false);
+        });
+
+        it('a subsequent get() re-queries the DB instead of serving a stale cached value', async () => {
+            service['cache'].set('SUPPORT_EMAIL', 'old@example.com');
+            await service.remove('SUPPORT_EMAIL');
+            (prismaMock.appSetting.findUnique as any).mockResolvedValueOnce(null);
+            const result = await service.get('SUPPORT_EMAIL');
+            expect(result).toBeNull();
+            expect(prismaMock.appSetting.findUnique).toHaveBeenCalled();
         });
     });
 

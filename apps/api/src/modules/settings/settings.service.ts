@@ -76,6 +76,16 @@ export class SettingsService implements OnModuleInit {
         this.cache.delete(key);
     }
 
+    /** Removes a setting's row entirely (as opposed to `set`, which requires a
+     *  replacement value) and busts its cache entry — callers that delete the
+     *  underlying app_settings row directly (e.g. a database purge) must call
+     *  this too, otherwise this process keeps serving the cached value until
+     *  it restarts, even though the row backing it is gone. */
+    async remove(key: string): Promise<void> {
+        await this.prisma.appSetting.deleteMany({ where: { key } });
+        this.cache.delete(key);
+    }
+
     mask(value: string | null): string | null {
         if (!value) return null;
         const lastUnderscore = value.lastIndexOf('_');

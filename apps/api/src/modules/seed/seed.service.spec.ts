@@ -3,6 +3,7 @@ import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals
 import * as fs from 'fs';
 import { SeedService } from './seed.service';
 import { PrismaService } from '../database/prisma.service';
+import { SettingsService } from '../settings/settings.service';
 
 jest.mock('fs');
 jest.mock('@aws-sdk/client-s3', () => {
@@ -43,22 +44,34 @@ function makePrismaMock() {
         promoSlide: { deleteMany: deleteMany(), findFirst: jest.fn<() => Promise<any>>(), create: jest.fn<() => Promise<any>>(), update: jest.fn<() => Promise<any>>() },
         pricingConfig: { deleteMany: deleteMany(), upsert: jest.fn<() => Promise<any>>() },
         gradeBanner: { findUnique: jest.fn<() => Promise<any>>(), create: jest.fn<(...args: any[]) => Promise<any>>() },
+        helplineNumber: { deleteMany: deleteMany(), count: jest.fn<() => Promise<number>>().mockResolvedValue(0), create: jest.fn<(args: any) => Promise<any>>() },
+    };
+}
+
+function makeSettingsMock() {
+    return {
+        get: jest.fn<() => Promise<any>>().mockResolvedValue(null),
+        set: jest.fn<(key: string, value: string) => Promise<any>>(),
+        remove: jest.fn<(key: string) => Promise<any>>(),
     };
 }
 
 describe('SeedService', () => {
     let service: SeedService;
     let prismaMock: ReturnType<typeof makePrismaMock>;
+    let settingsMock: ReturnType<typeof makeSettingsMock>;
     let s3SendMock: jest.Mock<any>;
 
     beforeEach(async () => {
         jest.clearAllMocks();
         prismaMock = makePrismaMock();
+        settingsMock = makeSettingsMock();
 
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 SeedService,
                 { provide: PrismaService, useValue: prismaMock },
+                { provide: SettingsService, useValue: settingsMock },
             ],
         }).compile();
 
@@ -105,6 +118,40 @@ describe('SeedService', () => {
         });
     });
 
+    describe('seedHelplines (private helper)', () => {
+        it('creates the default helpline when none exist', async () => {
+            prismaMock.helplineNumber.count.mockResolvedValueOnce(0);
+            const seeded = await (service as any).seedHelplines();
+            expect(seeded).toBe(true);
+            expect(prismaMock.helplineNumber.create).toHaveBeenCalledWith(
+                expect.objectContaining({ data: expect.objectContaining({ label: 'Leicester Store Helpline' }) }),
+            );
+        });
+
+        it('does not touch existing helplines', async () => {
+            prismaMock.helplineNumber.count.mockResolvedValueOnce(1);
+            const seeded = await (service as any).seedHelplines();
+            expect(seeded).toBe(false);
+            expect(prismaMock.helplineNumber.create).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('seedSupportEmail (private helper)', () => {
+        it('sets the default email when unset', async () => {
+            settingsMock.get.mockResolvedValueOnce(null);
+            const seeded = await (service as any).seedSupportEmail();
+            expect(seeded).toBe(true);
+            expect(settingsMock.set).toHaveBeenCalledWith('SUPPORT_EMAIL', 'techstopuk@outlook.com');
+        });
+
+        it('does not overwrite an existing email', async () => {
+            settingsMock.get.mockResolvedValueOnce('admin-set@example.com');
+            const seeded = await (service as any).seedSupportEmail();
+            expect(seeded).toBe(false);
+            expect(settingsMock.set).not.toHaveBeenCalled();
+        });
+    });
+
     describe('purgeAll', () => {
         it('deletes S3 objects in a single page and returns per-table counts', async () => {
             s3SendMock.mockResolvedValueOnce({ Contents: [{ Key: 'a' }, { Key: 'b' }], IsTruncated: false });
@@ -117,6 +164,19 @@ describe('SeedService', () => {
             expect(result.counts.products).toBe(5);
             expect(prismaMock.orderItem.deleteMany).toHaveBeenCalled();
             expect(prismaMock.pricingConfig.deleteMany).toHaveBeenCalled();
+        });
+
+        it('also clears helpline numbers and the support email setting', async () => {
+            s3SendMock.mockResolvedValueOnce({ Contents: [], IsTruncated: false });
+            prismaMock.helplineNumber.deleteMany.mockResolvedValueOnce({ count: 2 });
+            settingsMock.get.mockResolvedValueOnce('techstopuk@outlook.com');
+
+            const result = await service.purgeAll();
+
+            expect(prismaMock.helplineNumber.deleteMany).toHaveBeenCalled();
+            expect(result.counts.helplines).toBe(2);
+            expect(settingsMock.remove).toHaveBeenCalledWith('SUPPORT_EMAIL');
+            expect(result.counts.supportEmailCleared).toBe(true);
         });
 
         it('paginates through multiple S3 list pages using the continuation token', async () => {

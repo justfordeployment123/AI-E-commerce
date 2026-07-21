@@ -29,6 +29,8 @@ interface SeedResult {
   categories: number;
   brands: number;
   brandCategories: number;
+  helplineSeeded: boolean;
+  supportEmailSeeded: boolean;
   products: {
     created: number;
     updated: number;
@@ -57,6 +59,8 @@ interface PurgeResult {
     banners: number;
     promoSlides: number;
     pricingConfigs: number;
+    helplines: number;
+    supportEmailCleared: boolean;
   };
 }
 
@@ -115,6 +119,7 @@ export default function SeedPage() {
         <p className="text-sm text-zinc-500 mt-1">
           Seeds the production database from files in the <code className="text-xs font-mono bg-zinc-100 px-1 rounded">prisma/seed/</code> folder.
           Uploads all product images to S3 and upserts products, pricing configs, and the device trade-in catalog.
+          Also fills in a default helpline number and support email if none are set yet — safe to re-run, it never overwrites those two once you've customized them.
         </p>
       </div>
 
@@ -211,6 +216,14 @@ export default function SeedPage() {
                 <span className="font-bold text-sm">{result.banners}</span>
               </div>
               <div className="flex items-center justify-between px-5 py-2.5">
+                <span className="text-sm text-zinc-500">Default helpline number</span>
+                <span className="font-bold text-sm">{result.helplineSeeded ? "Added" : "Already set"}</span>
+              </div>
+              <div className="flex items-center justify-between px-5 py-2.5">
+                <span className="text-sm text-zinc-500">Support contact email</span>
+                <span className="font-bold text-sm">{result.supportEmailSeeded ? "Added" : "Already set"}</span>
+              </div>
+              <div className="flex items-center justify-between px-5 py-2.5">
                 <span className="text-sm text-zinc-500">Products created</span>
                 <span className="font-bold text-sm text-emerald-600">{result.products.created}</span>
               </div>
@@ -289,6 +302,7 @@ export default function SeedPage() {
               <li>Deletes all products, categories, brands, brand-categories, device catalog entries.</li>
               <li>Deletes all orders, order items, trade-ins, repairs, and reviews.</li>
               <li>Removes all pricing configs and scraper history.</li>
+              <li>Clears helpline numbers and the support contact email too.</li>
               <li>Use this before a full re-seed to start from a clean slate.</li>
             </ul>
           </div>
@@ -399,6 +413,14 @@ export default function SeedPage() {
                 <div className="flex items-center justify-between px-5 py-2.5">
                   <span className="text-sm text-zinc-500">Pricing Configs</span>
                   <span className="font-bold text-sm text-red-600">{purgeResult.counts.pricingConfigs}</span>
+                </div>
+                <div className="flex items-center justify-between px-5 py-2.5">
+                  <span className="text-sm text-zinc-500">Helpline Numbers</span>
+                  <span className="font-bold text-sm text-red-600">{purgeResult.counts.helplines}</span>
+                </div>
+                <div className="flex items-center justify-between px-5 py-2.5">
+                  <span className="text-sm text-zinc-500">Support Email</span>
+                  <span className="font-bold text-sm text-red-600">{purgeResult.counts.supportEmailCleared ? "Cleared" : "Was already unset"}</span>
                 </div>
                 <div className="flex items-center justify-between px-5 py-2.5">
                   <span className="text-sm text-zinc-500">Order Items</span>

@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { SettingsService } from '../settings/settings.service';
 import { S3Client, PutObjectCommand, DeleteObjectsCommand, ListObjectsV2Command, HeadObjectCommand } from '@aws-sdk/client-s3';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -132,6 +133,8 @@ export interface SeedResult {
     categories: number;
     brands: number;
     brandCategories: number;
+    helplineSeeded: boolean;
+    supportEmailSeeded: boolean;
     products: {
         created: number;
         updated: number;
@@ -148,7 +151,10 @@ export class SeedService {
     private readonly downloadsDir: string;
     private readonly seedDir: string;
 
-    constructor(private readonly prisma: PrismaService) {
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly settingsService: SettingsService,
+    ) {
         this.bucketName = process.env.GARAGE_BUCKET || 'ai-ecommerce';
         this.s3Client = new S3Client({
             region: 'us-east-1',
@@ -208,6 +214,8 @@ export class SeedService {
         const deviceCount    = await this.seedCatalogFromFolder();
         const productsResult = await this.seedProducts(productsData);
         const othersResult   = await this.seedOthers();
+        const helplineSeeded    = await this.seedHelplines();
+        const supportEmailSeeded = await this.seedSupportEmail();
 
         const categoryCount      = await this.prisma.category.count();
         const brandCount         = await this.prisma.brand.count();
@@ -224,7 +232,32 @@ export class SeedService {
             categories: categoryCount,
             brands: brandCount,
             brandCategories: brandCategoryCount,
+            helplineSeeded,
+            supportEmailSeeded,
         };
+    }
+
+    // ─── Support contact info (helpline + email) ─────────────────────────────
+    // Only fill these in when completely unset — unlike the rest of this seed,
+    // an admin editing these afterward (Admin → Helplines) is real customization
+    // that a repeat "Run Full Seed" click should never silently overwrite.
+
+    private async seedHelplines(): Promise<boolean> {
+        const existingCount = await this.prisma.helplineNumber.count();
+        if (existingCount > 0) return false;
+        await this.prisma.helplineNumber.create({
+            data: { label: 'Leicester Store Helpline', number: '+447343055398', isActive: true, order: 0 },
+        });
+        this.logger.log('Seeded default helpline number');
+        return true;
+    }
+
+    private async seedSupportEmail(): Promise<boolean> {
+        const existing = await this.settingsService.get('SUPPORT_EMAIL');
+        if (existing) return false;
+        await this.settingsService.set('SUPPORT_EMAIL', 'techstopuk@outlook.com');
+        this.logger.log('Seeded default support email');
+        return true;
     }
 
     // ─── Purge: wipe ALL data from DB and every object in Garage ────────────
@@ -248,6 +281,8 @@ export class SeedService {
             banners: number;
             promoSlides: number;
             pricingConfigs: number;
+            helplines: number;
+            supportEmailCleared: boolean;
         }
     }> {
         // 1. Nuclear Garage wipe — list every object in the bucket and delete all.
@@ -294,6 +329,9 @@ export class SeedService {
         const bannersDeleted       = await this.prisma.banner.deleteMany({});
         const promoSlidesDeleted   = await this.prisma.promoSlide.deleteMany({});
         const pricingDeleted       = await this.prisma.pricingConfig.deleteMany({});
+        const helplinesDeleted     = await this.prisma.helplineNumber.deleteMany({});
+        const hadSupportEmail      = (await this.settingsService.get('SUPPORT_EMAIL')) !== null;
+        await this.settingsService.remove('SUPPORT_EMAIL');
 
         this.logger.log('Database purged — all tables cleared');
         return {
@@ -316,6 +354,8 @@ export class SeedService {
                 banners:            bannersDeleted.count,
                 promoSlides:        promoSlidesDeleted.count,
                 pricingConfigs:     pricingDeleted.count,
+                helplines:          helplinesDeleted.count,
+                supportEmailCleared: hadSupportEmail,
             },
         };
     }
