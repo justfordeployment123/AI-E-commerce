@@ -231,7 +231,7 @@ export default function CategoryPage() {
           
           {/* Sub-brand Grid */}
           {subBrands.length > 0 && (
-            <div className="mb-8">
+            <div>
               <h2 className="text-lg font-extrabold mb-4 tracking-tight">Shop our most wanted</h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {subBrands.map((item) => (
@@ -262,7 +262,7 @@ export default function CategoryPage() {
 
       {/* ── Reassurance Bar ─────────────────────────────────────────────────── */}
       <div className="bg-zinc-50 border-b border-zinc-200 py-3">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-wrap justify-center items-center gap-4 sm:gap-8 md:gap-12 text-[11px] font-bold text-zinc-600">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-wrap justify-start items-center gap-4 md:gap-6 text-[11px] font-bold text-zinc-600">
           <div className="flex items-center gap-2">
             <span className="text-emerald-600">✓</span> 90-point quality check on all devices
           </div>
@@ -278,7 +278,7 @@ export default function CategoryPage() {
       </div>
 
       {/* ── Body ─────────────────────────────────────────────────────────────── */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-12">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-8 pb-12">
         <div className="flex flex-col">
 
           {/* ── Top Picks Carousel ────────────────────────────────────────────────── */}
@@ -688,13 +688,13 @@ export default function CategoryPage() {
         </div>
       </div>
 
-      {/* ── Diagnostic widget, Reviews, Promo, Guides ─────────────────────────── */}
-      <section className="py-16 bg-white border-t border-zinc-200">
+      {/* ── Promo Grid ──────────────────────────────────────────────────────────── */}
+      <section className="py-10 bg-white border-t border-zinc-200">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           
 
           {/* Double Promo Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-16">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {/* Trade-in card — accent/red theme */}
             <div className="bg-accent/[8%] dark:bg-accent/10 border border-accent/20 dark:border-accent/25 rounded-[28px] p-6 flex flex-col justify-between items-start relative overflow-hidden group">
               {/* decorative blobs */}

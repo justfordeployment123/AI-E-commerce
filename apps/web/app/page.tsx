@@ -77,7 +77,7 @@ import {
   ShoppingCart, ShieldCheck, RefreshCw, Leaf, ArrowRight,
   Star, Search, Play, Recycle, TrendingUp, Package, BadgeCheck,
   Zap, Check, Smartphone, Laptop, Headphones, Gamepad2, Tablet,
-  ChevronLeft, ChevronRight, MapPin, Clock, Phone
+  ChevronLeft, ChevronRight, MapPin, Clock, Phone, Bell, Wrench
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import NextImage from "next/image";
@@ -915,169 +915,326 @@ function Reviews() {
 
 // ─── App Preview ──────────────────────────────────────────────────────────────
 function AppPreview() {
-  const features = [
-    { Icon: ShieldCheck, title: "Grade-verified listings", desc: "Every listing shows battery health, cosmetic grade, and a full inspection certificate." },
-    { Icon: RefreshCw, title: "One-tap returns", desc: "Initiate a return in seconds from your order page — no calls, no forms, no friction." },
-    { Icon: BadgeCheck, title: "Instant price alerts", desc: "Set a target price on any device and get notified the moment it drops." },
-    { Icon: Leaf, title: "Eco-conscious shopping", desc: "Every refurbished device means one less device in a landfill — better for the planet." },
+  const [activePage, setActivePage] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActivePage((prev) => (prev + 1) % 4);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const navItems = [
+    { icon: Search, label: "Search", id: 0 },
+    { icon: Package, label: "Order", id: 1 },
+    { icon: RefreshCw, label: "Trade-in", id: 2 },
+    { icon: Wrench, label: "Repair", id: 3 },
   ];
 
   return (
-    <section className="bg-white py-24 overflow-hidden">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section className="bg-zinc-50 py-24 overflow-hidden relative">
+      <div className="absolute inset-0 bg-white/50 pointer-events-none" />
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
         <div className="grid lg:grid-cols-2 gap-20 items-center">
 
           {/* ── Left: phone mockup ── */}
-          <div className="relative flex justify-center lg:justify-start order-2 lg:order-1">
-            <div className="absolute inset-0 bg-accent/15 blur-3xl rounded-full scale-75 pointer-events-none" />
+          <div className="relative flex flex-col items-center lg:items-start order-2 lg:order-1">
+            <div className="absolute inset-0 bg-accent/10 blur-3xl rounded-full scale-75 pointer-events-none" />
 
             <div className="relative">
               {/* Frame */}
-              <div className="relative w-[272px] rounded-[3rem] bg-zinc-950 p-2.5 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)] ring-1 ring-white/10">
+              <div className="relative w-[280px] rounded-[3rem] bg-zinc-950 p-3 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.4)] ring-1 ring-white/10">
                 {/* Dynamic Island / Camera Notch */}
-                <div className="absolute top-5 left-1/2 -translate-x-1/2 w-16 h-3.5 bg-black rounded-full z-30 flex items-center justify-between px-1.5 pointer-events-none">
-                  <div className="h-1 w-1 rounded-full bg-blue-900/40" />
-                  <div className="h-1.5 w-1.5 rounded-full bg-zinc-900" />
+                <div className="absolute top-5 left-1/2 -translate-x-1/2 w-20 h-5 bg-black rounded-full z-30 flex items-center justify-between px-2 pointer-events-none">
+                  <div className="h-1.5 w-1.5 rounded-full bg-blue-900/40" />
+                  <div className="h-2 w-2 rounded-full bg-zinc-900" />
                 </div>
                 {/* Screen */}
-                <div className="rounded-[2.5rem] overflow-hidden bg-white" style={{ aspectRatio: "9/19.5" }}>
-                  <div className="flex flex-col h-full bg-white text-zinc-950 text-[11px]">
+                <div className="rounded-[2.5rem] overflow-hidden bg-zinc-50 relative" style={{ aspectRatio: "9/19.5" }}>
+                  <div className="flex flex-col h-full bg-zinc-50 text-zinc-950 text-[11px] relative">
 
-                    {/* App header */}
-                    <div className="flex items-center justify-between px-5 pt-10 pb-3 border-b border-zinc-100">
-                      <span className="font-bold tracking-tighter text-xs">TECHSTOP</span>
+                    {/* App header (static) */}
+                    <div className="flex items-center justify-between px-5 pt-11 pb-3 bg-white border-b border-zinc-100 z-10 shrink-0">
+                      <img src="/Icon/logo_black.png" alt="TechStop" className="h-6 w-auto object-contain" />
                       <div className="flex items-center gap-3">
-                        <ShoppingCart className="h-4 w-4" />
-                        <div className="h-7 w-7 rounded-full bg-zinc-100" />
-                      </div>
-                    </div>
-
-                    {/* Search */}
-                    <div className="px-4 pt-3 pb-2">
-                      <div className="h-8 rounded-xl bg-zinc-100 flex items-center gap-2 px-3">
-                        <Search className="h-3 w-3 text-zinc-400" />
-                        <span className="text-[10px] text-zinc-400 font-medium">Search 47,000+ devices…</span>
-                      </div>
-                    </div>
-
-                    {/* Flash deal */}
-                    <div className="mx-4 mb-3 rounded-2xl bg-accent p-3 text-white">
-                      <p className="text-[8px] font-bold uppercase tracking-widest text-white/70 mb-0.5">Flash Deal · 2h left</p>
-                      <p className="text-[11px] font-bold">iPhone 15 Pro</p>
-                      <div className="flex items-baseline gap-1.5 mt-0.5">
-                        <span className="text-sm font-bold">£679</span>
-                        <span className="text-[9px] text-white/70 line-through">£1,199</span>
-                      </div>
-                    </div>
-
-                    {/* Product list */}
-                    <div className="flex-1 px-4 space-y-2 overflow-hidden">
-                      {[
-                        { name: "MacBook Air M2", price: "£849", grade: "A", img: "/products/macbook-air-m2.png" },
-                        { name: "AirPods Pro 2", price: "£149", grade: "C", img: "/products/airpods-pro-2.png" },
-                        { name: "iPad Air 5", price: "£399", grade: "B", img: "/products/ipad-air-5.png" },
-                      ].map((p, j) => (
-                        <div key={j} className="flex items-center gap-3 bg-zinc-50 rounded-xl p-2">
-                          <img
-                            src={p.img}
-                            alt={p.name}
-                            className="h-9 w-9 rounded-lg object-cover bg-zinc-200 flex-shrink-0"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <p className="font-bold truncate">{p.name}</p>
-                            <p className="text-[9px] text-zinc-400 font-medium">{p.grade}</p>
-                          </div>
-                          <p className="font-bold flex-shrink-0">{p.price}</p>
+                        <ShoppingCart className="h-4 w-4 text-zinc-600" />
+                        <div className="h-6 w-6 rounded-full bg-zinc-100 flex items-center justify-center">
+                          <span className="text-[9px] font-bold">K</span>
                         </div>
-                      ))}
+                      </div>
                     </div>
 
-                    {/* Bottom nav */}
-                    <div className="flex items-center justify-around px-6 py-3 border-t border-zinc-100 mt-2">
-                      {[Search, ShoppingCart, Star, RefreshCw].map((Icon, j) => (
-                        <div key={j} className={`flex flex-col items-center gap-0.5 ${j === 0 ? "text-zinc-950" : "text-zinc-300"}`}>
-                          <Icon className="h-5 w-5" />
-                          {j === 0 && <span className="h-1 w-1 rounded-full bg-zinc-950" />}
-                        </div>
-                      ))}
+                    {/* Screen Content */}
+                    <div className="flex-1 relative overflow-hidden">
+                      <AnimatePresence mode="popLayout">
+                        {/* PAGE 0: SHOP / SEARCH */}
+                        {activePage === 0 && (
+                          <motion.div
+                            key="page0"
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -20 }}
+                            transition={{ duration: 0.3 }}
+                            className="absolute inset-0 flex flex-col"
+                          >
+                            <div className="px-4 py-3 shrink-0">
+                              <div className="h-8 rounded-xl bg-white border border-zinc-100 shadow-sm flex items-center gap-2 px-3">
+                                <Search className="h-3 w-3 text-zinc-400" />
+                                <span className="text-[10px] text-zinc-400 font-medium">Search devices…</span>
+                              </div>
+                            </div>
+                            
+                            <div className="flex-1 px-4 space-y-3 overflow-y-auto pb-4 scrollbar-hide">
+                              <div className="rounded-2xl bg-accent p-3.5 text-white shadow-md shadow-accent/20">
+                                <p className="text-[8px] font-bold uppercase tracking-widest text-white/80 mb-1">Flash Deal · 2h left</p>
+                                <p className="text-xs font-bold mb-0.5">iPhone 15 Pro</p>
+                                <div className="flex items-baseline gap-1.5">
+                                  <span className="text-sm font-bold">£679</span>
+                                  <span className="text-[9px] text-white/70 line-through">£1,199</span>
+                                </div>
+                              </div>
+
+                              {[
+                                { name: "MacBook Air M2", price: "£849", grade: "A", img: "/products/macbook-air-m2.png" },
+                                { name: "AirPods Pro 2", price: "£149", grade: "C", img: "/products/airpods-pro-2.png" },
+                              ].map((p, j) => (
+                                <div key={j} className="flex items-center gap-3 bg-white rounded-2xl p-2.5 shadow-sm border border-zinc-100">
+                                  <div className="h-10 w-10 rounded-xl bg-zinc-50 flex items-center justify-center shrink-0">
+                                    <img src={p.img} alt={p.name} className="h-8 w-8 object-contain" />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-bold truncate text-[11px]">{p.name}</p>
+                                    <p className="text-[9px] text-zinc-500 font-medium">Grade {p.grade}</p>
+                                  </div>
+                                  <p className="font-bold shrink-0 text-xs">{p.price}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </motion.div>
+                        )}
+
+                        {/* PAGE 1: ORDER TRACKING */}
+                        {activePage === 1 && (
+                          <motion.div
+                            key="page1"
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -20 }}
+                            transition={{ duration: 0.3 }}
+                            className="absolute inset-0 flex flex-col bg-zinc-50"
+                          >
+                            <div className="p-4 flex-1">
+                              <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-400 mb-1">Your Order</p>
+                              <h3 className="font-extrabold text-sm mb-4">iPhone 14 Pro</h3>
+
+                              <div className="bg-white rounded-2xl p-4 shadow-sm border border-zinc-100 mb-4">
+                                <div className="flex items-center gap-3 mb-4">
+                                  <div className="h-8 w-8 rounded-full bg-zinc-950 text-white flex items-center justify-center shrink-0">
+                                    <Package className="h-4 w-4" />
+                                  </div>
+                                  <div>
+                                    <p className="font-bold text-[11px]">Out for delivery</p>
+                                    <p className="text-[9px] text-zinc-500">Arriving today by 8 PM</p>
+                                  </div>
+                                </div>
+                                <div className="relative pl-4 border-l-2 border-zinc-950 ml-4 space-y-4 pb-1">
+                                  <div className="relative">
+                                    <div className="absolute -left-[21px] top-1 h-2 w-2 rounded-full bg-zinc-950 border-2 border-white" />
+                                    <p className="font-bold text-[10px]">Shipped</p>
+                                    <p className="text-[8px] text-zinc-400">Yesterday, 14:20</p>
+                                  </div>
+                                  <div className="relative">
+                                    <div className="absolute -left-[21px] top-1 h-2 w-2 rounded-full bg-zinc-950 border-2 border-white" />
+                                    <p className="font-bold text-[10px]">Order confirmed</p>
+                                    <p className="text-[8px] text-zinc-400">Monday, 09:15</p>
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              <button className="w-full h-10 bg-zinc-950 text-white rounded-xl font-bold text-[11px] shadow-md">
+                                Track Delivery
+                              </button>
+                            </div>
+                          </motion.div>
+                        )}
+
+                        {/* PAGE 2: TRADE IN */}
+                        {activePage === 2 && (
+                          <motion.div
+                            key="page2"
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -20 }}
+                            transition={{ duration: 0.3 }}
+                            className="absolute inset-0 flex flex-col bg-zinc-50"
+                          >
+                            <div className="p-4 flex-1 flex flex-col items-center justify-center text-center">
+                              <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-zinc-100 mb-3">
+                                <RefreshCw className="h-6 w-6 text-zinc-950" />
+                              </div>
+                              <h3 className="font-extrabold text-sm mb-1">Instant Trade-In</h3>
+                              <p className="text-[10px] text-zinc-500 mb-4 leading-relaxed">
+                                Swap your old device for instant credit towards your next upgrade.
+                              </p>
+                              
+                              <div className="w-full bg-white rounded-2xl p-3.5 shadow-sm border border-zinc-100 mb-3 text-left">
+                                <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-400 mb-1">Your device</p>
+                                <p className="font-bold text-[11px] mb-2">iPhone 12 Pro Max</p>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[10px] text-zinc-500">Est. value</span>
+                                  <span className="font-bold text-accent text-sm">£320</span>
+                                </div>
+                              </div>
+
+                              <button className="w-full h-10 bg-zinc-950 text-white rounded-xl font-bold text-[11px] shadow-md">
+                                Get Instant Offer
+                              </button>
+                            </div>
+                          </motion.div>
+                        )}
+
+                        {/* PAGE 3: REPAIR */}
+                        {activePage === 3 && (
+                          <motion.div
+                            key="page3"
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -20 }}
+                            transition={{ duration: 0.3 }}
+                            className="absolute inset-0 flex flex-col bg-zinc-50 p-4"
+                          >
+                            <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-400 mb-1">Express Repairs</p>
+                            <h3 className="font-extrabold text-sm mb-3">Book a Repair</h3>
+
+                            <div className="space-y-2.5 mb-4">
+                              <div className="bg-white rounded-2xl p-3 shadow-sm border border-zinc-100 flex items-center gap-3">
+                                <div className="h-9 w-9 rounded-xl bg-zinc-100 flex items-center justify-center shrink-0">
+                                  <Wrench className="h-4 w-4 text-zinc-950" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-bold text-[11px]">Screen Replacement</p>
+                                  <p className="text-[9px] text-zinc-400">Genuine parts · 45 mins</p>
+                                </div>
+                                <span className="font-bold text-xs">£69</span>
+                              </div>
+
+                              <div className="bg-white rounded-2xl p-3 shadow-sm border border-zinc-100 flex items-center gap-3">
+                                <div className="h-9 w-9 rounded-xl bg-zinc-100 flex items-center justify-center shrink-0">
+                                  <Zap className="h-4 w-4 text-zinc-950" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-bold text-[11px]">Battery Health Swap</p>
+                                  <p className="text-[9px] text-zinc-400">100% capacity · 30 mins</p>
+                                </div>
+                                <span className="font-bold text-xs">£39</span>
+                              </div>
+                            </div>
+
+                            <button className="w-full h-10 bg-accent text-white rounded-xl font-bold text-[11px] shadow-md shadow-accent/20 mt-auto">
+                              Schedule Repair
+                            </button>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+
+                    {/* Bottom nav bar with animated dot */}
+                    <div className="flex items-center justify-around px-4 py-3 bg-white border-t border-zinc-100 shrink-0 z-10 pb-5">
+                      {navItems.map((item) => {
+                        const isActive = activePage === item.id;
+                        return (
+                          <button
+                            key={item.id}
+                            onClick={() => setActivePage(item.id)}
+                            className="relative flex flex-col items-center gap-1 focus:outline-none transition-colors"
+                          >
+                            <item.icon className={"h-5 w-5 transition-colors " + (isActive ? "text-zinc-950" : "text-zinc-300")} />
+                            {isActive ? (
+                              <motion.div
+                                layoutId="activeTabDot"
+                                className="h-1 w-1 rounded-full bg-zinc-950"
+                                transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                              />
+                            ) : (
+                              <div className="h-1 w-1" />
+                            )}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Floating: shipped notification */}
-              <motion.div
-                animate={{ y: [0, -10, 0] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute hidden sm:block -right-6 top-16 bg-white rounded-2xl p-3.5 shadow-2xl border border-zinc-100 z-20 w-[168px]"
-              >
-                <div className="flex items-center gap-2.5 mb-2.5">
-                  <div className="h-8 w-8 rounded-xl bg-emerald-500 flex items-center justify-center flex-shrink-0">
-                    <BadgeCheck className="h-4 w-4 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Shipped</p>
-                    <p className="text-xs font-bold text-zinc-950">iPhone 14 Pro</p>
-                  </div>
-                </div>
-                <div className="h-1.5 rounded-full bg-zinc-100 overflow-hidden">
-                  <div className="h-full w-3/4 rounded-full bg-emerald-500" />
-                </div>
-                <p className="text-[9px] text-zinc-400 mt-1.5 font-medium">Est. delivery: Tomorrow</p>
-              </motion.div>
-
-              {/* Floating: rating */}
-              <motion.div
-                animate={{ y: [0, -7, 0] }}
-                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
-                className="absolute hidden sm:block -right-4 bottom-20 bg-accent text-white rounded-2xl px-3.5 py-2.5 shadow-xl z-20"
-              >
-                <div className="flex gap-0.5 mb-0.5">
-                  {[...Array(5)].map((_, k) => <Star key={k} className="h-3 w-3 fill-white text-white" />)}
-                </div>
-                <p className="text-[9px] font-bold text-white/90">Verified purchase</p>
-              </motion.div>
+              <AnimatePresence>
+                {activePage === 1 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: [0, -5, 0] }}
+                    exit={{ opacity: 0, y: 10 }}
+                    transition={{ y: { duration: 4, repeat: Infinity, ease: "easeInOut" }, opacity: { duration: 0.3 } }}
+                    className="absolute hidden sm:block -right-8 top-24 bg-white rounded-2xl p-4 shadow-xl border border-zinc-100 z-20 w-[180px]"
+                  >
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="h-8 w-8 rounded-xl bg-emerald-500 flex items-center justify-center flex-shrink-0 shadow-sm">
+                        <BadgeCheck className="h-4 w-4 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest leading-none mb-1">Shipped</p>
+                        <p className="text-xs font-bold text-zinc-950 leading-none">iPhone 14 Pro</p>
+                      </div>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-zinc-100 overflow-hidden">
+                      <div className="h-full w-[80%] rounded-full bg-emerald-500" />
+                    </div>
+                    <p className="text-[9px] text-zinc-400 mt-2 font-medium">Est. delivery: Tomorrow</p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
 
-          {/* ── Right: feature list ── */}
+          {/* ── Right: Clean Coming Soon Header & Store Badge Cards with uploaded images ── */}
           <div className="hidden lg:block order-1 lg:order-2">
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-2.5">The TechStop experience</p>
-            <h2 className="font-sans text-3xl md:text-4xl lg:text-5xl font-extrabold text-zinc-950 leading-tight tracking-tight mb-6">
-              Better in every single way
-            </h2>
-            <p className="text-lg text-zinc-500 leading-relaxed mb-12 max-w-[44ch]">
-              We rethought what buying refurbished should feel like — transparent, fast, and genuinely enjoyable from first click to delivery.
-            </p>
-
-            <div className="space-y-8">
-              {features.map((f, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, x: 16 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.1 }}
-                  className="flex items-start gap-5 group"
-                >
-                  <div className="h-11 w-11 rounded-2xl bg-zinc-50 border border-zinc-100 flex items-center justify-center flex-shrink-0 group-hover:bg-accent group-hover:border-accent transition-all duration-300">
-                    <f.Icon className="h-5 w-5 text-zinc-950 group-hover:text-white transition-colors" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-zinc-950 mb-1">{f.title}</h3>
-                    <p className="text-sm text-zinc-500 leading-relaxed">{f.desc}</p>
-                  </div>
-                </motion.div>
-              ))}
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-zinc-900 text-white text-[11px] font-bold mb-6 shadow-sm">
+              <span className="h-2 w-2 rounded-full bg-accent animate-pulse" />
+              <span>COMING SOON · iOS + ANDROID</span>
             </div>
 
-            <div className="mt-12 flex items-center gap-5">
-              <a href="/shop/phones" className="h-12 px-7 bg-zinc-950 text-white rounded-2xl font-bold text-sm flex items-center gap-2 hover:bg-zinc-800 transition-colors">
-                Start shopping <ArrowRight className="h-4 w-4" />
-              </a>
-              <a href="/help" className="text-sm font-bold text-zinc-500 hover:text-zinc-950 transition-colors flex items-center gap-1.5">
-                Help center <ArrowRight className="h-3.5 w-3.5" />
-              </a>
+            <h2 className="font-sans text-3xl md:text-4xl lg:text-5xl font-extrabold text-zinc-950 leading-tight tracking-tight mb-6">
+              Everything you need, in your pocket.
+            </h2>
+            <p className="text-lg text-zinc-500 leading-relaxed mb-10 max-w-[46ch]">
+              Search devices, track deliveries in real time, value instant trade-ins, and book express repairs — all seamlessly integrated into one app.
+            </p>
+
+            <div className="flex flex-col gap-3.5 sm:flex-row sm:items-center">
+              {/* Google Play Official Badge Card with uploaded playstore.png icon */}
+              <div className="flex items-center gap-3.5 bg-black text-white px-4 py-2.5 rounded-xl border border-zinc-700/80 shadow-md cursor-pointer hover:border-zinc-500 transition-all select-none w-max">
+                <img
+                  src="/playstore.png"
+                  alt="Google Play"
+                  className="w-7 h-7 object-contain shrink-0"
+                />
+                <div className="flex flex-col text-left leading-tight">
+                  <span className="text-[9px] uppercase tracking-wider text-zinc-300 font-semibold">Coming soon to</span>
+                  <span className="text-[17px] font-bold tracking-tight text-white font-sans">Google Play</span>
+                </div>
+              </div>
+
+              {/* App Store Official Badge Card with uploaded applestore.png icon */}
+              <div className="flex items-center gap-3.5 bg-black text-white px-4 py-2.5 rounded-xl border border-zinc-700/80 shadow-md cursor-pointer hover:border-zinc-500 transition-all select-none w-max">
+                <img
+                  src="/applestore.png"
+                  alt="App Store"
+                  className="w-7 h-7 object-contain shrink-0"
+                />
+                <div className="flex flex-col text-left leading-tight">
+                  <span className="text-[9px] uppercase tracking-wider text-zinc-300 font-semibold">Coming soon to</span>
+                  <span className="text-[17px] font-bold tracking-tight text-white font-sans">App Store</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
