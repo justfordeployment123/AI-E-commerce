@@ -8,8 +8,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import {
   ChevronDown, ChevronLeft, ChevronRight, ShoppingCart, Star, Check,
-  ArrowLeft, ArrowRight, ShieldCheck, Zap, RefreshCw, Wrench, X, SlidersHorizontal,
-  Battery, Camera, Monitor, Wifi, Cpu
+  ArrowLeft, ArrowRight, Zap, RefreshCw, Wrench, X, SlidersHorizontal,
+  Battery, Camera, Monitor, Wifi, Cpu, BadgeCheck
 } from "lucide-react";
 import Footer from "@/components/Footer";
 import { catalogApi } from "@/lib/api";
@@ -101,14 +101,6 @@ const BRAND_LOGOS: Record<string, React.ReactNode> = {
   ),
 };
 
-const ACCESSORIES: Record<string, string[]> = {
-  phones: ["Smartphone Cases", "Fast Chargers", "Screen Protectors", "Car Mounts", "USB-C Cables"],
-  tablets: ["iPad Cases", "Apple Pencils", "Styluses", "Tablet Stands", "Screen Protectors"],
-  gaming: ["PS5 Controllers", "Xbox Wireless Controllers", "Console Headsets", "HDMI 2.1 Cables"],
-  laptops: ["Laptop Sleeves", "USB-C Hubs", "Laptop Chargers", "Keyboard Covers"],
-  audio: ["Headphone Cases", "Ear Tips", "Charging Docks", "Aux Cables"],
-};
-
 const DIAGNOSTIC_STEPS: { id: string; label: string; icon: React.ComponentType<{ className?: string }>; description: string; checks: string[] }[] = [
   { id: "battery", label: "Battery Health", icon: Battery, description: "Every device is certified to have at least 85% battery capacity compared to new, often higher.", checks: ["Capacity verification", "Amperage testing", "Charge cycles count", "Overheating check"] },
   { id: "camera", label: "Camera & Lens", icon: Camera, description: "Lenses are inspected for scratches, autofocus calibration is tested, and flash output is verified.", checks: ["Autofocus speed calibration", "Flash synchronization", "Front/rear sensor check", "Lens scratch audit"] },
@@ -119,43 +111,6 @@ const DIAGNOSTIC_STEPS: { id: string; label: string; icon: React.ComponentType<{
 
 
 
-const SEO_TEXT: Record<string, { title: string; content: string[] }> = {
-  phones: {
-    title: "Everything you need to know about buying a refurbished smartphone",
-    content: [
-      "Buying a refurbished phone doesn't mean compromising on quality. Every smartphone on TechStop goes through a rigorous inspection process where our expert technicians run over 90 diagnostic tests. We check everything from screen responsiveness, camera focus, speaker output, and wireless connectivity to the mechanical buttons and the battery life.",
-      "By purchasing a certified refurbished smartphone, you are saving up to 70% compared to buying a brand-new retail device. Plus, you get the security of our free 2-year warranty and a 30-day money-back return policy. It is better for your wallet and significantly reduces carbon footprint and electronic waste."
-    ]
-  },
-  tablets: {
-    title: "Why buying a refurbished tablet is the smart choice",
-    content: [
-      "Whether you are looking for a refurbished iPad for drawing, a Samsung Galaxy Tab for streaming, or a Microsoft Surface for remote office work, TechStop offers fully tested, premium tablets at a fraction of their retail price.",
-      "All tablet batteries are guaranteed to meet our high-capacity standard (minimum 85%), screens are checked for backlight consistency, and digitizers are audited for absolute stylus accuracy. Save money, save the environment, and shop with confidence."
-    ]
-  },
-  gaming: {
-    title: "Refurbished gaming consoles: Next-gen performance for less",
-    content: [
-      "TechStop's gaming collection features fully vetted, cleaned, and updated consoles including PlayStation 5, Xbox Series X/S, and Nintendo Switch. Every console undergoes deep thermal testing to prevent fan noise issues, and optical drives are verified for disc loading and playback.",
-      "Get next-gen gaming power at incredible prices. Our refurbishing process ensures the motherboard is free of dust build-up, and all ports are tested for maximum input stability. Plus, every console comes with verified original or certified controller bundles."
-    ]
-  },
-  laptops: {
-    title: "Premium refurbished laptops and MacBooks built to last",
-    content: [
-      "Explore high-performance business laptops, light ultrabooks, and robust creative machines. Every MacBook and Windows notebook on TechStop is battery-audited, keyboard-tested, and clean-installed with the latest operating systems.",
-      "Get up to 75% off compared to buying brand new. Whether it is an Apple M3 MacBook Pro, a corporate-grade Lenovo ThinkPad, or a sleek Dell XPS, our laptops are checked for screen defects, SSD read speeds, and memory stability, backed by our 2-year warranty."
-    ]
-  },
-  audio: {
-    title: "High-fidelity refurbished headphones and earbuds",
-    content: [
-      "Listen to your favorite albums in high definition with premium noise-canceling headphones and wireless earbuds. Our audio gear goes through ultrasonic cleaning and sanitation, battery cycle evaluation, and driver frequency response testing.",
-      "From Apple AirPods Pro to Sony's industry-leading WH-1000XM5, TechStop offers pristine and excellent audio products. Every device is tested for Bluetooth stability, active noise cancellation depth, and microphone clarity."
-    ]
-  }
-};
 
 export default function CategoryPage() {
   const params = useParams();
@@ -193,7 +148,6 @@ export default function CategoryPage() {
   const [showSort, setShowSort] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [activeTabBrand, setActiveTabBrand] = useState<string>("all");
   const [selectedDiagnostic, setSelectedDiagnostic] = useState<string>("battery");
   const [displayProducts, setDisplayProducts] = useState<any[]>([]);
@@ -303,34 +257,18 @@ export default function CategoryPage() {
             </div>
           )}
 
-          {/* Accessories Row */}
-          {ACCESSORIES[categorySlug] && (
-            <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide py-1">
-              <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest shrink-0">Accessories:</span>
-              {ACCESSORIES[categorySlug].map((acc) => (
-                <Link
-                  key={acc}
-                  href="/shop/phones"
-                  className="shrink-0 h-9 px-4 rounded-full border border-zinc-200 dark:border-zinc-850 text-xs font-bold hover:border-black dark:hover:border-white transition-colors flex items-center bg-white text-zinc-700 dark:text-zinc-300"
-                >
-                  {acc}
-                </Link>
-              ))}
-            </div>
-          )}
-          
         </div>
       </section>
 
       {/* ── Reassurance Bar ─────────────────────────────────────────────────── */}
       <div className="bg-zinc-50 border-b border-zinc-200 py-3">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-wrap justify-between items-center gap-4 text-[11px] font-bold text-zinc-600">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-wrap justify-center items-center gap-4 sm:gap-8 md:gap-12 text-[11px] font-bold text-zinc-600">
           <div className="flex items-center gap-2">
             <span className="text-emerald-600">✓</span> 90-point quality check on all devices
           </div>
           <div className="w-1 h-1 rounded-full bg-zinc-300 hidden md:block"></div>
           <div className="flex items-center gap-2">
-            <span className="text-emerald-600">✓</span> Free 2-Year Warranty included
+            <span className="text-emerald-600">✓</span> Free 30-Day Returns
           </div>
           <div className="w-1 h-1 rounded-full bg-zinc-300 hidden md:block"></div>
           <div className="flex items-center gap-2">
@@ -754,85 +692,11 @@ export default function CategoryPage() {
       <section className="py-16 bg-white border-t border-zinc-200">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           
-          {/* Tested. Perfected. Refurbished. (Diagnostic Widget) */}
-          <div className="mb-16 bg-[#121212] text-white rounded-[32px] p-6 md:p-10 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-80 h-80 bg-accent/15 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-            
-            <div className="relative z-10 max-w-3xl mb-8">
-              <span className="text-accent text-xs font-bold uppercase tracking-widest mb-2 block">Our testing standards</span>
-              <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">Tested. Perfected. Refurbished.</h2>
-              <p className="text-zinc-400 text-sm md:text-base font-semibold leading-relaxed">
-                Every device on TechStop Leicester undergoes a rigorous 90-point diagnostic check before being certified for sale. Select a component below to see what our engineers test:
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-10">
-              {/* Left Column - Diagnostics Tabs */}
-              <div className="lg:col-span-4 flex flex-col gap-2">
-                {DIAGNOSTIC_STEPS.map((step) => {
-                  const isActive = selectedDiagnostic === step.id;
-                  return (
-                    <button
-                      key={step.id}
-                      onClick={() => setSelectedDiagnostic(step.id)}
-                      className={`w-full text-left px-5 py-4 rounded-[20px] font-bold text-sm flex items-center justify-between transition-all ${
-                        isActive ? "bg-accent text-white shadow-lg scale-[1.02]" : "bg-white/5 text-zinc-300 hover:bg-white/10"
-                      }`}
-                    >
-                      <span className="flex items-center gap-3">
-                        {React.createElement(step.icon, { className: "h-5 w-5" })}
-                        {step.label}
-                      </span>
-                      {isActive && <span className="h-2 w-2 rounded-full bg-white"></span>}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Right Column - Diagnostic Details Card */}
-              <div className="lg:col-span-8 bg-white/5 border border-white/10 rounded-[24px] p-6 md:p-8 flex flex-col justify-between">
-                <div>
-                  <h3 className="text-xl font-bold mb-2 flex items-center gap-2">
-                    {(() => {
-                      const activeStep = DIAGNOSTIC_STEPS.find(s => s.id === selectedDiagnostic);
-                      return activeStep ? React.createElement(activeStep.icon, { className: "h-5 w-5 text-accent" }) : null;
-                    })()}
-                    {DIAGNOSTIC_STEPS.find(s => s.id === selectedDiagnostic)?.label} check
-                  </h3>
-                  <p className="text-zinc-400 text-sm mb-6 leading-relaxed font-semibold">
-                    {DIAGNOSTIC_STEPS.find(s => s.id === selectedDiagnostic)?.description}
-                  </p>
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {DIAGNOSTIC_STEPS.find(s => s.id === selectedDiagnostic)?.checks.map((checkText) => (
-                      <div key={checkText} className="flex items-center gap-3 bg-white/5 rounded-xl p-3 border border-white/5">
-                        <span className="h-5 w-5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-bold flex items-center justify-center shrink-0">
-                          ✓
-                        </span>
-                        <span className="text-xs font-bold text-zinc-200">{checkText}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="mt-8 pt-6 border-t border-white/10 flex flex-wrap items-center justify-between gap-4">
-                  <div className="flex items-center gap-2">
-                    <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Certified 100% Functional</span>
-                  </div>
-                  <Link href="/help" className="text-xs font-bold text-accent hover:underline flex items-center gap-1">
-                    Learn about our grading system →
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-
 
           {/* Double Promo Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-16">
             {/* Trade-in card — accent/red theme */}
-            <div className="bg-accent/[8%] dark:bg-accent/10 border border-accent/20 dark:border-accent/25 rounded-[28px] p-8 flex flex-col justify-between items-start relative overflow-hidden min-h-[260px] group">
+            <div className="bg-accent/[8%] dark:bg-accent/10 border border-accent/20 dark:border-accent/25 rounded-[28px] p-6 flex flex-col justify-between items-start relative overflow-hidden group">
               {/* decorative blobs */}
               <div className="pointer-events-none absolute -top-12 -right-12 w-56 h-56 bg-accent/15 dark:bg-accent/20 rounded-full blur-3xl" />
               <div className="pointer-events-none absolute bottom-0 left-1/2 w-40 h-40 bg-accent/10 rounded-full blur-2xl" />
@@ -841,24 +705,21 @@ export default function CategoryPage() {
                 <span className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-accent mb-4 bg-accent/10 dark:bg-accent/15 px-3 py-1 rounded-full border border-accent/20">
                   <RefreshCw className="h-3 w-3" /> Trade-in Service
                 </span>
-                <h3 className="font-extrabold text-2xl md:text-3xl mb-3 leading-tight text-foreground">
+                <h3 className="font-extrabold text-2xl md:text-3xl mb-1 leading-tight text-foreground">
                   Swap your old tech<br className="hidden sm:block" /> for cash in hand
                 </h3>
-                <p className="text-muted-foreground font-medium text-sm leading-relaxed max-w-sm">
-                  Get a trade-in offer instantly online or drop by our Leicester store to cash out your pre-loved phone or laptop.
-                </p>
               </div>
 
               <Link
                 href="/trade-in"
-                className="mt-8 relative z-10 inline-flex items-center gap-2 h-11 px-6 rounded-full bg-accent text-white font-bold text-sm hover:bg-accent/90 hover:gap-3 transition-all shadow-sm shadow-accent/30"
+                className="mt-6 relative z-10 inline-flex items-center gap-2 h-11 px-6 rounded-full bg-accent text-white font-bold text-sm hover:bg-accent/90 hover:gap-3 transition-all shadow-sm shadow-accent/30"
               >
                 Get an offer <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
 
             {/* Help Centre card — foreground/dark theme */}
-            <div className="bg-foreground dark:bg-zinc-900 border border-foreground/10 dark:border-zinc-700 rounded-[28px] p-8 flex flex-col justify-between items-start relative overflow-hidden min-h-[260px] group">
+            <div className="bg-foreground dark:bg-zinc-900 border border-foreground/10 dark:border-zinc-700 rounded-[28px] p-6 flex flex-col justify-between items-start relative overflow-hidden group">
               {/* decorative blobs */}
               <div className="pointer-events-none absolute -top-10 -right-10 w-52 h-52 bg-white/5 rounded-full blur-3xl" />
               <div className="pointer-events-none absolute bottom-0 left-0 w-48 h-48 bg-accent/10 rounded-full blur-3xl" />
@@ -867,17 +728,14 @@ export default function CategoryPage() {
                 <span className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-accent mb-4 bg-accent/15 px-3 py-1 rounded-full border border-accent/25">
                   <Wrench className="h-3 w-3" /> Local Experts
                 </span>
-                <h3 className="font-extrabold text-2xl md:text-3xl mb-3 leading-tight text-white">
+                <h3 className="font-extrabold text-2xl md:text-3xl mb-1 leading-tight text-white">
                   Leicester-based<br className="hidden sm:block" /> technical support
                 </h3>
-                <p className="text-zinc-400 font-medium text-sm leading-relaxed max-w-sm">
-                  Got questions about grading, setting up your device, or choosing a model? Our diagnostic technicians are always here to help.
-                </p>
               </div>
 
               <Link
                 href="/help"
-                className="mt-8 relative z-10 inline-flex items-center gap-2 h-11 px-6 rounded-full bg-white text-zinc-950 font-bold text-sm hover:bg-zinc-100 hover:gap-3 transition-all shadow-sm"
+                className="mt-6 relative z-10 inline-flex items-center gap-2 h-11 px-6 rounded-full bg-white text-zinc-950 font-bold text-sm hover:bg-zinc-100 hover:gap-3 transition-all shadow-sm"
               >
                 Visit Help Centre <ArrowRight className="h-4 w-4" />
               </Link>
@@ -885,78 +743,27 @@ export default function CategoryPage() {
           </div>
 
 
+
         </div>
       </section>
 
-      {/* ── FAQ & SEO Buying Guide Block ───────────────────────────────────────── */}
-      <div className="bg-white border-t border-zinc-200 py-16">
-        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Why buy refurbished {meta.plural.toLowerCase()}?</h2>
-            <p className="text-zinc-500 font-medium text-lg">Everything you need to know about our rigorous testing and grading process.</p>
-          </div>
-          
-          <div className="space-y-4 mb-16">
+      {/* ── Trust bar ────────────────────────────────────────────────────────── */}
+      <div className="border-t border-zinc-200 bg-white py-12">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row justify-center items-start sm:items-center gap-8 md:gap-24 w-fit mx-auto pl-6 sm:pl-0">
             {[
-              { q: `Are these ${meta.plural.toLowerCase()} fully tested?`, a: `Yes, every single item goes through a 90-point inspection process by our certified technicians before being sold.` },
-              { q: "What does the 2-year warranty cover?", a: "Our warranty covers all software and hardware defects. If your device develops a fault, we will repair or replace it for free." },
-              { q: "How long does shipping take?", a: "We offer free express shipping on all orders. Most orders arrive within 1-2 business days." }
-            ].map((faq, i) => (
-              <div key={i} className="border border-zinc-200 rounded-[24px] overflow-hidden">
-                <button 
-                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                  className="w-full px-6 py-5 flex items-center justify-between bg-white hover:bg-zinc-50 transition-colors"
-                >
-                  <span className="font-bold text-lg text-left">{faq.q}</span>
-                  <ChevronDown className={`h-5 w-5 transition-transform ${openFaq === i ? "rotate-180" : ""}`} />
-                </button>
-                <AnimatePresence>
-                  {openFaq === i && (
-                    <motion.div
-                      initial={{ height: 0 }}
-                      animate={{ height: "auto" }}
-                      exit={{ height: 0 }}
-                      className="overflow-hidden bg-zinc-50"
-                    >
-                      <div className="p-6 pt-0 text-zinc-600 font-medium">
-                        {faq.a}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+              { icon: BadgeCheck,  text: "90-Point Quality Check" },
+              { icon: Zap,         text: "Free Express Shipping" },
+              { icon: RefreshCw,   text: "30-Day Returns" },
+            ].map(({ icon: Icon, text }) => (
+              <div key={text} className="flex items-center gap-4">
+                <div className="h-10 w-10 rounded-full bg-accent flex items-center justify-center shrink-0">
+                   <Icon className="h-5 w-5 text-white" />
+                </div>
+                <span className="text-sm font-bold">{text}</span>
               </div>
             ))}
           </div>
-
-          {/* Detailed SEO Buying Guide text block */}
-          {SEO_TEXT[categorySlug] && (
-            <div className="border-t border-zinc-200 pt-16">
-              <h2 className="text-xl font-extrabold text-zinc-900 mb-6">{SEO_TEXT[categorySlug].title}</h2>
-              <div className="space-y-4 text-xs md:text-sm font-semibold text-zinc-500 leading-relaxed">
-                {SEO_TEXT[categorySlug].content.map((pText, i) => (
-                  <p key={i}>{pText}</p>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* ── Trust bar ────────────────────────────────────────────────────────── */}
-      <div className="border-t border-zinc-200 bg-white py-12">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-wrap justify-center gap-12 md:gap-24">
-          {[
-            { icon: ShieldCheck, text: "2-Year Warranty" },
-            { icon: Zap,         text: "Free Express Shipping" },
-            { icon: RefreshCw,   text: "30-Day Returns" },
-          ].map(({ icon: Icon, text }) => (
-            <div key={text} className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-accent flex items-center justify-center">
-                 <Icon className="h-5 w-5 text-white" />
-              </div>
-              <span className="text-sm font-bold">{text}</span>
-            </div>
-          ))}
         </div>
       </div>
 

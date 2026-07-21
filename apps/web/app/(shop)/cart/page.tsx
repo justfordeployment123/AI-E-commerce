@@ -5,7 +5,6 @@ import {
   Trash2,
   Plus,
   Minus,
-  ShieldCheck,
   Zap,
   RefreshCw,
   ArrowRight,
@@ -209,15 +208,9 @@ function CartPageContent() {
               </div>
 
               {/* Support Trust Signals */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-white p-4 rounded-[20px] border border-zinc-200 flex flex-col items-center text-center gap-2">
-                  <ShieldCheck className="h-6 w-6 text-black" strokeWidth={1.5} />
-                  <p className="text-xs font-bold">2-Year Warranty</p>
-                </div>
-                <div className="bg-white p-4 rounded-[20px] border border-zinc-200 flex flex-col items-center text-center gap-2">
-                  <RefreshCw className="h-6 w-6 text-black" strokeWidth={1.5} />
-                  <p className="text-xs font-bold">30-Day Returns</p>
-                </div>
+              <div className="bg-white p-4 rounded-[20px] border border-zinc-200 flex flex-col items-center text-center gap-2 max-w-[200px] mx-auto">
+                <RefreshCw className="h-6 w-6 text-black" strokeWidth={1.5} />
+                <p className="text-xs font-bold">30-Day Returns</p>
               </div>
 
             </div>

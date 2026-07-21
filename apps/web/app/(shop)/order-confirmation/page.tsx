@@ -3,7 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { motion } from "framer-motion";
-import { Check, Truck, Package, ArrowRight, Star, ShieldCheck } from "lucide-react";
+import { Check, Truck, Package, ArrowRight, Star } from "lucide-react";
 import Footer from "@/components/Footer";
 
 function OrderConfirmationContent() {
@@ -140,9 +140,8 @@ function OrderConfirmationContent() {
           </div>
 
           {/* Trust signals */}
-          <div className="grid md:grid-cols-2 gap-5 mb-12">
+          <div className="grid gap-5 mb-12 max-w-md mx-auto md:max-w-none">
             {[
-              { icon: ShieldCheck, title: "2-Year Warranty", desc: "Every device sold is covered by our comprehensive 2-year warranty. If something's wrong, we fix it." },
               { icon: ArrowRight, title: "30-Day Returns", desc: "Changed your mind? Return any device within 30 days for a full refund, no questions asked." },
             ].map(({ icon: Icon, title, desc }) => (
               <div key={title} className="flex gap-4 p-6 rounded-[1.5rem] bg-muted border border-border">

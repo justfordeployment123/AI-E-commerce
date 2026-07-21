@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ProductImage from "@/components/ProductImage";
 import {
-  Shield, Lock, ChevronRight, Check, Truck,
+  Lock, ChevronRight, Check, Truck,
   Tag, ArrowLeft, Zap, ShoppingCart, ArrowRight, AlertCircle,
 } from "lucide-react";
 import { loadStripe } from "@stripe/stripe-js";
@@ -634,7 +634,6 @@ function CheckoutInner({ stripeConfigured, stripeConfigLoaded }: { stripeConfigu
 
                 <div className="mt-6 space-y-3">
                   {[
-                    { icon: Shield, text: "2-year warranty on every device" },
                     { icon: Truck, text: "Free tracked delivery" },
                   ].map(({ icon: Icon, text }) => (
                     <div key={text} className="flex items-center gap-2 text-xs text-zinc-500 font-medium">

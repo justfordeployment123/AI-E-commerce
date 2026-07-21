@@ -6,7 +6,7 @@ import { useParams } from "next/navigation";
 import { productsApi, reviewsApi, uploadsApi, type Product, type Review } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Star, ShoppingCart, Heart, Shield, RefreshCw, Truck,
+  Star, ShoppingCart, Heart, RefreshCw, Truck,
   Check, ChevronDown, ChevronUp, ArrowLeft,
   Award, Info, Camera, X, Send, Loader2, MessageSquare
 } from "lucide-react";
@@ -242,7 +242,6 @@ export default function ProductDetailPage() {
             {/* Trust signals */}
             <div className="hidden lg:grid grid-cols-1 gap-4 mt-8 bg-white p-6 rounded-[32px] border border-zinc-200">
               {[
-                { icon: Shield, title: "2-Year Warranty", desc: "For peace of mind" },
                 { icon: RefreshCw, title: "30-Day Returns", desc: "Hassle-free process" },
                 { icon: Truck, title: "Free Delivery", desc: "Carbon neutral shipping" },
               ].map(({ icon: Icon, title, desc }) => (
@@ -395,14 +394,10 @@ export default function ProductDetailPage() {
                   ),
                 },
                 {
-                  id: "warranty",
-                  title: "Warranty & Returns",
+                  id: "returns",
+                  title: "Returns & Inspection",
                   content: (
                     <div className="space-y-4 text-sm text-zinc-600 font-medium">
-                      <div className="flex items-start gap-3">
-                        <Shield className="h-5 w-5 text-black flex-shrink-0 mt-0.5" strokeWidth={1.5} />
-                        <p><strong>2-Year Warranty</strong> — All devices come with a full 2-year warranty. If something goes wrong, we fix or replace it, no questions asked.</p>
-                      </div>
                       <div className="flex items-start gap-3">
                         <RefreshCw className="h-5 w-5 text-black flex-shrink-0 mt-0.5" strokeWidth={1.5} />
                         <p><strong>30-Day Returns</strong> — Changed your mind? Return it within 30 days for a full refund, completely free of charge.</p>
@@ -441,9 +436,8 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Mobile trust signals */}
-            <div className="lg:hidden grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="lg:hidden grid grid-cols-1 sm:grid-cols-2 gap-3">
               {[
-                { icon: Shield, title: "2-Year Warranty" },
                 { icon: RefreshCw, title: "30-Day Returns" },
                 { icon: Truck, title: "Free Delivery" },
               ].map(({ icon: Icon, title }) => (
@@ -454,7 +448,7 @@ export default function ProductDetailPage() {
                   <div>
                     <p className="text-xs sm:text-[10px] font-bold leading-tight text-zinc-950">{title}</p>
                     <p className="text-[10px] text-zinc-400 font-semibold sm:hidden mt-0.5">
-                      {title === "2-Year Warranty" ? "For peace of mind" : title === "30-Day Returns" ? "Hassle-free process" : "Carbon neutral shipping"}
+                      {title === "30-Day Returns" ? "Hassle-free process" : "Carbon neutral shipping"}
                     </p>
                   </div>
                 </div>
