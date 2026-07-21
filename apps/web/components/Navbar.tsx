@@ -80,6 +80,7 @@ function SearchEmptyState({
 export default function Navbar() {
   const { count: itemsCount } = useCart();
   const [isOpen, setIsOpen] = useState(false);
+  const [showCategoryBar, setShowCategoryBar] = useState(true);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [productIndex, setProductIndex] = useState<SearchableItem[]>([]);
@@ -97,6 +98,26 @@ export default function Navbar() {
   const [hoveredCat, setHoveredCat] = useState<string | null>(null);
   const closeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [shopCategories, setShopCategories] = useState<{ label: string; href: string; slug: string }[]>([]);
+  const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      if (currentScrollY < 10) {
+        setShowCategoryBar(true); // Always show at top
+      } else if (currentScrollY > lastScrollY.current) {
+        setShowCategoryBar(false); // Scrolling down
+      } else if (currentScrollY < lastScrollY.current) {
+        setShowCategoryBar(true); // Scrolling up
+      }
+      
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
   const [categoryBrands, setCategoryBrands] = useState<Record<string, string[]>>({});
   const [categoryDescriptions, setCategoryDescriptions] = useState<Record<string, string>>({});
   const [categoryDisplayNames, setCategoryDisplayNames] = useState<Record<string, string>>({});
@@ -295,47 +316,30 @@ export default function Navbar() {
 
   return (
     <>
-      {/* Promo bar */}
-      <div className="bg-black text-white py-1.5 px-4 overflow-hidden">
-        <div className="mx-auto max-w-7xl flex items-center justify-center gap-6 text-[9px] md:text-[10px] font-bold uppercase tracking-[0.2em]">
-          <div className="flex items-center gap-2">
-            <Zap className="h-3 w-3 text-accent animate-pulse" />
-            <span>Free delivery on all tech above £50</span>
-          </div>
-          <span className="hidden md:inline h-1 w-1 rounded-full bg-white/20" />
-          <Link href="/trade-in" className="hidden md:flex items-center gap-2 hover:text-accent transition-colors">
-            Sell your tech for cash <ArrowRight className="h-3 w-3" />
-          </Link>
-        </div>
-      </div>
+      <div className="sticky top-0 inset-x-0 z-50 flex flex-col items-center pointer-events-none">
+        
+        {/* Promo bar removed as per user request */}
 
-      <header ref={headerRef} className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur-md text-foreground font-sans">
-        {/* Tier 1: Main row (Logo, Search, Actions) */}
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 border-b border-border/40">
-          <div className="flex h-14 md:h-16 items-center justify-between gap-4">
+        {/* Navbar Container */}
+        <div className="w-full flex justify-center bg-zinc-950 pointer-events-auto shadow-2xl relative">
+          <div className="flex w-full max-w-7xl h-[76px] relative shrink-0 px-4 sm:px-6 md:px-8 items-center justify-between gap-2 md:gap-4 lg:gap-8">
             
-            {/* Left: Mobile hamburger menu toggle + Logo */}
-            <div className="flex items-center gap-3 sm:gap-4 min-w-0 shrink">
-              <button className="lg:hidden text-foreground shrink-0" onClick={toggleMobileMenu} aria-label="Toggle menu">
+            {/* Left: Hamburger + Logo */}
+            <div className="flex items-center shrink-0 min-w-fit gap-2 sm:gap-4">
+              <button className="lg:hidden text-white shrink-0 hover:text-accent transition-colors" onClick={toggleMobileMenu} aria-label="Toggle menu">
                 {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
               </button>
-              
-              <Link href="/" className="flex items-center select-none min-w-0">
-                <img
-                  src="/Icon/logo_black.png"
-                  alt="TechStop Leicester"
-                  className="h-7 sm:h-8 md:h-9 w-auto object-contain block dark:hidden shrink"
-                />
+              <Link href="/" className="flex items-center select-none shrink-0">
                 <img
                   src="/Icon/logo_white.png"
                   alt="TechStop Leicester"
-                  className="h-7 sm:h-8 md:h-9 w-auto object-contain hidden dark:block shrink"
+                  className="h-9 sm:h-10 md:h-11 w-auto object-contain hover:scale-105 transition-transform shrink-0"
                 />
               </Link>
             </div>
 
-            {/* Center: Massive Search Bar with interactive preview */}
-            <div className="hidden lg:block flex-1 max-w-2xl relative">
+            {/* Center: Search Bar */}
+            <div className="hidden sm:block w-full max-w-[600px] xl:max-w-[800px] relative mx-2 lg:mx-4">
               <div className="relative">
                 <input
                   type="text"
@@ -401,6 +405,15 @@ export default function Navbar() {
             {/* Right: Account + Cart */}
             <div className="flex items-center gap-2 md:gap-3 shrink-0">
 
+              {/* Trade In Button (Icon on mobile/tablet, full text on desktop) */}
+              <Link
+                href="/trade-in"
+                className="flex items-center justify-center gap-2 h-10 w-10 md:h-11 md:w-11 lg:w-auto lg:px-4 rounded-[14px] bg-muted hover:bg-zinc-200 dark:hover:bg-zinc-800 text-foreground transition-all font-bold text-xs uppercase tracking-wide shrink-0 border border-border/40"
+              >
+                <RefreshCw className="h-4 w-4 md:h-5 md:w-5 shrink-0" />
+                <span className="hidden lg:inline">Trade In</span>
+              </Link>
+
               {/* Auth button */}
               {loading ? (
                 <div className="h-10 w-10 rounded-[14px] bg-muted animate-pulse" />
@@ -452,6 +465,22 @@ export default function Navbar() {
                               <Package className="h-3.5 w-3.5 text-zinc-400" />
                               My Orders
                             </Link>
+                            <Link
+                              href="/trade-in"
+                              onClick={() => setProfileOpen(false)}
+                              className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold text-zinc-500 hover:bg-muted hover:text-foreground transition-colors"
+                            >
+                              <RefreshCw className="h-3.5 w-3.5 text-zinc-400" />
+                              Trade-In
+                            </Link>
+                            <Link
+                              href="/repairs"
+                              onClick={() => setProfileOpen(false)}
+                              className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold text-zinc-500 hover:bg-muted hover:text-foreground transition-colors"
+                            >
+                              <Wrench className="h-3.5 w-3.5 text-zinc-400" />
+                              Repairs
+                            </Link>
                           </div>
 
                           {/* Sign out */}
@@ -480,21 +509,9 @@ export default function Navbar() {
                 </Link>
               )}
 
-              {/* Theme Toggle Button */}
-              <button
-                onClick={toggleTheme}
-                className="flex items-center justify-center h-10 w-10 md:h-11 md:w-11 rounded-[14px] bg-muted hover:bg-zinc-200 dark:hover:bg-zinc-800 text-foreground transition-transform hover:scale-105 active:scale-95 border border-border/40 shrink-0 cursor-pointer"
-                title="Toggle Theme"
-                aria-label="Toggle Theme"
-              >
-                {!mounted ? (
-                  <div className="h-4 w-4 md:h-5 md:w-5" />
-                ) : theme === "dark" ? (
-                  <Sun className="h-4 w-4 md:h-5 md:w-5 text-yellow-500 fill-yellow-500/20" />
-                ) : (
-                  <Moon className="h-4 w-4 md:h-5 md:w-5 text-zinc-750 fill-zinc-750/10" />
-                )}
-              </button>
+              {/* Theme Toggle Button removed as per user request */}
+              
+              {/* Category Toggle Button Removed as per user request */}
 
               {user && <NotificationBell />}
 
@@ -509,161 +526,208 @@ export default function Navbar() {
             </div>
 
           </div>
-        </div>
+        </div> {/* End Navbar Container */}
 
-        {/* Tier 2: Category Bar (Desktop only) */}
-        <div className="hidden lg:block bg-muted/30 border-b border-border/20 relative">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between">
-            {/* Category Links */}
-            <nav
-              className="flex items-center gap-1.5 text-xs font-bold relative bg-muted p-1 rounded-full border border-border/40"
-              onMouseLeave={scheduleClose}
+        {/* Tier 2: Category Bar (Floating below notch) */}
+        <AnimatePresence>
+          {showCategoryBar && !pathname?.startsWith("/account") && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20, pointerEvents: 'none' }}
+              transition={{ duration: 0.2 }}
+              className="hidden lg:flex w-full justify-center absolute top-full mt-2 z-0 pointer-events-auto"
             >
-              {[
-                { label: "All Products", href: "/", slug: "" },
-                ...shopCategories
-              ].map(({ label, href, slug }) => {
-                const isActive = href === "/" ? pathname === "/" : pathname?.startsWith(href);
-                return (
-                  <Link
-                    key={label}
-                    href={href}
-                    onMouseEnter={() => slug ? openDropdown(slug) : setHoveredCat(null)}
-                    className={`relative px-4 py-2 rounded-full transition-colors duration-250 ${
-                      isActive ? "text-white z-10 font-extrabold" : "text-zinc-500 dark:text-zinc-400 hover:text-foreground font-semibold"
-                    }`}
-                  >
-                    {isActive && (
-                      <motion.div
-                        layoutId="activeCategoryTab"
-                        className="absolute inset-0 bg-accent rounded-full -z-10 shadow-sm"
-                        transition={{ type: "spring", stiffness: 350, damping: 28 }}
-                      />
-                    )}
-                    {label}
-                  </Link>
-                );
-              })}
-            </nav>
-
-            {/* Right: Utility Links */}
-            <div className="flex items-center gap-2 text-xs font-bold">
-              {[
-                { label: "Sell Your Device", href: "/trade-in", icon: RefreshCw },
-                { label: "Book a Repair", href: "/repair", icon: Wrench },
-                { label: "Help Centre", href: "/help", icon: null },
-              ].map(({ label, href, icon: Icon }) => {
-                const isActive = pathname?.startsWith(href);
-                return (
-                  <Link
-                    key={label}
-                    href={href}
-                    className={`relative px-4 py-2 rounded-full flex items-center gap-1.5 transition-colors duration-250 ${
-                      isActive
-                        ? "bg-accent text-white shadow-sm font-extrabold"
-                        : "text-zinc-500 dark:text-zinc-400 hover:text-foreground font-semibold hover:bg-muted"
-                    }`}
-                  >
-                    {Icon && <Icon className={`h-3.5 w-3.5 ${isActive ? "text-white" : "text-zinc-500"}`} />}
-                    <span>{label}</span>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* ── Mega Menu Dropdown — 100% from DB, no static fallbacks ── */}
-          <AnimatePresence>
-            {hoveredCat && (() => {
-              // navLabel = short (e.g. "Audio"), heading = full display name (e.g. "Audio & Headphones")
-              const navLabel = shopCategories.find(c => c.slug === hoveredCat)?.label ?? hoveredCat;
-              const catLabel = categoryDisplayNames[hoveredCat] ?? navLabel;
-              const desc     = categoryDescriptions[hoveredCat];
-              const brands   = categoryBrands[hoveredCat] ?? [];
-              const hasContent = hoveredCat === "other"
-                ? otherSubcats.length > 0
-                : brands.length > 0;
-
-              if (!hasContent && !desc && hoveredCat !== "other") return null;
-
-              return (
-                <motion.div
-                  key={hoveredCat}
-                  initial={{ opacity: 0, y: -6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  transition={{ duration: 0.18, ease: "easeOut" }}
-                  onMouseEnter={cancelClose}
+              <div className="bg-zinc-950/90 backdrop-blur-xl border border-white/10 shadow-2xl rounded-full p-1.5 flex items-center gap-6">
+                
+                {/* Category Links */}
+                <nav
+                  className="flex items-center gap-1 text-xs font-bold relative"
                   onMouseLeave={scheduleClose}
-                  className="absolute top-full left-0 right-0 z-50 bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 shadow-xl"
                 >
-                  <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
-                    {/* Breadcrumb */}
-                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3">
-                      <Link href="/" className="hover:text-zinc-700 transition-colors">Home</Link>
-                      <span>/</span>
-                      <span className="text-zinc-800 dark:text-zinc-200">{catLabel}</span>
-                    </div>
+                  {[
+                    { label: "All Products", href: "/", slug: "all-products" },
+                    ...shopCategories
+                  ].map(({ label, href, slug }) => {
+                    const isActive = href === "/" ? pathname === "/" : pathname?.startsWith(href);
+                    let catLabel = slug ? (categoryDisplayNames[slug] ?? shopCategories.find(c => c.slug === slug)?.label ?? slug) : "";
+                    let desc = slug ? categoryDescriptions[slug] : "";
+                    const brands = slug ? (categoryBrands[slug] ?? []) : [];
+                    let hasContent = slug === "other" ? otherSubcats.length > 0 : brands.length > 0;
 
-                    <div className="flex items-end justify-between gap-8">
-                      <div className="flex-1 min-w-0">
-                        {/* Title — from DB name */}
-                        <h2 className="text-2xl font-bold tracking-tight text-zinc-950 dark:text-white mb-1.5">
-                          {catLabel}
-                        </h2>
+                    if (slug === "all-products") {
+                      catLabel = "All Products";
+                      desc = "Browse our complete catalog of certified refurbished tech and new devices.";
+                      hasContent = true;
+                    }
 
-                        {/* Description — only shown if set in admin panel */}
-                        {desc && (
-                          <p className="text-sm font-medium text-zinc-500 max-w-2xl leading-relaxed">
-                            {desc}
-                          </p>
-                        )}
-
-                        {/* Brands / subcategory chips */}
-                        {hoveredCat === "other" ? (
-                          otherSubcats.length > 0 && (
-                            <div className="flex items-center gap-2 mt-4 flex-wrap">
-                              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest shrink-0">Browse by type:</span>
-                              {otherSubcats.map(sub => (
-                                <Link key={sub.slug} href="/shop/others"
-                                  className="px-3 py-1.5 rounded-full border border-zinc-200 dark:border-zinc-700 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:border-zinc-900 hover:bg-zinc-900 hover:text-white dark:hover:bg-white dark:hover:text-zinc-950 transition-all">
-                                  {sub.label}
-                                </Link>
-                              ))}
-                            </div>
-                          )
-                        ) : (
-                          brands.length > 0 && (
-                            <div className="flex items-center gap-2 mt-4 flex-wrap">
-                              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest shrink-0">Shop by brand:</span>
-                              {brands.map(brand => (
-                                <Link key={brand} href={`/shop/${hoveredCat}`}
-                                  className="px-3 py-1.5 rounded-full border border-zinc-200 dark:border-zinc-700 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:border-zinc-900 hover:bg-zinc-900 hover:text-white dark:hover:bg-white dark:hover:text-zinc-950 transition-all">
-                                  {brand}
-                                </Link>
-                              ))}
-                            </div>
-                          )
-                        )}
-                      </div>
-
-                      {/* CTA */}
-                      <Link
-                        href={hoveredCat === "other" ? "/shop/others" : `/shop/${hoveredCat}`}
-                        className="shrink-0 flex items-center gap-2 h-11 px-6 rounded-full bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 text-xs font-bold hover:opacity-90 transition-opacity"
+                    return (
+                      <div
+                        key={label}
+                        className="relative"
+                        onMouseEnter={() => slug ? openDropdown(slug) : setHoveredCat(null)}
                       >
-                        Shop all {catLabel}
-                        <ArrowRight className="h-3.5 w-3.5" />
-                      </Link>
-                    </div>
-                  </div>
-                </motion.div>
-              );
-            })()}
-          </AnimatePresence>
-        </div>
-      </header>
+                        <Link
+                          href={href}
+                          className={`relative px-4 py-2 rounded-full transition-colors duration-250 flex items-center ${
+                            isActive ? "text-white z-10 font-extrabold" : "text-zinc-400 hover:text-white font-semibold"
+                          }`}
+                        >
+                          {isActive && (
+                            <motion.div
+                              layoutId="activeCategoryTab"
+                              className="absolute inset-0 bg-accent rounded-full -z-10 shadow-sm"
+                              transition={{ type: "spring", stiffness: 350, damping: 28 }}
+                            />
+                          )}
+                          {label}
+                        </Link>
 
+                        {/* Dropdown Card */}
+                        <AnimatePresence>
+                          {slug && hoveredCat === slug && (hasContent || desc || slug === "other") && (
+                            <motion.div
+                              key={slug}
+                              initial={{ opacity: 0, y: -20, scale: 0.95 }}
+                              animate={{ opacity: 1, y: 0, scale: 1 }}
+                              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                              transition={{ duration: 0.2, ease: "easeOut" }}
+                              className="absolute top-full mt-4 left-1/2 -translate-x-1/2 z-50 w-[400px] md:w-[420px] bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 shadow-2xl rounded-3xl overflow-hidden pointer-events-auto cursor-default"
+                            >
+                              <div className="p-6 text-left">
+                                {/* Breadcrumb */}
+                                <div className="flex items-center gap-1.5 text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3">
+                                  <Link href="/" className="hover:text-zinc-700 transition-colors cursor-pointer">Home</Link>
+                                  <span>/</span>
+                                  <span className="text-zinc-800 dark:text-zinc-200">{catLabel}</span>
+                                </div>
+
+                                <div className="flex flex-col gap-5">
+                                  <div>
+                                    <h2 className="text-xl font-bold tracking-tight text-zinc-950 dark:text-white mb-2">
+                                      {catLabel}
+                                    </h2>
+
+                                    {desc && (
+                                      <p className="text-sm font-medium text-zinc-500 leading-relaxed">
+                                        {desc}
+                                      </p>
+                                    )}
+
+                                    {slug === "other" ? (
+                                      otherSubcats.length > 0 && (
+                                        <div className="flex items-center gap-2 mt-5 flex-wrap">
+                                          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest w-full">Types</span>
+                                          {otherSubcats.map(sub => (
+                                            <Link key={sub.slug} href="/shop/others"
+                                              className="px-3 py-1.5 rounded-full border border-zinc-200 dark:border-zinc-700 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:border-zinc-900 hover:bg-zinc-900 hover:text-white dark:hover:bg-white dark:hover:text-zinc-950 transition-all cursor-pointer">
+                                              {sub.label}
+                                            </Link>
+                                          ))}
+                                        </div>
+                                      )
+                                    ) : (
+                                      brands.length > 0 && (
+                                        <div className="flex items-center gap-2 mt-5 flex-wrap">
+                                          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest w-full">Brands</span>
+                                          {brands.map(brand => (
+                                            <Link key={brand} href={`/shop/${slug}`}
+                                              className="px-3 py-1.5 rounded-full border border-zinc-200 dark:border-zinc-700 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:border-zinc-900 hover:bg-zinc-900 hover:text-white dark:hover:bg-white dark:hover:text-zinc-950 transition-all cursor-pointer">
+                                              {brand}
+                                            </Link>
+                                          ))}
+                                        </div>
+                                      )
+                                    )}
+                                  </div>
+
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    );
+                  })}
+                </nav>
+
+                <div className="w-px h-5 bg-white/10" />
+
+                {/* Right: Utility Links */}
+                <div className="flex items-center gap-1 text-xs font-bold pr-2" onMouseLeave={scheduleClose}>
+                  {[
+                    { label: "Sell Your Device", href: "/trade-in", icon: RefreshCw, slug: "trade-in" },
+                    { label: "Book a Repair", href: "/repair", icon: Wrench, slug: "repair" },
+                    { label: "Help Centre", href: "/help", icon: null, slug: "help" },
+                  ].map(({ label, href, icon: Icon, slug }) => {
+                    const isActive = pathname?.startsWith(href);
+                    let desc = "";
+                    let catLabel = label;
+                    if (slug === "trade-in") {
+                      desc = "Get instant cash for your old devices. Fast, easy, and secure.";
+                    } else if (slug === "repair") {
+                      desc = "Professional repair services for all your devices with warranty.";
+                    } else if (slug === "help") {
+                      desc = "Get support, track your orders, and find answers to your questions.";
+                    }
+                    const hasDropdown = slug === "trade-in" || slug === "repair" || slug === "help";
+
+                    return (
+                      <div
+                        key={label}
+                        className="relative"
+                        onMouseEnter={() => hasDropdown ? openDropdown(slug) : setHoveredCat(null)}
+                      >
+                        <Link
+                          href={href}
+                          className={`relative px-4 py-2 rounded-full flex items-center gap-1.5 transition-colors duration-250 ${
+                            isActive
+                              ? "bg-accent text-white shadow-sm font-extrabold"
+                              : "text-zinc-400 hover:text-white font-semibold hover:bg-white/5"
+                          }`}
+                        >
+                          {Icon && <Icon className={`h-3.5 w-3.5 ${isActive ? "text-white" : "text-zinc-500"}`} />}
+                          <span>{label}</span>
+                        </Link>
+
+                        {/* Static Dropdown Card */}
+                        <AnimatePresence>
+                          {hasDropdown && hoveredCat === slug && (
+                            <motion.div
+                              key={slug}
+                              initial={{ opacity: 0, y: -20, scale: 0.95 }}
+                              animate={{ opacity: 1, y: 0, scale: 1 }}
+                              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                              transition={{ duration: 0.2, ease: "easeOut" }}
+                              className="absolute top-full mt-4 left-1/2 -translate-x-1/2 z-50 w-[300px] bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 shadow-2xl rounded-3xl overflow-hidden pointer-events-auto cursor-default"
+                            >
+                              <div className="p-6 text-left">
+                                <div className="flex flex-col gap-4">
+                                  <div>
+                                    <h2 className="text-xl font-bold tracking-tight text-zinc-950 dark:text-white mb-2">
+                                      {catLabel}
+                                    </h2>
+                                    <p className="text-sm font-medium text-zinc-500 leading-relaxed">
+                                      {desc}
+                                    </p>
+                                  </div>
+
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+
+        </div>
       {/* Mobile drawer — a fixed off-canvas panel sliding in from the left.
           Rendered as a SIBLING of <header>, not a descendant: <header> has
           backdrop-blur (backdrop-filter), and per spec backdrop-filter on an

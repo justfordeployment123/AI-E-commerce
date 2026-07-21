@@ -44,12 +44,11 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#f8f8f8] text-black font-sans">
+    <div className="flex h-[calc(100vh-76px)] flex-col bg-[#f8f8f8] text-black font-sans overflow-hidden">
       
-
       {/* User header strip */}
-      <div className="bg-white border-b border-zinc-100">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
+      <div className="bg-white border-b border-zinc-100 shrink-0">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center gap-4">
             <div className="h-14 w-14 rounded-[1.25rem] bg-black flex items-center justify-center shrink-0">
               <span className="text-accent font-bold text-xl">{initial}</span>
@@ -64,13 +63,13 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
         </div>
       </div>
 
-      <main className="py-8 lg:py-10">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <main className="flex-1 flex flex-col min-h-0 overflow-y-auto custom-scrollbar relative">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 flex-1 flex flex-col pt-6 sm:pt-8 lg:pt-10 pb-8">
           <div className="flex flex-col lg:flex-row lg:items-start gap-6 sm:gap-8 lg:gap-10">
 
-            {/* Sidebar — sticky below the full navbar (tier1 64px + tier2 ~44px = ~108px) */}
-            <aside className="w-full lg:w-[240px] shrink-0 lg:sticky lg:top-36">
-              <nav className="bg-white rounded-[1.5rem] border border-zinc-100 shadow-sm overflow-hidden">
+            {/* Sidebar — sticky on all screens */}
+            <aside className="w-full lg:w-[240px] shrink-0 sticky top-6 sm:top-8 lg:top-10 z-30">
+              <nav className="bg-white rounded-[1.5rem] border border-zinc-100 shadow-2xl overflow-hidden">
                 <ul className="flex lg:flex-col gap-1 overflow-x-auto scrollbar-hide p-2 sm:p-3">
                   {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
                     const active = pathname === href;
@@ -78,42 +77,25 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
                       <li key={href} className="shrink-0 flex-1 lg:flex-initial">
                         <Link
                           href={href}
+                          title={label}
                           className={`flex items-center justify-center lg:justify-start gap-2.5 px-4 py-3 rounded-[1rem] text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
                             active
                               ? "bg-black text-white"
                               : "text-zinc-500 hover:bg-zinc-50 hover:text-black"
                           }`}
                         >
-                          <Icon className="h-4 w-4 shrink-0" />
-                          {label}
+                          <Icon className="h-5 w-5 lg:h-4 lg:w-4 shrink-0" />
+                          <span className="hidden lg:inline">{label}</span>
                         </Link>
                       </li>
                     );
                   })}
-                  <li className="shrink-0 lg:hidden flex items-center">
-                    <button
-                      onClick={handleLogout}
-                      className="flex items-center gap-2.5 px-4 py-3 rounded-[1rem] text-xs sm:text-sm font-bold text-red-500 hover:bg-red-50 transition-all whitespace-nowrap"
-                    >
-                      <LogOut className="h-4 w-4 shrink-0" />
-                      Sign out
-                    </button>
-                  </li>
                 </ul>
-                <div className="hidden lg:block mt-2 pt-2 border-t border-zinc-100">
-                  <button
-                    onClick={handleLogout}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-[1rem] text-sm font-bold text-red-500 hover:bg-red-50 transition-all text-left"
-                  >
-                    <LogOut className="h-4 w-4 shrink-0" />
-                    Sign out
-                  </button>
-                </div>
               </nav>
             </aside>
 
-            {/* Page content with animation */}
-            <div className="flex-1 min-w-0">
+            {/* Page content */}
+            <div className="flex-1 min-w-0 pt-0 lg:pt-10">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={pathname}

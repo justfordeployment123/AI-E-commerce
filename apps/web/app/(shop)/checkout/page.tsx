@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -312,7 +312,7 @@ function CheckoutInner({ stripeConfigured, stripeConfigLoaded }: { stripeConfigu
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-background text-foreground font-sans selection:bg-accent selection:text-white">
+    <div className="flex min-h-screen flex-col bg-background text-foreground font-sans selection:bg-accent selection:text-white overflow-x-hidden">
 
       <main className="flex-1">
         <div className="border-b border-zinc-100 bg-zinc-50/50">
@@ -340,11 +340,11 @@ function CheckoutInner({ stripeConfigured, stripeConfigLoaded }: { stripeConfigu
           </div>
         </div>
 
-        <div className="mx-auto max-w-7xl px-4 py-10 lg:py-14">
-          <div className="grid lg:grid-cols-[1fr_420px] gap-12 xl:gap-20">
+        <div className="mx-auto max-w-7xl px-4 py-10 lg:py-14 w-full">
+          <div className="grid lg:grid-cols-[1fr_420px] gap-12 xl:gap-20 min-w-0">
 
             {/* Left — Form */}
-            <div>
+            <div className="min-w-0">
               <AnimatePresence mode="wait">
                 {/* Step 0: Delivery */}
                 {step === 0 && (
@@ -356,19 +356,19 @@ function CheckoutInner({ stripeConfigured, stripeConfigLoaded }: { stripeConfigu
                     transition={{ type: "spring", stiffness: 300, damping: 30 }}
                   >
                     <h1 className="text-3xl font-bold mb-8">Delivery details</h1>
-                    <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                       {[
                         { key: "firstName", label: "First name" },
                         { key: "lastName", label: "Last name" },
                       ].map(({ key, label }) => (
-                        <div key={key} className="flex flex-col gap-2">
-                          <label className="text-xs font-bold uppercase tracking-widest text-zinc-400">{label}</label>
+                        <div key={key} className="flex flex-col gap-2 min-w-0">
+                          <label className="text-xs font-bold uppercase tracking-widest text-zinc-400 truncate">{label}</label>
                           <input
                             type="text"
                             placeholder={label}
                             value={delivery[key as keyof typeof delivery]}
                             onChange={e => setDelivery(d => ({ ...d, [key]: e.target.value }))}
-                            className="h-14 rounded-[1rem] border-2 border-zinc-200 px-5 text-sm font-medium outline-none focus:border-accent transition-colors"
+                            className="w-full min-w-0 h-14 rounded-[1rem] border-2 border-zinc-200 px-5 text-sm font-medium outline-none focus:border-accent transition-colors"
                           />
                         </div>
                       ))}
@@ -381,14 +381,14 @@ function CheckoutInner({ stripeConfigured, stripeConfigLoaded }: { stripeConfigu
                         { key: "city", label: "City", type: "text", placeholder: "Leicester" },
                         { key: "postcode", label: "Postcode", type: "text", placeholder: "LE1 1AA" },
                       ].map(({ key, label, type, placeholder }) => (
-                        <div key={key} className="flex flex-col gap-2">
-                          <label className="text-xs font-bold uppercase tracking-widest text-zinc-400">{label}</label>
+                        <div key={key} className="flex flex-col gap-2 min-w-0">
+                          <label className="text-xs font-bold uppercase tracking-widest text-zinc-400 truncate">{label}</label>
                           <input
                             type={type}
                             placeholder={placeholder}
                             value={delivery[key as keyof typeof delivery]}
                             onChange={e => setDelivery(d => ({ ...d, [key]: e.target.value }))}
-                            className="h-14 rounded-[1rem] border-2 border-zinc-200 px-5 text-sm font-medium outline-none focus:border-accent transition-colors"
+                            className="w-full min-w-0 h-14 rounded-[1rem] border-2 border-zinc-200 px-5 text-sm font-medium outline-none focus:border-accent transition-colors"
                           />
                         </div>
                       ))}
@@ -401,13 +401,13 @@ function CheckoutInner({ stripeConfigured, stripeConfigLoaded }: { stripeConfigu
                           { id: "tracked24", label: "Royal Mail Tracked 24", sub: "1–2 working days", price: "Free" },
                           { id: "express", label: "Royal Mail Special Delivery", sub: "Next working day by 1pm", price: "£7.99" },
                         ].map(opt => (
-                          <label key={opt.id} className="flex items-center gap-4 p-5 rounded-[1.5rem] border-2 border-zinc-200 hover:border-zinc-400 cursor-pointer transition-all has-[:checked]:border-black has-[:checked]:bg-zinc-50">
-                            <input type="radio" name="shipping" defaultChecked={opt.id === "tracked24"} className="accent-black" />
-                            <div className="flex-1">
-                              <p className="font-bold text-sm">{opt.label}</p>
-                              <p className="text-xs text-zinc-400 mt-0.5">{opt.sub}</p>
+                          <label key={opt.id} className="flex items-center gap-3 sm:gap-4 p-4 sm:p-5 rounded-[1.5rem] border-2 border-zinc-200 hover:border-zinc-400 cursor-pointer transition-all has-[:checked]:border-black has-[:checked]:bg-zinc-50 min-w-0">
+                            <input type="radio" name="shipping" defaultChecked={opt.id === "tracked24"} className="accent-black shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="font-bold text-sm truncate">{opt.label}</p>
+                              <p className="text-xs text-zinc-400 mt-0.5 truncate">{opt.sub}</p>
                             </div>
-                            <span className="font-bold text-sm">{opt.price}</span>
+                            <span className="font-bold text-sm shrink-0">{opt.price}</span>
                           </label>
                         ))}
                       </div>
@@ -525,9 +525,9 @@ function CheckoutInner({ stripeConfigured, stripeConfigLoaded }: { stripeConfigu
                         { label: "Email", value: delivery.email || "—" },
                         { label: "Payment", value: stripeConfigured ? "Card (Stripe)" : "Dev mode" },
                       ].map(({ label, value }) => (
-                        <div key={label} className="flex justify-between py-4 border-b border-zinc-100">
-                          <span className="text-xs font-bold uppercase tracking-widest text-zinc-400">{label}</span>
-                          <span className="text-sm font-medium text-right max-w-xs">{value}</span>
+                        <div key={label} className="flex justify-between py-4 border-b border-zinc-100 gap-4 min-w-0">
+                          <span className="text-xs font-bold uppercase tracking-widest text-zinc-400 shrink-0">{label}</span>
+                          <span className="text-sm font-medium text-right flex-1 min-w-0 break-words">{value}</span>
                         </div>
                       ))}
                     </div>
@@ -563,8 +563,8 @@ function CheckoutInner({ stripeConfigured, stripeConfigLoaded }: { stripeConfigu
             </div>
 
             {/* Right — Order Summary */}
-            <div>
-              <div className="lg:sticky lg:top-24 rounded-[2rem] bg-zinc-50 border border-zinc-100 p-8">
+            <div className="min-w-0">
+              <div className="lg:sticky lg:top-24 rounded-[2rem] bg-zinc-50 border border-zinc-100 p-6 sm:p-8 min-w-0">
                 <h2 className="font-bold text-lg mb-6">Order summary</h2>
 
                 <div className="space-y-4 mb-6">
@@ -591,7 +591,7 @@ function CheckoutInner({ stripeConfigured, stripeConfigLoaded }: { stripeConfigu
                       value={promoCode}
                       onChange={e => setPromoCode(e.target.value.toUpperCase())}
                       disabled={promoApplied}
-                      className="flex-1 h-12 rounded-[1rem] border-2 border-zinc-200 px-4 text-sm font-mono outline-none focus:border-accent transition-colors disabled:opacity-50"
+                      className="flex-1 min-w-0 h-12 rounded-[1rem] border-2 border-zinc-200 px-4 text-sm font-mono outline-none focus:border-accent transition-colors disabled:opacity-50"
                     />
                     <button
                       onClick={applyPromo}

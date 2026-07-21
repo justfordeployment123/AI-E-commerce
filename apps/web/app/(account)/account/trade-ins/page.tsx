@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { RefreshCw, ArrowRight, ChevronRight } from "lucide-react";
@@ -54,12 +54,14 @@ export default function TradeInsPage() {
               <Link key={t.id} href={`/account/trade-ins/${t.id}`}
                 className="block rounded-[1.25rem] border border-zinc-100 p-5 sm:p-6 hover:border-zinc-200 hover:shadow-sm transition-all group">
                 <div className="flex items-start justify-between gap-4 mb-4">
-                  <div>
-                    <p className="font-bold">{t.brand} {t.model}</p>
-                    <p className="text-xs text-zinc-400 font-medium mt-0.5">{t.reference} · {fmtDate(t.createdAt)}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-bold truncate">{t.brand} {t.model}</p>
+                    <p className="text-xs text-zinc-400 font-medium mt-0.5 truncate">
+                      {t.reference ? `#${t.reference.slice(-6).toUpperCase()}` : 'No Ref'} · {fmtDate(t.createdAt)}
+                    </p>
                   </div>
-                  <span className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-widest shrink-0 ${cfg.color}`}>
-                    <StatusIcon className="h-3 w-3" />
+                  <span className={`flex items-center gap-1.5 rounded-full px-2 sm:px-3 py-1 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest shrink-0 ${cfg.color}`}>
+                    <StatusIcon className="h-3 w-3 shrink-0" />
                     {cfg.label}
                   </span>
                 </div>

@@ -75,7 +75,7 @@ export default function SettingsPage() {
         </div>
       )}
 
-      <form onSubmit={handleSave} className="space-y-8 max-w-lg">
+      <form onSubmit={handleSave} className="space-y-8 max-w-2xl">
         <div>
           <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-5">Personal info</h3>
           <div className="space-y-4">

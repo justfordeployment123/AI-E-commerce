@@ -155,7 +155,7 @@ function PromoCarouselBanner() {
 
   return (
     <section
-      className="w-full min-h-[calc(100dvh-190px)] lg:min-h-[65vh] bg-zinc-950 relative overflow-hidden flex flex-col justify-between py-8 lg:py-10"
+      className="w-full min-h-[calc(100dvh-150px)] lg:min-h-[100dvh] bg-zinc-950 relative overflow-hidden flex flex-col justify-between pt-[120px] pb-8 lg:pt-[180px] lg:pb-12"
     >
       {/* Background Images */}
       <div className="absolute inset-0 z-0">
@@ -244,7 +244,7 @@ function PromoCarouselBanner() {
         <div className="flex justify-center">
 
           {/* Mobile Dots Pagination */}
-          <div className="sm:hidden flex items-center gap-2.5 p-2 rounded-full bg-black/20 backdrop-blur-md">
+          <div className="lg:hidden flex items-center gap-2.5 p-2 rounded-full bg-black/20 backdrop-blur-md">
             {slides.map((s, i) => {
               const isActive = safeIdx === i;
               return (
@@ -262,7 +262,7 @@ function PromoCarouselBanner() {
           {/* Desktop Pill Navigation */}
           <div
             ref={tabContainerRef}
-            className="hidden sm:flex items-center gap-2 p-2 rounded-[2rem] bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-white dark:border-zinc-800 shadow-xl"
+            className="hidden lg:flex items-center gap-2 p-2 rounded-[2rem] bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-white dark:border-zinc-800 shadow-xl"
           >
             {slides.map((s, i) => {
               const isActive = safeIdx === i;
@@ -1041,7 +1041,7 @@ function AppPreview() {
           </div>
 
           {/* ── Right: feature list ── */}
-          <div className="order-1 lg:order-2">
+          <div className="hidden lg:block order-1 lg:order-2">
             <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-2.5">The TechStop experience</p>
             <h2 className="font-sans text-3xl md:text-4xl lg:text-5xl font-extrabold text-zinc-950 leading-tight tracking-tight mb-6">
               Better in every single way
