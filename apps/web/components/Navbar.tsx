@@ -572,7 +572,7 @@ export default function Navbar() {
                     }}
                     autoFocus
                     placeholder="Search products..."
-                    className="h-12 w-full rounded-2xl bg-white/5 pl-11 pr-4 text-sm font-semibold outline-none transition-all focus:ring-2 focus:ring-accent border border-white/10 !text-white placeholder:text-zinc-500"
+                    className="h-12 w-full rounded-2xl bg-white/5 pl-11 pr-4 text-base font-semibold outline-none transition-all focus:ring-2 focus:ring-accent border border-white/10 !text-white placeholder:text-zinc-500"
                   />
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-500" />
                 </div>
