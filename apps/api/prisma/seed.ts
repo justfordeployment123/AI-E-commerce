@@ -637,6 +637,15 @@ async function seedHelplines() {
     console.log('✓ Helplines done');
 }
 
+async function seedSupportEmail() {
+    await prisma.appSetting.upsert({
+        where: { key: 'SUPPORT_EMAIL' },
+        update: { encryptedValue: 'techstopuk@outlook.com' },
+        create: { key: 'SUPPORT_EMAIL', encryptedValue: 'techstopuk@outlook.com' },
+    });
+    console.log('✓ Support email done');
+}
+
 // ─── Trade-in search devices ──────────────────────────────────────────────────
 
 const TRADE_IN_SEED: { name: string; brand: string; category: string }[] = [
@@ -831,6 +840,7 @@ async function main() {
     await seedPromoSlides();   // promo carousel from slides.json
     await seedStores();        // TechStop retail stores
     await seedHelplines();     // Store Helpline numbers
+    await seedSupportEmail();  // Public support contact email
 
     const catalogIdMap = await seedDeviceCatalog(productsData);
     await seedProducts(productsData, catalogIdMap);

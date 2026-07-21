@@ -23,6 +23,12 @@ export class SupportController {
     return this.supportService.getHelplines();
   }
 
+  // Get the support contact email shown on the Help page (public)
+  @Get('contact-email')
+  async getContactEmail() {
+    return { email: await this.supportService.getContactEmail() };
+  }
+
   // Start a new chat session (public)
   @Post('chats')
   async startChat(@Body() body: { guestName: string; guestEmail?: string; orderRef?: string }) {
@@ -45,6 +51,17 @@ export class SupportController {
 @Roles('ADMIN')
 export class AdminSupportController {
   constructor(private readonly supportService: SupportService) {}
+
+  // Support contact email
+  @Get('contact-email')
+  async getContactEmail() {
+    return { email: await this.supportService.getContactEmail() };
+  }
+
+  @Patch('contact-email')
+  updateContactEmail(@Body() body: { email: string }) {
+    return this.supportService.updateContactEmail(body.email);
+  }
 
   // Helpline management
   @Get('helplines')

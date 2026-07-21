@@ -175,6 +175,7 @@ export default function HelpPage() {
   const [recentOrder, setRecentOrder] = useState<Order | null>(null);
 
   const [helplines, setHelplines] = useState<Helpline[]>([]);
+  const [supportEmail, setSupportEmail] = useState<string | null>(null);
   const [articleFeedback, setArticleFeedback] = useState<Record<string, "up" | "down">>({});
   const [isMounted, setIsMounted] = useState(false);
 
@@ -200,6 +201,8 @@ export default function HelpPage() {
   useEffect(() => {
     fetch(`${API_URL}/support/helplines`)
       .then(r => r.json()).then(setHelplines).catch(() => {});
+    fetch(`${API_URL}/support/contact-email`)
+      .then(r => r.json()).then(data => setSupportEmail(data.email)).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -678,15 +681,17 @@ export default function HelpPage() {
             </p>
 
             <div className="grid md:grid-cols-2 gap-4 max-w-3xl mx-auto text-left">
-              <a href="mailto:support@markhor.ai" className="group relative bg-white/5 backdrop-blur-xl border border-white/10 p-6 rounded-[2rem] hover:bg-white/10 hover:border-white/20 transition-all duration-300 flex items-center gap-5">
-                <div className="h-12 w-12 rounded-xl bg-white/10 flex items-center justify-center text-white group-hover:scale-110 group-hover:bg-red-500 transition-all shadow-lg">
-                  <Mail className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="text-[10px] text-white/50 font-black uppercase tracking-widest mb-1">Email Support</p>
-                  <p className="text-lg font-black text-white">support@markhor.ai</p>
-                </div>
-              </a>
+              {supportEmail && (
+                <a href={`mailto:${supportEmail}`} className="group relative bg-white/5 backdrop-blur-xl border border-white/10 p-6 rounded-[2rem] hover:bg-white/10 hover:border-white/20 transition-all duration-300 flex items-center gap-5">
+                  <div className="h-12 w-12 rounded-xl bg-white/10 flex items-center justify-center text-white group-hover:scale-110 group-hover:bg-red-500 transition-all shadow-lg">
+                    <Mail className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-white/50 font-black uppercase tracking-widest mb-1">Email Support</p>
+                    <p className="text-lg font-black text-white">{supportEmail}</p>
+                  </div>
+                </a>
+              )}
               {helplines.map((hl) => (
                 <a key={hl.id} href={`tel:${hl.number.replace(/\s/g, "")}`} className="group relative bg-white/5 backdrop-blur-xl border border-white/10 p-6 rounded-[2rem] hover:bg-white/10 hover:border-white/20 transition-all duration-300 flex items-center gap-5">
                   <div className="h-12 w-12 rounded-xl bg-white/10 flex items-center justify-center text-white group-hover:scale-110 group-hover:bg-red-500 transition-all shadow-lg">

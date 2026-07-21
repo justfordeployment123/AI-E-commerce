@@ -1,9 +1,27 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { SettingsService } from '../settings/settings.service';
 
 @Injectable()
 export class SupportService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly settingsService: SettingsService,
+  ) {}
+
+  // ─── Support Contact Email ─────────────────────────────────────────────────
+
+  /** No hardcoded fallback on purpose — callers (public Help page, admin
+   *  settings form) should treat null as "not configured" and render nothing
+   *  rather than surface a placeholder address nobody actually checks. */
+  async getContactEmail(): Promise<string | null> {
+    return this.settingsService.get('SUPPORT_EMAIL');
+  }
+
+  async updateContactEmail(email: string): Promise<{ email: string }> {
+    await this.settingsService.set('SUPPORT_EMAIL', email);
+    return { email };
+  }
 
   // ─── Helpline Numbers ──────────────────────────────────────────────────────
 

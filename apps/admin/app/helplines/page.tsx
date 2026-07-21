@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import {
   Phone, Plus, Trash2, Edit2, Check, X,
-  PhoneCall, Save, ToggleLeft, ToggleRight, GripVertical
+  PhoneCall, Save, ToggleLeft, ToggleRight, GripVertical, Mail
 } from "lucide-react";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002";
@@ -35,6 +35,12 @@ export default function HelplinesPage() {
   const [newNumber, setNewNumber] = useState("");
   const [saving, setSaving] = useState(false);
 
+  const [supportEmail, setSupportEmail] = useState("");
+  const [emailInput, setEmailInput] = useState("");
+  const [emailLoading, setEmailLoading] = useState(true);
+  const [emailSaving, setEmailSaving] = useState(false);
+  const [emailSaved, setEmailSaved] = useState(false);
+
   const load = useCallback(() => {
     setLoading(true);
     apiFetch<Helpline[]>("/admin/support/helplines")
@@ -43,7 +49,30 @@ export default function HelplinesPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const loadEmail = useCallback(() => {
+    setEmailLoading(true);
+    apiFetch<{ email: string | null }>("/admin/support/contact-email")
+      .then(data => { setSupportEmail(data.email ?? ""); setEmailInput(data.email ?? ""); })
+      .catch(() => {})
+      .finally(() => setEmailLoading(false));
+  }, []);
+
   useEffect(() => { load(); }, [load]);
+  useEffect(() => { loadEmail(); }, [loadEmail]);
+
+  async function handleSaveEmail() {
+    if (!emailInput.trim()) return;
+    setEmailSaving(true);
+    try {
+      await apiFetch("/admin/support/contact-email", {
+        method: "PATCH",
+        body: JSON.stringify({ email: emailInput.trim() }),
+      });
+      setSupportEmail(emailInput.trim());
+      setEmailSaved(true);
+      setTimeout(() => setEmailSaved(false), 2000);
+    } finally { setEmailSaving(false); }
+  }
 
   async function handleAdd() {
     if (!newLabel.trim() || !newNumber.trim()) return;
@@ -105,6 +134,40 @@ export default function HelplinesPage() {
         >
           <Plus className="h-4 w-4" /> Add Number
         </button>
+      </div>
+
+      {/* Support email */}
+      <div className="bg-white rounded-3xl border border-zinc-200 shadow-sm p-6 mb-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="h-9 w-9 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
+            <Mail className="h-4 w-4 text-blue-600" />
+          </div>
+          <div>
+            <h2 className="font-bold text-base text-zinc-900">Support Email</h2>
+            <p className="text-xs text-zinc-500">Shown as the "Email Support" contact on the customer Help page.</p>
+          </div>
+        </div>
+        {emailLoading ? (
+          <div className="h-11 bg-zinc-100 rounded-2xl animate-pulse max-w-md" />
+        ) : (
+          <div className="flex flex-col sm:flex-row gap-3 max-w-md">
+            <input
+              type="email"
+              value={emailInput}
+              onChange={e => setEmailInput(e.target.value)}
+              placeholder="support@example.com"
+              className="flex-1 h-11 px-4 rounded-2xl border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-zinc-400"
+            />
+            <button
+              onClick={handleSaveEmail}
+              disabled={emailSaving || !emailInput.trim() || emailInput.trim() === supportEmail}
+              className="h-11 px-5 rounded-2xl bg-black text-white text-sm font-bold hover:bg-zinc-800 transition-colors disabled:opacity-40 flex items-center justify-center gap-2 shrink-0"
+            >
+              {emailSaved ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
+              {emailSaved ? "Saved" : "Save"}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Add form */}

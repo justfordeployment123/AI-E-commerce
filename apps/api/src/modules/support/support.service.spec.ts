@@ -3,6 +3,7 @@ import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { NotFoundException } from '@nestjs/common';
 import { SupportService } from './support.service';
 import { PrismaService } from '../database/prisma.service';
+import { SettingsService } from '../settings/settings.service';
 
 function makeChat(overrides: Partial<any> = {}) {
     return {
@@ -19,8 +20,14 @@ function makeChat(overrides: Partial<any> = {}) {
 describe('SupportService', () => {
     let service: SupportService;
     let prismaMock: any;
+    let settingsMock: any;
 
     beforeEach(async () => {
+        settingsMock = {
+            get: jest.fn<() => Promise<any>>().mockResolvedValue(null),
+            set: jest.fn<() => Promise<any>>(),
+        };
+
         prismaMock = {
             helplineNumber: {
                 findMany: jest.fn<() => Promise<any>>().mockResolvedValue([]),
@@ -44,10 +51,34 @@ describe('SupportService', () => {
             providers: [
                 SupportService,
                 { provide: PrismaService, useValue: prismaMock },
+                { provide: SettingsService, useValue: settingsMock },
             ],
         }).compile();
 
         service = module.get<SupportService>(SupportService);
+    });
+
+    describe('getContactEmail', () => {
+        it('returns null when no setting is stored, with no hardcoded fallback', async () => {
+            settingsMock.get.mockResolvedValueOnce(null);
+            const email = await service.getContactEmail();
+            expect(settingsMock.get).toHaveBeenCalledWith('SUPPORT_EMAIL');
+            expect(email).toBeNull();
+        });
+
+        it('returns the stored setting when present', async () => {
+            settingsMock.get.mockResolvedValueOnce('techstopuk@outlook.com');
+            const email = await service.getContactEmail();
+            expect(email).toBe('techstopuk@outlook.com');
+        });
+    });
+
+    describe('updateContactEmail', () => {
+        it('persists the new email via SettingsService', async () => {
+            const result = await service.updateContactEmail('new@example.com');
+            expect(settingsMock.set).toHaveBeenCalledWith('SUPPORT_EMAIL', 'new@example.com');
+            expect(result).toEqual({ email: 'new@example.com' });
+        });
     });
 
     describe('getHelplines', () => {
