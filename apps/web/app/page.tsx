@@ -1182,22 +1182,19 @@ function AppPreview() {
             </div>
           </div>
 
-          {/* ── Right: Clean Coming Soon Header & Store Badge Cards with uploaded images ── */}
-          <div className="hidden lg:block order-1 lg:order-2">
+          {/* ── Right: Clean Coming Soon Header & Store Badge Cards ── */}
+          <div className="block text-center lg:text-left order-1 lg:order-2 flex flex-col items-center lg:items-start">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-zinc-900 text-white text-[11px] font-bold mb-6 shadow-sm">
               <span className="h-2 w-2 rounded-full bg-accent animate-pulse" />
               <span>COMING SOON · iOS + ANDROID</span>
             </div>
 
-            <h2 className="font-sans text-3xl md:text-4xl lg:text-5xl font-extrabold text-zinc-950 leading-tight tracking-tight mb-6">
+            <h2 className="font-sans text-3xl md:text-4xl lg:text-5xl font-extrabold text-zinc-950 leading-tight tracking-tight mb-8">
               Everything you need, in your pocket.
             </h2>
-            <p className="text-lg text-zinc-500 leading-relaxed mb-10 max-w-[46ch]">
-              Search devices, track deliveries in real time, value instant trade-ins, and book express repairs — all seamlessly integrated into one app.
-            </p>
 
-            <div className="flex flex-col gap-3.5 sm:flex-row sm:items-center">
-              {/* Google Play Official Badge Card with uploaded playstore.png icon */}
+            <div className="flex flex-col sm:flex-row items-center gap-3.5 w-full sm:w-auto justify-center lg:justify-start">
+              {/* Google Play Official Badge Card */}
               <div className="flex items-center gap-3.5 bg-black text-white px-4 py-2.5 rounded-xl border border-zinc-700/80 shadow-md cursor-pointer hover:border-zinc-500 transition-all select-none w-max">
                 <img
                   src="/playstore.png"
@@ -1210,7 +1207,7 @@ function AppPreview() {
                 </div>
               </div>
 
-              {/* App Store Official Badge Card with uploaded applestore.png icon */}
+              {/* App Store Official Badge Card */}
               <div className="flex items-center gap-3.5 bg-black text-white px-4 py-2.5 rounded-xl border border-zinc-700/80 shadow-md cursor-pointer hover:border-zinc-500 transition-all select-none w-max">
                 <img
                   src="/applestore.png"
