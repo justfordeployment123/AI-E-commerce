@@ -599,38 +599,27 @@ export default function CategoryPage() {
 
                 {filtered.map((product, index) => {
                   const added = addedIds.has(product.id);
-                  const isPromoSpot = index === 2; // Inject promo after 3rd item
                   
                   return (
-                    <React.Fragment key={product.id}>
-                      {isPromoSpot && (
-                        <div className="bg-[#121212] text-white rounded-[24px] md:rounded-[32px] p-6 md:p-8 flex flex-col justify-center items-start group relative overflow-hidden col-span-2 lg:col-span-1">
-                           <div className="absolute top-0 right-0 w-64 h-64 bg-accent/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-                           <h3 className="font-bold text-2xl mb-3 relative z-10">Got an old device?</h3>
-                           <p className="text-zinc-400 font-medium mb-8 relative z-10">Trade it in and get extra cash towards your new refurbished tech.</p>
-                           <Link href="/trade-in" className="h-12 px-6 rounded-full bg-accent text-white font-bold flex items-center gap-2 hover:scale-105 transition-transform relative z-10">
-                             Get an offer <ArrowRight className="h-4 w-4" />
-                           </Link>
-                        </div>
-                      )}
-                      <Link href={`/shop/${categorySlug}/${product.id}`} className="group block">
+                    <Link href={`/shop/${categorySlug}/${product.id}`} key={product.id} className="group block">
                       <div className={`bg-white rounded-[32px] p-3 border transition-all duration-300 h-full flex flex-col ${product.stock === 0 ? "border-zinc-200 hover:border-zinc-300" : "border-zinc-200 hover:border-black hover:shadow-xl"}`}>
 
                         <div className="relative aspect-square rounded-[24px] bg-[#f5f5f7] mb-5 overflow-hidden">
-                          <div className="absolute top-4 left-4 z-20 flex flex-col gap-1.5">
-                            <GradeBadge condition={product.grade} />
+                          <div className="absolute top-2.5 left-2.5 right-2.5 sm:top-3.5 sm:left-3.5 sm:right-3.5 z-20 flex items-center justify-between pointer-events-none">
+                            <GradeBadge condition={product.grade} className="pointer-events-auto" />
+
                             {product.stock > 0 && product.stock <= 2 && (
-                              <span className="inline-flex px-2.5 py-1 rounded-full bg-amber-500 text-[10px] font-bold text-white uppercase tracking-wider">
+                              <span className="pointer-events-auto inline-flex items-center px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-amber-500 text-[8.5px] sm:text-[9.5px] font-bold text-white uppercase tracking-tight shadow-xs whitespace-nowrap">
                                 Only {product.stock} left
                               </span>
                             )}
-                          </div>
 
-                          {product.stock === 0 && (
-                            <span className="absolute top-2 left-2 z-20 text-[10px] font-bold bg-orange-100 text-orange-700 px-2 py-0.5 rounded-lg border border-orange-200">
-                              Out of Stock
-                            </span>
-                          )}
+                            {product.stock === 0 && (
+                              <span className="pointer-events-auto inline-flex items-center text-[8.5px] sm:text-[9.5px] font-bold bg-orange-100 text-orange-700 px-2 py-0.5 rounded-md border border-orange-200 shadow-xs whitespace-nowrap">
+                                Out of Stock
+                              </span>
+                            )}
+                          </div>
 
                           <ProductImage src={product.image} alt={product.title} hover={product.stock > 0} priority={index < 4} />
 
@@ -679,7 +668,6 @@ export default function CategoryPage() {
                         </div>
                       </div>
                     </Link>
-                    </React.Fragment>
                   );
                 })}
               </div>

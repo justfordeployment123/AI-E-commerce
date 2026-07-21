@@ -41,10 +41,13 @@ export function GradeBadge({ condition, size = 'sm', className = '' }: GradeBadg
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border font-bold text-[10px] uppercase tracking-wider transition-all duration-300 hover:scale-[1.03] active:scale-95 cursor-default ${grade.badgeClass} ${className}`}
+      className={`inline-flex items-center gap-1 sm:gap-1.5 px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-md sm:rounded-lg border font-bold text-[9px] sm:text-[10px] uppercase tracking-wider transition-all duration-300 hover:scale-[1.03] active:scale-95 cursor-default ${grade.badgeClass} ${className}`}
     >
-      <Icon className="w-3.5 h-3.5 shrink-0 opacity-90" />
-      <span>{grade.label}</span>
+      <Icon className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0 opacity-90" />
+      <span>
+        <span className="sm:hidden">{grade.label.replace(" Grade", "")}</span>
+        <span className="hidden sm:inline">{grade.label}</span>
+      </span>
       {grade.forParts && (
         <span className="font-semibold normal-case tracking-normal text-[8px] opacity-80 bg-rose-500/10 dark:bg-rose-500/20 px-1 rounded">
           Parts

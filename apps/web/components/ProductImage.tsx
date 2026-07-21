@@ -84,7 +84,7 @@ export default function ProductImage({
 
   const baseClass = mode === "cover"
     ? `object-cover transition-all duration-500 z-10 ${hover ? "group-hover:scale-105" : ""} ${className}`
-    : `object-contain mix-blend-multiply dark:mix-blend-normal transition-all duration-500 z-10 ${hover ? "group-hover:scale-105" : ""} ${className}`;
+    : `object-contain pt-5 pb-2 px-3 sm:pt-6 sm:pb-3 sm:px-4 mix-blend-multiply dark:mix-blend-normal transition-all duration-500 z-10 ${hover ? "group-hover:scale-105" : ""} ${className}`;
 
   return (
     <div
