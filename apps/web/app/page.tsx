@@ -978,13 +978,16 @@ function AppPreview() {
                             className="absolute inset-0 flex flex-col"
                           >
                             <div className="px-4 py-3 shrink-0">
-                              <div className="h-8 rounded-xl bg-white border border-zinc-100 shadow-sm flex items-center gap-2 px-3">
-                                <Search className="h-3 w-3 text-zinc-400" />
-                                <span className="text-[10px] text-zinc-400 font-medium">Search devices…</span>
+                              <div className="h-8 rounded-xl bg-white border border-zinc-200 shadow-sm flex items-center justify-between px-3">
+                                <div className="flex items-center gap-1.5">
+                                  <Search className="h-3 w-3 text-zinc-950" />
+                                  <span className="text-[10px] text-zinc-950 font-extrabold">Pro</span>
+                                  <span className="h-3 w-[1.5px] bg-accent animate-pulse" />
+                                </div>
                               </div>
                             </div>
                             
-                            <div className="flex-1 px-4 space-y-3 overflow-y-auto pb-4 scrollbar-hide">
+                            <div className="flex-1 px-4 space-y-2.5 overflow-y-auto pb-4 scrollbar-hide">
                               <div className="rounded-2xl bg-accent p-3.5 text-white shadow-md shadow-accent/20">
                                 <p className="text-[8px] font-bold uppercase tracking-widest text-white/80 mb-1">Flash Deal · 2h left</p>
                                 <p className="text-xs font-bold mb-0.5">iPhone 15 Pro</p>
@@ -995,8 +998,9 @@ function AppPreview() {
                               </div>
 
                               {[
-                                { name: "MacBook Air M2", price: "£849", grade: "A", img: "/products/macbook-air-m2.png" },
+                                { name: "MacBook Pro M2", price: "£849", grade: "A", img: "/products/macbook-air-m2.png" },
                                 { name: "AirPods Pro 2", price: "£149", grade: "C", img: "/products/airpods-pro-2.png" },
+                                { name: "iPad Pro 11\"", price: "£399", grade: "B", img: "/products/ipad-air-5.png" },
                               ].map((p, j) => (
                                 <div key={j} className="flex items-center gap-3 bg-white rounded-2xl p-2.5 shadow-sm border border-zinc-100">
                                   <div className="h-10 w-10 rounded-xl bg-zinc-50 flex items-center justify-center shrink-0">
@@ -1024,8 +1028,16 @@ function AppPreview() {
                             className="absolute inset-0 flex flex-col bg-zinc-50"
                           >
                             <div className="p-4 flex-1">
-                              <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-400 mb-1">Your Order</p>
-                              <h3 className="font-extrabold text-sm mb-4">iPhone 14 Pro</h3>
+                              <div className="flex items-center justify-between mb-3">
+                                <div>
+                                  <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-400 mb-0.5">Your Order</p>
+                                  <h3 className="font-extrabold text-sm text-zinc-950">iPhone 14 Pro</h3>
+                                  <p className="text-[9px] font-semibold text-emerald-600">Deep Purple · 128GB</p>
+                                </div>
+                                <div className="h-14 w-14 rounded-2xl bg-white border border-zinc-100 p-1 shadow-sm shrink-0 flex items-center justify-center">
+                                  <img src="/iphone14pro-order.png" alt="iPhone 14 Pro" className="h-full w-full object-contain" />
+                                </div>
+                              </div>
 
                               <div className="bg-white rounded-2xl p-4 shadow-sm border border-zinc-100 mb-4">
                                 <div className="flex items-center gap-3 mb-4">
@@ -1037,14 +1049,14 @@ function AppPreview() {
                                     <p className="text-[9px] text-zinc-500">Arriving today by 8 PM</p>
                                   </div>
                                 </div>
-                                <div className="relative pl-4 border-l-2 border-zinc-950 ml-4 space-y-4 pb-1">
+                                <div className="relative pl-4 border-l-2 border-emerald-500 ml-4 space-y-4 pb-1">
                                   <div className="relative">
-                                    <div className="absolute -left-[21px] top-1 h-2 w-2 rounded-full bg-zinc-950 border-2 border-white" />
+                                    <div className="absolute -left-[21px] top-1 h-2 w-2 rounded-full bg-emerald-500 border-2 border-white ring-2 ring-emerald-500/20" />
                                     <p className="font-bold text-[10px]">Shipped</p>
                                     <p className="text-[8px] text-zinc-400">Yesterday, 14:20</p>
                                   </div>
                                   <div className="relative">
-                                    <div className="absolute -left-[21px] top-1 h-2 w-2 rounded-full bg-zinc-950 border-2 border-white" />
+                                    <div className="absolute -left-[21px] top-1 h-2 w-2 rounded-full bg-emerald-500 border-2 border-white ring-2 ring-emerald-500/20" />
                                     <p className="font-bold text-[10px]">Order confirmed</p>
                                     <p className="text-[8px] text-zinc-400">Monday, 09:15</p>
                                   </div>
@@ -1166,32 +1178,7 @@ function AppPreview() {
                 </div>
               </div>
 
-              {/* Floating: shipped notification */}
-              <AnimatePresence>
-                {activePage === 1 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: [0, -5, 0] }}
-                    exit={{ opacity: 0, y: 10 }}
-                    transition={{ y: { duration: 4, repeat: Infinity, ease: "easeInOut" }, opacity: { duration: 0.3 } }}
-                    className="absolute hidden sm:block -right-8 top-24 bg-white rounded-2xl p-4 shadow-xl border border-zinc-100 z-20 w-[180px]"
-                  >
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="h-8 w-8 rounded-xl bg-emerald-500 flex items-center justify-center flex-shrink-0 shadow-sm">
-                        <BadgeCheck className="h-4 w-4 text-white" />
-                      </div>
-                      <div>
-                        <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest leading-none mb-1">Shipped</p>
-                        <p className="text-xs font-bold text-zinc-950 leading-none">iPhone 14 Pro</p>
-                      </div>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-zinc-100 overflow-hidden">
-                      <div className="h-full w-[80%] rounded-full bg-emerald-500" />
-                    </div>
-                    <p className="text-[9px] text-zinc-400 mt-2 font-medium">Est. delivery: Tomorrow</p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+
             </div>
           </div>
 
