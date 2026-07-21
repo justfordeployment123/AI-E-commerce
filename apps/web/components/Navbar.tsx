@@ -328,8 +328,10 @@ export default function Navbar() {
             
             {/* Left: Hamburger + Logo */}
             <div className="flex items-center shrink-0 min-w-fit gap-2 sm:gap-4">
-              <button className="lg:hidden flex items-center justify-center h-10 w-10 rounded-[14px] bg-white/5 hover:bg-white/10 text-white transition-all shrink-0 border border-white/10" onClick={toggleMobileMenu} aria-label="Toggle menu">
-                {isOpen ? <X className="h-5 w-5" strokeWidth={2.5} /> : <AlignLeft className="h-5 w-5" strokeWidth={2.5} />}
+              <button className="lg:hidden flex items-center justify-center h-12 w-12 group shrink-0" onClick={toggleMobileMenu} aria-label="Toggle menu">
+                <div className="flex items-center justify-center h-10 w-10 rounded-[14px] bg-white/5 group-hover:bg-white/10 text-white transition-all border border-white/10">
+                  {isOpen ? <X className="h-5 w-5" strokeWidth={2.5} /> : <AlignLeft className="h-5 w-5" strokeWidth={2.5} />}
+                </div>
               </button>
               <Link href="/" className="flex items-center select-none shrink-0">
                 <img
@@ -410,32 +412,38 @@ export default function Navbar() {
               {/* Trade In Button (Icon on mobile/tablet, full text on desktop) */}
               <Link
                 href="/trade-in"
-                className="flex items-center justify-center gap-2 h-10 w-10 md:h-11 md:w-11 lg:w-auto lg:px-4 rounded-[14px] bg-muted hover:bg-zinc-200 dark:hover:bg-zinc-800 text-foreground transition-all font-bold text-xs uppercase tracking-wide shrink-0 border border-border/40"
+                className="flex items-center justify-center gap-2 h-12 w-12 md:h-12 md:w-12 lg:w-auto shrink-0 group"
               >
+                <div className="flex items-center justify-center gap-2 h-10 w-10 md:h-11 md:w-11 lg:w-auto lg:px-4 rounded-[14px] bg-muted group-hover:bg-zinc-200 dark:group-hover:bg-zinc-800 text-foreground transition-all font-bold text-xs uppercase tracking-wide border border-border/40">
                 <RefreshCw className="h-4 w-4 md:h-5 md:w-5 shrink-0" />
-                <span className="hidden lg:inline">Trade In</span>
+                  <span className="hidden lg:inline">Trade In</span>
+                </div>
               </Link>
 
               {/* Mobile Search Toggle */}
               <button
                 onClick={() => setMobileSearchOpen(prev => !prev)}
-                className="sm:hidden flex items-center justify-center h-10 w-10 rounded-[14px] bg-white/5 hover:bg-white/10 text-white transition-all shrink-0 border border-white/10"
+                className="sm:hidden flex items-center justify-center h-12 w-12 shrink-0 group"
               >
-                <Search className="h-4 w-4 shrink-0" />
+                <div className="flex items-center justify-center h-10 w-10 rounded-[14px] bg-white/5 group-hover:bg-white/10 text-white transition-all border border-white/10">
+                  <Search className="h-4 w-4 shrink-0" />
+                </div>
               </button>
 
               {/* Auth button */}
               {loading ? (
-                <div className="hidden sm:block h-10 w-10 rounded-[14px] bg-muted animate-pulse" />
+                <div className="hidden sm:block h-12 w-12 rounded-[14px] bg-muted animate-pulse" />
               ) : user ? (
                 /* Logged-in avatar + dropdown */
                 <div ref={profileRef} className="relative hidden sm:block">
                   <button
                     onClick={() => setProfileOpen((o) => !o)}
-                    className="flex items-center justify-center h-10 w-10 md:h-11 md:w-11 rounded-[14px] bg-accent text-white font-black text-sm uppercase tracking-tight transition-transform hover:scale-105 active:scale-95 shadow-md shadow-accent/20 select-none"
+                    className="flex items-center justify-center h-12 w-12 md:h-12 md:w-12 group select-none"
                     aria-label="Profile menu"
                   >
-                    {user.name.charAt(0)}
+                    <div className="flex items-center justify-center h-10 w-10 md:h-11 md:w-11 rounded-[14px] bg-accent text-white font-black text-sm uppercase tracking-tight group-hover:scale-105 active:scale-95 shadow-md shadow-accent/20 transition-transform">
+                      {user.name.charAt(0)}
+                    </div>
                   </button>
 
                   <AnimatePresence>
@@ -512,10 +520,12 @@ export default function Navbar() {
                 /* Not logged in */
                 <Link
                   href="/account"
-                  className="hidden sm:flex items-center justify-center gap-2 h-10 w-10 sm:w-auto sm:px-4 rounded-xl bg-accent text-white hover:bg-accent-dark transition-all font-bold text-xs uppercase tracking-wide shadow-md shadow-accent/20 shrink-0"
+                  className="hidden sm:flex items-center justify-center h-12 w-12 sm:w-auto shrink-0 group"
                 >
-                  <LogIn className="h-4 w-4 shrink-0" />
-                  <span className="hidden sm:inline">Sign In</span>
+                  <div className="flex items-center justify-center gap-2 h-10 w-10 sm:w-auto sm:px-4 rounded-xl bg-accent text-white group-hover:bg-accent-dark transition-all font-bold text-xs uppercase tracking-wide shadow-md shadow-accent/20">
+                    <LogIn className="h-4 w-4 shrink-0" />
+                    <span className="hidden sm:inline">Sign In</span>
+                  </div>
                 </Link>
               )}
 
@@ -525,13 +535,15 @@ export default function Navbar() {
 
               {user && <NotificationBell />}
 
-              <Link href="/cart" className="relative flex items-center justify-center h-10 w-10 md:h-11 md:w-11 rounded-[14px] bg-accent text-white transition-transform hover:scale-105 active:scale-95 shadow-md shadow-accent/20">
-                <ShoppingCart className="h-4 w-4 md:h-5 md:w-5" />
-                {itemsCount > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-4 w-4 md:h-5 md:w-5 items-center justify-center rounded-full bg-black text-[9px] font-bold text-white ring-2 ring-background">
-                    {itemsCount}
-                  </span>
-                )}
+              <Link href="/cart" className="relative flex items-center justify-center h-12 w-12 md:h-12 md:w-12 group">
+                <div className="relative flex items-center justify-center h-10 w-10 md:h-11 md:w-11 rounded-[14px] bg-accent text-white group-hover:scale-105 active:scale-95 shadow-md shadow-accent/20 transition-transform">
+                  <ShoppingCart className="h-4 w-4 md:h-5 md:w-5" />
+                  {itemsCount > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-4 w-4 md:h-5 md:w-5 items-center justify-center rounded-full bg-black text-[9px] font-bold text-white ring-2 ring-background">
+                      {itemsCount}
+                    </span>
+                  )}
+                </div>
               </Link>
             </div>
 
@@ -542,9 +554,10 @@ export default function Navbar() {
         <AnimatePresence>
           {mobileSearchOpen && (
             <motion.div
-              initial={{ opacity: 0, y: -10 }}
+              initial={{ opacity: 0, y: -15 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ type: "spring", bounce: 0, duration: 0.4 }}
               className="sm:hidden absolute top-[76px] inset-x-0 w-full bg-[#0a0a0a] border-t border-white/10 pointer-events-auto shadow-2xl z-40"
             >
               <div className="p-4">
@@ -559,7 +572,7 @@ export default function Navbar() {
                     }}
                     autoFocus
                     placeholder="Search products..."
-                    className="h-12 w-full rounded-2xl bg-white/5 pl-11 pr-4 text-sm font-semibold outline-none transition-all focus:ring-2 focus:ring-accent border border-white/10 text-white placeholder:text-zinc-500"
+                    className="h-12 w-full rounded-2xl bg-white/5 pl-11 pr-4 text-sm font-semibold outline-none transition-all focus:ring-2 focus:ring-accent border border-white/10 !text-white placeholder:text-zinc-500"
                   />
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-500" />
                 </div>
@@ -571,6 +584,7 @@ export default function Navbar() {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 10 }}
+                      transition={{ type: "spring", bounce: 0, duration: 0.4 }}
                       className="mt-4 max-h-[60vh] overflow-y-auto"
                     >
                       {searchQuery === "" ? (
@@ -590,7 +604,7 @@ export default function Navbar() {
                               <Link key={item.slug} href={`/shop/${item.category.toLowerCase()}/${item.slug}`}
                                 onClick={() => { recordSearch(searchQuery); setMobileSearchOpen(false); }}
                                 className="flex items-center gap-4 p-2 rounded-xl hover:bg-white/5 transition-colors group text-white">
-                                <div className="h-10 w-10 bg-white/5 rounded-lg p-1.5 flex items-center justify-center shrink-0">
+                                <div className="h-10 w-10 bg-white rounded-lg p-1.5 flex items-center justify-center shrink-0">
                                   <ProductImage src={item.image} alt={item.name} width={28} height={28} iconClassName="h-4 w-4" bg="" />
                                 </div>
                                 <div className="min-w-0 flex-1">
@@ -852,7 +866,7 @@ export default function Navbar() {
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ type: "spring", bounce: 0, duration: 0.4 }}
-              className="lg:hidden fixed left-0 z-50 w-[82%] max-w-xs border-r border-b border-white/10 bg-[#0a0a0a] overflow-y-auto text-white shadow-2xl rounded-br-[2.5rem]"
+              className="lg:hidden fixed left-0 z-50 w-[82%] max-w-xs border-r border-b border-white/10 bg-[#0a0a0a] overflow-y-auto text-white shadow-2xl"
               style={{ top: headerHeight, height: `calc(100vh - ${headerHeight}px)` }}
             >
             <div className="px-4 py-6 space-y-1 flex flex-col min-h-full">
@@ -861,10 +875,12 @@ export default function Navbar() {
                 <img src="/Icon/logo_white.png" alt="TechStop" className="h-8 w-auto ml-1" />
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="flex items-center justify-center h-8 w-8 rounded-full bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-all border border-white/10"
+                  className="flex items-center justify-center h-12 w-12 group"
                   aria-label="Close menu"
                 >
-                  <X className="h-4 w-4" strokeWidth={2.5} />
+                  <div className="flex items-center justify-center h-8 w-8 rounded-full bg-white/5 group-hover:bg-white/10 text-zinc-400 group-hover:text-white transition-all border border-white/10">
+                    <X className="h-4 w-4" strokeWidth={2.5} />
+                  </div>
                 </button>
               </div>
 

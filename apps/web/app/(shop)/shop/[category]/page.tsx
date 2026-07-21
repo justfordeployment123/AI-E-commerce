@@ -634,14 +634,14 @@ export default function CategoryPage() {
 
             {/* Product Grid */}
             {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
                 {[...Array(6)].map((_, i) => (
-                  <div key={i} className="bg-white rounded-[32px] p-3 border border-zinc-200 h-[400px] animate-pulse">
-                    <div className="aspect-square rounded-[24px] bg-zinc-100 mb-5" />
-                    <div className="px-2 space-y-3">
-                      <div className="h-5 bg-zinc-100 rounded-full w-3/4" />
-                      <div className="h-4 bg-zinc-100 rounded-full w-1/2" />
-                      <div className="h-6 bg-zinc-100 rounded-full w-1/3 mt-4" />
+                  <div key={i} className="bg-white rounded-[24px] md:rounded-[32px] p-3 border border-zinc-200 h-[250px] md:h-[400px] animate-pulse">
+                    <div className="aspect-square rounded-[16px] md:rounded-[24px] bg-zinc-100 mb-5" />
+                    <div className="px-2 space-y-2 md:space-y-3">
+                      <div className="h-3 md:h-5 bg-zinc-100 rounded-full w-3/4" />
+                      <div className="h-3 md:h-4 bg-zinc-100 rounded-full w-1/2" />
+                      <div className="h-4 md:h-6 bg-zinc-100 rounded-full w-1/3 mt-2 md:mt-4" />
                     </div>
                   </div>
                 ))}
@@ -657,7 +657,7 @@ export default function CategoryPage() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
 
                 {filtered.map((product, index) => {
                   const added = addedIds.has(product.id);
@@ -666,7 +666,7 @@ export default function CategoryPage() {
                   return (
                     <React.Fragment key={product.id}>
                       {isPromoSpot && (
-                        <div className="bg-[#121212] text-white rounded-[32px] p-8 flex flex-col justify-center items-start group relative overflow-hidden col-span-1 sm:col-span-2 lg:col-span-1">
+                        <div className="bg-[#121212] text-white rounded-[24px] md:rounded-[32px] p-6 md:p-8 flex flex-col justify-center items-start group relative overflow-hidden col-span-2 lg:col-span-1">
                            <div className="absolute top-0 right-0 w-64 h-64 bg-accent/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
                            <h3 className="font-bold text-2xl mb-3 relative z-10">Got an old device?</h3>
                            <p className="text-zinc-400 font-medium mb-8 relative z-10">Trade it in and get extra cash towards your new refurbished tech.</p>

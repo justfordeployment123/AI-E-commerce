@@ -186,8 +186,8 @@ export default function ProductDetailPage() {
       {/* Breadcrumb */}
       <div className="bg-white border-b border-zinc-200 sticky top-0 z-30">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 flex items-center gap-2 text-xs font-bold text-zinc-500 uppercase tracking-wide min-w-0">
-          <a href={backHref} className="hover:text-black flex items-center gap-1 shrink-0 min-w-0">
-            <ArrowLeft className="h-3.5 w-3.5 shrink-0" />
+          <a href={backHref} className="hover:text-black flex items-center gap-1 shrink-0 min-w-0 p-2 -ml-2 -my-2 rounded-lg hover:bg-zinc-100 transition-colors">
+            <ArrowLeft className="h-4 w-4 shrink-0" />
             <span className="truncate">{decodeURIComponent(categorySlug)}</span>
           </a>
           <span className="shrink-0">/</span>
