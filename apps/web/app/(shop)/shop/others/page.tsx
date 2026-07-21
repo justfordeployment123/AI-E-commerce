@@ -62,10 +62,17 @@ export default function OthersPage() {
   // section has actually rendered.
   useEffect(() => {
     if (loading) return;
-    const hash = window.location.hash.slice(1);
-    if (!hash) return;
+    const rawHash = window.location.hash.slice(1);
+    if (!rawHash) return;
+    const hash = decodeURIComponent(rawHash).toLowerCase();
+    
     requestAnimationFrame(() => {
-      document.getElementById(hash)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      const el = document.getElementById(hash) || 
+                 document.getElementById(hash.replace(/-/g, " ")) || 
+                 document.getElementById(hash.replace(/ /g, "-"));
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
     });
   }, [loading, categories]);
 

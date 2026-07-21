@@ -55,9 +55,19 @@ export default function ProductDetailPage() {
     window.scrollTo(0, 0);
     setLoadingProduct(true);
     productsApi.bySlug(slug)
-      .then(p => { setProduct(p); })
+      .then(p => { 
+        setProduct(p);
+        requestAnimationFrame(() => {
+          window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+        });
+      })
       .catch(() => {})
-      .finally(() => setLoadingProduct(false));
+      .finally(() => {
+        setLoadingProduct(false);
+        requestAnimationFrame(() => {
+          window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+        });
+      });
   }, [slug]);
 
   useEffect(() => {
