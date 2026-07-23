@@ -83,18 +83,11 @@ export default async function RootLayout({
             __html: `
               (function() {
                 try {
-                  var theme = localStorage.getItem('ts-theme');
-                  if (!theme) {
-                    theme = 'light';
-                    localStorage.setItem('ts-theme', 'light');
-                  }
-                  if (theme === 'dark') {
-                    document.documentElement.setAttribute('data-theme', 'dark');
-                    document.documentElement.classList.add('dark');
-                  } else {
-                    document.documentElement.setAttribute('data-theme', 'light');
-                    document.documentElement.classList.remove('dark');
-                  }
+                  // Dark mode is disabled site-wide — force light regardless of any
+                  // stale/tampered 'ts-theme' value in localStorage.
+                  localStorage.setItem('ts-theme', 'light');
+                  document.documentElement.setAttribute('data-theme', 'light');
+                  document.documentElement.classList.remove('dark');
                 } catch (e) {}
               })();
             `

@@ -92,8 +92,6 @@ export default function Navbar() {
   const pathname = usePathname();
   const { user, loading, logout } = useAuth();
 
-  const [theme, setTheme] = useState<string | null>(null);
-  const [mounted, setMounted] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
   const drawerRef = useRef<HTMLDivElement>(null);
   const [headerHeight, setHeaderHeight] = useState(0);
@@ -139,10 +137,6 @@ export default function Navbar() {
   }
 
   useEffect(() => {
-    const currentTheme = document.documentElement.getAttribute("data-theme") || "light";
-    setTheme(currentTheme);
-    setMounted(true);
-
     // Slugs grouped under a single "Others" tab — always rendered last
     const OTHERS_SLUGS = new Set([
       'accessories', 'cables', 'chargers', 'memory', 'storage',
@@ -302,19 +296,6 @@ export default function Navbar() {
       window.scrollTo(0, scrollY);
     };
   }, [isOpen]);
-
-  const toggleTheme = () => {
-    const nextTheme = theme === "dark" ? "light" : "dark";
-    setTheme(nextTheme);
-    document.documentElement.setAttribute("data-theme", nextTheme);
-    if (nextTheme === "dark") {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-    localStorage.setItem("ts-theme", nextTheme);
-  };
-
 
   return (
     <>

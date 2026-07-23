@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Package, RefreshCw, Wrench, Settings, LogOut } from "lucide-react";
+import { Package, RefreshCw, Wrench, Settings, LogOut, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { fmtDate } from "./_utils";
 
@@ -50,6 +50,17 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
       <div className="bg-white border-b border-zinc-100 shrink-0">
         <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center gap-4">
+            <button
+              onClick={() => {
+                if (window.history.length > 1) router.back();
+                else router.push("/");
+              }}
+              aria-label="Go back"
+              title="Go back"
+              className="h-11 w-11 rounded-full border border-zinc-200 flex items-center justify-center shrink-0 text-zinc-500 hover:text-black hover:bg-zinc-50 hover:border-zinc-300 transition-colors"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
             <div className="h-14 w-14 rounded-[1.25rem] bg-black flex items-center justify-center shrink-0">
               <span className="text-accent font-bold text-xl">{initial}</span>
             </div>

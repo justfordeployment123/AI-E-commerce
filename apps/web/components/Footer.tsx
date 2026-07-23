@@ -1,17 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { Star } from "lucide-react";
 
 export default function Footer() {
-  const [theme, setTheme] = useState<string | null>(null);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setTheme(document.documentElement.getAttribute("data-theme") || "light");
-    setMounted(true);
-  }, []);
-
   return (
     <footer className="bg-zinc-950 pt-24 pb-12 border-t border-zinc-900 text-white font-sans selection:bg-red-500 selection:text-white">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
